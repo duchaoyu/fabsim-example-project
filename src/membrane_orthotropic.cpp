@@ -1,4 +1,4 @@
-#include <fsim/ElasticMembrane.h>
+#include <fsim/OrthotropicStVKMembrane.h>
 #include <fsim/util/io.h>
 #include <fsim/util/typedefs.h>
 #include <optim/NewtonSolver.h>
@@ -14,14 +14,15 @@ int main(int argc, char *argv[]) {
   fsim::readOFF("../data/mesh.off", V, F);
 
   // parameters of the membrane model
-  const double young_modulus = 10;
+  const double young_modulus_1 = 10;
+  const double young_modulus_2 = 10;
   const double thickness = 0.5;
   const double poisson_ratio = 0.3;
   double stretch_factor = 1.7;
   double mass = 1;
 
   // declare StVKMembrane object (could be replaced seamlessly with e.g. NeohookeanMembrane)
-  fsim::StVKMembrane model(V / stretch_factor, F, thickness, young_modulus, poisson_ratio, mass);
+  fsim::OrthotropicStVKMembrane model(V/stretch_factor, F, thickness, young_modulus_1, young_modulus_2, poisson_ratio, mass);
 
   // declare NewtonSolver object
   optim::NewtonSolver<double> solver;
@@ -43,7 +44,7 @@ int main(int argc, char *argv[]) {
   {
     ImGui::PushItemWidth(100);
     if(ImGui::InputDouble("Stretch factor", &stretch_factor, 0, 0, "%.1f"))
-      model = fsim::StVKMembrane(V / stretch_factor, F, thickness, young_modulus, poisson_ratio, mass);
+      model = fsim::OrthotropicStVKMembrane(V / stretch_factor, F, thickness, young_modulus_1, young_modulus_2, poisson_ratio, mass);
 
     if(ImGui::InputDouble("Mass", &mass, 0, 0, "%.1f"))
       model.setMass(mass);
