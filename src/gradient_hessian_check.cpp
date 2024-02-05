@@ -19,7 +19,7 @@ int main(int argc, char *argv[]) {
 
   // parameters of the membrane model
   const double young_modulus = 10;
-  const double thickness = 0.5;
+  const double thickness = 10;
   const double poisson_ratio = 0.3;
   double stretch_factor = 1.7;
   double mass = 1;
@@ -30,8 +30,8 @@ int main(int argc, char *argv[]) {
 
   Eigen::VectorXd X = Eigen::Map<Eigen::VectorXd>(V.data(), V.size());
 
-  int i = 0;
-  int j = 0;
+  int i = 1;
+  int j = 2;
   std::cout << model.gradient(X)(i * 3 + j) << " gradient 0" << std::endl;
   std::cout << model.hessian(X) << " hessian 0" << std::endl;
 //    std::cout << "full gradient" << std::endl;
@@ -49,6 +49,17 @@ int main(int argc, char *argv[]) {
 
 //    std::cout << model.energy(X2) << " energy_e" << std::endl;
   std::cout << (model.energy(X2) - model.energy(X)) / tol << " energy_difference / step" << std::endl;
-  std::cout << (model.gradient(X2)(i * 3 + j) - model.gradient(X)(i * 3 + j)) / tol << "gradient_difference / step"
-            << std::endl;
+//  std::cout << (model.gradient(X2)(i * 3 + j) - model.gradient(X)(i * 3 + j)) / tol << p << ", " << q << ", gradient_difference / step"
+//            << std::endl;
+
+  for (int p =0; p<3; p++){
+    for (int q=0; q<3; q++){
+      V2 << V;
+      V2(p, q) += tol;
+      X2 << Eigen::Map<Eigen::VectorXd>(V2.data(), V2.size());
+      std::cout << (model.gradient(X2)(p * 3 + q) - model.gradient(X)(p * 3 + q)) / tol << ", " << p << ", " << q << ", gradient_difference / step"
+                << std::endl;
+    }
+  }
+
 }
