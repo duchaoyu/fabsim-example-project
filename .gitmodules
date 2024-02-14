@@ -3,7 +3,7 @@
 	url = https://github.com/DavidJourdan/optim
 [submodule "external/fabsim"]
 	path = external/fabsim
-	url = https://github.com/DavidJourdan/fabsim
+	url = https://github.com/duchaoyu/fabsim
 [submodule "external/polyscope"]
 	path = external/polyscope
 	url = https://github.com/nmwsharp/polyscope
