@@ -1,5 +1,5 @@
 #include <fsim/CompositeModel.h>
-#include <fsim/Spring.h>
+#include <fsim/ElasticRod.h>
 #include <fsim/ElasticMembrane.h>
 #include <fsim/util/io.h>
 #include <fsim/util/typedefs.h>
@@ -39,15 +39,11 @@ int main(int argc, char *argv[]) {
   VectorXi indices(11);
   indices << 139, 64, 75, 8, 149, 38, 30, 84, 126, 57, 58;
 
-  for (int i = 0; i < indices.size() - 1; ++i) { // -1 because we are accessing i and i+1
-    double length = (V.row(indices[i]) - V.row(indices[i + 1])).norm();
-    std::cout << "Length of edge between vertices " << indices[i] << " and " << indices[i + 1] << ": " << length << std::endl;
-  }
+  fsim::RodParams params = {1, 1.5, 1000 * young_modulus, 1, fsim::CrossSection::Circle, false};
 
   fsim::CompositeModel composite(
       fsim::StVKMembrane(V / stretch_factor, F, thicknesses, young_modulus, poisson_ratio, mass, pressure),
-      fsim::Spring(139, 64, 1),
-      fsim::Spring(64, 75, 1)
+      fsim::ElasticRod(V, indices, Vector3d(0, 0, 1), params)
 );
 
   // declare NewtonSolver object
@@ -67,6 +63,7 @@ int main(int argc, char *argv[]) {
   solver.options.threshold = 1e-6; // specify how small the gradient's norm has to be
   solver.options.update_fct = [&](const Ref<const VectorXd> X) {
     // updates twist angles as per [Bergou et al. 2010] (section 6)
+    composite.getModel<1>().updateProperties(X); 
   };
 
   // display the curve network
@@ -81,7 +78,7 @@ int main(int argc, char *argv[]) {
     E.row(j) << j, j + 1;
   }
   polyscope::registerCurveNetwork("rod", R, E);
-
+  
   // display the mesh
   polyscope::registerSurfaceMesh("mesh", V, F)
       ->setEdgeWidth(1)
@@ -90,40 +87,42 @@ int main(int argc, char *argv[]) {
   polyscope::options::groundPlaneHeightFactor = 0.4;
   polyscope::init();
 
-  polyscope::state::userCallback = [&]()
+  polyscope::state::userCallback = [&]() 
   {
     // ImGui::PushItemWidth(100);
     // if(ImGui::InputDouble("Stretch factor", &stretch_factor, 0, 0, "%.1f"))
     //   membrane = fsim::StVKMembrane(V.leftCols(2) / stretch_factor, F, thickness, young_modulus, poisson_ratio, mass);
-
+    
     // if(ImGui::InputDouble("Mass", &mass, 0, 0, "%.1f"))
     //   membrane.setMass(mass);
 
-//    if(ImGui::Button("Solve"))
-//    {
-//      // prepare input variables for the Newton solver
-//      VectorXd var = VectorXd::Zero(V.size());
-////      var.head(V.size()) = Map<VectorXd>(V.data(), V.size());
-////
-////      for(int i = 0; i < V.rows(); ++i)
-////      {
-////        // add noise in the Z direction to force the rod out of plane
-////        std::mt19937 gen(std::random_device{}());
-////        std::uniform_real_distribution<double> dis(-0.1, 0.1);
-////        var(3 * i + 2) = dis(gen);
-////      }
-//
-//      // Newton's method: finds a local minimum of the energy (Fval = energy value, Optimality = gradient's norm)
-//      var = solver.solve(composite, var);
-//
-//      // Display the result of the optimization
-//      polyscope::getSurfaceMesh("mesh")->updateVertexPositions(
-//          Map<fsim::Mat3<double>>(var.data(), V.rows(), 3));
-//
-//      for(int j = 0; j < indices.size() - 1; ++j)
-//        R.row(j) = var.segment<3>(3 * indices(j));
-//      polyscope::getCurveNetwork("rod")->updateNodePositions(R);
-//    }
+    if(ImGui::Button("Solve")) 
+    {
+      // prepare input variables for the Newton solver
+      VectorXd var = VectorXd::Zero(V.size() + V.rows());
+      var.head(V.size()) = Map<VectorXd>(V.data(), V.size());
+
+      for(int i = 0; i < V.rows(); ++i)
+      {
+        // add noise in the Z direction to force the rod out of plane
+        std::mt19937 gen(std::random_device{}());
+        std::uniform_real_distribution<double> dis(-0.1, 0.1);
+        var(3 * i + 2) = dis(gen);
+      }
+
+      composite.getModel<1>().updateProperties(var); // necessary to do so if it's not the first solve
+
+      // Newton's method: finds a local minimum of the energy (Fval = energy value, Optimality = gradient's norm)
+      var = solver.solve(composite, var);
+
+      // Display the result of the optimization
+      polyscope::getSurfaceMesh("mesh")->updateVertexPositions(
+          Map<fsim::Mat3<double>>(var.data(), V.rows(), 3));
+
+      for(int j = 0; j < indices.size() - 1; ++j)
+        R.row(j) = var.segment<3>(3 * indices(j));
+      polyscope::getCurveNetwork("rod")->updateNodePositions(R);
+    }
   };
   polyscope::show();
 }

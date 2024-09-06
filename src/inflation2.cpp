@@ -14,7 +14,7 @@ int main(int argc, char *argv[]) {
     // load geometry from OFF mesh file
     fsim::Mat3<double> V;
     fsim::Mat3<int> F;
-    fsim::readOFF("/Users/duch/Downloads/pillow.off", V, F);
+    fsim::readOFF("/Users/duch/Downloads/2part_opt.off", V, F);
 
 
     // parameters of the membrane model

@@ -11,8 +11,8 @@ int main(int argc, char *argv[]) {
   // load geometry from OFF mesh file
   fsim::Mat3<double> V;
   fsim::Mat3<int> F;
-//  fsim::readOFF("../data/mesh.off", V, F);
-  fsim::readOFF("/Users/duch/Downloads/pillow.off", V, F);
+  fsim::readOFF("../data/mesh.off", V, F);
+//  fsim::readOFF("/Users/duch/Downloads/pillow.off", V, F);
 
 
   // parameters of the membrane model
@@ -22,7 +22,7 @@ int main(int argc, char *argv[]) {
   double poisson_ratio = 0.3;
   double stretch_factor = 1.7;
   double mass = 1; // 1kg per face
-  double pressure = 5;
+  double pressure = 0;
 
 
    fsim::StVKMembrane model(V , F, thickness, young_modulus, poisson_ratio, mass, pressure);
@@ -30,8 +30,8 @@ int main(int argc, char *argv[]) {
   // declare NewtonSolver object
   optim::NewtonSolver<double> solver;
   // specify fixed degrees of freedom (here the 4 corners of the mesh are fixed)
-  std::vector<int> bdrs = {10, 11, 18, 22, 25, 27, 30, 41, 42, 53, 55, 57, 65, 66, 83, 85, 92, 93, 94, 96, 98, 100, 101, 111, 122, 123, 124, 126, 128, 130, 133, 134, 137, 138, 145, 146, 149, 150, 151, 152, 156, 160, 161, 163, 164, 166};
-//  std::vector<int> bdrs = {0, 1, 2, 3};
+//  std::vector<int> bdrs = {10, 11, 18, 22, 25, 27, 30, 41, 42, 53, 55, 57, 65, 66, 83, 85, 92, 93, 94, 96, 98, 100, 101, 111, 122, 123, 124, 126, 128, 130, 133, 134, 137, 138, 145, 146, 149, 150, 151, 152, 156, 160, 161, 163, 164, 166};
+  std::vector<int> bdrs = {0, 1, 2, 3};
 //
   for (int bdr : bdrs) {
     solver.options.fixed_dofs.push_back(bdr * 3);
