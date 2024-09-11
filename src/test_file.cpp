@@ -5,30 +5,6 @@
 // Created by Chaoyu Du on 06.09.24.
 using namespace Eigen;
 
-// Function to compute local frame based on points A, B, C
-void computeLocalFrame(const Vector3d& A, const Vector3d& B, const Vector3d& C,
-                       Matrix3d& rotationMatrix, Vector3d& translation) {
-  // Compute the local X-axis (AB)
-  Vector3d xLocal = (B - A).normalized();
-
-  // Compute the local Z-axis (normal to triangle ABC)
-  Vector3d zLocal = (B - A).cross(C - A).normalized();
-
-  // Compute the local Y-axis (cross product of Z and X)
-  Vector3d yLocal = zLocal.cross(xLocal);
-
-  // Construct the rotation matrix
-  rotationMatrix.col(0) = xLocal;
-  rotationMatrix.col(1) = yLocal;
-  rotationMatrix.col(2) = zLocal;
-
-  // Translation (A becomes the origin of the local frame)
-  translation = A;
-}
-// Function to compute the local coordinates of a point in the new frame
-Vector3d computeLocalCoordinates(const Vector3d& point, const Matrix3d& rotationMatrix, const Vector3d& translation) {
-  return rotationMatrix.transpose() * (point - translation);
-}
 
 int main(int argc, char *argv[]) {
 
@@ -43,9 +19,9 @@ int main(int argc, char *argv[]) {
 
 
   Matrix3d X;
-  X.row(0) << 0, 0, 1;
-  X.row(1) << 1, 2, 1;
-  X.row(2) << 0, 2, 1;
+  X.row(0) << 0, 2, 1;
+  X.row(1) << 1, 0, 1;
+  X.row(2) << 0, 0, 1;
 
   Vector3i E;
   E << 0, 1, 2;
@@ -95,109 +71,47 @@ int main(int argc, char *argv[]) {
   Matrix4d T_inverse = T.inverse();
   Matrix4d T_mul = T_inverse * Matrix4d::Identity();
 
+
+  std::cout << "T_mul" << std::endl;
   std::cout << T_mul << std::endl;
+  std::cout << "T_mul_transpose" << std::endl;
   std::cout << T_mul.transpose() << std::endl;
 
-  MatrixXd V_local(3, 3);
+  MatrixXd V_local_xy33(3, 3);
+  MatrixXd V_local_XY(3,3 );
 
   for (int i = 0; i < 3; ++i) {
     // Convert each 3D point to homogeneous coordinates (Vector4d)
 //    Vector4d V_homogeneous;
-    Matrix<double, 1, 4> V_homogeneous;
-    V_homogeneous << V.row(E(i))[0], V.row(E(i))[1], V.row(E(i))[2], 1.0;
-    Matrix<double, 1, 4>  V_transformed = V_homogeneous * T_mul.transpose() ;
-    V_local.row(i) << V_transformed.head<3>();  // Store in the output matrix
+    Matrix<double, 1, 4> V_homogeneous_xy;
+    V_homogeneous_xy << V.row(E(i))[0], V.row(E(i))[1], V.row(E(i))[2], 1.0;
+
+    Matrix<double, 1, 4> V_homogeneous_XY;
+    V_homogeneous_XY << X.row(i)[0], X.row(i)[1], X.row(i)[2], 1.0;
+
+    Matrix<double, 1, 4>  V_transformed_xy = V_homogeneous_xy * T_mul.transpose() ;
+    Matrix<double, 1, 4>  V_transformed_XY = V_homogeneous_XY * T_mul.transpose() ;
+
+
+    V_local_xy33.row(i) << V_transformed_xy.head<3>();  // Store in the output matrix
+    V_local_XY.row(i) << V_transformed_XY.head<3>();
   }
 
-  std::cout << V_local << std::endl;
 
 
   MatrixXd V_local_xy(3,2);
 //  V_local_xy << V_local;
-  V_local_xy << V_local.block<3, 2>(0, 0);
-
-
-  Matrix3d rotationMatrix;
-  Vector3d translation;
-
-  // Compute the local frame based on A, B, C
-  computeLocalFrame( V.row(E(0)),  V.row(E(1)),  V.row(E(2)), rotationMatrix, translation);
-  // Print the rotation matrix and translation vector
-  std::cout << "Rotation Matrix (world to local):\n" << rotationMatrix << std::endl;
-  std::cout << "Translation (origin):\n" << translation.transpose() << std::endl;
-
-  Vector3d A_local = computeLocalCoordinates(V.row(E(0)), rotationMatrix, translation);
-  Vector3d B_local = computeLocalCoordinates(V.row(E(1)), rotationMatrix, translation);
-  Vector3d C_local = computeLocalCoordinates(V.row(E(2)), rotationMatrix, translation);
-
-  // Print the local coordinates
-  std::cout << "Local coordinates of A: " << A_local.transpose() << std::endl;
-  std::cout << "Local coordinates of B: " << B_local.transpose() << std::endl;
-  std::cout << "Local coordinates of C: " << C_local.transpose() << std::endl;
-
-
-  Matrix3d rotationMatrixX;
-  Vector3d translationX;
-
-  // Compute the local frame based on A, B, C
-  computeLocalFrame( X.row(0),  X.row(1),  X.row(2), rotationMatrixX, translationX);
-  // Print the rotation matrix and translation vector
-  std::cout << "Rotation Matrix (world to local):\n" << rotationMatrixX << std::endl;
-  std::cout << "Translation (origin):\n" << translationX.transpose() << std::endl;
-
-  Vector3d A_localX = computeLocalCoordinates(X.row(0), rotationMatrixX, translationX);
-  Vector3d B_localX = computeLocalCoordinates(X.row(1), rotationMatrixX, translationX);
-  Vector3d C_localX = computeLocalCoordinates(X.row(2), rotationMatrixX, translationX);
-
-  // Print the local coordinates
-  std::cout << "Local coordinates of A: " << A_localX.transpose() << std::endl;
-  std::cout << "Local coordinates of B: " << B_localX.transpose() << std::endl;
-  std::cout << "Local coordinates of C: " << C_localX.transpose() << std::endl;
-
-  Matrix2d T_trans;
-  MatrixXd x_matrix(2,2);
-  x_matrix.col(0) << B_local[0], B_local[1];
-  x_matrix.col(1) << C_local[0],C_local[1];
-
-  MatrixXd X_matrix(2,2);
-  X_matrix.col(0) << B_localX[0], B_local[1];
-  X_matrix.col(1) << C_localX[0],C_local[1];
-
-  T_trans = X_matrix * x_matrix.inverse();
+  V_local_xy << V_local_xy33.block<3, 2>(0, 0);
 
 
 
 
-//  Matrix3d x_matrix;
-//  x_matrix.col(0) = V.row(E(0));
-//  x_matrix.col(1) = V.row(E(1));
-//  x_matrix.col(2) = V.row(E(2));
-//
-//
-//  Matrix3d X_matrix;
-//  X_matrix.col(0) = X.row(0);
-//  X_matrix.col(1) = X.row(1);
-//  X_matrix.col(2) = X.row(2);
-//
-//  MatrixXd A(3, 4);
-//  MatrixXd B(3, 4);
-//  Matrix4d T_trans = B * (A.completeOrthogonalDecomposition().pseudoInverse());
+  std::cout << "V_local_xy" << std::endl;
+  std::cout << V_local_xy33 << std::endl;
+  std::cout << V_local_xy << std::endl;
 
-
-//  Matrix3d T_trans = X_matrix * x_matrix.inverse();
-//  JacobiSVD<Matrix3d> svd(T_trans, ComputeFullU | ComputeFullV);
-//  Matrix3d S = svd.matrixV() * svd.singularValues().asDiagonal() * svd.matrixV().transpose();
-//
-//
-  MatrixXd V_local_XY(3, 2);
-  V_local_XY = V_local_xy * T_trans;
-
-  std::cout << "T_trans" << std::endl;
-  std::cout << T_trans << std::endl;
   std::cout << "V_local_XY" << std::endl;
   std::cout << V_local_XY << std::endl;
-  std::cout << "V_local_xy" << std::endl;
-  std::cout << V_local_xy << std::endl;
 
 
 
@@ -219,9 +133,9 @@ int main(int argc, char *argv[]) {
   coeff = thickness / 2 * std::abs(d);
 
   Matrix3d P;
-  P.col(0) << V_local_XY.row(0)[0], V_local_XY.row(0)[1], 0;
-  P.col(1) << V_local_XY.row(1)[0], V_local_XY.row(1)[1], 0;
-  P.col(2) << V_local_XY.row(2)[0], V_local_XY.row(2)[1], 0;
+  P.col(0) << V_local_XY.row(0)[0], V_local_XY.row(0)[1], V_local_XY.row(0)[2];
+  P.col(1) << V_local_XY.row(1)[0], V_local_XY.row(1)[1], V_local_XY.row(1)[2];
+  P.col(2) << V_local_XY.row(2)[0], V_local_XY.row(2)[1], V_local_XY.row(2)[2];
   Matrix<double, 3, 2> F = P * _R;
 
   std::cout << F << ", F" << std::endl;
@@ -251,6 +165,8 @@ int main(int argc, char *argv[]) {
   energy = coeff * (0.5 * res.dot(C * res) + 9.8 * mass * (X.row(0)[2] + X.row(1)[2] + X.row(2)[2]));
 
   std::cout << energy << "energy" <<  std::endl;
+
+
 
 
 

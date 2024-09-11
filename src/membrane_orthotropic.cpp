@@ -15,8 +15,8 @@ int main(int argc, char *argv[]) {
 //  V /= 10; // total 5m
 
   // parameters of the membrane model
-  double young_modulus1 = 10; // 1000 Pa
-  double young_modulus2 = 10;
+  double young_modulus1 = 1000; // 1000 Pa
+  double young_modulus2 = 1000;
 //  const double young_modulus = 10000000; // 10 MPa
   double thickness = 0.5;  // m
   double poisson_ratio = 0.3;
