@@ -17,6 +17,7 @@ add_executable(rod_example src/rod.cpp)
 add_executable(inflatable_example src/inflation.cpp)
 add_executable(orthotropic_example src/membrane_orthotropic.cpp)
 add_executable(gradient src/gradient_hessian_check.cpp)
+add_executable(test src/test_file.cpp)
 add_executable(best_fit_thickness src/genetic_algorithm.cpp
         src/genetic_algorithm.cpp)
 
@@ -26,4 +27,5 @@ target_link_libraries(rod_example fabsim optim polyscope)
 target_link_libraries(inflatable_example fabsim optim polyscope)
 target_link_libraries(orthotropic_example fabsim optim polyscope)
 target_link_libraries(gradient fabsim optim polyscope)
+target_link_libraries(test fabsim optim polyscope)
 target_link_libraries(best_fit_thickness fabsim optim polyscope)
