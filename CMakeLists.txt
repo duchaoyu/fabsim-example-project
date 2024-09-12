@@ -19,7 +19,8 @@ add_executable(orthotropic_example src/membrane_orthotropic.cpp)
 add_executable(gradient src/gradient_hessian_check.cpp)
 add_executable(test src/test_file.cpp)
 add_executable(best_fit_thickness src/genetic_algorithm.cpp
-        src/genetic_algorithm.cpp)
+        src/genetic_algorithm.cpp
+        external/fabsim/tests/check_finite_differences.cpp)
 
 target_link_libraries(composite_example fabsim optim polyscope)
 target_link_libraries(membrane_example fabsim optim polyscope)

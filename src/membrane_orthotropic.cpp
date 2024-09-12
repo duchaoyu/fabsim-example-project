@@ -11,6 +11,7 @@ int main(int argc, char *argv[]) {
   fsim::Mat3<double> V0;
   fsim::Mat3<int> F;
   fsim::readOFF("../data/mesh.off", V0, F);
+//  fsim::readOFF("/Users/duch/Downloads/pillow.off", V0, F);
 //  fsim::Mat2<double> V = V0.leftCols<2>();
 //  V /= 10; // total 5m
 
@@ -63,17 +64,21 @@ int main(int argc, char *argv[]) {
         model = fsim::OrthotropicStVKMembrane(V0 / stretch_factor, F, thickness, young_modulus1, young_modulus2, poisson_ratio, mass);
 
       if(ImGui::InputDouble("Possian", &poisson_ratio, 0, 0, "%.2f"))
-        model = fsim::OrthotropicStVKMembrane(V0 / stretch_factor, F, thickness, young_modulus1, young_modulus2, poisson_ratio, mass);
+//        model = fsim::OrthotropicStVKMembrane(V0 / stretch_factor, F, thickness, young_modulus1, young_modulus2, poisson_ratio, mass);
+        model.setPoissonRatio(poisson_ratio);
 
       if(ImGui::InputDouble("Modulus1", &young_modulus1, 0, 0, "%.2f"))
-        model = fsim::OrthotropicStVKMembrane(V0 / stretch_factor, F, thickness, young_modulus1, young_modulus2, poisson_ratio, mass);
+        model.setE1(young_modulus1);
 
       if(ImGui::InputDouble("Modulus2", &young_modulus2, 0, 0, "%.2f"))
-        model = fsim::OrthotropicStVKMembrane(V0 / stretch_factor, F, thickness, young_modulus1, young_modulus2, poisson_ratio, mass);
-
+//        model = fsim::OrthotropicStVKMembrane(V0 / stretch_factor, F, thickness, young_modulus1, young_modulus2, poisson_ratio, mass);
+        model.setE2(young_modulus2);
 
       if(ImGui::InputDouble("Mass", &mass, 0, 0, "%.2f"))
         model.setMass(mass);
+
+      if(ImGui::InputDouble("Pressure", &pressure, 0, 0, "%.2f"))
+        model.setPressure(pressure);
 
       if(ImGui::Button("Solve"))
       {
