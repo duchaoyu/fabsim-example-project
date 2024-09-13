@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
 
   // parameters of the membrane model
   double young_modulus = 50000;  // knit: ~50kPa https://journals.sagepub.com/doi/pdf/10.1177/0040517510371864
-  double thickness = 0.4;
+  double thickness = 1.0;
   double thickness2 = 0.6;
   double poisson_ratio = 0.38;  // 0.38
   double stretch_factor = 1.05;
