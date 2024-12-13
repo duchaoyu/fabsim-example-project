@@ -3,6 +3,11 @@
 #include <optim/NewtonSolver.h>
 #include <polyscope/surface_mesh.h>
 #include "polyscope/point_cloud.h"
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <vector>
+#include <string>
 
 
 std::vector<int> findBoundaryVertices(fsim::Mat3<int> F) {
@@ -35,36 +40,136 @@ std::vector<int> findBoundaryVertices(fsim::Mat3<int> F) {
   return std::vector<int>(boundaryVertices.begin(), boundaryVertices.end());
 }
 
+void projectFaceVectorsToFaces(const fsim::Mat3<double>& V, const fsim::Mat3<int>& F, std::vector<Eigen::Vector3d>& face_vectors) {
+  // Ensure the number of face vectors matches the number of faces
+  if (face_vectors.size() != F.rows()) {
+    std::cerr << "Error: Number of face vectors does not match the number of faces." << std::endl;
+    return;
+  }
+
+  for (int i = 0; i < F.rows(); ++i) {
+    // Get the vertices of the face
+    Eigen::Vector3d v0 = V.row(F(i, 0));
+    Eigen::Vector3d v1 = V.row(F(i, 1));
+    Eigen::Vector3d v2 = V.row(F(i, 2));
+
+    // Compute two edges of the face
+    Eigen::Vector3d edge1 = v1 - v0;
+    Eigen::Vector3d edge2 = v2 - v0;
+
+    // Compute the normal of the face
+    Eigen::Vector3d faceNormal = edge1.cross(edge2).normalized();
+
+    // Get the original face vector
+    Eigen::Vector3d originalVector = face_vectors[i];
+
+    // Compute the projection of the vector onto the plane
+    Eigen::Vector3d projection = originalVector - (originalVector.dot(faceNormal)) * faceNormal;
+
+    // Normalize the projected vector
+    face_vectors[i] = projection.normalized();
+  }
+}
 
 
 int main(int argc, char *argv[]) {
   using namespace Eigen;
+
+  bool showDeviation = false;
+  bool showRef = false;
+  bool showFixedPoints = false;
 
   // load geometry from OFF mesh file
   fsim::Mat3<double> V0;
   fsim::Mat3<int> F;
 //  fsim::readOFF("../data/mesh.off", V0, F);
 //  fsim::readOFF("/Users/duch/Downloads/pillow.off", V0, F);
-  fsim::readOFF("/Users/duch/Downloads/2part_opt.off", V0, F);
+//  fsim::readOFF("/Users/duch/Documents/PhD/knit/2024_prototypes/rectangle/gentle_unit_m.off", V0, F);
+  std::string folder = "/Users/duch/Documents/PhD/knit/2024_prototypes/callibration/two_patterns/model/";
+  std::string mesh_name = "circlemesh.off";
+  std::string file_path = folder + mesh_name;
+
+  fsim::readOFF(file_path, V0, F);
+
 //  fsim::Mat2<double> V = V0.leftCols<2>();
-//  V /= 10; // total 5m
+//  V0 /= 100.; // total 5m
 
   // parameters of the membrane model
-  double young_modulus1 = 50000; // 1000 Pa
-  double young_modulus2 = 25000;
-//  const double young_modulus = 10000000; // 10 MPa
-  double thickness = 1.0;  // m
-  double poisson_ratio = 0.38;
-  double stretch_factor = 1.05;
-  double mass = 30; // 1kg per face
-  double pressure = 250;
+  double young_modulus1= 5000;  // knit: ~50kPa https://journals.sagepub.com/doi/pdf/10.1177/0040517510371864
+  double young_modulus2 = 12507;
+  double thickness = 1.0;
+  double poisson_ratio = 0.198;
+  double stretch_factor = 1.043;
+  double mass = 0.001; // mass per area, density * material thickness= 1500kg/m3 * 0.02 = 30kg/m2
+  double pressure = 1200; // pressure per area N/m2, Pa, air-supported structure 200-300 Pa
 
-  fsim::OrthotropicStVKMembrane model(V0 , F, thickness, young_modulus1, young_modulus2, poisson_ratio, mass);
+//  double young_modulus1 = 6000; // unit: N/m
+//  double young_modulus2 = 10000;
+////  const double young_modulus = 10000000; // 10 MPa
+//  double thickness = 1.0;  // m
+//  double poisson_ratio = 0.2;
+//  double stretch_factor = 1.06;
+//  double mass = 0.001; // / mass per area, density * material thickness
+//  double pressure = 850;  // pressure per area N/m2, Pa, air-supported structure 200-300 Pa; fomwork, 0.5-90kN/m2
+
+////   Create face vectors (one per face)
+  std::vector<Eigen::Vector3d> face_vectors(F.rows(), Eigen::Vector3d(1.0, 0.0, 0.0));
+
+//  // read face vectors from a txt file
+//  std::vector<Eigen::Vector3d> face_vectors;
+//  std::string line;
+//  std::ifstream infile("/Users/duch/Documents/PhD/knit/2024_prototypes/rectangle/gentle_unit_m_vertex_directional_field.txt");
+//  while (std::getline(infile, line))
+//  {
+//    // Remove any leading/trailing whitespace
+//    line.erase(0, line.find_first_not_of(" \t\n\r"));
+//    line.erase(line.find_last_not_of(" \t\n\r") + 1);
+//
+//    // Skip empty lines
+//    if (line.empty()) continue;
+//
+//    // Replace commas with spaces to simplify splitting
+//    for (size_t i = 0; i < line.length(); ++i){
+//      if (line[i] == ',') line[i] = ' ';}
+//
+//    // Use a stringstream to parse the numbers
+//    std::stringstream ss(line);
+//    double x, y, z;
+//    if (ss >> x >> y >> z){
+//      Eigen::Vector3d vec(x, y, z);
+//      face_vectors.push_back(vec);}
+//    else{
+//      std::cerr << "Warning: Could not parse line: " << line << std::endl;}
+//  }
+
+  projectFaceVectorsToFaces(V0, F, face_vectors);
+
+  // visualise the vector field, only for TEMPLATE now!!
+  fsim::Mat3<double> faceVectorsMatrix(F.rows(), 3);
+  for(int i = 0; i < F.rows(); ++i){
+    faceVectorsMatrix.row(i) = face_vectors[i];
+  }
+
+  // initialise the vector field
+  std::vector<glm::vec3> faceVectors(F.rows());
+
+  for(int i = 0; i < F.rows(); ++i){
+    faceVectors[i] = glm::vec3(
+        static_cast<float>(faceVectorsMatrix(i, 0)),
+        static_cast<float>(faceVectorsMatrix(i, 1)),
+        static_cast<float>(faceVectorsMatrix(i, 2))
+    );
+  }
+
+
+  fsim::OrthotropicStVKMembrane model(V0 / stretch_factor , F, thickness, young_modulus1, young_modulus2, poisson_ratio, face_vectors, mass, pressure);
 
   // declare NewtonSolver object
   optim::NewtonSolver<double> solver;
+  std::vector<int> bdrs = findBoundaryVertices(F);
+//  std::vector<int> bdrs = {1, 2, 3, 11, 14, 24, 35, 38, 47, 49, 60, 69, 76, 147, 148, 155, 157, 166, 174, 176, 184, 186, 196, 204, 210, 269, 270, 277, 279, 288, 296, 298, 306, 308, 318, 326, 332, 392, 393, 401, 404, 414, 425, 428, 437, 439, 450, 459, 466, 0, 5, 6, 7, 12, 19, 80, 82, 83, 84, 88, 94, 149, 150, 151, 156, 161, 214, 215, 216, 218, 220, 224, 271, 272, 273, 275, 278, 283, 336, 337, 338, 342, 346, 391, 395, 396, 397, 402, 409, 470, 472, 473, 474, 478, 484, 9, 153, 73, 141, 77, 86, 340, 144, 208, 264, 211, 266, 330, 386, 333, 388, 399, 463, 531, 467, 476, 534};
 
-  std::vector<int> bdrs = {11, 13, 25, 29, 35, 51, 55, 65, 73, 79, 98, 99, 100, 104, 105, 114, 118, 130, 133, 142, 144, 149, 153, 155, 157, 158, 163, 164, 165, 166, 167, 169, 170, 171, 172, 173, 186, 188, 200, 204, 210, 226, 230, 247, 274, 275, 284, 288, 302, 311, 313, 314, 322, 324, 326, 327, 332, 333, 334, 336, 337, 338, 339};
+//  std::vector<int> bdrs = {11, 13, 25, 29, 35, 51, 55, 65, 73, 79, 98, 99, 100, 104, 105, 114, 118, 130, 133, 142, 144, 149, 153, 155, 157, 158, 163, 164, 165, 166, 167, 169, 170, 171, 172, 173, 186, 188, 200, 204, 210, 226, 230, 247, 274, 275, 284, 288, 302, 311, 313, 314, 322, 324, 326, 327, 332, 333, 334, 336, 337, 338, 339};
   std::sort(bdrs.begin(), bdrs.end());
 
   for (int bdr : bdrs) {
@@ -78,21 +183,15 @@ int main(int argc, char *argv[]) {
 //                               2 * 3 + 2, 3 * 3 + 0, 3 * 3 + 1, 3 * 3 + 2};
   solver.options.threshold = 1e-6; // specify how small the gradient's norm has to be
 
-  // fixed points
-  std::vector<glm::vec3> points;
 
-//  for (int i = 0; i < 4; ++i) {
-//    points.push_back(glm::vec3(V.row(i)[0], V.row(i)[1], V.row(i)[2]));
-//  }
-//  // visualize fixes
-//  polyscope::PointCloud* psCloud = polyscope::registerPointCloud("Fixed points", points);
-//  psCloud->setPointRadius(0.02);
-//  psCloud->setPointRenderMode(polyscope::PointRenderMode::Quad);
 
   // display the mesh
   polyscope::registerSurfaceMesh("mesh", V0, F)
       ->setEdgeWidth(1)
       ->setEdgeColor({0.1, 0.1, 0.1});
+  polyscope::getSurfaceMesh("mesh")->addFaceVectorQuantity("Face Vectors", faceVectors)
+      ->setVectorColor(glm::vec3(1.0f, 0.0f, 0.0f)); // Red color for vectors
+
   polyscope::view::upDir = polyscope::view::UpDir::ZUp;
   polyscope::options::groundPlaneHeightFactor = 0.4;
   polyscope::init();
@@ -100,13 +199,13 @@ int main(int argc, char *argv[]) {
   polyscope::state::userCallback = [&]()
   {
       ImGui::PushItemWidth(100);
-      if(ImGui::InputDouble("Stretch factor", &stretch_factor, 0, 0, "%.2f"))
-        model = fsim::OrthotropicStVKMembrane(V0 / stretch_factor, F, thickness, young_modulus1, young_modulus2, poisson_ratio, mass);
+      if(ImGui::InputDouble("Stretch factor", &stretch_factor, 0, 0, "%.3f"))
+        model = fsim::OrthotropicStVKMembrane(V0 / stretch_factor, F, thickness, young_modulus1, young_modulus2, poisson_ratio, face_vectors, mass, pressure);
 
       if(ImGui::InputDouble("Thickness", &thickness, 0, 0, "%.2f"))
-        model = fsim::OrthotropicStVKMembrane(V0 / stretch_factor, F, thickness, young_modulus1, young_modulus2, poisson_ratio, mass);
+        model = fsim::OrthotropicStVKMembrane(V0 / stretch_factor, F, thickness, young_modulus1, young_modulus2, poisson_ratio, face_vectors, mass, pressure);
 
-      if(ImGui::InputDouble("Possian", &poisson_ratio, 0, 0, "%.2f"))
+      if(ImGui::InputDouble("Possian", &poisson_ratio, 0, 0, "%.3f"))
 //        model = fsim::OrthotropicStVKMembrane(V0 / stretch_factor, F, thickness, young_modulus1, young_modulus2, poisson_ratio, mass);
         model.setPoissonRatio(poisson_ratio);
 
@@ -117,7 +216,7 @@ int main(int argc, char *argv[]) {
 //        model = fsim::OrthotropicStVKMembrane(V0 / stretch_factor, F, thickness, young_modulus1, young_modulus2, poisson_ratio, mass);
         model.setE2(young_modulus2);
 
-      if(ImGui::InputDouble("Mass", &mass, 0, 0, "%.2f"))
+      if(ImGui::InputDouble("Mass", &mass, 0, 0, "%.3f"))
         model.setMass(mass);
 
       if(ImGui::InputDouble("Pressure", &pressure, 0, 0, "%.2f"))
@@ -131,6 +230,67 @@ int main(int argc, char *argv[]) {
         // Display the result of the optimization
         polyscope::getSurfaceMesh("mesh")->updateVertexPositions(
             Map<fsim::Mat3<double>>(solver.var().data(), V0.rows(), 3));
+
+
+        if (showDeviation) {
+
+//          Eigen::MatrixXd VTarget = xTarget.reshaped<Eigen::RowMajor>(V.rows(), 3);
+//          Eigen::MatrixXd Vsolve = Map<fsim::Mat3<double>>(solver.var().data(), V.rows(), 3))
+          fsim::Mat3<double> Vsolve = Map<fsim::Mat3<double>>(solver.var().data(), V0.rows(), 3);
+          Eigen::VectorXd d = (V0 - Vsolve).cwiseProduct((V0 - Vsolve)).rowwise().sum();
+          d = d.array().sqrt();
+          std::cout << d << std::endl;
+          std::cout << "Avg distance = "
+                    << 100 * d.sum() / d.size() / (Vsolve.colwise().maxCoeff() - Vsolve.colwise().minCoeff()).norm()
+                    << "\n";
+          std::cout << "Max distance = "
+                    << 100 * d.lpNorm<Eigen::Infinity>() /
+                       (Vsolve.colwise().maxCoeff() - Vsolve.colwise().minCoeff()).norm()
+                    << "\n";
+          polyscope::getSurfaceMesh("mesh")->addVertexScalarQuantity("Distance", d)->setEnabled(true);
+        }
+
+        std::ostringstream expfilename;
+        expfilename << folder + "exp/"
+                 << "YM1_" << young_modulus1
+                 << "_YM2_" << young_modulus2
+                 << "_PR_" << poisson_ratio
+                 << "_SF_" << stretch_factor
+//                 << "_M_" << mass
+                 << "_P_" << pressure;
+
+        fsim::saveOBJ(expfilename.str(), Map<fsim::Mat3<double>>(solver.var().data(), V0.rows(), 3), F);
+
+
+      };
+
+    if (ImGui::Checkbox("Set Deviation", &showDeviation)) {
+      }
+
+    if (ImGui::Checkbox("Show Reference Mesh", &showRef)) {
+      static polyscope::SurfaceMesh *refMesh = polyscope::registerSurfaceMesh("refmesh", V0, F);
+      refMesh->setEnabled(showRef);
+      if (showRef) {
+        refMesh->setEdgeWidth(1);
+        refMesh->setEdgeColor({0.1, 0.1, 0.1});
+        refMesh->setSurfaceColor({0, 1., 1.});
+    }
+  }
+      if (ImGui::Checkbox("Show Fixed Points", &showFixedPoints)) {
+        std::vector<glm::vec3> points(bdrs.size());
+
+        for (int bdr : bdrs) {
+          // fixed points
+            points.emplace_back(glm::vec3(V0.row(bdr)[0], V0.row(bdr)[1], V0.row(bdr)[2]));
+        }
+        polyscope::PointCloud* psCloud = polyscope::registerPointCloud("Fixed points", points);
+        psCloud->setEnabled(showFixedPoints);
+
+        if (showFixedPoints){
+          // visualize fixes
+          psCloud->setPointRadius(0.02);
+          psCloud->setPointRenderMode(polyscope::PointRenderMode::Quad);
+        }
       }
   };
   polyscope::show();
