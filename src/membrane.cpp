@@ -46,11 +46,10 @@ int main(int argc, char *argv[]) {
   // fixed points
   std::vector<glm::vec3> points;
 
-
-
   for (unsigned int i = 0; i < bdrs.size(); i++) {
     points.push_back(glm::vec3(V.row(bdrs[i])[0], V.row(bdrs[i])[1], V.row(bdrs[i])[2]));
   }
+
   // visualize fixes
   polyscope::PointCloud* psCloud = polyscope::registerPointCloud("Fixed points", points);
   psCloud->setPointRadius(0.02);

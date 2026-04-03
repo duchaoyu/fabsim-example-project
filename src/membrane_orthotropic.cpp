@@ -8,6 +8,7 @@
 #include <sstream>
 #include <vector>
 #include <string>
+#include "anisotropic_rest_shape.h"
 
 
 std::vector<int> findBoundaryVertices(fsim::Mat3<int> F) {
@@ -72,6 +73,27 @@ void projectFaceVectorsToFaces(const fsim::Mat3<double>& V, const fsim::Mat3<int
 }
 
 
+std::vector<double> readNumbersFromFile(const std::string& filename) {
+  std::ifstream infile(filename);
+  if (!infile.is_open()) {
+    throw std::runtime_error("Could not open file: " + filename);
+  }
+  std::vector<double> data;
+  std::string line;
+  // Read the single line from the file
+  if (std::getline(infile, line)) {
+    std::istringstream iss(line);
+    double num;
+    // Parse the space-separated integers
+    while (iss >> num) {
+      data.push_back(num);
+    }
+  }
+  infile.close();
+  return data;
+}
+
+
 int main(int argc, char *argv[]) {
   using namespace Eigen;
 
@@ -83,13 +105,18 @@ int main(int argc, char *argv[]) {
   fsim::Mat3<double> V0;
   fsim::Mat3<int> F;
 //  fsim::readOFF("../data/mesh.off", V0, F);
-//  fsim::readOFF("/Users/duch/Downloads/pillow.off", V0, F);
-//  fsim::readOFF("/Users/duch/Documents/PhD/knit/2024_prototypes/rectangle/gentle_unit_m.off", V0, F);
-  std::string folder = "/Users/duch/Documents/PhD/knit/2024_prototypes/callibration/two_patterns/model/";
-  std::string mesh_name = "circlemesh.off";
+//  std::string folder = "/Users/duch/Documents/PhD/knit/2024_prototypes/rectangle/";
+//  std::string mesh_name = "gentle_unit_m.off";
+  std::string folder = "/Users/duch/Documents/PhD/knit/2024_prototypes/2part/";
+  std::string mesh_name = "2part_opt_simu_m.off";
+//  std::string folder = "/Users/duch/Documents/PhD/knit/2024_prototypes/callibration/two_patterns/square/";
+//  std::string mesh_name = "square.off";
   std::string file_path = folder + mesh_name;
-
   fsim::readOFF(file_path, V0, F);
+
+  // V0_mod is computed after stretch_factor and face_vectors are both initialised (see below).
+  fsim::Mat3<double> V0_mod = V0;   // placeholder
+
 
 //  fsim::Mat2<double> V = V0.leftCols<2>();
 //  V0 /= 100.; // total 5m
@@ -97,11 +124,28 @@ int main(int argc, char *argv[]) {
   // parameters of the membrane model
   double young_modulus1= 5000;  // knit: ~50kPa https://journals.sagepub.com/doi/pdf/10.1177/0040517510371864
   double young_modulus2 = 12507;
-  double thickness = 1.0;
   double poisson_ratio = 0.198;
-  double stretch_factor = 1.043;
+
+//  std::string E1s_path = folder + "E1.txt";
+//  std::vector<double> young_modulus1s = readNumbersFromFile(E1s_path);
+//  std::string E2s_path = folder + "E2.txt";
+//  std::vector<double> young_modulus2s = readNumbersFromFile(E2s_path);
+//  std::string nu1s_path = folder + "nu1.txt";
+//  std::vector<double> poisson_ratios = readNumbersFromFile(nu1s_path);
+  std::vector<double> young_modulus1s(F.rows(), young_modulus1);
+  std::vector<double> young_modulus2s(F.rows(), young_modulus2);
+  std::vector<double> poisson_ratios(F.rows(), poisson_ratio);
+
+  double thickness = 1.0;
+  std::vector<double> thicknesses(F.rows(), thickness);
+  double s_f1 = 1.043;  // wale stretch factor
+  double s_f2 = 1.043;  // course stretch factor
+
+  // Per-face anisotropic pre-strain ratios derived from s_f1 / s_f2.
+  std::vector<double> s1_vec(F.rows(), 1.0 / s_f1);
+  std::vector<double> s2_vec(F.rows(), 1.0 / s_f2);
   double mass = 0.001; // mass per area, density * material thickness= 1500kg/m3 * 0.02 = 30kg/m2
-  double pressure = 1200; // pressure per area N/m2, Pa, air-supported structure 200-300 Pa
+  double pressure = 1000; // pressure per area N/m2, Pa, air-supported structure 200-300 Pa
 
 //  double young_modulus1 = 6000; // unit: N/m
 //  double young_modulus2 = 10000;
@@ -113,7 +157,8 @@ int main(int argc, char *argv[]) {
 //  double pressure = 850;  // pressure per area N/m2, Pa, air-supported structure 200-300 Pa; fomwork, 0.5-90kN/m2
 
 ////   Create face vectors (one per face)
-  std::vector<Eigen::Vector3d> face_vectors(F.rows(), Eigen::Vector3d(1.0, 0.0, 0.0));
+  std::vector<Eigen::Vector3d> face_vectors(F.rows(), Eigen::Vector3d(0.0, 1.0, 0.0));
+
 
 //  // read face vectors from a txt file
 //  std::vector<Eigen::Vector3d> face_vectors;
@@ -144,6 +189,10 @@ int main(int argc, char *argv[]) {
 
   projectFaceVectorsToFaces(V0, F, face_vectors);
 
+  // Compute anisotropic rest shape now that face_vectors are available.
+  std::vector<int> bdrs_for_mod = findBoundaryVertices(F);
+  V0_mod = computeAnisotropicRestShape(V0, F, bdrs_for_mod, face_vectors, s1_vec, s2_vec);
+
   // visualise the vector field, only for TEMPLATE now!!
   fsim::Mat3<double> faceVectorsMatrix(F.rows(), 3);
   for(int i = 0; i < F.rows(); ++i){
@@ -162,25 +211,20 @@ int main(int argc, char *argv[]) {
   }
 
 
-  fsim::OrthotropicStVKMembrane model(V0 / stretch_factor , F, thickness, young_modulus1, young_modulus2, poisson_ratio, face_vectors, mass, pressure);
+  fsim::OrthotropicStVKMembrane model(V0_mod , F, thicknesses, young_modulus1s, young_modulus2s, poisson_ratios, face_vectors, mass, pressure);
 
   // declare NewtonSolver object
   optim::NewtonSolver<double> solver;
   std::vector<int> bdrs = findBoundaryVertices(F);
 //  std::vector<int> bdrs = {1, 2, 3, 11, 14, 24, 35, 38, 47, 49, 60, 69, 76, 147, 148, 155, 157, 166, 174, 176, 184, 186, 196, 204, 210, 269, 270, 277, 279, 288, 296, 298, 306, 308, 318, 326, 332, 392, 393, 401, 404, 414, 425, 428, 437, 439, 450, 459, 466, 0, 5, 6, 7, 12, 19, 80, 82, 83, 84, 88, 94, 149, 150, 151, 156, 161, 214, 215, 216, 218, 220, 224, 271, 272, 273, 275, 278, 283, 336, 337, 338, 342, 346, 391, 395, 396, 397, 402, 409, 470, 472, 473, 474, 478, 484, 9, 153, 73, 141, 77, 86, 340, 144, 208, 264, 211, 266, 330, 386, 333, 388, 399, 463, 531, 467, 476, 534};
-
-//  std::vector<int> bdrs = {11, 13, 25, 29, 35, 51, 55, 65, 73, 79, 98, 99, 100, 104, 105, 114, 118, 130, 133, 142, 144, 149, 153, 155, 157, 158, 163, 164, 165, 166, 167, 169, 170, 171, 172, 173, 186, 188, 200, 204, 210, 226, 230, 247, 274, 275, 284, 288, 302, 311, 313, 314, 322, 324, 326, 327, 332, 333, 334, 336, 337, 338, 339};
   std::sort(bdrs.begin(), bdrs.end());
 
+  // specify fixed degrees of freedom
   for (int bdr : bdrs) {
     solver.options.fixed_dofs.push_back(bdr * 3);
     solver.options.fixed_dofs.push_back(bdr * 3 + 1);
     solver.options.fixed_dofs.push_back(bdr * 3 + 2);
   }
-  // specify fixed degrees of freedom (here the 4 corners of the mesh are fixed)
-//  solver.options.fixed_dofs = {0 * 3 + 0, 0 * 3 + 1, 0 * 3 + 2, 1 * 3 + 0,
-//                               1 * 3 + 1, 1 * 3 + 2, 2 * 3 + 0, 2 * 3 + 1,
-//                               2 * 3 + 2, 3 * 3 + 0, 3 * 3 + 1, 3 * 3 + 2};
   solver.options.threshold = 1e-6; // specify how small the gradient's norm has to be
 
 
@@ -196,25 +240,39 @@ int main(int argc, char *argv[]) {
   polyscope::options::groundPlaneHeightFactor = 0.4;
   polyscope::init();
 
+  // Helper: rebuild V0_mod and the model from current s_f1, s_f2 and material params.
+  auto rebuildModel = [&]() {
+    std::fill(s1_vec.begin(), s1_vec.end(), 1.0 / s_f1);
+    std::fill(s2_vec.begin(), s2_vec.end(), 1.0 / s_f2);
+    V0_mod = computeAnisotropicRestShape(V0, F, bdrs_for_mod, face_vectors, s1_vec, s2_vec);
+    std::fill(young_modulus1s.begin(), young_modulus1s.end(), young_modulus1);
+    std::fill(young_modulus2s.begin(), young_modulus2s.end(), young_modulus2);
+    std::fill(poisson_ratios.begin(), poisson_ratios.end(), poisson_ratio);
+    std::fill(thicknesses.begin(), thicknesses.end(), thickness);
+    model = fsim::OrthotropicStVKMembrane(V0_mod, F, thicknesses, young_modulus1s, young_modulus2s, poisson_ratios, face_vectors, mass, pressure);
+  };
+
   polyscope::state::userCallback = [&]()
   {
       ImGui::PushItemWidth(100);
-      if(ImGui::InputDouble("Stretch factor", &stretch_factor, 0, 0, "%.3f"))
-        model = fsim::OrthotropicStVKMembrane(V0 / stretch_factor, F, thickness, young_modulus1, young_modulus2, poisson_ratio, face_vectors, mass, pressure);
+
+      if(ImGui::InputDouble("SF wale (s_f1)", &s_f1, 0, 0, "%.4f"))
+        rebuildModel();
+
+      if(ImGui::InputDouble("SF course (s_f2)", &s_f2, 0, 0, "%.4f"))
+        rebuildModel();
 
       if(ImGui::InputDouble("Thickness", &thickness, 0, 0, "%.2f"))
-        model = fsim::OrthotropicStVKMembrane(V0 / stretch_factor, F, thickness, young_modulus1, young_modulus2, poisson_ratio, face_vectors, mass, pressure);
+        rebuildModel();
 
-      if(ImGui::InputDouble("Possian", &poisson_ratio, 0, 0, "%.3f"))
-//        model = fsim::OrthotropicStVKMembrane(V0 / stretch_factor, F, thickness, young_modulus1, young_modulus2, poisson_ratio, mass);
-        model.setPoissonRatio(poisson_ratio);
+      if(ImGui::InputDouble("Poisson", &poisson_ratio, 0, 0, "%.3f"))
+        rebuildModel();
 
       if(ImGui::InputDouble("Modulus1", &young_modulus1, 0, 0, "%.2f"))
-        model.setE1(young_modulus1);
+        rebuildModel();
 
       if(ImGui::InputDouble("Modulus2", &young_modulus2, 0, 0, "%.2f"))
-//        model = fsim::OrthotropicStVKMembrane(V0 / stretch_factor, F, thickness, young_modulus1, young_modulus2, poisson_ratio, mass);
-        model.setE2(young_modulus2);
+        rebuildModel();
 
       if(ImGui::InputDouble("Mass", &mass, 0, 0, "%.3f"))
         model.setMass(mass);
@@ -225,6 +283,7 @@ int main(int argc, char *argv[]) {
       if(ImGui::Button("Solve"))
       {
         // Newton's method: finds a local minimum of the energy (Fval = energy value, Optimality = gradient's norm)
+        // the V0.data() is the initial guess, also the fixed DF is defined here!
         solver.solve(model, Map<VectorXd>(V0.data(), V0.size()));
 
         // Display the result of the optimization
@@ -255,7 +314,8 @@ int main(int argc, char *argv[]) {
                  << "YM1_" << young_modulus1
                  << "_YM2_" << young_modulus2
                  << "_PR_" << poisson_ratio
-                 << "_SF_" << stretch_factor
+                 << "_SF1_" << s_f1
+                 << "_SF2_" << s_f2
 //                 << "_M_" << mass
                  << "_P_" << pressure;
 
