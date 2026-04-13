@@ -226,13 +226,15 @@ int main(int argc, char *argv[]) {
     solver.options.fixed_dofs.push_back(bdr * 3 + 2);
   }
   solver.options.threshold = 1e-6; // specify how small the gradient's norm has to be
+  solver.options.newton.max = 1e10; // allow aggressive regularization for high pre-strain initial states
 
 
 
   // display the mesh
   polyscope::registerSurfaceMesh("mesh", V0, F)
       ->setEdgeWidth(1)
-      ->setEdgeColor({0.1, 0.1, 0.1});
+      ->setEdgeColor({0.1, 0.1, 0.1})
+      ->setSurfaceColor({0.1, 0.5, 0.9});
   polyscope::getSurfaceMesh("mesh")->addFaceVectorQuantity("Face Vectors", faceVectors)
       ->setVectorColor(glm::vec3(1.0f, 0.0f, 0.0f)); // Red color for vectors
 

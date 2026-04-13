@@ -11,6 +11,54 @@
 #include <set>
 #include <map>
 
+// ── SpringCollection ──────────────────────────────────────────────────────────
+// Wraps a vector<Spring> and provides the energy/gradient/hessian interface
+// expected by CompositeModel.
+struct SpringCollection
+{
+  std::vector<fsim::Spring> springs;
+
+  explicit SpringCollection(std::vector<fsim::Spring> s) : springs(std::move(s)) {}
+
+  double energy(const Eigen::Ref<const Eigen::VectorXd> X) const
+  {
+    double e = 0;
+    for(auto& s : springs) e += s.energy(X);
+    return e;
+  }
+
+  void gradient(const Eigen::Ref<const Eigen::VectorXd> X, Eigen::Ref<Eigen::VectorXd> Y) const
+  {
+    for(auto& s : springs) s.gradient(X, Y);
+  }
+
+  Eigen::VectorXd gradient(const Eigen::Ref<const Eigen::VectorXd> X) const
+  {
+    Eigen::VectorXd Y = Eigen::VectorXd::Zero(X.size());
+    gradient(X, Y);
+    return Y;
+  }
+
+  std::vector<Eigen::Triplet<double>> hessianTriplets(const Eigen::Ref<const Eigen::VectorXd> X) const
+  {
+    std::vector<Eigen::Triplet<double>> trips;
+    for(auto& s : springs)
+    {
+      auto t = s.hessianTriplets(X);
+      trips.insert(trips.end(), t.begin(), t.end());
+    }
+    return trips;
+  }
+
+  Eigen::SparseMatrix<double> hessian(const Eigen::Ref<const Eigen::VectorXd> X) const
+  {
+    auto trips = hessianTriplets(X);
+    Eigen::SparseMatrix<double> H(X.size(), X.size());
+    H.setFromTriplets(trips.begin(), trips.end());
+    return H;
+  }
+};
+
 int main(int argc, char *argv[])
 {
   using namespace Eigen;
@@ -27,9 +75,11 @@ int main(int argc, char *argv[])
   double stretch_factor = 1.2;
   double mass = 0;
 
-  RowVector3d barycenter = V.colwise().sum() / V.rows();
-  VectorXi indices;
+  // Steel cable stiffness: k = E*A/L; for a thin steel cable this is typically
+  // much stiffer than the membrane. Tune as needed.
+  double spring_stiffness = 1000.0;
 
+  RowVector3d barycenter = V.colwise().sum() / V.rows();
 
   // Collect the indices of the boundary vertices to connect with springs
   std::vector<std::pair<int, int>> springIndices;
@@ -39,66 +89,56 @@ int main(int argc, char *argv[])
     std::vector<int> indicesInEdge;
     for(int i = 0; i < V.rows(); ++i)
       if(fsim::point_in_segment(V.row(i), V.row(k), V.row((k + 1) % 4)))
-      {
         indicesInEdge.push_back(i);
-      }
+
     std::sort(indicesInEdge.begin(), indicesInEdge.end(), [&](int a, int b) {
-        Vector3d orientation = (V.row(a) - barycenter).cross(V.row(b) - barycenter);
-        return orientation(2) > 0;
+      Vector3d orientation = (V.row(a) - barycenter).cross(V.row(b) - barycenter);
+      return orientation(2) > 0;
     });
 
-    for (size_t j = 0; j < indicesInEdge.size() - 1; ++j) {
+    for(size_t j = 0; j + 1 < indicesInEdge.size(); ++j)
       springIndices.emplace_back(indicesInEdge[j], indicesInEdge[j + 1]);
-    }
   }
 
-  for (const auto& pair : springIndices) {
+  for(const auto& pair : springIndices)
     std::cout << "(" << pair.first << ", " << pair.second << ")\n";
-  }
 
-
-
-
-  // Initialize springs
-  std::vector<fsim::Spring> springs;
-  for (auto &[start, end] : springIndices) {
+  // Initialize springs with stiffness
+  std::vector<fsim::Spring> springVec;
+  for(auto& [start, end] : springIndices)
+  {
     double length = (V.row(start) - V.row(end)).norm();
-    springs.emplace_back(start, end, length);
+    springVec.emplace_back(start, end, length, spring_stiffness);
   }
+  SpringCollection springCol(std::move(springVec));
 
-// Initialize the membrane model
+  // Initialize the membrane model
   auto membrane = fsim::StVKMembrane(V / stretch_factor, F, thickness, young_modulus, poisson_ratio, mass);
 
-// Create a vector to hold all models
-//  std::vector<fsim::StVKMembrane> models;
-//  models.push_back(membrane);
-//  models.insert(models.end(), springs.begin(), springs.end());
-
-// Initialize the composite model with the vector of models
-  fsim::CompositeModel composite(springs, 0);
+  // Composite: membrane + cable springs
+  fsim::CompositeModel composite(std::move(membrane), std::move(springCol));
 
   // declare NewtonSolver object
   optim::NewtonSolver<double> solver;
-   // specify fixed degrees of freedom (here the 4 corners of the mesh are fixed)
-   solver.options.fixed_dofs = {0 * 3 + 0, 0 * 3 + 1, 0 * 3 + 2, 1 * 3 + 0,
-                                1 * 3 + 1, 1 * 3 + 2, 2 * 3 + 0, 2 * 3 + 1,
-                                2 * 3 + 2, 3 * 3 + 0, 3 * 3 + 1, 3 * 3 + 2};
-  solver.options.threshold = 1e-6; // specify how small the gradient's norm has to be
-  solver.options.update_fct = [&](const Ref<const VectorXd> X) {
-  };
+  // specify fixed degrees of freedom (here the 4 corners of the mesh are fixed)
+  solver.options.fixed_dofs = {0*3+0, 0*3+1, 0*3+2,
+                               1*3+0, 1*3+1, 1*3+2,
+                               2*3+0, 2*3+1, 2*3+2,
+                               3*3+0, 3*3+1, 3*3+2};
+  solver.options.threshold = 1e-6;
+  solver.options.newton.max = 1e10;
 
-  // display the curve network
-  // Collect unique node indices
+  // Display the curve network
   std::set<int> uniqueNodeIndices;
-  for (const auto& pair : springIndices) {
+  for(const auto& pair : springIndices)
+  {
     uniqueNodeIndices.insert(pair.first);
     uniqueNodeIndices.insert(pair.second);
   }
   std::map<int, int> indexMapping;
   int newIndex = 0;
-  for (int idx : uniqueNodeIndices) {
+  for(int idx : uniqueNodeIndices)
     indexMapping[idx] = newIndex++;
-  }
 
   std::vector<int> nodeIndicesVec(uniqueNodeIndices.begin(), uniqueNodeIndices.end());
 
@@ -106,15 +146,11 @@ int main(int argc, char *argv[])
   fsim::Mat2<int> E(springIndices.size(), 2);
 
   int row = 0;
-  for (int idx : nodeIndicesVec) {
+  for(int idx : nodeIndicesVec)
     R.row(row++) = V.row(idx);
-  }
 
-  for(size_t j = 0; j < springIndices.size(); ++j) {
-    int idx1 = indexMapping[springIndices[j].first];
-    int idx2 = indexMapping[springIndices[j].second];
-    E.row(j) << idx1, idx2;
-  }
+  for(size_t j = 0; j < springIndices.size(); ++j)
+    E.row(j) << indexMapping[springIndices[j].first], indexMapping[springIndices[j].second];
 
   polyscope::registerCurveNetwork("springs", R, E);
 
@@ -128,24 +164,31 @@ int main(int argc, char *argv[])
 
   polyscope::state::userCallback = [&]()
   {
-      if(ImGui::Button("Solve"))
+    if(ImGui::InputDouble("Spring stiffness", &spring_stiffness, 0, 0, "%.1f"))
+    {
+      // Rebuild springs with new stiffness
+      std::vector<fsim::Spring> newSprings;
+      for(auto& [start, end] : springIndices)
       {
-        VectorXd var = VectorXd::Zero(V.size());
-        var.head(V.size()) = Map<VectorXd>(V.data(), V.size());
-
-        var = solver.solve(composite, var);
-
-        polyscope::getSurfaceMesh("mesh")->updateVertexPositions(
-            Map<fsim::Mat3<double>>(var.data(), V.rows(), 3));
-
-        // Update R with new positions
-        for (int i = 0; i < R.rows(); ++i) {
-          int originalIdx = nodeIndicesVec[i]; // nodeIndicesVec is a vector of uniqueNodeIndices
-          R.row(i) = var.segment<3>(3 * originalIdx);
-        }
-
-        polyscope::getCurveNetwork("springs")->updateNodePositions(R);
+        double length = (V.row(start) - V.row(end)).norm();
+        newSprings.emplace_back(start, end, length, spring_stiffness);
       }
+      composite.getModel<1>() = SpringCollection(std::move(newSprings));
+    }
+
+    if(ImGui::Button("Solve"))
+    {
+      VectorXd var = Map<const VectorXd>(V.data(), V.size());
+      solver.solve(composite, var);
+
+      polyscope::getSurfaceMesh("mesh")->updateVertexPositions(
+          Map<fsim::Mat3<double>>(solver.var().data(), V.rows(), 3));
+
+      for(int i = 0; i < R.rows(); ++i)
+        R.row(i) = solver.var().segment<3>(3 * nodeIndicesVec[i]);
+
+      polyscope::getCurveNetwork("springs")->updateNodePositions(R);
+    }
   };
   polyscope::show();
 }

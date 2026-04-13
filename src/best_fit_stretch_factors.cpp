@@ -44,6 +44,7 @@ std::vector<Eigen::Vector3d> face_dirs;
 double E1, E2, nu, thickness, mass, pressure;
 
 int sim_count = 0;   // total Newton solves (for progress reporting)
+VectorXd warm_start; // cached solution for warm-starting the next Newton solve
 
 // ── Mesh utilities ────────────────────────────────────────────────────────────
 std::vector<int> findBoundaryVertices(const fsim::Mat3<int>& F)
@@ -76,8 +77,24 @@ void projectFaceVectors(const fsim::Mat3<double>& V, const fsim::Mat3<int>& F,
   }
 }
 
+// ── Newton solve helper ───────────────────────────────────────────────────────
+VectorXd newtonSolve(fsim::OrthotropicStVKMembrane& model, const VectorXd& x0)
+{
+  optim::NewtonSolver<double> solver;
+  solver.options.display         = optim::SolverDisplay::quiet;
+  solver.options.threshold       = 1e-6;
+  solver.options.iteration_limit = 10000;
+  for (int b : bdrs) {
+    solver.options.fixed_dofs.push_back(b*3);
+    solver.options.fixed_dofs.push_back(b*3+1);
+    solver.options.fixed_dofs.push_back(b*3+2);
+  }
+  solver.solve(model, x0);
+  return solver.var();
+}
+
 // ── Forward simulation ────────────────────────────────────────────────────────
-fsim::Mat3<double> simulate(double sf1, double sf2)
+fsim::Mat3<double> simulateImpl(double sf1, double sf2, bool update_warm)
 {
   const int nF = F.rows();
   std::vector<double> s1(nF, 1.0/sf1), s2(nF, 1.0/sf2);
@@ -86,21 +103,24 @@ fsim::Mat3<double> simulate(double sf1, double sf2)
   fsim::Mat3<double> V0_mod =
       computeAnisotropicRestShape(V0, F, bdrs, face_dirs, s1, s2);
 
-  fsim::OrthotropicStVKMembrane model(V0_mod, F, ths, E1s, E2s, nus, face_dirs, mass, pressure);
-
-  optim::NewtonSolver<double> solver;
-  solver.options.display   = optim::SolverDisplay::quiet;
-  solver.options.threshold = 1e-6;
-  for (int b : bdrs) {
-    solver.options.fixed_dofs.push_back(b*3);
-    solver.options.fixed_dofs.push_back(b*3+1);
-    solver.options.fixed_dofs.push_back(b*3+2);
+  if (warm_start.size() == 0) {
+    std::cout << "  [cold start] ramping pressure to " << pressure << " Pa...\n" << std::flush;
+    VectorXd x = Map<const VectorXd>(V0.data(), V0.size());
+    for (double p : {pressure * 0.01, pressure * 0.1, pressure * 0.5, pressure}) {
+      fsim::OrthotropicStVKMembrane m(V0_mod, F, ths, E1s, E2s, nus, face_dirs, mass, p);
+      x = newtonSolve(m, x);
+    }
+    warm_start = x;
+    std::cout << "  [cold start] done.\n" << std::flush;
   }
 
-  VectorXd x0 = Map<const VectorXd>(V0.data(), V0.size());
-  solver.solve(model, x0);
+  fsim::OrthotropicStVKMembrane model(V0_mod, F, ths, E1s, E2s, nus, face_dirs, mass, pressure);
+
+  VectorXd result = newtonSolve(model, warm_start);
   ++sim_count;
-  return Map<fsim::Mat3<double>>(solver.var().data(), V0.rows(), 3);
+  if (update_warm)
+    warm_start = result;
+  return Map<fsim::Mat3<double>>(result.data(), V0.rows(), 3);
 }
 
 // ── Fit loss: mean per-vertex distance ────────────────────────────────────────
@@ -116,19 +136,19 @@ int lbfgs_iter = 0;
 
 double objective(const VectorXd& phi)
 {
-  return fitLoss(simulate(std::exp(phi(0)), std::exp(phi(1))));
+  return fitLoss(simulateImpl(std::exp(phi(0)), std::exp(phi(1)), /*update_warm=*/false));
 }
 
 VectorXd gradient(const VectorXd& phi)
 {
   const double eps = 1e-4;
-  double f0 = fitLoss(simulate(std::exp(phi(0)), std::exp(phi(1))));
+  double f0 = fitLoss(simulateImpl(std::exp(phi(0)), std::exp(phi(1)), /*update_warm=*/true));
 
   VectorXd grad(2);
   for (int i = 0; i < 2; ++i) {
     VectorXd phiP = phi;
     phiP(i) += eps;
-    grad(i) = (fitLoss(simulate(std::exp(phiP(0)), std::exp(phiP(1)))) - f0) / eps;
+    grad(i) = (fitLoss(simulateImpl(std::exp(phiP(0)), std::exp(phiP(1)), /*update_warm=*/true)) - f0) / eps;
   }
 
   std::cout << "[iter " << lbfgs_iter++ << "]"
@@ -197,7 +217,7 @@ int main()
   // ── Initial simulation ─────────────────────────────────────────────────────
   std::cout << "\n--- Initial simulation (sf1=" << sf1_init
             << ", sf2=" << sf2_init << ") ---\n";
-  fsim::Mat3<double> Vsim_init = simulate(sf1_init, sf2_init);
+  fsim::Mat3<double> Vsim_init = simulateImpl(sf1_init, sf2_init, /*update_warm=*/true);
   double loss_init = fitLoss(Vsim_init);
   std::cout << "Initial mean vertex distance: " << loss_init << " m\n\n";
   saveOFF(out_dir + "sf_opt_initial.off", Vsim_init, F);
@@ -223,7 +243,7 @@ int main()
   std::cout << "  sf1 (wale)   = " << sf1_opt << "\n";
   std::cout << "  sf2 (course) = " << sf2_opt << "\n";
 
-  fsim::Mat3<double> Vsim_opt = simulate(sf1_opt, sf2_opt);
+  fsim::Mat3<double> Vsim_opt = simulateImpl(sf1_opt, sf2_opt, /*update_warm=*/true);
   double loss_opt = fitLoss(Vsim_opt);
   std::cout << "  mean vertex distance: " << loss_opt << " m"
             << "  (was " << loss_init << " m, "
