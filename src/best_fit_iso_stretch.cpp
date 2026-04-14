@@ -1,0 +1,250 @@
+// best_fit_iso_stretch.cpp
+//
+// Finds a single isotropic pre-strain factor (sf, applied equally to both
+// wale and course directions) that minimises the vertex-wise distance between
+// the simulated inflated shape and a target geometry (no cable).
+//
+//   min_{sf}  Σ_v || V_sim_v(sf) − V_target_v ||
+//
+// Gradient: finite differences — only 1 extra Newton solve per L-BFGS step.
+
+#include <fsim/OrthotropicStVKMembrane.h>
+#include <fsim/util/io.h>
+#include <optim/NewtonSolver.h>
+#include <optim/LBFGS.h>
+#include "anisotropic_rest_shape.h"
+
+#include <Eigen/Dense>
+#include <cmath>
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <map>
+#include <set>
+#include <vector>
+
+using namespace Eigen;
+
+// ── Globals ───────────────────────────────────────────────────────────────────
+fsim::Mat3<double> V0;
+fsim::Mat3<int>    F;
+fsim::Mat3<double> Vtarget;
+
+std::vector<int>             bdrs;
+std::vector<Eigen::Vector3d> face_dirs;
+
+double E1, E2, nu, thickness, mass, pressure;
+
+int sim_count = 0;
+VectorXd warm_start;   // cached solution for warm-starting the next Newton solve
+
+// ── Mesh utilities ────────────────────────────────────────────────────────────
+std::vector<int> findBoundaryVertices(const fsim::Mat3<int>& F)
+{
+  std::map<std::pair<int,int>, int> cnt;
+  for (int f = 0; f < F.rows(); ++f)
+    for (int i = 0; i < 3; ++i) {
+      int a = F(f,i), b = F(f,(i+1)%3);
+      if (a > b) std::swap(a, b);
+      cnt[{a,b}]++;
+    }
+  std::set<int> bv;
+  for (auto& [e, c] : cnt)
+    if (c == 1) { bv.insert(e.first); bv.insert(e.second); }
+  return {bv.begin(), bv.end()};
+}
+
+void projectFaceVectors(const fsim::Mat3<double>& V, const fsim::Mat3<int>& F,
+                        std::vector<Eigen::Vector3d>& fv)
+{
+  for (int i = 0; i < F.rows(); ++i) {
+    Eigen::Vector3d n = (V.row(F(i,1)) - V.row(F(i,0)))
+                        .cross(V.row(F(i,2)) - V.row(F(i,0)));
+    n.normalize();
+    Eigen::Vector3d p = fv[i] - fv[i].dot(n) * n;
+    if (p.norm() < 1e-10)
+      fv[i] = Eigen::Vector3d(V.row(F(i,1)) - V.row(F(i,0))).normalized();
+    else
+      fv[i] = p.normalized();
+  }
+}
+
+// ── Newton solve helper ───────────────────────────────────────────────────────
+// Solves equilibrium for a given model, warm-starting from x0, returns result.
+VectorXd newtonSolve(fsim::OrthotropicStVKMembrane& model, const VectorXd& x0)
+{
+  optim::NewtonSolver<double> solver;
+  solver.options.display         = optim::SolverDisplay::quiet;
+  solver.options.threshold       = 1e-6;
+  solver.options.iteration_limit = 10000;
+  for (int b : bdrs) {
+    solver.options.fixed_dofs.push_back(b*3);
+    solver.options.fixed_dofs.push_back(b*3+1);
+    solver.options.fixed_dofs.push_back(b*3+2);
+  }
+  solver.solve(model, x0);
+  return solver.var();
+}
+
+// ── Forward simulation ────────────────────────────────────────────────────────
+// solve() builds the model and runs Newton. If update_warm=true, writes the
+// result back to warm_start (done only during gradient evaluations, NOT during
+// the L-BFGS line search, to prevent warm_start from being corrupted by many
+// consecutive line-search steps at unrelated sf values).
+fsim::Mat3<double> simulateImpl(double sf, bool update_warm)
+{
+  const int nF = F.rows();
+  std::vector<double> s(nF, 1.0/sf);
+  std::vector<double> E1s(nF, E1), E2s(nF, E2), nus(nF, nu), ths(nF, thickness);
+
+  fsim::Mat3<double> V0_mod =
+      computeAnisotropicRestShape(V0, F, bdrs, face_dirs, s, s);
+
+  // Cold start: ramp pressure in steps to avoid divergence from flat mesh.
+  if (warm_start.size() == 0) {
+    std::cout << "  [cold start] ramping pressure to " << pressure << " Pa...\n" << std::flush;
+    VectorXd x = Map<const VectorXd>(V0.data(), V0.size());
+    for (double p : {pressure * 0.01, pressure * 0.1, pressure * 0.5, pressure}) {
+      fsim::OrthotropicStVKMembrane m(V0_mod, F, ths, E1s, E2s, nus, face_dirs, mass, p);
+      x = newtonSolve(m, x);
+    }
+    warm_start = x;
+    std::cout << "  [cold start] done.\n" << std::flush;
+  }
+
+  fsim::OrthotropicStVKMembrane model(
+      V0_mod, F, ths, E1s, E2s, nus, face_dirs, mass, pressure);
+
+  VectorXd result = newtonSolve(model, warm_start);
+  ++sim_count;
+  if (update_warm)
+    warm_start = result;
+  return Map<fsim::Mat3<double>>(result.data(), V0.rows(), 3);
+}
+
+// ── Fit loss: mean per-vertex distance ────────────────────────────────────────
+double fitLoss(const fsim::Mat3<double>& Vsim)
+{
+  return (Vsim - Vtarget).rowwise().norm().mean();
+}
+
+// ── L-BFGS objective and gradient ─────────────────────────────────────────────
+// Variable: phi = log(sf)  →  sf = exp(phi) > 0 always.
+//
+// objective() is called by the L-BFGS line search (many times per iteration).
+//   → uses warm_start read-only so the line search does not corrupt it.
+// gradient() is called once per L-BFGS iteration at the accepted iterate.
+//   → updates warm_start so the next gradient evaluation is fast.
+
+int lbfgs_iter = 0;
+
+double objective(const VectorXd& phi)
+{
+  return fitLoss(simulateImpl(std::exp(phi(0)), /*update_warm=*/false));
+}
+
+VectorXd gradient(const VectorXd& phi)
+{
+  const double eps = 1e-4;
+  // update_warm=true: these evaluations are at the accepted iterate and at
+  // a tiny perturbation, so they anchor warm_start near the current solution.
+  double f0 = fitLoss(simulateImpl(std::exp(phi(0)), /*update_warm=*/true));
+
+  VectorXd grad(1);
+  VectorXd phiP = phi;
+  phiP(0) += eps;
+  grad(0) = (fitLoss(simulateImpl(std::exp(phiP(0)), /*update_warm=*/true)) - f0) / eps;
+
+  std::cout << "[iter " << lbfgs_iter++ << "]"
+            << "  sf=" << std::fixed << std::setprecision(5) << std::exp(phi(0))
+            << "  loss=" << std::setprecision(6) << f0
+            << "  |grad|=" << grad.norm()
+            << "  (total Newton solves: " << sim_count << ")\n" << std::flush;
+  return grad;
+}
+
+// ── OFF writer ────────────────────────────────────────────────────────────────
+void saveOFF(const std::string& path,
+             const fsim::Mat3<double>& V, const fsim::Mat3<int>& F)
+{
+  std::ofstream out(path);
+  out << "OFF\n" << V.rows() << " " << F.rows() << " 0\n";
+  out << std::fixed << std::setprecision(8);
+  for (int i = 0; i < V.rows(); ++i)
+    out << V(i,0) << " " << V(i,1) << " " << V(i,2) << "\n";
+  for (int i = 0; i < F.rows(); ++i)
+    out << "3 " << F(i,0) << " " << F(i,1) << " " << F(i,2) << "\n";
+  std::cout << "  saved: " << path << "\n";
+}
+
+// ── Main ──────────────────────────────────────────────────────────────────────
+int main()
+{
+  // ── Configuration ──────────────────────────────────────────────────────────
+  const std::string folder      = "/Users/duch/Documents/PhD/knit/2024_prototypes/2part/";
+  const std::string mesh_ref    = folder + "2part_opt_simu_m.off";
+  const std::string mesh_target = folder + "2part_opt_simu_m.off";   // change to target!
+  const std::string out_dir     = "/Users/duch/Downloads/";
+
+  E1        = 5000.0;    // N/m, wale
+  E2        = 12507.0;   // N/m, course
+  nu        = 0.198;
+  thickness = 1.0;
+  mass      = 0.001;     // kg/m²
+  pressure  = 1000.0;    // Pa
+
+  double sf_init = 1.043;   // initial isotropic stretch factor
+  // ───────────────────────────────────────────────────────────────────────────
+
+  fsim::readOFF(mesh_ref,    V0,      F);
+  fsim::readOFF(mesh_target, Vtarget, F);
+
+  if (V0.rows() != Vtarget.rows()) {
+    std::cerr << "Error: reference and target meshes have different vertex counts.\n";
+    return 1;
+  }
+
+  std::cout << "Mesh: " << V0.rows() << " vertices, " << F.rows() << " faces\n";
+
+  bdrs = findBoundaryVertices(F);
+  std::cout << "Boundary vertices: " << bdrs.size() << "\n";
+
+  face_dirs.assign(F.rows(), Eigen::Vector3d(0.0, 1.0, 0.0));
+  projectFaceVectors(V0, F, face_dirs);
+
+  // ── Initial simulation ─────────────────────────────────────────────────────
+  std::cout << "\n--- Initial simulation (sf=" << sf_init << ") ---\n";
+  fsim::Mat3<double> Vsim_init = simulateImpl(sf_init, /*update_warm=*/true);
+  double loss_init = fitLoss(Vsim_init);
+  std::cout << "Initial mean vertex distance: " << loss_init << " m\n\n";
+  saveOFF(out_dir + "sf_iso_opt_initial.off", Vsim_init, F);
+
+  // ── L-BFGS optimisation ────────────────────────────────────────────────────
+  VectorXd phi(1);
+  phi(0) = std::log(sf_init);
+
+  std::cout << "--- L-BFGS optimisation ---\n";
+  optim::LBFGSSolver<double> lbfgs;
+  lbfgs.options.threshold       = 1e-5;
+  lbfgs.options.iteration_limit = 50;
+
+  VectorXd phi_opt = lbfgs.solve(objective, gradient, phi);
+
+  double sf_opt = std::exp(phi_opt(0));
+
+  // ── Final result ───────────────────────────────────────────────────────────
+  std::cout << "\n--- Optimal parameters ---\n";
+  std::cout << "  sf (isotropic) = " << sf_opt << "\n";
+
+  fsim::Mat3<double> Vsim_opt = simulateImpl(sf_opt, /*update_warm=*/true);
+  double loss_opt = fitLoss(Vsim_opt);
+  std::cout << "  mean vertex distance: " << loss_opt << " m"
+            << "  (was " << loss_init << " m, "
+            << std::fixed << std::setprecision(2)
+            << 100.0*(loss_init - loss_opt)/loss_init << "% improvement)\n";
+
+  saveOFF(out_dir + "sf_iso_opt_result.off", Vsim_opt, F);
+
+  std::cout << "\nTotal Newton solves: " << sim_count << "\n";
+  return 0;
+}
