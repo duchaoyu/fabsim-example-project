@@ -160,19 +160,7 @@ VectorXd gradient(const VectorXd& phi)
   return grad;
 }
 
-// ── OFF writer ────────────────────────────────────────────────────────────────
-void saveOFF(const std::string& path,
-             const fsim::Mat3<double>& V, const fsim::Mat3<int>& F)
-{
-  std::ofstream out(path);
-  out << "OFF\n" << V.rows() << " " << F.rows() << " 0\n";
-  out << std::fixed << std::setprecision(8);
-  for (int i = 0; i < V.rows(); ++i)
-    out << V(i,0) << " " << V(i,1) << " " << V(i,2) << "\n";
-  for (int i = 0; i < F.rows(); ++i)
-    out << "3 " << F(i,0) << " " << F(i,1) << " " << F(i,2) << "\n";
-  std::cout << "  saved: " << path << "\n";
-}
+#include "save_mesh.h"
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 int main()
@@ -220,7 +208,7 @@ int main()
   fsim::Mat3<double> Vsim_init = simulateImpl(sf1_init, sf2_init, /*update_warm=*/true);
   double loss_init = fitLoss(Vsim_init);
   std::cout << "Initial mean vertex distance: " << loss_init << " m\n\n";
-  saveOFF(out_dir + "sf_opt_initial.off", Vsim_init, F);
+  saveMesh(out_dir + "sf_opt_initial.off", Vsim_init, F);
 
   // ── L-BFGS optimisation ────────────────────────────────────────────────────
   // phi = (log(sf1), log(sf2))  so that sf_i = exp(phi_i) is always positive.
@@ -250,7 +238,7 @@ int main()
             << std::fixed << std::setprecision(2)
             << 100.0*(loss_init - loss_opt)/loss_init << "% improvement)\n";
 
-  saveOFF(out_dir + "sf_opt_result.off", Vsim_opt, F);
+  saveMesh(out_dir + "sf_opt_result.off", Vsim_opt, F);
 
   std::cout << "\nTotal Newton solves: " << sim_count << "\n";
   return 0;

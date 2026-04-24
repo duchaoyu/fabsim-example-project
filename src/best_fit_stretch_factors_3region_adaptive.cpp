@@ -168,7 +168,7 @@ VectorXd newtonSolve(fsim::OrthotropicStVKMembrane& model, const VectorXd& x0)
 {
   optim::NewtonSolver<double> solver;
   solver.options.display         = optim::SolverDisplay::quiet;
-  solver.options.threshold       = 1e-6;
+  solver.options.threshold       = 1e-4;
   solver.options.iteration_limit = 10000;
   for (int b : bdrs) {
     solver.options.fixed_dofs.push_back(b*3);
@@ -257,21 +257,27 @@ void takeScreenshot(const fsim::Mat3<double>& V, const std::string& label)
 int lbfgs_iter = 0;
 std::chrono::steady_clock::time_point iter_start;
 
-std::array<double,3> sfFromPhi(const VectorXd& phi, int comp)
+// phi = (log_sf1_shared, log_sf2_shared, log_sf1_R2, log_sf2_R2)
+// R0 and R1 share the same stretch factors (phi[0], phi[1]).
+std::array<double,3> sf1FromPhi(const VectorXd& phi)
 {
-  return { std::exp(phi(comp)), std::exp(phi(2+comp)), std::exp(phi(4+comp)) };
+  return { std::exp(phi(0)), std::exp(phi(0)), std::exp(phi(2)) };
+}
+std::array<double,3> sf2FromPhi(const VectorXd& phi)
+{
+  return { std::exp(phi(1)), std::exp(phi(1)), std::exp(phi(3)) };
 }
 
 double objective(const VectorXd& phi)
 {
-  return fitLoss(simulateImpl(sfFromPhi(phi,0), sfFromPhi(phi,1), false));
+  return fitLoss(simulateImpl(sf1FromPhi(phi), sf2FromPhi(phi), false));
 }
 
 VectorXd gradient(const VectorXd& phi)
 {
   iter_start = std::chrono::steady_clock::now();
   const double eps = 1e-4;
-  double f0 = fitLoss(simulateImpl(sfFromPhi(phi,0), sfFromPhi(phi,1), true));
+  double f0 = fitLoss(simulateImpl(sf1FromPhi(phi), sf2FromPhi(phi), true));
 
   // Per-iteration screenshot
   {
@@ -280,21 +286,20 @@ VectorXd gradient(const VectorXd& phi)
     takeScreenshot(Vcur, lbl.str());
   }
 
-  VectorXd grad(6);
-  for (int i = 0; i < 6; ++i) {
+  VectorXd grad(4);
+  for (int i = 0; i < 4; ++i) {
     VectorXd phiP = phi; phiP(i) += eps;
-    grad(i) = (fitLoss(simulateImpl(sfFromPhi(phiP,0), sfFromPhi(phiP,1), false)) - f0) / eps;
+    grad(i) = (fitLoss(simulateImpl(sf1FromPhi(phiP), sf2FromPhi(phiP), false)) - f0) / eps;
   }
   double cs = std::chrono::duration<double>(std::chrono::steady_clock::now()-iter_start).count();
   std::cout << "[iter " << lbfgs_iter++ << "]"
             << std::fixed << std::setprecision(5)
-            << "  R0: sf1=" << std::exp(phi(0)) << " sf2=" << std::exp(phi(1))
-            << "  R1: sf1=" << std::exp(phi(2)) << " sf2=" << std::exp(phi(3))
-            << "  R2: sf1=" << std::exp(phi(4)) << " sf2=" << std::exp(phi(5))
+            << "  R0=R1: sf1=" << std::exp(phi(0)) << " sf2=" << std::exp(phi(1))
+            << "  R2: sf1=" << std::exp(phi(2)) << " sf2=" << std::exp(phi(3))
             << std::setprecision(6) << "  loss=" << f0
             << "  |grad|=" << grad.norm()
             << std::fixed << std::setprecision(1) << "  cycle=" << cs << "s"
-            << "  (solves:" << sim_count << ")\n" << std::flush;
+            << "  (solves:" << sim_count << ")\n" << std::defaultfloat << std::flush;
   return grad;
 }
 
@@ -379,16 +384,7 @@ int reassignBoundaryFaces(const std::array<double,3>& sf1,
   return n_swapped;
 }
 
-// ── OFF writer ────────────────────────────────────────────────────────────────
-void saveOFF(const std::string& path,
-             const fsim::Mat3<double>& V, const fsim::Mat3<int>& F)
-{
-  std::ofstream out(path);
-  out << "OFF\n" << V.rows() << " " << F.rows() << " 0\n" << std::fixed << std::setprecision(8);
-  for (int i = 0; i < V.rows(); ++i) out << V(i,0) << " " << V(i,1) << " " << V(i,2) << "\n";
-  for (int i = 0; i < F.rows(); ++i) out << "3 " << F(i,0) << " " << F(i,1) << " " << F(i,2) << "\n";
-  std::cout << "  saved: " << path << "\n";
-}
+#include "save_mesh.h"
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 int main()
@@ -438,7 +434,7 @@ int main()
   double max_init  = (Vsim_init - Vtarget).rowwise().norm().maxCoeff();
   std::cout << "Initial mean distance: " << loss_init << " m\n";
   std::cout << "Initial max  distance: " << max_init  << " m\n\n";
-  saveOFF(out_dir + "sf_3region_adaptive_initial.off", Vsim_init, F);
+  saveMesh(out_dir + "sf_3region_adaptive_initial.off", Vsim_init, F);
 
   // ── Polyscope init ─────────────────────────────────────────────────────────
   screenshots_dir = out_dir + "sf_3region_adaptive_screenshots/";
@@ -452,10 +448,10 @@ int main()
   takeScreenshot(Vsim_init, "00_initial");
 
   // ── Alternating optimisation ───────────────────────────────────────────────
-  VectorXd phi(6);
-  phi(0)=std::log(sf1_init); phi(1)=std::log(sf2_init);
-  phi(2)=std::log(sf1_init); phi(3)=std::log(sf2_init);
-  phi(4)=std::log(sf1_init); phi(5)=std::log(sf2_init);
+  // 4 DOF: (log_sf1_R0R1, log_sf2_R0R1, log_sf1_R2, log_sf2_R2)
+  VectorXd phi(4);
+  phi(0)=std::log(sf1_init); phi(1)=std::log(sf2_init);  // shared R0/R1
+  phi(2)=std::log(sf1_init); phi(3)=std::log(sf2_init);  // R2
 
   VectorXd phi_opt = phi;
   double loss_final = loss_init;
@@ -472,12 +468,12 @@ int main()
     // ── (A) Inner L-BFGS ────────────────────────────────────────────────────
     std::cout << "--- (A) L-BFGS inner optimisation ---\n";
     optim::LBFGSSolver<double> lbfgs;
-    lbfgs.options.threshold       = 1e-4;
-    lbfgs.options.iteration_limit = 50;
+    lbfgs.options.threshold       = 1e-3;
+    lbfgs.options.iteration_limit = 10;
 
     phi_opt = lbfgs.solve(objective, gradient, phi_opt);
-    std::array<double,3> sf1_opt = sfFromPhi(phi_opt, 0);
-    std::array<double,3> sf2_opt = sfFromPhi(phi_opt, 1);
+    std::array<double,3> sf1_opt = sf1FromPhi(phi_opt);
+    std::array<double,3> sf2_opt = sf2FromPhi(phi_opt);
 
     // Update warm_start to current optimum
     fsim::Mat3<double> Vsim_cur = simulateImpl(sf1_opt, sf2_opt, true);
@@ -496,7 +492,6 @@ int main()
     saveRegions(out_dir + "sf_3region_adaptive_faces.txt", face_region);
 
     // Update warm_start for new region assignment + current sf
-    warm_start.resize(0);   // force cold-start ramp with new regions
     Vsim_cur = simulateImpl(sf1_opt, sf2_opt, true);
     loss_final = fitLoss(Vsim_cur);
 
@@ -517,17 +512,17 @@ int main()
       std::chrono::steady_clock::now() - t_total).count();
 
   // ── Final result ───────────────────────────────────────────────────────────
-  std::array<double,3> sf1_opt = sfFromPhi(phi_opt, 0);
-  std::array<double,3> sf2_opt = sfFromPhi(phi_opt, 1);
+  std::array<double,3> sf1_opt = sf1FromPhi(phi_opt);
+  std::array<double,3> sf2_opt = sf2FromPhi(phi_opt);
 
   fsim::Mat3<double> Vsim_opt = simulateImpl(sf1_opt, sf2_opt, true);
   double loss_opt = fitLoss(Vsim_opt);
   double max_opt  = (Vsim_opt - Vtarget).rowwise().norm().maxCoeff();
 
   std::cout << std::defaultfloat << std::setprecision(6)
-            << "\n═══ Optimal parameters ═══\n";
-  for (int r = 0; r < 3; ++r)
-    std::cout << "  Region " << r << ":  sf1=" << sf1_opt[r] << "  sf2=" << sf2_opt[r] << "\n";
+            << "\n═══ Optimal parameters (R0=R1 constrained) ═══\n";
+  std::cout << "  Region 0=1:  sf1=" << sf1_opt[0] << "  sf2=" << sf2_opt[0] << "\n";
+  std::cout << "  Region 2:    sf1=" << sf1_opt[2] << "  sf2=" << sf2_opt[2] << "\n";
   std::cout << "  mean distance: " << loss_opt << " m"
             << "  (was " << loss_init << " m, "
             << std::fixed << std::setprecision(2)
@@ -538,7 +533,7 @@ int main()
             << "\nTotal time: " << total_s << " s\n";
   std::cout << "Total Newton solves: " << sim_count << "\n";
 
-  saveOFF(out_dir + "sf_3region_adaptive_result.off", Vsim_opt, F);
+  saveMesh(out_dir + "sf_3region_adaptive_result.off", Vsim_opt, F);
   takeScreenshot(Vsim_opt, "final");
   std::cout << "  screenshots saved to: " << screenshots_dir << "\n";
 

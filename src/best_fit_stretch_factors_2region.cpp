@@ -362,19 +362,7 @@ VectorXd gradient(const VectorXd& phi)
   return grad;
 }
 
-// ── OFF writer ────────────────────────────────────────────────────────────────
-void saveOFF(const std::string& path,
-             const fsim::Mat3<double>& V, const fsim::Mat3<int>& F)
-{
-  std::ofstream out(path);
-  out << "OFF\n" << V.rows() << " " << F.rows() << " 0\n";
-  out << std::fixed << std::setprecision(8);
-  for (int i = 0; i < V.rows(); ++i)
-    out << V(i,0) << " " << V(i,1) << " " << V(i,2) << "\n";
-  for (int i = 0; i < F.rows(); ++i)
-    out << "3 " << F(i,0) << " " << F(i,1) << " " << F(i,2) << "\n";
-  std::cout << "  saved: " << path << "\n";
-}
+#include "save_mesh.h"
 
 // ── Region export ─────────────────────────────────────────────────────────────
 void saveRegions(const std::string& path, const std::vector<int>& region)
@@ -448,7 +436,7 @@ int main()
   double max_init  = (Vsim_init - Vtarget).rowwise().norm().maxCoeff();
   std::cout << "Initial mean vertex distance: " << loss_init << " m\n";
   std::cout << "Initial max  vertex distance: " << max_init  << " m\n\n";
-  saveOFF(out_dir + "sf_2region_initial.off", Vsim_init, F);
+  saveMesh(out_dir + "sf_2region_initial.off", Vsim_init, F);
 
   // ── Polyscope init + initial screenshot ────────────────────────────────────
   screenshots_dir = out_dir + "sf_2region_screenshots/";
@@ -507,7 +495,7 @@ int main()
             << total_s << " s\n";
   std::cout << "Total Newton solves: " << sim_count << "\n";
 
-  saveOFF(out_dir + "sf_2region_result.off", Vsim_opt, F);
+  saveMesh(out_dir + "sf_2region_result.off", Vsim_opt, F);
 
   // ── Polyscope visualisation ────────────────────────────────────────────────
   // Final screenshots (region + residual pair)

@@ -47,7 +47,7 @@ struct SlidingCable
     double EA;                  // axial stiffness (N)
     double L_rest;              // total rest length (m)
 
-    // V0: reference vertex positions (Nx3 matrix, any row-major Eigen matrix)
+    // V0: reference vertex positions — L_rest computed from geometry
     template <typename Derived>
     SlidingCable(const std::vector<int>& idx, double ea,
                  const Eigen::MatrixBase<Derived>& V0)
@@ -56,6 +56,11 @@ struct SlidingCable
         for (size_t k = 0; k + 1 < indices.size(); ++k)
             L_rest += (V0.row(indices[k+1]) - V0.row(indices[k])).norm();
     }
+
+    // Direct rest-length constructor — specify total rest length explicitly.
+    // Use this to pre-stress the cable: L_rest < geometric length → tension.
+    SlidingCable(const std::vector<int>& idx, double ea, double l_rest)
+        : indices(idx), EA(ea), L_rest(l_rest) {}
 
 private:
     struct Seg { int a, b; double l; Eigen::Vector3d t; };  // t = unit tangent a→b
