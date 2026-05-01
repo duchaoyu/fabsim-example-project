@@ -7,7 +7,7 @@ After running FEA, curvature is computed and results are merged into
 results_with_curvature.csv, then surrogates are retrained.
 
 Usage:
-    python3 extend_samples.py [--n-extra 150] [--jobs 4]
+    python3 extend_samples.py [--n-extra 150] [--jobs 4] [--groups motif1_cable]
 """
 import argparse, csv, json, os, sys, traceback
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -74,18 +74,21 @@ def _run_one(sample):
         return sample, False, f"FEA failed: {e}\n{traceback.format_exc()}"
 
 
-def generate_extra_samples(n_extra, id_offset, seed_extra):
+def generate_extra_samples(n_extra, id_offset, seed_extra, only_groups=None):
     samples = []
     sid = id_offset
     for gi, (motif, has_cable) in enumerate(
         [(m, c) for m in MOTIFS for c in HAS_CABLE]
     ):
+        group_name = f"motif{motif}_{'cable' if has_cable else 'nocable'}"
+        if only_groups and group_name not in only_groups:
+            continue
         bounds = PARAMS_CABLE if has_cable else PARAMS_NO_CABLE
         df = lhs(n_extra, bounds, seed=seed_extra + gi * 1000)
         for _, row in df.iterrows():
             samples.append({
                 "sample_id":   sid,
-                "group":       f"motif{motif}_{'cable' if has_cable else 'nocable'}",
+                "group":       group_name,
                 "motif":       motif,
                 "has_cable":   has_cable,
                 "sf_wale":     float(row["sf_wale"]),
@@ -103,7 +106,10 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--n-extra", type=int, default=150)
     parser.add_argument("--jobs",    type=int, default=4)
+    parser.add_argument("--groups",  type=str, default=None,
+                        help="Comma-separated groups to run, e.g. motif1_cable,motif2_cable")
     args = parser.parse_args()
+    only_groups = set(args.groups.split(",")) if args.groups else None
 
     check_binary()
 
@@ -119,11 +125,13 @@ def main():
     id_offset = int(df_exist["sample_id"].max()) + 1 if len(df_exist) else 600
     seed_extra = RANDOM_SEED + 77777
 
-    print(f"Generating {args.n_extra} extra samples per group "
-          f"(IDs {id_offset}–{id_offset + 4*args.n_extra - 1}), "
-          f"seed={seed_extra}")
+    groups_msg = args.groups if args.groups else "all groups"
+    print(f"Generating {args.n_extra} extra samples for {groups_msg} "
+          f"(starting ID {id_offset}), seed={seed_extra}")
 
-    samples = generate_extra_samples(args.n_extra, id_offset, seed_extra)
+    samples = generate_extra_samples(args.n_extra, id_offset, seed_extra,
+                                     only_groups=only_groups)
+    print(f"Total samples to run: {len(samples)}")
 
     # ── Run FEA ──────────────────────────────────────────────────────────────
     print(f"\nRunning {len(samples)} FEA simulations ({args.jobs} workers)...")
@@ -144,6 +152,30 @@ def main():
 
     print(f"\nFEA done: {n_ok} OK, {n_fail} failed.")
     df_new = pd.DataFrame(results)
+
+    # ── Validate FEA outcomes ────────────────────────────────────────────────
+    n_before = len(df_new)
+    # Collapsed dome: crown_height near 0
+    collapsed = df_new["crown_height"] < 0.001
+    # Cable tension divergence: values > 500 N
+    tension_bad = pd.Series(False, index=df_new.index)
+    for tcol in ["cable_wale_tension", "cable_course_tension"]:
+        if tcol in df_new.columns:
+            tension_bad |= df_new[tcol].fillna(0) > 500
+    is_cable = df_new.get("has_cable", pd.Series(False, index=df_new.index))
+    bad = collapsed | (tension_bad & is_cable)
+    if bad.any():
+        print(f"\nValidation: dropping {bad.sum()} invalid rows "
+              f"({collapsed.sum()} collapsed dome, "
+              f"{(tension_bad & is_cable).sum()} tension divergence)")
+        for _, r in df_new[bad].iterrows():
+            h  = r.get("crown_height", float("nan"))
+            tw = r.get("cable_wale_tension", 0)
+            tc = r.get("cable_course_tension", 0)
+            print(f"  [{int(r['sample_id']):05d}] h={h:.4f}  T_wale={tw:.1f}  T_course={tc:.1f}")
+        df_new = df_new[~bad].reset_index(drop=True)
+    else:
+        print(f"\nValidation: all {n_before} new rows OK")
 
     # ── Compute curvature ────────────────────────────────────────────────────
     print("\nComputing section curvature for new samples...")
