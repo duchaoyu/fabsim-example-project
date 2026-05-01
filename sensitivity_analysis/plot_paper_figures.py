@@ -74,143 +74,149 @@ def plot_sobol_heatmap(index="ST", save=True):
     """
     4-panel heatmap in figA3 layout: rows = no cable/cable, cols = motif1/motif2.
     Rows = input parameters, columns = scalar outputs.
-    Each cell shows value and ±conf below it.
-    index: "ST" (total-order) or "S1" (first-order).
+    Sizing, fonts, and spacing identical to plot_sobol_regime (figA3).
     """
     assert index in ("ST", "S1"), "index must be 'ST' or 'S1'"
     conf_col = "ST_conf" if index == "ST" else "S1_conf"
 
-    # figA3 layout: rows = nocable/cable, cols = motif1/motif2
+    MOTIF_TITLES = {1: r"Motif 1 ($E_2/E_1=2.5$)", 2: r"Motif 2 ($E_1/E_2=2.5$)"}
+    ROW_LABELS   = {False: "No cable", True: "Cable"}
+
     layout = [
-        ["motif1_nocable", "motif2_nocable"],
-        ["motif1_cable",   "motif2_cable"],
+        [(1, False), (2, False)],
+        [(1, True),  (2, True)],
     ]
 
-    MOTIF_TITLES = {
-        "motif1": r"Motif 1 ($E_2/E_1=2.5$)",
-        "motif2": r"Motif 2 ($E_1/E_2=2.5$)",
-    }
-    ROW_LABELS = {"nocable": "No cable", "cable": "Cable"}
+    def _is_masked(p, o):
+        return ((p == "cable_wale_lrest"  and o == "cable_course_tension") or
+                (p == "cable_course_lrest" and o == "cable_wale_tension"))
 
     # Load surrogates and compute Sobol
-    all_idx  = {}
-    all_conf = {}
-    for group in sum(layout, []):
-        path = os.path.join(DATA_DIR, f"{group}_scalar_surrogate.pkl")
-        if not os.path.exists(path):
-            continue
-        surrogate = ScalarSurrogate.load(path)
-        has_cable = "cable" in group and "nocable" not in group
-        motif = 1 if "motif1" in group else 2
-        results = run_sobol_for_group(surrogate, motif, has_cable)
-
-        param_names = list(results[list(results.keys())[0]].index)
-        out_names   = [o for o in SCALAR_OUTPUTS if o in results
-                       and not (o in _CABLE_OUTPUTS and not has_cable)]
-
-        mat      = np.zeros((len(param_names), len(out_names)))
-        conf_mat = np.zeros_like(mat)
-        for j, col in enumerate(out_names):
-            if col in results:
+    group_data = {}
+    for motif in [1, 2]:
+        for has_cable in [False, True]:
+            group = "motif{}_{}".format(motif, "cable" if has_cable else "nocable")
+            pkl = os.path.join(DATA_DIR, "{}_scalar_surrogate.pkl".format(group))
+            if not os.path.exists(pkl):
+                continue
+            sur = ScalarSurrogate.load(pkl)
+            results = run_sobol_for_group(sur, motif, has_cable)
+            param_names = list(results[list(results.keys())[0]].index)
+            out_names   = [o for o in SCALAR_OUTPUTS if o in results
+                           and not (o in _CABLE_OUTPUTS and not has_cable)]
+            mat      = np.zeros((len(param_names), len(out_names)))
+            conf_mat = np.zeros_like(mat)
+            for j, col in enumerate(out_names):
                 for i, p in enumerate(param_names):
                     mat[i, j]      = max(0, results[col].loc[p, index])
                     conf_mat[i, j] = results[col].loc[p, conf_col]
+            mask = np.zeros_like(mat, dtype=bool)
+            for i, p in enumerate(param_names):
+                for j, col in enumerate(out_names):
+                    if _is_masked(p, col):
+                        mask[i, j] = True
+            mat = np.where(mask, np.nan, mat)
+            group_data[(motif, has_cable)] = (param_names, out_names, mat, conf_mat, mask)
 
-        # Enforce physical constraint: L_wale cannot drive T_course and vice versa
-        _mask = np.zeros((len(param_names), len(out_names)), dtype=bool)
-        for i, p in enumerate(param_names):
-            for j, col in enumerate(out_names):
-                if (p == "cable_wale_lrest"   and col == "cable_course_tension") or \
-                   (p == "cable_course_lrest"  and col == "cable_wale_tension"):
-                    _mask[i, j] = True
-        mat = np.where(_mask, np.nan, mat)
-
-        all_idx[group]  = (param_names, out_names, mat, _mask)
-        all_conf[group] = conf_mat
-
-    if not all_idx:
+    if not group_data:
         print("No surrogate data found.")
         return
 
-    # height_ratios: nocable row has 4 params, cable row has 6
-    fig, axes = plt.subplots(2, 2, figsize=(10.0, 8.0), constrained_layout=True,
-                             gridspec_kw={"height_ratios": [4, 6]})
+    # ── Match figA3 sizing exactly ────────────────────────────────────────────
+    max_params  = max(len(v[0]) for v in group_data.values())
+    max_outputs = max(len(v[1]) for v in group_data.values())
+    cell_w, cell_h = 0.62, 0.52
+    pad_top, pad_bot, pad_left, pad_right = 1.2, 0.8, 1.4, 1.4
+    panel_w = max_outputs * cell_w + 0.4
+    panel_h = max_params  * cell_h + 0.6
+    fig_w = 2 * panel_w + pad_left + pad_right + 0.6
+    fig_h = 2 * panel_h + pad_top  + pad_bot   + 0.4
+
+    fig, axes = plt.subplots(2, 2, figsize=(fig_w, fig_h), constrained_layout=False)
+    fig.subplots_adjust(left=pad_left/fig_w, right=1 - pad_right/fig_w,
+                        bottom=pad_bot/fig_h, top=1 - pad_top/fig_h,
+                        wspace=0.35, hspace=0.55)
 
     vmin, vmax = 0.0, 1.0
     cmap = plt.cm.YlOrRd
-
     im_ref = None
-    for row_i, row_groups in enumerate(layout):
-        for col_i, group in enumerate(row_groups):
-            ax = axes[row_i, col_i]
-            if group not in all_idx:
+
+    for row_idx, row in enumerate(layout):
+        for col_idx, (motif, has_cable) in enumerate(row):
+            ax  = axes[row_idx, col_idx]
+            key = (motif, has_cable)
+            if key not in group_data:
                 ax.set_visible(False)
                 continue
-            param_names, out_names, mat, mask = all_idx[group]
-            conf_mat = all_conf[group]
+            param_names, out_names, mat, conf_mat, mask = group_data[key]
+            n_p, n_o = len(param_names), len(out_names)
 
             im = ax.imshow(mat, cmap=cmap, vmin=vmin, vmax=vmax,
                            aspect="auto", interpolation="nearest")
             im_ref = im
 
-            # Grey overlay for physically masked cells
+            # Grey overlay for masked cells
             grey = np.zeros((*mat.shape, 4))
             grey[mask] = [0.85, 0.85, 0.85, 1.0]
             ax.imshow(grey, aspect="auto", interpolation="nearest",
-                      extent=(-0.5, mat.shape[1]-0.5, mat.shape[0]-0.5, -0.5))
+                      extent=(-0.5, n_o-0.5, n_p-0.5, -0.5))
 
-            for i in range(len(param_names)):
-                for j in range(len(out_names)):
+            for i in range(n_p):
+                for j in range(n_o):
                     if mask[i, j]:
                         continue
                     v = mat[i, j]
                     c = conf_mat[i, j]
                     color = "white" if v > 0.6 else "black"
-                    ax.text(j, i - 0.15, f"{v:.2f}", ha="center", va="center",
-                            fontsize=6.5, color=color, fontweight="bold")
-                    ax.text(j, i + 0.20, f"±{c:.2f}", ha="center", va="center",
-                            fontsize=5.0, color=color)
+                    ax.text(j, i - 0.18, "{:.2f}".format(v),
+                            ha="center", va="center",
+                            fontsize=5.5, color=color, fontweight="bold")
+                    ax.text(j, i + 0.15, "±{:.2f}".format(c),
+                            ha="center", va="center",
+                            fontsize=4.5, color=color)
 
-            ax.set_xticks(range(len(out_names)))
-            ax.set_xticklabels(
-                [OUTPUT_LABELS.get(o, o) for o in out_names],
-                rotation=30, ha="right",
-            )
-            ax.set_yticks(range(len(param_names)))
-            ax.set_yticklabels([PARAM_LABELS.get(p, p) for p in param_names])
+            ax.set_xticks(range(n_o))
+            ax.set_xticklabels([OUTPUT_LABELS.get(o, o) for o in out_names],
+                               rotation=30, ha="right", fontsize=7)
+            ax.set_yticks(range(n_p))
+            ax.set_yticklabels([PARAM_LABELS.get(p, p) for p in param_names],
+                               fontsize=7)
             ax.tick_params(length=0)
-
-            ax.set_xticks(np.arange(-0.5, len(out_names)), minor=True)
-            ax.set_yticks(np.arange(-0.5, len(param_names)), minor=True)
-            ax.grid(which="minor", color="white", linewidth=1.5)
+            ax.set_xticks(np.arange(-0.5, n_o), minor=True)
+            ax.set_yticks(np.arange(-0.5, n_p), minor=True)
+            ax.grid(which="minor", color="white", linewidth=1.2)
             ax.tick_params(which="minor", bottom=False, left=False)
 
-            # Column title on top row; row label on left column
-            if row_i == 0:
-                mk = "motif1" if "motif1" in group else "motif2"
-                ax.set_title(MOTIF_TITLES[mk], fontsize=9, pad=5)
-            if col_i == 0:
-                ck = "cable" if ("cable" in group and "nocable" not in group) else "nocable"
-                ax.set_ylabel(ROW_LABELS[ck], fontsize=9, labelpad=6)
+            if col_idx == 0:
+                ax.set_ylabel(ROW_LABELS[has_cable], fontsize=8, labelpad=6)
+            if row_idx == 0:
+                ax.set_title(MOTIF_TITLES[motif], fontsize=8, pad=5)
 
+    # Colorbar placed in right margin (manual axes, same height as plot area)
     if im_ref is not None:
         label = (r"Total-order Sobol index $S_T$" if index == "ST"
                  else r"First-order Sobol index $S_1$")
-        cbar = fig.colorbar(im_ref, ax=axes.flatten(), shrink=0.6, pad=0.02, label=label)
+        plot_bot = pad_bot / fig_h
+        plot_top = 1 - pad_top / fig_h
+        cbar_left = 1 - (pad_right - 0.15) / fig_w
+        cbar_ax = fig.add_axes([cbar_left, plot_bot, 0.12/fig_w, plot_top - plot_bot])
+        cbar = fig.colorbar(im_ref, cax=cbar_ax, label=label)
         cbar.set_ticks([0, 0.25, 0.5, 0.75, 1.0])
+        cbar.ax.tick_params(labelsize=7)
         cbar.ax.yaxis.set_major_formatter(ticker.FormatStrFormatter("%.2f"))
+        cbar.set_label(label, fontsize=8)
 
     title = ("Variance-based sensitivity: total-order Sobol indices $S_T$"
              if index == "ST"
              else "Variance-based sensitivity: first-order Sobol indices $S_1$")
-    fig.suptitle(title, fontsize=10)
+    fig.suptitle(title, fontsize=9, y=1.01)
 
     if save:
         fname = "figA_sobol_heatmap_ST" if index == "ST" else "figA2_sobol_s1_heatmap"
-        path = os.path.join(FIG_DIR, f"{fname}.pdf")
+        path = os.path.join(FIG_DIR, "{}.pdf".format(fname))
         fig.savefig(path, bbox_inches="tight")
         fig.savefig(path.replace(".pdf", ".png"), bbox_inches="tight", dpi=200)
-        print(f"Saved: {path}")
+        print("Saved: {}".format(path))
     return fig
 
 
