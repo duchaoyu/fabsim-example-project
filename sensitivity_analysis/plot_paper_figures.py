@@ -155,11 +155,16 @@ def plot_sobol_heatmap(index="ST", save=True):
                            aspect="auto", interpolation="nearest")
             im_ref = im
 
-            # Grey overlay for masked cells
-            grey = np.zeros((*mat.shape, 4))
-            grey[mask] = [0.85, 0.85, 0.85, 1.0]
-            ax.imshow(grey, aspect="auto", interpolation="nearest",
-                      extent=(-0.5, n_o-0.5, n_p-0.5, -0.5))
+            # Hatched overlay for physically masked cells
+            from matplotlib.patches import Rectangle as _Rect
+            for i in range(n_p):
+                for j in range(n_o):
+                    if mask[i, j]:
+                        ax.add_patch(_Rect(
+                            (j - 0.5, i - 0.5), 1, 1,
+                            facecolor="lightgrey", hatch="////",
+                            edgecolor="grey", linewidth=0.0, zorder=2,
+                        ))
 
             for i in range(n_p):
                 for j in range(n_o):
@@ -323,6 +328,17 @@ def plot_sobol_regime(save=True):
 
             ax.imshow(rgb_arr, aspect="auto", interpolation="nearest",
                       extent=(-0.5, n_o-0.5, n_p-0.5, -0.5))
+
+            # Hatched overlay for cross-coupling masked cells
+            from matplotlib.patches import Rectangle as _Rect
+            for i, p in enumerate(param_names):
+                for j, o in enumerate(out_names):
+                    if _is_masked(p, o):
+                        ax.add_patch(_Rect(
+                            (j - 0.5, i - 0.5), 1, 1,
+                            facecolor="lightgrey", hatch="////",
+                            edgecolor="grey", linewidth=0.0, zorder=2,
+                        ))
 
             for i, p in enumerate(param_names):
                 for j, o in enumerate(out_names):
