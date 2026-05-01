@@ -404,103 +404,142 @@ def plot_sobol_regime(save=True):
 
 def plot_correlation_heatmap(save=True):
     """
-    2×2 grid of Spearman correlation heatmaps (one per group).
-    Rows = input parameters, columns = scalar outputs.
-    Only outputs with non-trivial variance are shown.
+    2×2 grid in figA3 layout: rows = no cable/cable, cols = motif1/motif2.
+    All panels share the same 8 output columns; cable-only outputs are shown
+    with diagonal hatching in no-cable panels.
+    Sizing, fonts, and spacing identical to figA/A2/A3.
     """
+    from matplotlib.patches import Rectangle as _Rect
     df = pd.read_csv(os.path.join(DATA_DIR, "results_with_curvature.csv"))
 
-    groups_ordered = [
-        "motif1_nocable", "motif1_cable",
-        "motif2_nocable", "motif2_cable",
+    MOTIF_TITLES = {1: r"Motif 1 ($E_2/E_1=2.5$)", 2: r"Motif 2 ($E_1/E_2=2.5$)"}
+    ROW_LABELS   = {False: "No cable", True: "Cable"}
+
+    layout = [
+        [(1, False), (2, False)],
+        [(1, True),  (2, True)],
     ]
 
-    fig, axes = plt.subplots(
-        2, 2,
-        figsize=(8.5, 6.0),
-        constrained_layout=True,
-    )
-    axes_flat = axes.flatten()
+    # Fixed output order — same columns for every panel
+    output_cols = [o for o in SCALAR_OUTPUTS if o in df.columns]
+
+    # Fixed cell sizing matching figA/A2/A3
+    max_params  = 6  # cable groups have 6 input params
+    max_outputs = len(output_cols)
+    cell_w, cell_h = 0.72, 0.65
+    pad_top, pad_bot, pad_left, pad_right = 1.4, 1.2, 1.6, 0.5
+    panel_w = max_outputs * cell_w + 0.4
+    panel_h = max_params  * cell_h + 0.6
+    fig_w = 2 * panel_w + pad_left + pad_right + 0.6
+    fig_h = 2 * panel_h + pad_top  + pad_bot   + 0.4
+
+    fig, axes = plt.subplots(2, 2, figsize=(fig_w, fig_h), constrained_layout=False)
+    fig.subplots_adjust(left=pad_left/fig_w, right=1 - pad_right/fig_w,
+                        bottom=pad_bot/fig_h, top=1 - pad_top/fig_h,
+                        wspace=0.25, hspace=0.45)
 
     cmap = plt.cm.RdBu_r
     vmin, vmax = -1.0, 1.0
     im_ref = None
 
-    for ax, group in zip(axes_flat, groups_ordered):
-        has_cable = "cable" in group and "nocable" not in group
-        sub = df[df["group"] == group].copy()
+    for row_idx, row in enumerate(layout):
+        for col_idx, (motif, has_cable) in enumerate(row):
+            ax    = axes[row_idx, col_idx]
+            group = "motif{}_{}".format(motif, "cable" if has_cable else "nocable")
+            sub   = df[df["group"] == group].copy()
 
-        input_cols = (["sf_wale", "sf_course", "knit_dir", "pressure",
-                       "cable_wale_lrest", "cable_course_lrest"]
-                      if has_cable
-                      else ["sf_wale", "sf_course", "knit_dir", "pressure"])
+            input_cols = (["sf_wale", "sf_course", "knit_dir", "pressure",
+                           "cable_wale_lrest", "cable_course_lrest"]
+                          if has_cable
+                          else ["sf_wale", "sf_course", "knit_dir", "pressure"])
+            n_in  = len(input_cols)
+            n_out = len(output_cols)
 
-        # Only outputs with meaningful variance; exclude cable tensions for nocable
-        output_cols = [o for o in SCALAR_OUTPUTS
-                       if o in sub.columns and sub[o].std() > 1e-6
-                       and not (o in _CABLE_OUTPUTS and not has_cable)]
+            mat  = np.full((n_in, n_out), np.nan)
+            pmat = np.full((n_in, n_out), np.nan)
+            for i, inp in enumerate(input_cols):
+                for j, out in enumerate(output_cols):
+                    if out in _CABLE_OUTPUTS and not has_cable:
+                        continue  # will be hatched — leave NaN
+                    if out not in sub.columns or sub[out].std() < 1e-6:
+                        continue
+                    valid = sub[[inp, out]].dropna()
+                    if len(valid) < 5:
+                        continue
+                    r, p = stats.spearmanr(valid[inp], valid[out])
+                    mat[i, j]  = r
+                    pmat[i, j] = p
 
-        mat = np.zeros((len(input_cols), len(output_cols)))
-        pmat = np.ones_like(mat)
-        for i, inp in enumerate(input_cols):
-            for j, out in enumerate(output_cols):
-                valid = sub[[inp, out]].dropna()
-                if len(valid) < 5:
-                    continue
-                r, p = stats.spearmanr(valid[inp], valid[out])
-                mat[i, j]  = r
-                pmat[i, j] = p
+            im = ax.imshow(mat, cmap=cmap, vmin=vmin, vmax=vmax,
+                           aspect="auto", interpolation="nearest")
+            im_ref = im
 
-        im = ax.imshow(mat, cmap=cmap, vmin=vmin, vmax=vmax,
-                       aspect="auto", interpolation="nearest")
-        im_ref = im
+            # Annotate with r value; * for p < 0.05
+            for i in range(n_in):
+                for j in range(n_out):
+                    if output_cols[j] in _CABLE_OUTPUTS and not has_cable:
+                        continue  # hatched cell — no text
+                    r, p = mat[i, j], pmat[i, j]
+                    if np.isnan(r):
+                        continue
+                    sig   = "*" if p < 0.05 else ""
+                    color = "white" if abs(r) > 0.65 else "black"
+                    ax.text(j, i, "{:.2f}{}".format(r, sig),
+                            ha="center", va="center", fontsize=7, color=color)
 
-        # Annotate with r value; mark significant (p<0.05) with *
-        for i in range(len(input_cols)):
-            for j in range(len(output_cols)):
-                r, p = mat[i, j], pmat[i, j]
-                sig  = "*" if p < 0.05 else ""
-                color = "white" if abs(r) > 0.65 else "black"
-                ax.text(j, i, f"{r:.2f}{sig}",
-                        ha="center", va="center",
-                        fontsize=7, color=color)
+            # Diagonal hatching over cable-only output columns in no-cable panels
+            if not has_cable:
+                for j, out in enumerate(output_cols):
+                    if out in _CABLE_OUTPUTS:
+                        for i in range(n_in):
+                            ax.add_patch(_Rect(
+                                (j - 0.5, i - 0.5), 1, 1,
+                                facecolor="lightgrey", hatch="////",
+                                edgecolor="grey", linewidth=0.0, zorder=2,
+                            ))
 
-        ax.set_xticks(range(len(output_cols)))
-        ax.set_xticklabels(
-            [OUTPUT_LABELS.get(o, o) for o in output_cols],
-            rotation=30, ha="right",
-        )
-        ax.set_yticks(range(len(input_cols)))
-        ax.set_yticklabels(
-            [PARAM_LABELS.get(p, p) for p in input_cols],
-        )
-        ax.set_title(GROUP_LABELS.get(group, group), pad=4)
-        ax.tick_params(length=0)
+            ax.set_xticks(range(n_out))
+            ax.set_xticklabels([OUTPUT_LABELS.get(o, o) for o in output_cols],
+                               rotation=30, ha="right", fontsize=9)
+            ax.set_yticks(range(n_in))
+            ax.set_yticklabels([PARAM_LABELS.get(p, p) for p in input_cols],
+                               fontsize=9)
+            ax.tick_params(length=0)
+            ax.set_xticks(np.arange(-0.5, n_out), minor=True)
+            ax.set_yticks(np.arange(-0.5, n_in), minor=True)
+            ax.grid(which="minor", color="white", linewidth=1.2, zorder=3)
+            ax.tick_params(which="minor", bottom=False, left=False)
 
-        # Grid
-        ax.set_xticks(np.arange(-0.5, len(output_cols)), minor=True)
-        ax.set_yticks(np.arange(-0.5, len(input_cols)), minor=True)
-        ax.grid(which="minor", color="white", linewidth=1.2)
-        ax.tick_params(which="minor", bottom=False, left=False)
+            if col_idx == 0:
+                ax.set_ylabel(ROW_LABELS[has_cable], fontsize=10, labelpad=6)
+            if row_idx == 0:
+                ax.set_title(MOTIF_TITLES[motif], fontsize=10, pad=5)
 
-    # Shared colorbar
+    # Horizontal colorbar at bottom (matching figA/A2)
     if im_ref is not None:
-        cbar = fig.colorbar(im_ref, ax=axes_flat, shrink=0.6, pad=0.02,
-                             label=r"Spearman correlation $\rho$")
+        plot_left  = pad_left / fig_w
+        plot_right = 1 - pad_right / fig_w
+        cbar_w    = (plot_right - plot_left) * 0.55
+        cbar_left = plot_left + (plot_right - plot_left - cbar_w) / 2
+        cbar_ax = fig.add_axes([cbar_left, 0.18/fig_h, cbar_w, 0.18/fig_h])
+        cbar = fig.colorbar(im_ref, cax=cbar_ax, orientation="horizontal",
+                            label=r"Spearman correlation $\rho$")
         cbar.set_ticks([-1, -0.5, 0, 0.5, 1])
-        cbar.ax.yaxis.set_major_formatter(ticker.FormatStrFormatter("%.1f"))
+        cbar.ax.tick_params(labelsize=9)
+        cbar.ax.xaxis.set_major_formatter(ticker.FormatStrFormatter("%.1f"))
+        cbar.set_label(r"Spearman correlation $\rho$", fontsize=10)
 
     fig.suptitle(
         r"Spearman rank correlations between design parameters and outputs"
         "\n(* $p < 0.05$; grouped by knit motif and cable configuration)",
-        fontsize=10,
+        fontsize=12,
     )
 
     if save:
         path = os.path.join(FIG_DIR, "figB_correlation_heatmap.pdf")
         fig.savefig(path, bbox_inches="tight")
         fig.savefig(path.replace(".pdf", ".png"), bbox_inches="tight", dpi=200)
-        print(f"Saved: {path}")
+        print("Saved: {}".format(path))
     return fig
 
 
