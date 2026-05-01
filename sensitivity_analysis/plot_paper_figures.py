@@ -79,7 +79,7 @@ def plot_sobol_heatmap(index="ST", save=True):
     assert index in ("ST", "S1"), "index must be 'ST' or 'S1'"
     conf_col = "ST_conf" if index == "ST" else "S1_conf"
 
-    MOTIF_TITLES = {1: r"Motif 1 ($E_2/E_1=2.5$)", 2: r"Motif 2 ($E_1/E_2=2.5$)"}
+    MOTIF_TITLES = {1: r"Motif 1 ($E_2/E_1=2.5$)", 2: r"Motif 2 ($E_2/E_1=1.6$)"}
     ROW_LABELS   = {False: "No cable", True: "Cable"}
 
     layout = [
@@ -246,7 +246,7 @@ def plot_sobol_regime(save=True):
 
     MOTIF_TITLES = {
         1: r"Motif 1 ($E_2/E_1=2.5$)",
-        2: r"Motif 2 ($E_1/E_2=2.5$)",
+        2: r"Motif 2 ($E_2/E_1=1.6$)",
     }
     ROW_LABELS = {False: "No cable", True: "Cable"}
 
@@ -428,7 +428,7 @@ def plot_correlation_heatmap(save=True):
     from matplotlib.patches import Rectangle as _Rect
     df = pd.read_csv(os.path.join(DATA_DIR, "results_with_curvature.csv"))
 
-    MOTIF_TITLES = {1: r"Motif 1 ($E_2/E_1=2.5$)", 2: r"Motif 2 ($E_1/E_2=2.5$)"}
+    MOTIF_TITLES = {1: r"Motif 1 ($E_2/E_1=2.5$)", 2: r"Motif 2 ($E_2/E_1=1.6$)"}
     ROW_LABELS   = {False: "No cable", True: "Cable"}
 
     layout = [

@@ -44,10 +44,10 @@ HAS_CABLE = [False, True]
 N_SAMPLES = 150
 
 # ── Material parameters per motif ─────────────────────────────────────────────
-# motif 1: course-stiff (E2/E1=2.50), motif 2: wale-stiff (E1/E2=2.50)
+# motif 1: course-stiff (E2/E1=2.50), motif 2: less course-stiff (E2/E1=1.60)
 MOTIF_PARAMS = {
-    1: {"E1": 5000.0,  "E2": 12507.0, "nu": 0.198},
-    2: {"E1": 12507.0, "E2": 5000.0,  "nu": 0.198},
+    1: {"E1": 5000.0, "E2": 12507.0, "nu": 0.198},
+    2: {"E1": 5000.0, "E2": 8000.0,  "nu": 0.198},
 }
 
 # ── Cable ─────────────────────────────────────────────────────────────────────
