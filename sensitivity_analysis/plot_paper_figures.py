@@ -125,7 +125,7 @@ def plot_sobol_heatmap(index="ST", save=True):
     # ── Match figA3 sizing exactly ────────────────────────────────────────────
     max_params  = max(len(v[0]) for v in group_data.values())
     max_outputs = max(len(v[1]) for v in group_data.values())
-    cell_w, cell_h = 0.72, 0.65
+    cell_w, cell_h = 0.90, 0.82
     pad_top, pad_bot, pad_left, pad_right = 1.4, 1.2, 1.6, 0.5
     panel_w = max_outputs * cell_w + 0.4
     panel_h = max_params  * cell_h + 0.6
@@ -175,17 +175,17 @@ def plot_sobol_heatmap(index="ST", save=True):
                     color = "white" if v > 0.6 else "black"
                     ax.text(j, i - 0.20, "{:.2f}".format(v),
                             ha="center", va="center",
-                            fontsize=7, color=color, fontweight="bold")
+                            fontsize=9, color=color, fontweight="bold")
                     ax.text(j, i + 0.18, "±{:.2f}".format(c),
                             ha="center", va="center",
-                            fontsize=6, color=color)
+                            fontsize=8, color=color)
 
             ax.set_xticks(range(n_o))
             ax.set_xticklabels([OUTPUT_LABELS.get(o, o) for o in out_names],
-                               rotation=30, ha="right", fontsize=9)
+                               rotation=30, ha="right", fontsize=11)
             ax.set_yticks(range(n_p))
             ax.set_yticklabels([PARAM_LABELS.get(p, p) for p in param_names],
-                               fontsize=9)
+                               fontsize=11)
             ax.tick_params(length=0)
             ax.set_xticks(np.arange(-0.5, n_o), minor=True)
             ax.set_yticks(np.arange(-0.5, n_p), minor=True)
@@ -193,9 +193,9 @@ def plot_sobol_heatmap(index="ST", save=True):
             ax.tick_params(which="minor", bottom=False, left=False)
 
             if col_idx == 0:
-                ax.set_ylabel(ROW_LABELS[has_cable], fontsize=10, labelpad=6)
+                ax.set_ylabel(ROW_LABELS[has_cable], fontsize=13, labelpad=6)
             if row_idx == 0:
-                ax.set_title(MOTIF_TITLES[motif], fontsize=10, pad=5)
+                ax.set_title(MOTIF_TITLES[motif], fontsize=13, pad=5)
 
     # Horizontal colorbar at the bottom
     if im_ref is not None:
@@ -210,14 +210,14 @@ def plot_sobol_heatmap(index="ST", save=True):
         cbar_ax = fig.add_axes([cbar_left, cbar_bot, cbar_w, cbar_h])
         cbar = fig.colorbar(im_ref, cax=cbar_ax, orientation="horizontal", label=label)
         cbar.set_ticks([0, 0.25, 0.5, 0.75, 1.0])
-        cbar.ax.tick_params(labelsize=9)
+        cbar.ax.tick_params(labelsize=11)
         cbar.ax.xaxis.set_major_formatter(ticker.FormatStrFormatter("%.2f"))
-        cbar.set_label(label, fontsize=10)
+        cbar.set_label(label, fontsize=13)
 
     title = ("Variance-based sensitivity: total-order Sobol indices $S_T$"
              if index == "ST"
              else "Variance-based sensitivity: first-order Sobol indices $S_1$")
-    fig.suptitle(title, fontsize=12, y=1.01)
+    fig.suptitle(title, fontsize=15, y=1.01)
 
     if save:
         fname = "figA_sobol_heatmap_ST" if index == "ST" else "figA2_sobol_s1_heatmap"
@@ -288,7 +288,7 @@ def plot_sobol_regime(save=True):
     # Determine cell sizes from max param/output counts
     max_params  = max(len(v[0]) for v in group_data.values())
     max_outputs = max(len(v[1]) for v in group_data.values())
-    cell_w, cell_h = 0.72, 0.65
+    cell_w, cell_h = 0.90, 0.82
     pad_top, pad_bot, pad_left, pad_right = 1.4, 1.2, 1.6, 0.5
     panel_w = max_outputs * cell_w + 0.4
     panel_h = max_params  * cell_h + 0.6
@@ -364,21 +364,21 @@ def plot_sobol_regime(save=True):
                                                                 param_names[best])
 
                     ax.text(j, i - 0.20, r"$S_T$={:.2f}".format(st),
-                            ha="center", va="center", fontsize=7,
+                            ha="center", va="center", fontsize=9,
                             color=fc, fontweight="bold")
                     ax.text(j, i + 0.15, r"$S_1$={:.2f}".format(s1),
-                            ha="center", va="center", fontsize=6, color=fc)
+                            ha="center", va="center", fontsize=8, color=fc)
                     if partner:
                         ax.text(j, i + 0.38, partner,
-                                ha="center", va="center", fontsize=5.5,
+                                ha="center", va="center", fontsize=7.5,
                                 color=fc, style="italic")
 
             ax.set_xticks(range(n_o))
             ax.set_xticklabels([OUTPUT_LABELS.get(o, o) for o in out_names],
-                               rotation=30, ha="right", fontsize=9)
+                               rotation=30, ha="right", fontsize=11)
             ax.set_yticks(range(n_p))
             ax.set_yticklabels([PARAM_LABELS.get(p, p) for p in param_names],
-                               fontsize=9)
+                               fontsize=11)
             ax.tick_params(length=0)
             ax.set_xticks(np.arange(-0.5, n_o), minor=True)
             ax.set_yticks(np.arange(-0.5, n_p), minor=True)
@@ -386,9 +386,9 @@ def plot_sobol_regime(save=True):
             ax.tick_params(which="minor", bottom=False, left=False)
 
             if col_idx == 0:
-                ax.set_ylabel(ROW_LABELS[has_cable], fontsize=10, labelpad=6)
+                ax.set_ylabel(ROW_LABELS[has_cable], fontsize=13, labelpad=6)
             if row_idx == 0:
-                ax.set_title(MOTIF_TITLES[motif], fontsize=10, pad=5)
+                ax.set_title(MOTIF_TITLES[motif], fontsize=13, pad=5)
 
     # Legend patches
     from matplotlib.patches import Patch
@@ -398,14 +398,14 @@ def plot_sobol_regime(save=True):
         Patch(facecolor=GREY,   label=r"Negligible ($S_T \to 0$)"),
     ]
     fig.legend(handles=legend_elements, loc="lower center", ncol=3,
-               fontsize=9, frameon=False,
+               fontsize=11, frameon=False,
                bbox_to_anchor=(0.5, -0.01))
 
     fig.suptitle(
         r"Sobol sensitivity regime map""\n"
         r"{\small Color = $S_1$ (blue) + $(S_T-S_1)$ (orange) + $(1-S_T)$ (grey)"
         r" $|$ italic = dominant $S_2$ partner}",
-        fontsize=12, y=1.01,
+        fontsize=15, y=1.01,
     )
 
     if save:
@@ -442,7 +442,7 @@ def plot_correlation_heatmap(save=True):
     # Fixed cell sizing matching figA/A2/A3
     max_params  = 6  # cable groups have 6 input params
     max_outputs = len(output_cols)
-    cell_w, cell_h = 0.72, 0.65
+    cell_w, cell_h = 0.90, 0.82
     pad_top, pad_bot, pad_left, pad_right = 1.4, 1.2, 1.6, 0.5
     panel_w = max_outputs * cell_w + 0.4
     panel_h = max_params  * cell_h + 0.6
@@ -501,7 +501,7 @@ def plot_correlation_heatmap(save=True):
                     sig   = "*" if p < 0.05 else ""
                     color = "white" if abs(r) > 0.65 else "black"
                     ax.text(j, i, "{:.2f}{}".format(r, sig),
-                            ha="center", va="center", fontsize=7, color=color)
+                            ha="center", va="center", fontsize=9, color=color)
 
             # Diagonal hatching over cable-only output columns in no-cable panels
             if not has_cable:
@@ -516,10 +516,10 @@ def plot_correlation_heatmap(save=True):
 
             ax.set_xticks(range(n_out))
             ax.set_xticklabels([OUTPUT_LABELS.get(o, o) for o in output_cols],
-                               rotation=30, ha="right", fontsize=9)
+                               rotation=30, ha="right", fontsize=11)
             ax.set_yticks(range(n_in))
             ax.set_yticklabels([PARAM_LABELS.get(p, p) for p in input_cols],
-                               fontsize=9)
+                               fontsize=11)
             ax.tick_params(length=0)
             ax.set_xticks(np.arange(-0.5, n_out), minor=True)
             ax.set_yticks(np.arange(-0.5, n_in), minor=True)
@@ -527,9 +527,9 @@ def plot_correlation_heatmap(save=True):
             ax.tick_params(which="minor", bottom=False, left=False)
 
             if col_idx == 0:
-                ax.set_ylabel(ROW_LABELS[has_cable], fontsize=10, labelpad=6)
+                ax.set_ylabel(ROW_LABELS[has_cable], fontsize=13, labelpad=6)
             if row_idx == 0:
-                ax.set_title(MOTIF_TITLES[motif], fontsize=10, pad=5)
+                ax.set_title(MOTIF_TITLES[motif], fontsize=13, pad=5)
 
     # Horizontal colorbar at bottom (matching figA/A2)
     if im_ref is not None:
@@ -541,14 +541,14 @@ def plot_correlation_heatmap(save=True):
         cbar = fig.colorbar(im_ref, cax=cbar_ax, orientation="horizontal",
                             label=r"Spearman correlation $\rho$")
         cbar.set_ticks([-1, -0.5, 0, 0.5, 1])
-        cbar.ax.tick_params(labelsize=9)
+        cbar.ax.tick_params(labelsize=11)
         cbar.ax.xaxis.set_major_formatter(ticker.FormatStrFormatter("%.1f"))
-        cbar.set_label(r"Spearman correlation $\rho$", fontsize=10)
+        cbar.set_label(r"Spearman correlation $\rho$", fontsize=13)
 
     fig.suptitle(
         r"Spearman rank correlations between design parameters and outputs"
         "\n(* $p < 0.05$; grouped by knit motif and cable configuration)",
-        fontsize=12,
+        fontsize=15,
     )
 
     if save:
