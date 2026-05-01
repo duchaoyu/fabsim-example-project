@@ -46,6 +46,8 @@ def run_sobol_for_group(
         if col not in preds:
             continue
         Y = preds[col]
+        if np.std(Y) < 1e-10:
+            continue  # constant output (e.g. cable tension for no-cable group)
         si = sobol.analyze(problem, Y, calc_second_order=False, print_to_console=False)
         df = pd.DataFrame(
             {
