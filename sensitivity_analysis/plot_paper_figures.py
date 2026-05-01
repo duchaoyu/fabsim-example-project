@@ -125,8 +125,8 @@ def plot_sobol_heatmap(index="ST", save=True):
     # ── Match figA3 sizing exactly ────────────────────────────────────────────
     max_params  = max(len(v[0]) for v in group_data.values())
     max_outputs = max(len(v[1]) for v in group_data.values())
-    cell_w, cell_h = 0.62, 0.52
-    pad_top, pad_bot, pad_left, pad_right = 1.2, 0.8, 1.4, 1.4
+    cell_w, cell_h = 0.72, 0.65
+    pad_top, pad_bot, pad_left, pad_right = 1.4, 1.2, 1.6, 0.5
     panel_w = max_outputs * cell_w + 0.4
     panel_h = max_params  * cell_h + 0.6
     fig_w = 2 * panel_w + pad_left + pad_right + 0.6
@@ -135,7 +135,7 @@ def plot_sobol_heatmap(index="ST", save=True):
     fig, axes = plt.subplots(2, 2, figsize=(fig_w, fig_h), constrained_layout=False)
     fig.subplots_adjust(left=pad_left/fig_w, right=1 - pad_right/fig_w,
                         bottom=pad_bot/fig_h, top=1 - pad_top/fig_h,
-                        wspace=0.35, hspace=0.55)
+                        wspace=0.25, hspace=0.45)
 
     vmin, vmax = 0.0, 1.0
     cmap = plt.cm.YlOrRd
@@ -168,19 +168,19 @@ def plot_sobol_heatmap(index="ST", save=True):
                     v = mat[i, j]
                     c = conf_mat[i, j]
                     color = "white" if v > 0.6 else "black"
-                    ax.text(j, i - 0.18, "{:.2f}".format(v),
+                    ax.text(j, i - 0.20, "{:.2f}".format(v),
                             ha="center", va="center",
-                            fontsize=5.5, color=color, fontweight="bold")
-                    ax.text(j, i + 0.15, "±{:.2f}".format(c),
+                            fontsize=7, color=color, fontweight="bold")
+                    ax.text(j, i + 0.18, "±{:.2f}".format(c),
                             ha="center", va="center",
-                            fontsize=4.5, color=color)
+                            fontsize=6, color=color)
 
             ax.set_xticks(range(n_o))
             ax.set_xticklabels([OUTPUT_LABELS.get(o, o) for o in out_names],
-                               rotation=30, ha="right", fontsize=7)
+                               rotation=30, ha="right", fontsize=9)
             ax.set_yticks(range(n_p))
             ax.set_yticklabels([PARAM_LABELS.get(p, p) for p in param_names],
-                               fontsize=7)
+                               fontsize=9)
             ax.tick_params(length=0)
             ax.set_xticks(np.arange(-0.5, n_o), minor=True)
             ax.set_yticks(np.arange(-0.5, n_p), minor=True)
@@ -188,28 +188,31 @@ def plot_sobol_heatmap(index="ST", save=True):
             ax.tick_params(which="minor", bottom=False, left=False)
 
             if col_idx == 0:
-                ax.set_ylabel(ROW_LABELS[has_cable], fontsize=8, labelpad=6)
+                ax.set_ylabel(ROW_LABELS[has_cable], fontsize=10, labelpad=6)
             if row_idx == 0:
-                ax.set_title(MOTIF_TITLES[motif], fontsize=8, pad=5)
+                ax.set_title(MOTIF_TITLES[motif], fontsize=10, pad=5)
 
-    # Colorbar placed in right margin (manual axes, same height as plot area)
+    # Horizontal colorbar at the bottom
     if im_ref is not None:
         label = (r"Total-order Sobol index $S_T$" if index == "ST"
                  else r"First-order Sobol index $S_1$")
-        plot_bot = pad_bot / fig_h
-        plot_top = 1 - pad_top / fig_h
-        cbar_left = 1 - (pad_right - 0.15) / fig_w
-        cbar_ax = fig.add_axes([cbar_left, plot_bot, 0.12/fig_w, plot_top - plot_bot])
-        cbar = fig.colorbar(im_ref, cax=cbar_ax, label=label)
+        plot_left  = pad_left / fig_w
+        plot_right = 1 - pad_right / fig_w
+        cbar_bot   = 0.18 / fig_h
+        cbar_h     = 0.18 / fig_h
+        cbar_w     = (plot_right - plot_left) * 0.55
+        cbar_left  = plot_left + (plot_right - plot_left - cbar_w) / 2
+        cbar_ax = fig.add_axes([cbar_left, cbar_bot, cbar_w, cbar_h])
+        cbar = fig.colorbar(im_ref, cax=cbar_ax, orientation="horizontal", label=label)
         cbar.set_ticks([0, 0.25, 0.5, 0.75, 1.0])
-        cbar.ax.tick_params(labelsize=7)
-        cbar.ax.yaxis.set_major_formatter(ticker.FormatStrFormatter("%.2f"))
-        cbar.set_label(label, fontsize=8)
+        cbar.ax.tick_params(labelsize=9)
+        cbar.ax.xaxis.set_major_formatter(ticker.FormatStrFormatter("%.2f"))
+        cbar.set_label(label, fontsize=10)
 
     title = ("Variance-based sensitivity: total-order Sobol indices $S_T$"
              if index == "ST"
              else "Variance-based sensitivity: first-order Sobol indices $S_1$")
-    fig.suptitle(title, fontsize=9, y=1.01)
+    fig.suptitle(title, fontsize=12, y=1.01)
 
     if save:
         fname = "figA_sobol_heatmap_ST" if index == "ST" else "figA2_sobol_s1_heatmap"
@@ -280,8 +283,8 @@ def plot_sobol_regime(save=True):
     # Determine cell sizes from max param/output counts
     max_params  = max(len(v[0]) for v in group_data.values())
     max_outputs = max(len(v[1]) for v in group_data.values())
-    cell_w, cell_h = 0.62, 0.52
-    pad_top, pad_bot, pad_left, pad_right = 1.2, 0.8, 1.4, 0.5
+    cell_w, cell_h = 0.72, 0.65
+    pad_top, pad_bot, pad_left, pad_right = 1.4, 1.2, 1.6, 0.5
     panel_w = max_outputs * cell_w + 0.4
     panel_h = max_params  * cell_h + 0.6
     fig_w = 2 * panel_w + pad_left + pad_right + 0.6
@@ -291,7 +294,7 @@ def plot_sobol_regime(save=True):
                              constrained_layout=False)
     fig.subplots_adjust(left=pad_left/fig_w, right=1-pad_right/fig_w,
                         bottom=pad_bot/fig_h, top=1-pad_top/fig_h,
-                        wspace=0.35, hspace=0.55)
+                        wspace=0.25, hspace=0.45)
 
     for row_idx, row in enumerate(layout):
         for col_idx, (motif, has_cable) in enumerate(row):
@@ -344,22 +347,22 @@ def plot_sobol_regime(save=True):
                             partner = "w. " + PARAM_LABELS.get(param_names[best],
                                                                 param_names[best])
 
-                    ax.text(j, i - 0.18, r"$S_T$={:.2f}".format(st),
-                            ha="center", va="center", fontsize=5.5,
+                    ax.text(j, i - 0.20, r"$S_T$={:.2f}".format(st),
+                            ha="center", va="center", fontsize=7,
                             color=fc, fontweight="bold")
-                    ax.text(j, i + 0.12, r"$S_1$={:.2f}".format(s1),
-                            ha="center", va="center", fontsize=5.0, color=fc)
+                    ax.text(j, i + 0.15, r"$S_1$={:.2f}".format(s1),
+                            ha="center", va="center", fontsize=6, color=fc)
                     if partner:
-                        ax.text(j, i + 0.35, partner,
-                                ha="center", va="center", fontsize=4.5,
+                        ax.text(j, i + 0.38, partner,
+                                ha="center", va="center", fontsize=5.5,
                                 color=fc, style="italic")
 
             ax.set_xticks(range(n_o))
             ax.set_xticklabels([OUTPUT_LABELS.get(o, o) for o in out_names],
-                               rotation=30, ha="right", fontsize=7)
+                               rotation=30, ha="right", fontsize=9)
             ax.set_yticks(range(n_p))
             ax.set_yticklabels([PARAM_LABELS.get(p, p) for p in param_names],
-                               fontsize=7)
+                               fontsize=9)
             ax.tick_params(length=0)
             ax.set_xticks(np.arange(-0.5, n_o), minor=True)
             ax.set_yticks(np.arange(-0.5, n_p), minor=True)
@@ -367,9 +370,9 @@ def plot_sobol_regime(save=True):
             ax.tick_params(which="minor", bottom=False, left=False)
 
             if col_idx == 0:
-                ax.set_ylabel(ROW_LABELS[has_cable], fontsize=8, labelpad=6)
+                ax.set_ylabel(ROW_LABELS[has_cable], fontsize=10, labelpad=6)
             if row_idx == 0:
-                ax.set_title(MOTIF_TITLES[motif], fontsize=8, pad=5)
+                ax.set_title(MOTIF_TITLES[motif], fontsize=10, pad=5)
 
     # Legend patches
     from matplotlib.patches import Patch
@@ -379,14 +382,14 @@ def plot_sobol_regime(save=True):
         Patch(facecolor=GREY,   label=r"Negligible ($S_T \to 0$)"),
     ]
     fig.legend(handles=legend_elements, loc="lower center", ncol=3,
-               fontsize=7, frameon=False,
+               fontsize=9, frameon=False,
                bbox_to_anchor=(0.5, -0.01))
 
     fig.suptitle(
         r"Sobol sensitivity regime map""\n"
         r"{\small Color = $S_1$ (blue) + $(S_T-S_1)$ (orange) + $(1-S_T)$ (grey)"
         r" $|$ italic = dominant $S_2$ partner}",
-        fontsize=9, y=1.01,
+        fontsize=12, y=1.01,
     )
 
     if save:
