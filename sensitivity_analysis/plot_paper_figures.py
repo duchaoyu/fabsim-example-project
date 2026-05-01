@@ -39,22 +39,26 @@ plt.rcParams.update({
 })
 
 PARAM_LABELS = {
-    "sf_wale":    r"$s_{wale}$",
-    "sf_course":  r"$s_{course}$",
-    "knit_dir":   r"$\theta_{knit}$",
-    "pressure":   r"$p$",
-    "cable_angle": r"$\phi_{cable}$",
+    "sf_wale":            r"$s_{wale}$",
+    "sf_course":          r"$s_{course}$",
+    "knit_dir":           r"$\theta_{knit}$",
+    "pressure":           r"$p$",
+    "cable_wale_lrest":   r"$l_{wale}$",
+    "cable_course_lrest": r"$l_{course}$",
 }
 
 OUTPUT_LABELS = {
-    "crown_height":          r"$h_{crown}$",
-    "H_mean_x0":             r"$\bar{H}_{x0}$",
-    "H_mean_y0":             r"$\bar{H}_{y0}$",
-    "max_stress":            r"$\sigma_{max}$",
-    "mean_stress":           r"$\bar{\sigma}$",
-    "cable_tension":         r"$T_{cable}$",
+    "crown_height":           r"$h_{crown}$",
+    "H_mean_x0":              r"$\bar{H}_{x0}$",
+    "H_mean_y0":              r"$\bar{H}_{y0}$",
+    "max_stress":             r"$\sigma_{max}$",
+    "mean_stress":            r"$\bar{\sigma}$",
+    "cable_wale_tension":     r"$T_{wale}$",
+    "cable_course_tension":   r"$T_{course}$",
     "boundary_reaction_mean": r"$\bar{R}_{bdry}$",
 }
+
+_CABLE_OUTPUTS = {"cable_wale_tension", "cable_course_tension"}
 
 GROUP_LABELS = {
     "motif1_nocable": "Motif 1\n(no cable)",
@@ -92,7 +96,7 @@ def plot_sobol_heatmap(save=True):
         # Build matrix: rows=params, cols=outputs
         param_names = list(results[list(results.keys())[0]].index)
         out_names   = [o for o in SCALAR_OUTPUTS if o in results
-                       and not (o == "cable_tension" and not has_cable)]
+                       and not (o in _CABLE_OUTPUTS and not has_cable)]
 
         ST_mat   = np.zeros((len(param_names), len(out_names)))
         conf_mat = np.zeros_like(ST_mat)
@@ -186,7 +190,7 @@ def plot_correlation_heatmap(save=True):
     Rows = input parameters, columns = scalar outputs.
     Only outputs with non-trivial variance are shown.
     """
-    df = pd.read_csv(os.path.join(DATA_DIR, "results.csv"))
+    df = pd.read_csv(os.path.join(DATA_DIR, "results_with_curvature.csv"))
 
     groups_ordered = [
         "motif1_nocable", "motif1_cable",
@@ -208,13 +212,15 @@ def plot_correlation_heatmap(save=True):
         has_cable = "cable" in group and "nocable" not in group
         sub = df[df["group"] == group].copy()
 
-        input_cols = (["sf_wale", "sf_course", "knit_dir", "pressure", "cable_angle"]
+        input_cols = (["sf_wale", "sf_course", "knit_dir", "pressure",
+                       "cable_wale_lrest", "cable_course_lrest"]
                       if has_cable
                       else ["sf_wale", "sf_course", "knit_dir", "pressure"])
 
-        # Only outputs with meaningful variance
+        # Only outputs with meaningful variance; exclude cable tensions for nocable
         output_cols = [o for o in SCALAR_OUTPUTS
-                       if o in sub.columns and sub[o].std() > 1e-6]
+                       if o in sub.columns and sub[o].std() > 1e-6
+                       and not (o in _CABLE_OUTPUTS and not has_cable)]
 
         mat = np.zeros((len(input_cols), len(output_cols)))
         pmat = np.ones_like(mat)
