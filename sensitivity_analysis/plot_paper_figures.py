@@ -72,22 +72,30 @@ GROUP_LABELS = {
 
 def plot_sobol_heatmap(index="ST", save=True):
     """
-    4-panel heatmap: each panel = one (motif, cable) group.
+    4-panel heatmap in figA3 layout: rows = no cable/cable, cols = motif1/motif2.
     Rows = input parameters, columns = scalar outputs.
+    Each cell shows value and ±conf below it.
     index: "ST" (total-order) or "S1" (first-order).
     """
     assert index in ("ST", "S1"), "index must be 'ST' or 'S1'"
     conf_col = "ST_conf" if index == "ST" else "S1_conf"
 
-    groups_ordered = [
-        "motif1_nocable", "motif1_cable",
-        "motif2_nocable", "motif2_cable",
+    # figA3 layout: rows = nocable/cable, cols = motif1/motif2
+    layout = [
+        ["motif1_nocable", "motif2_nocable"],
+        ["motif1_cable",   "motif2_cable"],
     ]
 
+    MOTIF_TITLES = {
+        "motif1": r"Motif 1 ($E_2/E_1=2.5$)",
+        "motif2": r"Motif 2 ($E_1/E_2=2.5$)",
+    }
+    ROW_LABELS = {"nocable": "No cable", "cable": "Cable"}
+
     # Load surrogates and compute Sobol
-    all_idx = {}
+    all_idx  = {}
     all_conf = {}
-    for group in groups_ordered:
+    for group in sum(layout, []):
         path = os.path.join(DATA_DIR, f"{group}_scalar_surrogate.pkl")
         if not os.path.exists(path):
             continue
@@ -124,57 +132,71 @@ def plot_sobol_heatmap(index="ST", save=True):
         print("No surrogate data found.")
         return
 
-    fig, axes = plt.subplots(2, 2, figsize=(8.5, 6.0), constrained_layout=True)
-    axes_flat = axes.flatten()
+    # height_ratios: nocable row has 4 params, cable row has 6
+    fig, axes = plt.subplots(2, 2, figsize=(10.0, 8.0), constrained_layout=True,
+                             gridspec_kw={"height_ratios": [4, 6]})
 
     vmin, vmax = 0.0, 1.0
     cmap = plt.cm.YlOrRd
 
     im_ref = None
-    for ax, group in zip(axes_flat, groups_ordered):
-        if group not in all_idx:
-            ax.set_visible(False)
-            continue
-        param_names, out_names, mat, mask = all_idx[group]
+    for row_i, row_groups in enumerate(layout):
+        for col_i, group in enumerate(row_groups):
+            ax = axes[row_i, col_i]
+            if group not in all_idx:
+                ax.set_visible(False)
+                continue
+            param_names, out_names, mat, mask = all_idx[group]
+            conf_mat = all_conf[group]
 
-        im = ax.imshow(mat, cmap=cmap, vmin=vmin, vmax=vmax,
-                       aspect="auto", interpolation="nearest")
-        im_ref = im
+            im = ax.imshow(mat, cmap=cmap, vmin=vmin, vmax=vmax,
+                           aspect="auto", interpolation="nearest")
+            im_ref = im
 
-        # Grey overlay for physically masked cells
-        grey = np.zeros((*mat.shape, 4))
-        grey[mask] = [0.85, 0.85, 0.85, 1.0]
-        ax.imshow(grey, aspect="auto", interpolation="nearest",
-                  extent=(-0.5, mat.shape[1]-0.5, mat.shape[0]-0.5, -0.5))
+            # Grey overlay for physically masked cells
+            grey = np.zeros((*mat.shape, 4))
+            grey[mask] = [0.85, 0.85, 0.85, 1.0]
+            ax.imshow(grey, aspect="auto", interpolation="nearest",
+                      extent=(-0.5, mat.shape[1]-0.5, mat.shape[0]-0.5, -0.5))
 
-        for i in range(len(param_names)):
-            for j in range(len(out_names)):
-                if mask[i, j]:
-                    continue
-                v = mat[i, j]
-                color = "white" if v > 0.6 else "black"
-                ax.text(j, i, f"{v:.2f}", ha="center", va="center",
-                        fontsize=7, color=color, fontweight="bold")
+            for i in range(len(param_names)):
+                for j in range(len(out_names)):
+                    if mask[i, j]:
+                        continue
+                    v = mat[i, j]
+                    c = conf_mat[i, j]
+                    color = "white" if v > 0.6 else "black"
+                    ax.text(j, i - 0.15, f"{v:.2f}", ha="center", va="center",
+                            fontsize=6.5, color=color, fontweight="bold")
+                    ax.text(j, i + 0.20, f"±{c:.2f}", ha="center", va="center",
+                            fontsize=5.0, color=color)
 
-        ax.set_xticks(range(len(out_names)))
-        ax.set_xticklabels(
-            [OUTPUT_LABELS.get(o, o) for o in out_names],
-            rotation=30, ha="right",
-        )
-        ax.set_yticks(range(len(param_names)))
-        ax.set_yticklabels([PARAM_LABELS.get(p, p) for p in param_names])
-        ax.set_title(GROUP_LABELS.get(group, group), pad=4)
-        ax.tick_params(length=0)
+            ax.set_xticks(range(len(out_names)))
+            ax.set_xticklabels(
+                [OUTPUT_LABELS.get(o, o) for o in out_names],
+                rotation=30, ha="right",
+            )
+            ax.set_yticks(range(len(param_names)))
+            ax.set_yticklabels([PARAM_LABELS.get(p, p) for p in param_names])
+            ax.tick_params(length=0)
 
-        ax.set_xticks(np.arange(-0.5, len(out_names)), minor=True)
-        ax.set_yticks(np.arange(-0.5, len(param_names)), minor=True)
-        ax.grid(which="minor", color="white", linewidth=1.5)
-        ax.tick_params(which="minor", bottom=False, left=False)
+            ax.set_xticks(np.arange(-0.5, len(out_names)), minor=True)
+            ax.set_yticks(np.arange(-0.5, len(param_names)), minor=True)
+            ax.grid(which="minor", color="white", linewidth=1.5)
+            ax.tick_params(which="minor", bottom=False, left=False)
+
+            # Column title on top row; row label on left column
+            if row_i == 0:
+                mk = "motif1" if "motif1" in group else "motif2"
+                ax.set_title(MOTIF_TITLES[mk], fontsize=9, pad=5)
+            if col_i == 0:
+                ck = "cable" if ("cable" in group and "nocable" not in group) else "nocable"
+                ax.set_ylabel(ROW_LABELS[ck], fontsize=9, labelpad=6)
 
     if im_ref is not None:
         label = (r"Total-order Sobol index $S_T$" if index == "ST"
                  else r"First-order Sobol index $S_1$")
-        cbar = fig.colorbar(im_ref, ax=axes_flat, shrink=0.6, pad=0.02, label=label)
+        cbar = fig.colorbar(im_ref, ax=axes.flatten(), shrink=0.6, pad=0.02, label=label)
         cbar.set_ticks([0, 0.25, 0.5, 0.75, 1.0])
         cbar.ax.yaxis.set_major_formatter(ticker.FormatStrFormatter("%.2f"))
 
