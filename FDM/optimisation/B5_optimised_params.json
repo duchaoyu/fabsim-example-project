@@ -11,7 +11,7 @@
       "region_id": 0,
       "row": 0,
       "col": 0,
-      "knit_dir_deg": 45,
+      "knit_dir_deg": 0,
       "sf_wale": 2.2776943815656194,
       "sf_course": 2.2643407371621795
     },
@@ -19,7 +19,7 @@
       "region_id": 1,
       "row": 0,
       "col": 1,
-      "knit_dir_deg": 45,
+      "knit_dir_deg": 0,
       "sf_wale": 2.28334466283341,
       "sf_course": 2.296977641109369
     },
@@ -27,7 +27,7 @@
       "region_id": 2,
       "row": 0,
       "col": 2,
-      "knit_dir_deg": 45,
+      "knit_dir_deg": 0,
       "sf_wale": 2.2737840944224033,
       "sf_course": 2.332774960046497
     },
@@ -35,7 +35,7 @@
       "region_id": 3,
       "row": 1,
       "col": 0,
-      "knit_dir_deg": 45,
+      "knit_dir_deg": 0,
       "sf_wale": 2.2851771330706763,
       "sf_course": 2.2637456765649535
     },
@@ -43,7 +43,7 @@
       "region_id": 4,
       "row": 1,
       "col": 1,
-      "knit_dir_deg": 45,
+      "knit_dir_deg": 0,
       "sf_wale": 2.3151449511296858,
       "sf_course": 2.2630730170288507
     },
@@ -51,7 +51,7 @@
       "region_id": 5,
       "row": 1,
       "col": 2,
-      "knit_dir_deg": 45,
+      "knit_dir_deg": 0,
       "sf_wale": 2.280366328486102,
       "sf_course": 2.297530129737643
     },
@@ -59,7 +59,7 @@
       "region_id": 6,
       "row": 2,
       "col": 0,
-      "knit_dir_deg": 45,
+      "knit_dir_deg": 0,
       "sf_wale": 2.2729711484745776,
       "sf_course": 2.3098564100896892
     },
@@ -67,7 +67,7 @@
       "region_id": 7,
       "row": 2,
       "col": 1,
-      "knit_dir_deg": 45,
+      "knit_dir_deg": 0,
       "sf_wale": 2.2826252309152486,
       "sf_course": 2.258715325844577
     },
@@ -75,7 +75,7 @@
       "region_id": 8,
       "row": 2,
       "col": 2,
-      "knit_dir_deg": 45,
+      "knit_dir_deg": 0,
       "sf_wale": 2.281857566216571,
       "sf_course": 2.265673546928754
     }
