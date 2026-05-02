@@ -1,35 +1,47 @@
 """
-FDM-guided 9-region FEM inverse optimisation for B5.
+B5 9-region FEM inverse optimisation.
 
 Pipeline:
-  1. Load FDM result → extract B5 target surface (scaled to FEM mesh units)
-  2. Assign 9 regions to FEM circular mesh faces (3×3 grid from cable positions)
+  1. FEM rest-shape mesh = B5_flat.off (B5.obj topology, z=0) → fast Newton convergence
+     FEM target          = B5_shared.off (B5.obj 3D dome) → vertex-by-vertex comparison
+  2. 12 cable sections (4 cables × 3 sections each, split at 4 intersection nodes)
+     dividing the mesh into 9 knit regions
   3. Optimise per-region (sf_wale, sf_course) via scipy L-BFGS-B
-     — knit_dir per region is FIXED from cable geometry (FDM-derived)
-     — objective: match FEM deformed shape to B5 target (crown_height + curvature)
-  4. Save result JSON + visualise convergence
+     — knit_dir fixed from cable geometry
+     — objective: RMSE of FEM inflated shape vs B5 target vertices (interior only)
+  4. Save result JSON
 
 Usage:
-    python3 optimise_B5.py [--motif 1] [--pressure 500] [--jobs 1]
+    python3 optimise_B5.py [--motif 1] [--pressure 1000] [--maxiter 200]
 """
-import argparse, csv, json, os, sys, subprocess, tempfile, shutil
+import argparse, csv, json, os, sys, subprocess, tempfile
 import numpy as np
 from scipy.optimize import minimize
 
 HERE   = os.path.dirname(os.path.abspath(__file__))
-SA_DIR = os.path.join(HERE, "..", "sensitivity_analysis")
-sys.path.insert(0, SA_DIR)
 
-BINARY      = os.environ.get("FEM_BINARY_NREGION",
-    os.path.join(HERE, "..", "build-linux", "fem_batch_nregion"))
+# FEM mesh and target: B5_remeshed (3D dome, 497v/929f, feature-preserving remesh)
+# Starting from dome with sf>1 → rest shape < dome → elastic inward force
+# balances pressure at dome equilibrium (sf≈2.25 gives crown≈3.86m at p=1000)
 MESH_PATH   = os.environ.get("FEM_MESH",
-    os.path.join(HERE, "..", "data", "circular_flat_fdm.off"))
-CABLE_PATHS_FILE = os.environ.get("FEM_CABLE_PATHS",
-    os.path.join(HERE, "..", "data", "cable_paths_B5.json"))
-FDM_JSON    = os.path.join(HERE, "data", "mesh_out_B5_20260501213116.json")
-OUT_DIR     = os.path.join(HERE, "optimisation")
+    os.path.join(HERE, "..", "data", "B5_remeshed_shared.off"))
+TARGET_OFF  = os.environ.get("FEM_TARGET",
+    os.path.join(HERE, "..", "data", "B5_remeshed_shared.off"))
 
-# ── FEM mesh geometry ─────────────────────────────────────────────────────────
+BINARY           = os.environ.get("FEM_BINARY_NREGION",
+    os.path.join(HERE, "..", "build-linux", "fem_batch_nregion"))
+CABLE_PATHS_FILE = os.environ.get("FEM_CABLE_PATHS",
+    os.path.join(HERE, "..", "data", "cable_paths_B5_remeshed.json"))
+OUT_DIR = os.path.join(HERE, "optimisation")
+
+# ── Knit directions per region (row, col) ─────────────────────────────────────
+KNIT_DIR = {
+    (0,0): 45, (0,1):  0, (0,2): 45,
+    (1,0): 90, (1,1): 45, (1,2): 90,
+    (2,0): 45, (2,1):  0, (2,2): 45,
+}
+
+# ── Load OFF mesh ─────────────────────────────────────────────────────────────
 def load_off(path):
     with open(path) as f:
         lines = f.readlines()
@@ -38,95 +50,29 @@ def load_off(path):
     F = np.array([[int(x) for x in l.split()[1:]] for l in lines[2+nv:2+nv+nf]])
     return V, F
 
-# ── Region assignment for FEM faces (3×3 grid) ────────────────────────────────
-# Knit directions per region (row, col) — from FDM cable analysis
-KNIT_DIR = {
-    (0,0): 45, (0,1):  0, (0,2): 45,
-    (1,0): 90, (1,1): 45, (1,2): 90,
-    (2,0): 45, (2,1):  0, (2,2): 45,
-}
-
+# ── Region assignment (3×3 grid) ─────────────────────────────────────────────
 def make_region_map(V, F, x_lo, x_hi, y_lo, y_hi):
-    """Assign each face a region id 0-8 based on 3×3 x/y grid."""
     face_cx = V[F[:,0],0]/3 + V[F[:,1],0]/3 + V[F[:,2],0]/3
     face_cy = V[F[:,0],1]/3 + V[F[:,1],1]/3 + V[F[:,2],1]/3
     regions = []
     for cx, cy in zip(face_cx, face_cy):
         col = 0 if cx < x_lo else (1 if cx < x_hi else 2)
         row = 0 if cy < y_lo else (1 if cy < y_hi else 2)
-        regions.append(row * 3 + col)   # 0-8
+        regions.append(row * 3 + col)
     return regions
 
 def region_knit_dir(region_id):
     row, col = divmod(region_id, 3)
     return KNIT_DIR[(row, col)]
 
-# ── Extract B5 targets from FDM result (scaled to FEM mesh) ──────────────────
-def extract_fdm_targets(fdm_json, fem_V):
-    # Load COMPAS JSON manually (Mesh.from_json fails on this format version)
-    with open(fdm_json) as f:
-        d = json.load(f)
-
-    vid_keys   = sorted(d['vertex'].keys(), key=int)
-    vpts       = np.array([[d['vertex'][k]['x'], d['vertex'][k]['y'],
-                             d['vertex'][k]['z']] for k in vid_keys])
-
-    # Boundary: vertices with z=0 (constrained nodes in FDM)
-    bdry_mask  = np.abs(vpts[:, 2]) < 1e-6
-    free_mask  = ~bdry_mask
-
-    fdm_span   = 20.0                         # B5 footprint span (m)
-    fem_span   = fem_V[:,0].max() - fem_V[:,0].min()
-    scale      = fem_span / fdm_span
-
-    fdm_crown  = float(vpts[free_mask, 2].max())
-    fem_crown_target = fdm_crown * scale
-
-    # Curvature along x=0 and y=0 slices — approximate via central-difference
-    # on the FDM dome vertices closest to those planes.
-    curv_scale = fdm_span / fem_span
-    R    = fdm_span / 2
-    band = 0.08 * R   # 0.8m band around x=0 / y=0
-
-    def mean_curvature_in_band(axis):
-        other = 1 if axis == 0 else 0
-        in_band = (np.abs(vpts[:, axis]) < band) & free_mask
-        if in_band.sum() < 3:
-            return None
-        pts = vpts[in_band]
-        pts_sorted = pts[np.argsort(pts[:, other])]
-        z = pts_sorted[:, 2]
-        s = pts_sorted[:, other]
-        ds = np.diff(s)
-        dz = np.diff(z)
-        if len(ds) < 2 or np.any(ds < 1e-8):
-            return None
-        d2z = np.diff(dz / ds) / (0.5 * (ds[:-1] + ds[1:]))
-        kappa = float(np.mean(np.abs(d2z)))
-        return kappa * curv_scale
-
-    H_x0 = mean_curvature_in_band(0)
-    H_y0 = mean_curvature_in_band(1)
-
-    return {
-        "crown_height": fem_crown_target,
-        "H_mean_x0":    H_x0,
-        "H_mean_y0":    H_y0,
-        "scale":        scale,
-        "fdm_crown":    fdm_crown,
-    }
-
-# ── Cable paths ───────────────────────────────────────────────────────────────
+# ── Load cable sections ───────────────────────────────────────────────────────
 def load_cable_paths(path):
     if not os.path.exists(path):
-        print(f"WARNING: cable paths file not found: {path}")
+        print(f"WARNING: cable paths not found: {path}")
         return []
     with open(path) as f:
         d = json.load(f)
-    # Accept either {A:[...], B:[...]} or [[...], [...]]
-    if isinstance(d, dict):
-        return list(d.values())
-    return d
+    return list(d.values()) if isinstance(d, dict) else d
 
 # ── Run FEM binary ─────────────────────────────────────────────────────────────
 _call_count = [0]
@@ -161,32 +107,37 @@ def run_fem(sf_wale_per_region, sf_course_per_region, knit_dirs,
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
         if result.returncode != 0:
+            print(f"  FEM error: {result.stderr[:200]}")
             return None
+
         scalars_path = prefix + "_scalars.csv"
+        verts_path   = prefix + "_verts.csv"
         if not os.path.exists(scalars_path):
             return None
+
         with open(scalars_path) as f:
             row = next(csv.DictReader(f))
-        return {k: float(v) for k, v in row.items()}
-    except Exception:
+        out = {k: float(v) for k, v in row.items()}
+
+        if os.path.exists(verts_path):
+            vdata = np.loadtxt(verts_path, delimiter=",", skiprows=1)
+            out["verts"] = vdata[:, 1:]   # (nV, 3)
+
+        return out
+    except Exception as e:
+        print(f"  FEM exception: {e}")
         return None
     finally:
-        os.unlink(params_path)
+        try: os.unlink(params_path)
+        except: pass
 
-# ── Objective ─────────────────────────────────────────────────────────────────
-def make_objective(targets, region_map_path, knit_dirs, pressure, motif,
-                   cable_paths=None, cable_ea=157000.0):
-    t_crown = targets["crown_height"]
-    t_Hx    = targets["H_mean_x0"]
-    t_Hy    = targets["H_mean_y0"]
-
-    # Weights: crown is most reliable; curvature noisier
-    w_crown, w_Hx, w_Hy = 1.0, 0.3, 0.3
-
+# ── Objective (vertex-by-vertex RMSE vs B5 target) ────────────────────────────
+def make_objective(V_target, interior_idx, region_map_path, knit_dirs,
+                   pressure, motif, cable_paths=None, cable_ea=157000.0):
+    t_crown = float(V_target[:,2].max())
     history = []
 
     def objective(p):
-        # p: 18 values — sf_wale[0..8] then sf_course[0..8]
         sf_w = p[:9]
         sf_c = p[9:]
         out  = run_fem(sf_w, sf_c, knit_dirs, pressure, motif, region_map_path,
@@ -194,22 +145,18 @@ def make_objective(targets, region_map_path, knit_dirs, pressure, motif,
         if out is None:
             return 1e6
 
-        loss  = w_crown * ((out["crown_height"] - t_crown) / t_crown) ** 2
-        if t_Hx is not None and "H_mean_x0" in out and out["H_mean_x0"] > 0:
-            loss += w_Hx * ((out["H_mean_x0"] - t_Hx) / (t_Hx + 1e-6)) ** 2
-        if t_Hy is not None and "H_mean_y0" in out and out["H_mean_y0"] > 0:
-            loss += w_Hy * ((out["H_mean_y0"] - t_Hy) / (t_Hy + 1e-6)) ** 2
+        if "verts" in out:
+            diff = out["verts"][interior_idx] - V_target[interior_idx]
+            loss = float(np.sqrt(np.mean(np.sum(diff**2, axis=1))))
+        else:
+            loss = abs(out["crown_height"] - t_crown) / (t_crown + 1e-6)
 
-        history.append({
-            "call":         _call_count[0],
-            "loss":         loss,
-            "crown_height": out["crown_height"],
-            "target_crown": t_crown,
-        })
-        if _call_count[0] % 5 == 0 or _call_count[0] == 1:
-            print(f"  [{_call_count[0]:4d}]  loss={loss:.6f}  "
-                  f"h={out['crown_height']:.4f} (target {t_crown:.4f})")
-
+        history.append({"call": _call_count[0], "loss": loss,
+                        "crown_height": out.get("crown_height", 0.0)})
+        if _call_count[0] % 10 == 0 or _call_count[0] == 1:
+            print(f"  [{_call_count[0]:4d}]  rmse={loss:.4f} m  "
+                  f"crown={out.get('crown_height', 0):.4f} m  "
+                  f"(target {t_crown:.4f})")
         return loss
 
     return objective, history
@@ -218,89 +165,91 @@ def make_objective(targets, region_map_path, knit_dirs, pressure, motif,
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--motif",    type=int,   default=1)
-    parser.add_argument("--pressure", type=float, default=500.0)
+    parser.add_argument("--pressure", type=float, default=1000.0)
     parser.add_argument("--maxiter",  type=int,   default=200)
+    parser.add_argument("--mesh", type=str, default=None,
+                        help="Override FEM mesh (env: FEM_MESH)")
     args = parser.parse_args()
+
+    global MESH_PATH
+    if args.mesh:
+        MESH_PATH = args.mesh
 
     os.makedirs(OUT_DIR, exist_ok=True)
 
-    # Check binary
     if not os.path.exists(BINARY):
         print(f"FEM binary not found: {BINARY}")
         sys.exit(1)
 
-    # Load FEM mesh
+    # FEM mesh (3D dome)
     V, F = load_off(MESH_PATH)
     fem_span = V[:,0].max() - V[:,0].min()
-    print(f"FEM mesh: {len(V)} verts, {len(F)} faces, span={fem_span:.4f} m")
+    print(f"FEM mesh:   {len(V)} verts, {len(F)} faces, span={fem_span:.2f} m")
 
-    # Load cable paths
+    # Target (3D dome — same file; FEM output should match this)
+    V_target, _ = load_off(TARGET_OFF)
+    bdry_mask    = np.abs(V_target[:,2]) < 0.01
+    interior_idx = np.where(~bdry_mask)[0]
+    t_crown      = float(V_target[:,2].max())
+    print(f"Target:     {len(V_target)} verts, {len(interior_idx)} interior, crown={t_crown:.4f} m")
+
+    # 12 cable sections (4 cables × 3 sections, split at intersection nodes)
     cable_paths = load_cable_paths(CABLE_PATHS_FILE)
-    cable_ea = 157000.0   # N  (1mm diameter steel cable)
-    print(f"Cables: {len(cable_paths)} paths, EA={cable_ea:.0f} N")
+    cable_ea    = 157000.0   # N  (1 mm steel cable)
+    print(f"Cables:     {len(cable_paths)} sections, EA={cable_ea:.0f} N")
 
-    # Region splits at ±1/6 of span (i.e., at ±R/3 mapped to FEM scale)
+    # 3×3 region map — split at ±R/3 in x and y (the cable lines)
     R     = fem_span / 2
     x_lo, x_hi = -R/3, R/3
     y_lo, y_hi = -R/3, R/3
     region_ids = make_region_map(V, F, x_lo, x_hi, y_lo, y_hi)
     knit_dirs  = [region_knit_dir(r) for r in range(9)]
 
-    # Save region map
     region_map_path = os.path.join(OUT_DIR, "region_map.json")
     with open(region_map_path, "w") as f:
         json.dump({"face_regions": region_ids}, f)
     counts = np.bincount(region_ids, minlength=9)
-    print(f"Region face counts: {counts.tolist()}")
-    print(f"Knit dirs: {knit_dirs}")
+    print(f"Regions:    {counts.tolist()}")
+    print(f"Knit dirs:  {knit_dirs}")
+    print(f"Pressure:   {args.pressure} Pa  |  motif: {args.motif}")
 
-    # Extract targets from FDM
-    print("\nExtracting B5 targets from FDM result...")
-    targets = extract_fdm_targets(FDM_JSON, V)
-    print(f"  FDM crown:  {targets['fdm_crown']:.4f} m  (B5 scale)")
-    print(f"  FEM target: {targets['crown_height']:.4f} m")
-    if targets["H_mean_x0"]: print(f"  H_mean_x0:  {targets['H_mean_x0']:.4f}")
-    if targets["H_mean_y0"]: print(f"  H_mean_y0:  {targets['H_mean_y0']:.4f}")
-
-    # Initial parameters: sf=1.0 for all regions
-    p0     = np.ones(18)
-    bounds = [(0.75, 1.5)] * 18
-
-    # Sanity-check: run FEM with p0
-    print("\nSanity check (all sf=1.0)...")
-    sf0 = p0[:9]; sc0 = p0[9:]
-    out0 = run_fem(sf0, sc0, knit_dirs, args.pressure, args.motif, region_map_path,
-                   cable_paths, cable_ea)
+    # Initial guess: sf=2.25 (calibrated: 3D remeshed dome + 12 cables + p=1000 → crown≈3.90m)
+    p0 = np.full(18, 2.25)
+    print("\nSanity check (sf=2.25 uniform)...")
+    out0 = run_fem(p0[:9], p0[9:], knit_dirs, args.pressure, args.motif,
+                   region_map_path, cable_paths, cable_ea)
     if out0 is None:
-        print("ERROR: FEM failed at sf=1.0 — check binary and mesh path")
+        print("ERROR: FEM failed at sf=2.0 — check binary and mesh")
         sys.exit(1)
-    print(f"  crown_height = {out0['crown_height']:.4f} m  "
-          f"(target {targets['crown_height']:.4f})")
+    print(f"  crown={out0['crown_height']:.4f} m  (target {t_crown:.4f})")
+    if "verts" in out0:
+        diff0 = out0["verts"][interior_idx] - V_target[interior_idx]
+        rmse0 = float(np.sqrt(np.mean(np.sum(diff0**2, axis=1))))
+        print(f"  RMSE = {rmse0:.4f} m")
 
-    # Optimise
-    print(f"\nOptimising {len(p0)} parameters (9×sf_wale + 9×sf_course)...")
-    print(f"  L-BFGS-B, max {args.maxiter} iterations, finite-difference gradient\n")
+    # Optimise — wide bounds; avoid sf<1.5 (slow Newton on dome) or sf>4 (unphysical)
+    bounds = [(1.5, 4.0)] * 18
+    print(f"\nOptimising 18 params (9×sf_wale + 9×sf_course), maxiter={args.maxiter}...")
+    print(f"  L-BFGS-B, bounds (1.5, 4.0), FD eps=0.05\n")
 
     objective, history = make_objective(
-        targets, region_map_path, knit_dirs, args.pressure, args.motif,
-        cable_paths, cable_ea)
+        V_target, interior_idx, region_map_path, knit_dirs,
+        args.pressure, args.motif, cable_paths, cable_ea)
 
     result = minimize(
         objective,
         p0,
         method="L-BFGS-B",
         bounds=bounds,
-        options={"maxiter": args.maxiter, "ftol": 1e-9, "gtol": 1e-6,
-                 "eps": 0.01,   # finite-difference step for gradient
-                 },
+        options={"maxiter": args.maxiter, "ftol": 1e-10, "gtol": 1e-6, "eps": 0.05},
     )
 
     print(f"\nConverged: {result.success}  |  {result.message}")
-    print(f"Final loss: {result.fun:.6f}  calls: {_call_count[0]}")
+    print(f"Final RMSE: {result.fun:.4f} m   calls: {_call_count[0]}")
 
-    p_opt  = result.x
-    sf_w   = p_opt[:9]
-    sf_c   = p_opt[9:]
+    p_opt = result.x
+    sf_w  = p_opt[:9]
+    sf_c  = p_opt[9:]
 
     print("\n=== Optimal parameters per region ===")
     print(f"{'Region':>6}  {'row':>4}  {'col':>4}  {'knit_dir':>8}  "
@@ -310,34 +259,31 @@ def main():
         print(f"{r:6d}  {row:4d}  {col:4d}  {knit_dirs[r]:8.0f}°  "
               f"{sf_w[r]:8.4f}  {sf_c[r]:9.4f}")
 
-    # Final FEM run to get output files
+    # Final FEM run
     print("\nRunning final FEM simulation...")
-    out_final = run_fem(sf_w, sf_c, knit_dirs, args.pressure, args.motif, region_map_path,
-                        cable_paths, cable_ea)
+    out_final = run_fem(sf_w, sf_c, knit_dirs, args.pressure, args.motif,
+                        region_map_path, cable_paths, cable_ea)
     if out_final:
-        print(f"  crown_height = {out_final['crown_height']:.4f} m  "
-              f"(target {targets['crown_height']:.4f})")
+        print(f"  crown = {out_final['crown_height']:.4f} m  (target {t_crown:.4f})")
+        if "verts" in out_final:
+            diff_f = out_final["verts"][interior_idx] - V_target[interior_idx]
+            print(f"  RMSE  = {np.sqrt(np.mean(np.sum(diff_f**2, axis=1))):.4f} m")
 
-    # Save results
     results = {
         "motif":    args.motif,
         "pressure": args.pressure,
-        "target":   targets,
+        "fem_mesh": MESH_PATH,
+        "target_crown_m": float(t_crown),
         "converged": bool(result.success),
-        "loss":     float(result.fun),
+        "loss_rmse_m": float(result.fun),
         "n_calls":  _call_count[0],
         "regions":  [
-            {
-                "region_id":    r,
-                "row":          r // 3,
-                "col":          r  % 3,
-                "knit_dir_deg": knit_dirs[r],
-                "sf_wale":      float(sf_w[r]),
-                "sf_course":    float(sf_c[r]),
-            }
+            {"region_id": r, "row": r//3, "col": r%3,
+             "knit_dir_deg": knit_dirs[r],
+             "sf_wale": float(sf_w[r]), "sf_course": float(sf_c[r])}
             for r in range(9)
         ],
-        "history":  history[-20:],   # last 20 evaluations
+        "history": history[-30:],
     }
     out_json = os.path.join(OUT_DIR, "B5_optimised_params.json")
     with open(out_json, "w") as f:
