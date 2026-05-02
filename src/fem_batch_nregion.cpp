@@ -167,6 +167,25 @@ static int jsonInt(const std::string& s, const std::string& key, int def = 0)
     return std::stoi(s.substr(colon + 1));
 }
 
+// Parse a flat numeric array: "<key>": [a, b, c, ...]
+static std::vector<double> jsonDoubleArray(const std::string& s, const std::string& key)
+{
+    std::vector<double> result;
+    auto pos = s.find("\"" + key + "\"");
+    if (pos == std::string::npos) return result;
+    auto open  = s.find('[', pos);
+    auto close = s.find(']', open);
+    if (open == std::string::npos || close == std::string::npos) return result;
+    std::string arr = s.substr(open + 1, close - open - 1);
+    std::istringstream ss(arr);
+    std::string tok;
+    while (std::getline(ss, tok, ',')) {
+        tok.erase(0, tok.find_first_not_of(" \t\n\r"));
+        if (!tok.empty()) result.push_back(std::stod(tok));
+    }
+    return result;
+}
+
 static std::vector<int> parseRegionMap(const std::string& path)
 {
     std::ifstream f(path);
@@ -395,6 +414,7 @@ int main(int argc, char* argv[])
     double cable_ea = jsonDouble(ps, "cable_ea",  157000.0);
     std::vector<RegionParams> regions = parseRegions(ps);
     std::vector<std::vector<int>> cable_paths = parseCablePaths(ps);
+    std::vector<double> cable_rest_scales = jsonDoubleArray(ps, "cable_rest_scales");
 
     if (regions.empty()) {
         std::cerr << "No regions found in params JSON\n";
@@ -423,6 +443,7 @@ int main(int argc, char* argv[])
 
     // Build cable model
     MultiCableModel cables;
+    int cable_idx = 0;
     for (auto& path : cable_paths) {
         if (path.size() < 2) continue;
         bool valid = true;
@@ -432,7 +453,17 @@ int main(int argc, char* argv[])
             std::cerr << "Cable path has out-of-range vertex index\n";
             return 1;
         }
-        cables.cables.emplace_back(path, cable_ea, V0);
+        // Optional per-cable rest-length scale: L_rest = scale * L_geom (scale<1 → pre-tensioned)
+        if (cable_idx < (int)cable_rest_scales.size()) {
+            double L_geom = 0.0;
+            for (size_t k = 0; k + 1 < path.size(); ++k)
+                L_geom += (V0.row(path[k+1]) - V0.row(path[k])).norm();
+            double L_rest = cable_rest_scales[cable_idx] * L_geom;
+            cables.cables.emplace_back(path, cable_ea, L_rest);
+        } else {
+            cables.cables.emplace_back(path, cable_ea, V0);
+        }
+        cable_idx++;
     }
 
     std::cerr << "Mesh: " << V0.rows() << "v  " << F.rows() << "f  "

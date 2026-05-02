@@ -79,7 +79,8 @@ def load_cable_paths(path):
 _call_count = [0]
 
 def run_fem(sf_wale_per_region, sf_course_per_region, knit_dirs,
-            pressure, motif, region_map_path, cable_paths=None, cable_ea=157000.0):
+            pressure, motif, region_map_path, cable_paths=None, cable_ea=157000.0,
+            cable_rest_scales=None):
     os.makedirs(OUT_DIR, exist_ok=True)
     _call_count[0] += 1
 
@@ -97,6 +98,8 @@ def run_fem(sf_wale_per_region, sf_course_per_region, knit_dirs,
             for r in range(9)
         ]
     }
+    if cable_rest_scales is not None:
+        params["cable_rest_scales"] = [float(x) for x in cable_rest_scales]
     with tempfile.NamedTemporaryFile(mode="w", suffix=".json",
                                      delete=False, dir=OUT_DIR) as pf:
         json.dump(params, pf)
@@ -139,10 +142,11 @@ def make_objective(V_target, interior_idx, region_map_path, knit_dirs,
     history = []
 
     def objective(p):
-        sf_w = p[:9]
-        sf_c = p[9:]
+        sf_w   = p[:9]
+        sf_c   = p[9:18]
+        scales = p[18:30] if len(p) >= 30 else None
         out  = run_fem(sf_w, sf_c, knit_dirs, pressure, motif, region_map_path,
-                       cable_paths, cable_ea)
+                       cable_paths, cable_ea, cable_rest_scales=scales)
         if out is None:
             return 1e6
 
@@ -214,11 +218,13 @@ def main():
     print(f"Knit dirs:  {knit_dirs}")
     print(f"Pressure:   {args.pressure} Pa  |  motif: {args.motif}")
 
-    # Initial guess: sf=1.041 (calibrated for 1.2m diameter, p=1000 Pa)
-    p0 = np.full(18, 1.041)
-    print("\nSanity check (sf=1.041 uniform)...")
-    out0 = run_fem(p0[:9], p0[9:], knit_dirs, args.pressure, args.motif,
-                   region_map_path, cable_paths, cable_ea)
+    # Initial guess: sf=1.041 + cable_rest_scale=1.0 (no cable pre-stress)
+    n_cables = len(cable_paths)
+    p0 = np.concatenate([np.full(18, 1.041), np.full(n_cables, 1.0)])
+    print(f"\nSanity check (sf=1.041 uniform, cable_rest_scale=1.0)...")
+    out0 = run_fem(p0[:9], p0[9:18], knit_dirs, args.pressure, args.motif,
+                   region_map_path, cable_paths, cable_ea,
+                   cable_rest_scales=p0[18:18+n_cables])
     if out0 is None:
         print("ERROR: FEM failed at sf=1.041 — check binary and mesh")
         sys.exit(1)
@@ -228,11 +234,13 @@ def main():
         rmse0 = float(np.sqrt(np.mean(np.sum(diff0**2, axis=1))))
         print(f"  RMSE = {rmse0:.4f} m")
 
-    # Optimise — bounds around the 1.2m calibration; sf<0.9 risks instability,
-    # sf>2.0 makes the membrane too loose for this scale/pressure
-    bounds = [(0.9, 2.0)] * 18
-    print(f"\nOptimising 18 params (9×sf_wale + 9×sf_course), maxiter={args.maxiter}...")
-    print(f"  L-BFGS-B, bounds (0.9, 2.0), FD eps=0.05\n")
+    # Optimise — sf bounds (0.9, 2.0); cable_rest_scale bounds (0.85, 1.05)
+    # scale<1: cable pre-tensioned (pulls dome inward); scale>1: slack (no force)
+    bounds = [(0.9, 2.0)] * 18 + [(0.85, 1.05)] * n_cables
+    n_params = 18 + n_cables
+    print(f"\nOptimising {n_params} params (9×sf_wale + 9×sf_course "
+          f"+ {n_cables}×cable_rest_scale), maxiter={args.maxiter}...")
+    print(f"  L-BFGS-B, sf bounds (0.9, 2.0), cable bounds (0.85, 1.05), FD eps=0.05\n")
 
     objective, history = make_objective(
         V_target, interior_idx, region_map_path, knit_dirs,
@@ -251,7 +259,8 @@ def main():
 
     p_opt = result.x
     sf_w  = p_opt[:9]
-    sf_c  = p_opt[9:]
+    sf_c  = p_opt[9:18]
+    scales = p_opt[18:18+n_cables]
 
     print("\n=== Optimal parameters per region ===")
     print(f"{'Region':>6}  {'row':>4}  {'col':>4}  {'knit_dir':>8}  "
@@ -261,10 +270,22 @@ def main():
         print(f"{r:6d}  {row:4d}  {col:4d}  {knit_dirs[r]:8.0f}°  "
               f"{sf_w[r]:8.4f}  {sf_c[r]:9.4f}")
 
+    # Cable names (e.g. A1, A2, ... D3) if the JSON is a dict
+    cable_names = [f"C{i}" for i in range(n_cables)]
+    if os.path.exists(CABLE_PATHS_FILE):
+        with open(CABLE_PATHS_FILE) as f:
+            cd = json.load(f)
+        if isinstance(cd, dict):
+            cable_names = list(cd.keys())[:n_cables]
+    print("\n=== Optimal cable rest-length scales ===")
+    for i, name in enumerate(cable_names):
+        print(f"  {name:>4}  scale={scales[i]:.4f}  (1.0=no pre-stress)")
+
     # Final FEM run
     print("\nRunning final FEM simulation...")
     out_final = run_fem(sf_w, sf_c, knit_dirs, args.pressure, args.motif,
-                        region_map_path, cable_paths, cable_ea)
+                        region_map_path, cable_paths, cable_ea,
+                        cable_rest_scales=scales)
     if out_final:
         print(f"  crown = {out_final['crown_height']:.4f} m  (target {t_crown:.4f})")
         if "verts" in out_final:
@@ -284,6 +305,10 @@ def main():
              "knit_dir_deg": knit_dirs[r],
              "sf_wale": float(sf_w[r]), "sf_course": float(sf_c[r])}
             for r in range(9)
+        ],
+        "cables": [
+            {"name": cable_names[i], "rest_scale": float(scales[i])}
+            for i in range(n_cables)
         ],
         "history": history[-30:],
     }
