@@ -2,234 +2,234 @@
   "motif": 1,
   "pressure": 1000.0,
   "fem_mesh": "/home/chaoyu/phd_simulation/FDM/../data/B5_remeshed_shared.off",
-  "target_crown_m": 3.85092211,
-  "converged": false,
-  "loss_rmse_m": 0.48982581594706825,
-  "n_calls": 40,
+  "target_crown_m": 0.23167445,
+  "converged": true,
+  "loss_rmse_m": 0.11710897307682888,
+  "n_calls": 1313,
   "regions": [
     {
       "region_id": 0,
       "row": 0,
       "col": 0,
       "knit_dir_deg": 0,
-      "sf_wale": 2.2776943815656194,
-      "sf_course": 2.2643407371621795
+      "sf_wale": 2.121970134874592,
+      "sf_course": 1.7767516162121144
     },
     {
       "region_id": 1,
       "row": 0,
       "col": 1,
       "knit_dir_deg": 0,
-      "sf_wale": 2.28334466283341,
-      "sf_course": 2.296977641109369
+      "sf_wale": 1.776739070530614,
+      "sf_course": 2.3215317910524185
     },
     {
       "region_id": 2,
       "row": 0,
       "col": 2,
       "knit_dir_deg": 0,
-      "sf_wale": 2.2737840944224033,
-      "sf_course": 2.332774960046497
+      "sf_wale": 2.2492492947019165,
+      "sf_course": 1.9765556129814361
     },
     {
       "region_id": 3,
       "row": 1,
       "col": 0,
       "knit_dir_deg": 0,
-      "sf_wale": 2.2851771330706763,
-      "sf_course": 2.2637456765649535
+      "sf_wale": 2.0834838248185488,
+      "sf_course": 2.0124502756253326
     },
     {
       "region_id": 4,
       "row": 1,
       "col": 1,
       "knit_dir_deg": 0,
-      "sf_wale": 2.3151449511296858,
-      "sf_course": 2.2630730170288507
+      "sf_wale": 1.863592524022531,
+      "sf_course": 2.0296068230755826
     },
     {
       "region_id": 5,
       "row": 1,
       "col": 2,
       "knit_dir_deg": 0,
-      "sf_wale": 2.280366328486102,
-      "sf_course": 2.297530129737643
+      "sf_wale": 2.3468760595715388,
+      "sf_course": 1.9688166634717912
     },
     {
       "region_id": 6,
       "row": 2,
       "col": 0,
       "knit_dir_deg": 0,
-      "sf_wale": 2.2729711484745776,
-      "sf_course": 2.3098564100896892
+      "sf_wale": 2.093773620584485,
+      "sf_course": 1.6323735228271403
     },
     {
       "region_id": 7,
       "row": 2,
       "col": 1,
       "knit_dir_deg": 0,
-      "sf_wale": 2.2826252309152486,
-      "sf_course": 2.258715325844577
+      "sf_wale": 1.9779252468887096,
+      "sf_course": 1.5
     },
     {
       "region_id": 8,
       "row": 2,
       "col": 2,
       "knit_dir_deg": 0,
-      "sf_wale": 2.281857566216571,
-      "sf_course": 2.265673546928754
+      "sf_wale": 2.2521562309441356,
+      "sf_course": 1.6995851832982711
     }
   ],
   "history": [
     {
-      "call": 10,
-      "loss": 0.5124411184261605,
-      "crown_height": 3.78077827
+      "call": 1283,
+      "loss": 0.11720284880299485,
+      "crown_height": 0.02941079
     },
     {
-      "call": 11,
-      "loss": 0.5124795016610943,
-      "crown_height": 3.77760324
+      "call": 1284,
+      "loss": 0.11712156958161421,
+      "crown_height": 0.02864163
     },
     {
-      "call": 12,
-      "loss": 0.5133553431138139,
-      "crown_height": 3.77874236
+      "call": 1285,
+      "loss": 0.11725696471215452,
+      "crown_height": 0.02894884
     },
     {
-      "call": 13,
-      "loss": 0.5117234979164544,
-      "crown_height": 3.76862224
+      "call": 1286,
+      "loss": 0.11725222508117715,
+      "crown_height": 0.02669041
     },
     {
-      "call": 14,
-      "loss": 0.5099336319695981,
-      "crown_height": 3.76537863
+      "call": 1287,
+      "loss": 0.11720071210513129,
+      "crown_height": 0.02898766
     },
     {
-      "call": 15,
-      "loss": 0.5133850961436752,
-      "crown_height": 3.7618631
+      "call": 1288,
+      "loss": 0.11722971516975635,
+      "crown_height": 0.02728836
     },
     {
-      "call": 16,
-      "loss": 0.5134187291204804,
-      "crown_height": 3.77915543
+      "call": 1289,
+      "loss": 0.11738430531711619,
+      "crown_height": 0.02557173
     },
     {
-      "call": 17,
-      "loss": 0.5116958734850408,
-      "crown_height": 3.76851294
+      "call": 1290,
+      "loss": 0.11723086345879989,
+      "crown_height": 0.0272728
     },
     {
-      "call": 18,
-      "loss": 0.5110795594674384,
-      "crown_height": 3.75866071
+      "call": 1291,
+      "loss": 0.11712928573569852,
+      "crown_height": 0.02815784
     },
     {
-      "call": 19,
-      "loss": 0.513636613679694,
-      "crown_height": 3.76213815
+      "call": 1292,
+      "loss": 0.11724793150272056,
+      "crown_height": 0.02871693
     },
     {
-      "call": 20,
-      "loss": 0.5132887026254852,
-      "crown_height": 3.77871063
+      "call": 1293,
+      "loss": 0.11718571713456832,
+      "crown_height": 0.02862103
     },
     {
-      "call": 21,
-      "loss": 0.48982581594706825,
-      "crown_height": 3.66265783
+      "call": 1294,
+      "loss": 0.11710897307682888,
+      "crown_height": 0.02880972
     },
     {
-      "call": 22,
-      "loss": 0.489047918737555,
-      "crown_height": 3.65683437
+      "call": 1295,
+      "loss": 0.11746176632359764,
+      "crown_height": 0.02510518
     },
     {
-      "call": 23,
-      "loss": 0.4884697914390443,
-      "crown_height": 3.65795391
+      "call": 1296,
+      "loss": 0.11714955240945811,
+      "crown_height": 0.02886295
     },
     {
-      "call": 24,
-      "loss": 0.4891285753988258,
-      "crown_height": 3.65573885
+      "call": 1297,
+      "loss": 0.1171415138252044,
+      "crown_height": 0.02898067
     },
     {
-      "call": 25,
-      "loss": 0.48827808061500744,
-      "crown_height": 3.66031219
+      "call": 1298,
+      "loss": 0.11721220565239926,
+      "crown_height": 0.02719379
     },
     {
-      "call": 26,
-      "loss": 0.48679390709868187,
-      "crown_height": 3.66110307
+      "call": 1299,
+      "loss": 0.1172208986371671,
+      "crown_height": 0.02910186
     },
     {
-      "call": 27,
-      "loss": 0.48861839768006055,
-      "crown_height": 3.65760645
+      "call": 1300,
+      "loss": 0.11708989971371028,
+      "crown_height": 0.02872448
     },
     {
-      "call": 28,
-      "loss": 0.48897356057018165,
-      "crown_height": 3.65948927
+      "call": 1301,
+      "loss": 0.1171833608092024,
+      "crown_height": 0.02731385
     },
     {
-      "call": 29,
-      "loss": 0.48836570091169806,
-      "crown_height": 3.66039338
+      "call": 1302,
+      "loss": 0.11720284880299485,
+      "crown_height": 0.02941079
     },
     {
-      "call": 30,
-      "loss": 0.48883076076781456,
-      "crown_height": 3.65696485
+      "call": 1303,
+      "loss": 0.11712156958161421,
+      "crown_height": 0.02864163
     },
     {
-      "call": 31,
-      "loss": 0.48954649122306143,
-      "crown_height": 3.65798573
+      "call": 1304,
+      "loss": 0.11725696471215452,
+      "crown_height": 0.02894884
     },
     {
-      "call": 32,
-      "loss": 0.48954408328827026,
-      "crown_height": 3.64884207
+      "call": 1305,
+      "loss": 0.11725222508117715,
+      "crown_height": 0.02669041
     },
     {
-      "call": 33,
-      "loss": 0.4877497199375589,
-      "crown_height": 3.64442774
+      "call": 1306,
+      "loss": 0.11720071210513129,
+      "crown_height": 0.02898766
     },
     {
-      "call": 34,
-      "loss": 0.4913030460638312,
-      "crown_height": 3.6545046
+      "call": 1307,
+      "loss": 0.11722971516975635,
+      "crown_height": 0.02728836
     },
     {
-      "call": 35,
-      "loss": 0.48911354772855664,
-      "crown_height": 3.65957635
+      "call": 1308,
+      "loss": 0.11738430531711619,
+      "crown_height": 0.02557173
     },
     {
-      "call": 36,
-      "loss": 0.48948975340768874,
-      "crown_height": 3.64874227
+      "call": 1309,
+      "loss": 0.11723086345879989,
+      "crown_height": 0.0272728
     },
     {
-      "call": 37,
-      "loss": 0.48969240902559574,
-      "crown_height": 3.64791035
+      "call": 1310,
+      "loss": 0.11712928573569852,
+      "crown_height": 0.02815784
     },
     {
-      "call": 38,
-      "loss": 0.4913729698838693,
-      "crown_height": 3.65508356
+      "call": 1311,
+      "loss": 0.11724793150272056,
+      "crown_height": 0.02871693
     },
     {
-      "call": 39,
-      "loss": 0.4894950859997075,
-      "crown_height": 3.65795505
+      "call": 1312,
+      "loss": 0.11718571713160428,
+      "crown_height": 0.02862103
     }
   ]
 }
