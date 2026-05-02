@@ -190,18 +190,20 @@ for ax, mode, cmap, norm in [
         ax.plot([pts[v,0] for v in pv], [pts[v,1] for v in pv],
                 color=col, linewidth=2.5, zorder=4, solid_capstyle="round")
 
-    # Region labels: value + knit dir arrow
-    L = 2.5
+    # Region labels: value + knit dir arrow — sizes scale with geometry
+    R = max(pts[:,0].max() - pts[:,0].min(), pts[:,1].max() - pts[:,1].min()) / 2
+    L          = 0.13 * R   # arrow half-length
+    label_off  = 0.02 * R   # text offset below centroid
     for (row, col), ctr in reg_centroids.items():
         rd  = regions_data[(row, col)]
         val = rd["sf_wale"] if mode == "wale" else rd["sf_course"]
         kd  = np.radians(rd["knit_dir_deg"])
         dx, dy = L * np.cos(kd), L * np.sin(kd)
         ax.annotate("", xy=(ctr[0]+dx, ctr[1]+dy), xytext=(ctr[0]-dx, ctr[1]-dy),
-                    arrowprops=dict(arrowstyle="<->", color="white", lw=1.4), zorder=5)
+                    arrowprops=dict(arrowstyle="<->", color="white", lw=1.2), zorder=5)
         lbl_r = {0: "B", 1: "M", 2: "T"}[row]
         lbl_c = {0: "L", 1: "C", 2: "R"}[col]
-        ax.text(ctr[0], ctr[1] - 0.45,
+        ax.text(ctr[0], ctr[1] - label_off,
                 f"{lbl_r}{lbl_c}\n{val:.4f}\n{rd['knit_dir_deg']}°",
                 ha="center", va="top", color="white", fontsize=7, fontweight="bold",
                 zorder=6, bbox=dict(facecolor="#00000080", edgecolor="none", pad=1.5))
