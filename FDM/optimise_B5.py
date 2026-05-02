@@ -214,13 +214,13 @@ def main():
     print(f"Knit dirs:  {knit_dirs}")
     print(f"Pressure:   {args.pressure} Pa  |  motif: {args.motif}")
 
-    # Initial guess: sf=2.25 (calibrated: 3D remeshed dome + 12 cables + p=1000 → crown≈3.90m)
-    p0 = np.full(18, 2.25)
-    print("\nSanity check (sf=2.25 uniform)...")
+    # Initial guess: sf=1.041 (calibrated for 1.2m diameter, p=1000 Pa)
+    p0 = np.full(18, 1.041)
+    print("\nSanity check (sf=1.041 uniform)...")
     out0 = run_fem(p0[:9], p0[9:], knit_dirs, args.pressure, args.motif,
                    region_map_path, cable_paths, cable_ea)
     if out0 is None:
-        print("ERROR: FEM failed at sf=2.0 — check binary and mesh")
+        print("ERROR: FEM failed at sf=1.041 — check binary and mesh")
         sys.exit(1)
     print(f"  crown={out0['crown_height']:.4f} m  (target {t_crown:.4f})")
     if "verts" in out0:
@@ -228,10 +228,11 @@ def main():
         rmse0 = float(np.sqrt(np.mean(np.sum(diff0**2, axis=1))))
         print(f"  RMSE = {rmse0:.4f} m")
 
-    # Optimise — wide bounds; avoid sf<1.5 (slow Newton on dome) or sf>4 (unphysical)
-    bounds = [(1.5, 4.0)] * 18
+    # Optimise — bounds around the 1.2m calibration; sf<0.9 risks instability,
+    # sf>2.0 makes the membrane too loose for this scale/pressure
+    bounds = [(0.9, 2.0)] * 18
     print(f"\nOptimising 18 params (9×sf_wale + 9×sf_course), maxiter={args.maxiter}...")
-    print(f"  L-BFGS-B, bounds (1.5, 4.0), FD eps=0.05\n")
+    print(f"  L-BFGS-B, bounds (0.9, 2.0), FD eps=0.05\n")
 
     objective, history = make_objective(
         V_target, interior_idx, region_map_path, knit_dirs,
