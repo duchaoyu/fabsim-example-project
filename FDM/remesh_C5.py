@@ -26,14 +26,16 @@ INPUT_OBJ   = os.path.join(HERE, "input", "C5.obj")
 OUT_OFF     = os.path.join(HERE, "..", "data", "C5_remeshed.off")
 CABLES_OUT  = os.path.join(HERE, "..", "data", "cable_paths_C5.json")
 
-# Mesh parameters (matches B5_remeshed: 497v / 929f)
-N_CIRC      = 32          # verts per ring; 32 lets every 4th vert sit on a spoke
+# Mesh parameters
+# N_CIRC must be a multiple of 32 so spokes at θ = 11.25° + k·45° land on
+# integer vertex indices (since 11.25° / (360/N_CIRC) = N_CIRC/32 must be int).
+N_CIRC      = 64          # verts per ring; spokes at every 8th vertex (j = 2, 10, …, 58)
 N_RING      = 15          # rings outside the apex
 R           = 10.0        # boundary radius (C5 footprint)
 N_SAMPLE_TH = 720         # angular samples per ring for FFT projection
-KEEP_MODES  = (0, 8, 16, 24)   # keep multiples of 8 → exact D8 symmetry
+KEEP_MODES  = (0, 8, 16)   # multiples of 8 → exact D8; drop k≥24 to smooth lobes
 
-assert N_CIRC % 8 == 0
+assert N_CIRC % 32 == 0, "N_CIRC must be a multiple of 32 to preserve exact spoke angles"
 
 # ── 1. z(x, y) interpolator from raw C5.obj ───────────────────────────────────
 target = Mesh.from_obj(INPUT_OBJ)
@@ -129,9 +131,14 @@ with open(OUT_OFF, "w") as f:
         f.write(f"3 {face[0]} {face[1]} {face[2]}\n")
 print(f"Saved {OUT_OFF}")
 
-# ── 7. Cable paths: 8 spokes along ridge columns j = 1, 5, 9, …, 29 ───────────
-spoke_cols  = [1 + 4*k for k in range(8)]    # j indices in 0..31
-cable_paths = {}
+# ── 7. Cable paths: 8 spokes at θ = 11.25° + k·45° ───────────────────────────
+# Spoke vertex indices generalised for any valid N_CIRC (multiple of 32):
+#   first spoke offset = N_CIRC / 32  (e.g. 1 for N_CIRC=32, 2 for N_CIRC=64)
+#   spoke step          = N_CIRC / 8   (e.g. 4 for N_CIRC=32, 8 for N_CIRC=64)
+spoke_offset = N_CIRC // 32
+spoke_step   = N_CIRC // 8
+spoke_cols   = [spoke_offset + spoke_step * k for k in range(8)]
+cable_paths  = {}
 for k, j in enumerate(spoke_cols):
     angle = j * (360 / N_CIRC)
     path  = [0] + [ring_idx(i, j) for i in range(1, N_RING + 1)]
@@ -146,6 +153,6 @@ print("\nRidge profile vs trough profile (D8 quadrupole amplitude per radius):")
 print(f"{'r':>6}  {'z(spoke)':>9}  {'z(trough)':>10}  {'amp':>8}")
 for i in range(1, N_RING + 1):
     r       = R * (i / N_RING)
-    z_spoke = verts[ring_idx(i, 1)][2]      # j=1 → ridge at θ=11.25°
-    z_trough= verts[ring_idx(i, 3)][2]      # j=3 → mid-trough at θ=33.75°
+    z_spoke = verts[ring_idx(i, spoke_offset)][2]        # ridge at θ=11.25°
+    z_trough= verts[ring_idx(i, 3 * spoke_offset)][2]    # mid-trough at θ=33.75°
     print(f"{r:6.2f}  {z_spoke:9.3f}  {z_trough:10.3f}  {z_spoke - z_trough:8.3f}")
