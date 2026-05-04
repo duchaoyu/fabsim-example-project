@@ -29,7 +29,8 @@ PRESSURE   = 1.0     # inflation pressure (dimensionless FDM units)
 Q_INIT     = 1.0     # uniform starting force density
 Q_MIN      = 0.01    # lower bound (tension-only network)
 INFLATE_IT = 5       # inner iterations to update pressure loads
-MAXITER    = 500     # L-BFGS-B iterations
+INFLATE_DAMP = 1.0   # under-relaxation (1.0 = no damping; <1 stabilises Picard)
+MAXITER    = 2000    # L-BFGS-B iterations
 
 # ── Load mesh ─────────────────────────────────────────────────────────────────
 mesh_target = Mesh.from_obj(INPUT)
@@ -94,7 +95,7 @@ def inflate(xyz_full, q_vec, pressure):
 
         xyz_free_new = scipy.sparse.linalg.spsolve(Dn, p_f)  # (n_free, 3)
         for i, vkey in enumerate(free):
-            xyz[vkey] = xyz_free_new[i]
+            xyz[vkey] = (1.0 - INFLATE_DAMP) * xyz[vkey] + INFLATE_DAMP * xyz_free_new[i]
 
     return xyz
 
@@ -150,7 +151,7 @@ result = minimize(
     jac=True,
     method="L-BFGS-B",
     bounds=bounds,
-    options={"maxiter": MAXITER, "ftol": 1e-12, "gtol": 1e-8, "disp": True},
+    options={"maxiter": MAXITER, "ftol": 1e-8, "gtol": 1e-8, "disp": True},
 )
 
 print(f"\nConverged: {result.success}  |  {result.message}")
