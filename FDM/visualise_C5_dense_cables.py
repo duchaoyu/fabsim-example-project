@@ -29,9 +29,19 @@ RESULT   = os.path.join(HERE, "data", "C5", "mesh_out_C5_dense_latest.json")
 OUT_PNG  = os.path.join(HERE, "data", "C5", "C5_dense_cables.png")
 OUT_JSON = os.path.join(HERE, "data", "C5", "cable_paths_C5_dense.json")
 
-# ── User-specified cable endpoints (0-based OBJ indices) ─────────────────────
-SRC_OBJ = 1091
-DST_OBJ = [949, 1032, 1193, 1218, 1212, 1128, 973, 942]
+# ── User-specified cable waypoints (0-based OBJ indices) ─────────────────────
+# Each tuple: (centroid, hoop_vertex, boundary_vertex)
+CABLES_DEF = [
+    (1091,  995,  949),
+    (1091, 1059, 1032),
+    (1091, 1138, 1193),
+    (1091, 1187, 1218),
+    (1091, 1170, 1212),
+    (1091, 1105, 1128),
+    (1091, 1028,  973),
+    (1091,  977,  942),
+]
+HOOP_VERTS = [c[1] for c in CABLES_DEF]   # the 8 spoke-hoop junction vertices
 
 
 # ── Load OBJ mesh (0-based vertices) ─────────────────────────────────────────
@@ -224,77 +234,72 @@ else:
     print("  no hoop found")
 
 
-# ── Find 8 cable paths via COMPAS-mesh Dijkstra, then map to OBJ ─────────────
-# The OBJ is disconnected (16 components), so we run Dijkstra on the
-# connected COMPAS form-found mesh and map the resulting paths to OBJ vertices.
-src_key  = obj_to_compas_key(SRC_OBJ)
-dst_keys = [obj_to_compas_key(d) for d in DST_OBJ]
-print(f"\nMapped OBJ-{SRC_OBJ} → COMPAS key {src_key}  r={r_xy_c[ck_to_i[src_key]]:.4f}")
-print(f"Finding COMPAS paths to {len(dst_keys)} destinations...")
-dist_src, prev_src = dijkstra_compas(src_key)
-
+# ── Build cables from exact user-specified waypoints ─────────────────────────
+# Each cable: centroid --[inner]--> hoop_vertex --[outer]--> boundary_vertex
+# Paths computed on COMPAS mesh (OBJ is disconnected), mapped back to OBJ.
 cables = {}
 
-# Hoop ring without closing duplicate
+# Hoop ring without closing duplicate (for arc extraction)
 hoop_closed = len(hoop_path) > 1 and hoop_path[0] == hoop_path[-1]
 hoop_ring   = hoop_path[:-1] if hoop_closed else list(hoop_path)
 n_ring      = len(hoop_ring)
-r_hoop_mid  = 0.5 * (r_lo + r_hi)
 
-# ── 8 spokes: centroid → boundary, split at hoop intersection ────────────────
-print(f"\n{'cable':>6}  {'θ°':>7}  {'total':>6}  inner  outer  hoop_v")
-spoke_hoop_pos = []    # position in hoop_ring for each spoke's hoop vertex
+print(f"\n{'k':>2}  {'θ°':>7}  inner  outer")
+spoke_ring_pos = []   # position of each hoop_vertex in hoop_ring
 
-for k, (dst_obj, dst_key) in enumerate(zip(DST_OBJ, dst_keys)):
-    path_c = reconstruct_compas(dst_key, prev_src)
-    path   = compas_path_to_obj(path_c)
-    r_path = r_xy_obj[path]
-    theta  = float(np.degrees(np.arctan2(V_obj[dst_obj, 1], V_obj[dst_obj, 0])) % 360)
+for k, (v_src, v_hoop, v_dst) in enumerate(CABLES_DEF):
+    theta = float(np.degrees(np.arctan2(V_obj[v_dst, 1], V_obj[v_dst, 0])) % 360)
 
-    # Split at the path vertex whose radius is closest to the hoop mid-radius
-    split_i = int(np.argmin(np.abs(r_path - r_hoop_mid)))
-    split_i = max(split_i, 1)
-    split_i = min(split_i, len(path) - 2)
-    hoop_v  = path[split_i]
+    # inner leg: centroid → hoop vertex
+    src_key  = obj_to_compas_key(v_src)
+    hoop_key = obj_to_compas_key(v_hoop)
+    _, prev_inner = dijkstra_compas(src_key)
+    path_inner_c  = reconstruct_compas(hoop_key, prev_inner)
+    path_inner    = compas_path_to_obj(path_inner_c)
+    # ensure it ends exactly at v_hoop
+    if path_inner[-1] != v_hoop:
+        path_inner.append(v_hoop)
 
-    # Find where this spoke meets the hoop ring (nearest hoop vertex in xy)
-    dists_to_ring = np.sum((V_obj[hoop_ring, :2] - V_obj[hoop_v, :2])**2, axis=1)
-    ring_pos      = int(np.argmin(dists_to_ring))
-    # Snap the split point to the nearest hoop ring vertex
-    hoop_v_snapped = hoop_ring[ring_pos]
-    spoke_hoop_pos.append(ring_pos)
+    # outer leg: hoop vertex → boundary
+    dst_key  = obj_to_compas_key(v_dst)
+    _, prev_outer = dijkstra_compas(hoop_key)
+    path_outer_c  = reconstruct_compas(dst_key, prev_outer)
+    path_outer    = compas_path_to_obj(path_outer_c)
+    # ensure it starts exactly at v_hoop
+    if path_outer[0] != v_hoop:
+        path_outer.insert(0, v_hoop)
 
-    # Rebuild sections with hoop vertex snapped to actual ring vertex
-    # Inner: centroid → snapped hoop vertex
-    # Outer: snapped hoop vertex → boundary
-    sec_inner = path[:split_i] + [hoop_v_snapped]
-    sec_outer = [hoop_v_snapped] + path[split_i + 1:]
+    print(f"{k:>2}  {theta:7.2f}  {len(path_inner):5d}  {len(path_outer):5d}")
 
-    print(f"  {k:>4d}  {theta:7.2f}  {len(path):6d}  {len(sec_inner):5d}  "
-          f"{len(sec_outer):5d}  ring[{ring_pos}]={hoop_v_snapped}")
+    cables[f"Si{k}_{theta:.1f}"] = path_inner   # orange
+    cables[f"So{k}_{theta:.1f}"] = path_outer   # red
 
-    cables[f"Si{k}_{theta:.1f}"] = sec_inner  # orange: centroid → hoop
-    cables[f"So{k}_{theta:.1f}"] = sec_outer  # red:    hoop → boundary
+    # Find v_hoop's position in the hoop ring (for arc extraction)
+    if v_hoop in hoop_ring:
+        pos = hoop_ring.index(v_hoop)
+    else:
+        dists = np.sum((V_obj[hoop_ring, :2] - V_obj[v_hoop, :2])**2, axis=1)
+        pos   = int(np.argmin(dists))
+    spoke_ring_pos.append(pos)
 
-# ── Hoop split into 8 arcs between spoke connection points ───────────────────
-# Sort spoke connection positions CCW around the ring
-order     = np.argsort(spoke_hoop_pos)
-positions = [spoke_hoop_pos[i] for i in order]
-thetas    = [float(np.degrees(np.arctan2(V_obj[DST_OBJ[i], 1], V_obj[DST_OBJ[i], 0])) % 360)
+# ── Hoop arcs: split ring at the 8 spoke connection points ───────────────────
+order     = np.argsort(spoke_ring_pos)
+positions = [spoke_ring_pos[i] for i in order]
+thetas    = [float(np.degrees(np.arctan2(V_obj[CABLES_DEF[i][2], 1],
+                                          V_obj[CABLES_DEF[i][2], 0])) % 360)
              for i in order]
 
-print(f"\nHoop arcs (CCW):")
+print(f"\nHoop arcs:")
 for i in range(8):
-    p0  = positions[i]
-    p1  = positions[(i + 1) % 8]
-    th0 = thetas[i]
+    p0 = positions[i]
+    p1 = positions[(i + 1) % 8]
     if p1 > p0:
         arc = [hoop_ring[j] for j in range(p0, p1 + 1)]
     else:
-        arc = [hoop_ring[j] for j in range(p0, n_ring)] + \
-              [hoop_ring[j] for j in range(0, p1 + 1)]
-    print(f"  arc {i}: ring[{p0}..{p1}] → {len(arc)} verts  (spoke θ={th0:.1f}°)")
-    cables[f"Ha{i}_{th0:.1f}"] = arc   # lime: hoop arc
+        arc = ([hoop_ring[j] for j in range(p0, n_ring)] +
+               [hoop_ring[j] for j in range(0, p1 + 1)])
+    print(f"  arc {i}: ring[{p0}..{p1}] → {len(arc)} verts")
+    cables[f"Ha{i}_{thetas[i]:.1f}"] = arc   # lime
 
 with open(OUT_JSON, "w") as f:
     json.dump(cables, f, indent=2)
