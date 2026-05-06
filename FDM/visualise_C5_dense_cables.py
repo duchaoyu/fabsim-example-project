@@ -74,48 +74,53 @@ print(f"FDM q range: [{min(edge_q.values()):.3f}, {max(edge_q.values()):.3f}], "
 #                 the local outward radial direction).
 # Without the radial term, high exponents make Dijkstra traverse the inner
 # hoop tangentially rather than going straight outward, producing jagged paths.
-LAMBDA_RADIAL = 8.0   # tune: higher = straighter paths, lower = more q-driven
+LAMBDA_RADIAL = 3.0   # tune: higher = straighter, lower = more q-driven
 
-def dijkstra_from_apex():
-    dist = {k: np.inf for k in verts_keys}
-    prev = {k: None  for k in verts_keys}
-    dist[apex_key] = 0.0
-    pq = [(0.0, apex_key)]
+def dijkstra_from(src_key, prev_dict=None):
+    """Dijkstra with 1/q^4 + radial-outward bias.
+
+    Radial direction is always measured from apex_xy so both the inner
+    (apex→hoop) and outer (hoop→boundary) Dijkstras bias toward outward
+    travel, keeping paths roughly radial across the whole dome.
+    Returns (dist_dict, prev_dict).
+    """
+    dist_d = {k: np.inf for k in verts_keys}
+    p      = {k: None   for k in verts_keys}
+    dist_d[src_key] = 0.0
+    pq = [(0.0, src_key)]
     while pq:
         d, uk = heapq.heappop(pq)
-        if d > dist[uk]: continue
+        if d > dist_d[uk]: continue
         u_xy = V[key_to_idx[uk], :2]
         r_u  = float(np.linalg.norm(u_xy - apex_xy))
         for vk in adj[uk]:
             v_xy = V[key_to_idx[vk], :2]
             qe   = edge_q[tuple(sorted([uk, vk]))]
             q_cost = 1.0 / max(qe, 1e-6) ** 4
-            # radial alignment: edge should point away from apex
-            e_vec = v_xy - u_xy
-            e_len = float(np.linalg.norm(e_vec))
+            e_vec  = v_xy - u_xy
+            e_len  = float(np.linalg.norm(e_vec))
             if r_u > 1e-6 and e_len > 1e-9:
                 radial_dir = (u_xy - apex_xy) / r_u
                 cos_r = float(np.dot(e_vec / e_len, radial_dir))
             else:
                 cos_r = 0.0
-            radial_cost = LAMBDA_RADIAL * (1.0 - cos_r)   # 0 if perfectly outward
-            w  = q_cost + radial_cost
+            w  = q_cost + LAMBDA_RADIAL * (1.0 - cos_r)
             nd = d + w
-            if nd < dist[vk]:
-                dist[vk] = nd
-                prev[vk] = uk
+            if nd < dist_d[vk]:
+                dist_d[vk] = nd
+                p[vk] = uk
                 heapq.heappush(pq, (nd, vk))
-    return dist, prev
+    return dist_d, p
 
-dist, prev = dijkstra_from_apex()
-
-def reconstruct(target):
+def reconstruct_path(target, p):
     path = []
     cur = target
     while cur is not None:
         path.append(cur)
-        cur = prev[cur]
+        cur = p[cur]
     return list(reversed(path))
+
+dist, prev = dijkstra_from(apex_key)
 
 # ── Greedy boundary endpoint selection ────────────────────────────────────────
 # Score each boundary vertex by (a) max incident q — good cable termination
@@ -154,17 +159,6 @@ selected_th = [selected_th[i] for i in ord_th]
 print(f"\n8 boundary endpoints (greedy, min-sep={MIN_SEP_DEG}°):")
 for k, (bk, th) in enumerate(zip(selected, selected_th)):
     print(f"  cable {k}: vertex {bk}  θ={th:6.2f}°  Dijkstra-dist={dist[bk]:.3f}")
-
-# ── Reconstruct full apex→boundary paths ──────────────────────────────────────
-full_paths = []
-print("\nFull spoke paths (apex→boundary):")
-for k, (bk, theta) in enumerate(zip(selected, selected_th)):
-    path = reconstruct(bk)
-    full_paths.append(path)
-    end_xy = V[key_to_idx[path[-1]], :2]
-    qs_path = [edge_q[tuple(sorted([path[i], path[i+1]]))] for i in range(len(path)-1)]
-    print(f"  S{k} θ={theta:6.2f}°: {len(path)} verts, "
-          f"mean q={np.mean(qs_path):.3f}, min q={min(qs_path):.3f}")
 
 cables    = {}        # filled after hoop detection (16 spoke sections + hoop)
 r_hoop_mid = None    # set during hoop detection, used to split spokes
@@ -277,25 +271,50 @@ if edge_circ:
     else:
         print(f"  no inner ring found (max bin count {int(bin_count.max())})")
 
-# ── Split each spoke at the inner hoop → 16 cable sections ────────────────────
-# Each full apex→boundary path crosses the inner hoop around r ≈ r_hoop_mid.
-# Find the vertex on the path with r closest to r_hoop_mid and split there.
-# Inner section: apex → hoop node (converges at center)
-# Outer section: hoop node → boundary
-print("\nSplitting spokes at inner hoop (16 sections):")
-r_xy_verts = np.linalg.norm(V[:, :2], axis=1)
-for k, (path, theta) in enumerate(zip(full_paths, selected_th)):
-    r_path = np.array([r_xy_verts[key_to_idx[vk]] for vk in path])
-    if r_hoop_mid is not None:
-        split_i = int(np.argmin(np.abs(r_path - r_hoop_mid)))
-    else:
-        split_i = len(path) // 2      # fallback: midpoint
-    inner = path[:split_i + 1]       # apex … hoop-node  (ends at center-side hoop)
-    outer = path[split_i:]           # hoop-node … boundary
+# ── Two-phase spoke paths: apex→hoop_v (inner) + hoop_v→boundary (outer) ──────
+# Old approach: split a single apex→boundary path at the nearest-radius vertex.
+# Problem: that vertex is rarely ON the hoop polygon, so inner and outer appear
+# disconnected in the plot.
+#
+# New approach:
+#   1. For each spoke angle θ_k, find the hoop polygon vertex closest to θ_k.
+#   2. Inner path: apex → hoop_v via the apex Dijkstra (guaranteed to start
+#      at the apex center and end exactly at hoop_v).
+#   3. Outer path: run a fresh Dijkstra from hoop_v, reconstruct hoop_v →
+#      boundary endpoint (guaranteed to start exactly at hoop_v).
+# Both halves share hoop_v ⟹ they are always connected.
+hoop_raw = cables.get("H0_inner_hoop", [])
+# Remove closing duplicate vertex if hoop is stored as closed polygon
+hoop_unique = hoop_raw[:-1] if (len(hoop_raw) > 1 and hoop_raw[0] == hoop_raw[-1]) \
+              else list(hoop_raw)
+hoop_v_th = [np.degrees(np.arctan2(V[key_to_idx[v], 1] - apex_xy[1],
+                                    V[key_to_idx[v], 0] - apex_xy[0])) % 360.0
+             for v in hoop_unique]
+
+print("\nTwo-phase spoke paths (apex → hoop_v → boundary):")
+for k, (theta, bk) in enumerate(zip(selected_th, selected)):
+    # Match spoke angle to nearest hoop vertex
+    diffs = [abs(((h - theta + 180) % 360) - 180) for h in hoop_v_th]
+    hi    = int(np.argmin(diffs))
+    hoop_v = hoop_unique[hi]
+    hoop_th = hoop_v_th[hi]
+
+    # Inner: apex → hoop_v (uses apex Dijkstra tree)
+    inner = reconstruct_path(hoop_v, prev)
+
+    # Outer: hoop_v → boundary (fresh Dijkstra from hoop_v)
+    _, prev_h = dijkstra_from(hoop_v)
+    outer = reconstruct_path(bk, prev_h)
+
     cables[f"Si{k}_{theta:.1f}deg"] = [int(v) for v in inner]
     cables[f"So{k}_{theta:.1f}deg"] = [int(v) for v in outer]
-    print(f"  S{k} θ={theta:5.1f}°: split at idx {split_i} (r={r_path[split_i]:.3f})  "
-          f"inner {len(inner)}v, outer {len(outer)}v")
+
+    inner_r = float(np.linalg.norm(V[key_to_idx[hoop_v], :2] - apex_xy))
+    qs_in   = [edge_q[tuple(sorted([inner[i], inner[i+1]]))] for i in range(len(inner)-1)]
+    qs_out  = [edge_q[tuple(sorted([outer[i], outer[i+1]]))] for i in range(len(outer)-1)]
+    print(f"  S{k} θ={theta:5.1f}°  hoop_v={hoop_v}(θ={hoop_th:.1f}°,r={inner_r:.3f})  "
+          f"inner {len(inner)}v q̄={np.mean(qs_in):.2f}  "
+          f"outer {len(outer)}v q̄={np.mean(qs_out):.2f}")
 
 with open(OUT_JSON, "w") as f:
     json.dump(cables, f, indent=2)
