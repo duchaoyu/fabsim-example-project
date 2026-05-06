@@ -47,6 +47,7 @@ print(f"  x[{V[:,0].min():.4f},{V[:,0].max():.4f}]  z[{V[:,2].min():.4f},{V[:,2]
 r_xy = np.linalg.norm(V[:, :2], axis=1)
 apex_idx = int(np.argmin(r_xy))
 apex_key = verts_keys[apex_idx]
+apex_xy  = V[apex_idx, :2]          # xy position of apex (used in Dijkstra)
 print(f"Apex: vert {apex_key}, xy_r={r_xy[apex_idx]:.5f}, z={V[apex_idx,2]:.4f}")
 
 
@@ -65,18 +66,40 @@ print(f"FDM q range: [{min(edge_q.values()):.3f}, {max(edge_q.values()):.3f}], "
       f"mean={np.mean(list(edge_q.values())):.3f}")
 
 
-# ── Dijkstra from apex with weight = 1/q² (stronger high-q preference) ──────
+# ── Dijkstra from apex with weight = 1/q^4 + radial-alignment penalty ─────────
+# Two contributions:
+#   q-cost      = 1/q^4  — very strongly prefers high-q (FDM-ridge) edges
+#   radial-cost = λ*(1 − cos θ)  — penalises edges that don't point radially
+#                 outward from the apex (θ = angle between edge direction and
+#                 the local outward radial direction).
+# Without the radial term, high exponents make Dijkstra traverse the inner
+# hoop tangentially rather than going straight outward, producing jagged paths.
+LAMBDA_RADIAL = 8.0   # tune: higher = straighter paths, lower = more q-driven
+
 def dijkstra_from_apex():
     dist = {k: np.inf for k in verts_keys}
-    prev = {k: None for k in verts_keys}
+    prev = {k: None  for k in verts_keys}
     dist[apex_key] = 0.0
     pq = [(0.0, apex_key)]
     while pq:
         d, uk = heapq.heappop(pq)
         if d > dist[uk]: continue
+        u_xy = V[key_to_idx[uk], :2]
+        r_u  = float(np.linalg.norm(u_xy - apex_xy))
         for vk in adj[uk]:
-            qe = edge_q[tuple(sorted([uk, vk]))]
-            w = 1.0 / max(qe, 1e-6) ** 2        # quadratic: strongly prefers high q
+            v_xy = V[key_to_idx[vk], :2]
+            qe   = edge_q[tuple(sorted([uk, vk]))]
+            q_cost = 1.0 / max(qe, 1e-6) ** 4
+            # radial alignment: edge should point away from apex
+            e_vec = v_xy - u_xy
+            e_len = float(np.linalg.norm(e_vec))
+            if r_u > 1e-6 and e_len > 1e-9:
+                radial_dir = (u_xy - apex_xy) / r_u
+                cos_r = float(np.dot(e_vec / e_len, radial_dir))
+            else:
+                cos_r = 0.0
+            radial_cost = LAMBDA_RADIAL * (1.0 - cos_r)   # 0 if perfectly outward
+            w  = q_cost + radial_cost
             nd = d + w
             if nd < dist[vk]:
                 dist[vk] = nd
@@ -85,6 +108,7 @@ def dijkstra_from_apex():
     return dist, prev
 
 dist, prev = dijkstra_from_apex()
+
 def reconstruct(target):
     path = []
     cur = target
@@ -93,35 +117,28 @@ def reconstruct(target):
         cur = prev[cur]
     return list(reversed(path))
 
-# Pick 8 boundary endpoints: smallest-distance per 45° angular bucket
+# ── Greedy boundary endpoint selection ────────────────────────────────────────
+# Score each boundary vertex by (a) max incident q — good cable termination
+# and (b) reachability from the apex via high-q edges (small Dijkstra distance).
+# Pick 8 endpoints greedily, enforcing ≥ 25° angular separation so all 8 spokes
+# are distinct directions.  This is more robust than sector-based selection when
+# the actual FDM spokes are not exactly at k×45°.
+bdry_list  = list(bdry_keys)
+bdry_th    = np.array([np.degrees(np.arctan2(V[key_to_idx[bk], 1] - apex_xy[1],
+                                              V[key_to_idx[bk], 0] - apex_xy[0])) % 360.0
+                       for bk in bdry_list])
+bdry_dist  = np.array([dist[k] for k in bdry_list])
+bdry_max_q = np.array([max(edge_q[tuple(sorted([bk, n]))] for n in adj[bk])
+                       for bk in bdry_list])
+inv_dist   = 1.0 / (bdry_dist + 1e-6)
+score_raw  = bdry_max_q / bdry_max_q.max() + inv_dist / inv_dist.max()
+
 def angle_diff_deg(a, b):
     return abs(((a - b + 180.0) % 360.0) - 180.0)
 
-apex_xy = V[apex_idx, :2]
-bdry_list = list(bdry_keys)
-bdry_th = []
-for bk in bdry_list:
-    bv = V[key_to_idx[bk], :2] - apex_xy
-    bdry_th.append(np.degrees(np.arctan2(bv[1], bv[0])) % 360.0)
-bdry_th = np.array(bdry_th)
-bdry_dist = np.array([dist[k] for k in bdry_list])
-
-# Best cable terminus = boundary vertex whose highest-q incident edge is largest.
-# That is the vertex where the FDM-found radial cable actually anchors.
-bdry_max_q = []
-for bk in bdry_list:
-    qs_b = [edge_q[tuple(sorted([bk, n]))] for n in adj[bk]]
-    bdry_max_q.append(max(qs_b))
-bdry_max_q = np.array(bdry_max_q)
-
-# Score combines anchor-q (high = good cable terminus) and apex distance
-# (small = reachable on a high-q chain). Normalise both to [0,1] and add.
-inv_dist = 1.0 / (bdry_dist + 1e-6)
-score = bdry_max_q / bdry_max_q.max() + inv_dist / inv_dist.max()
-
-N_CABLES    = 8
+N_CABLES   = 8
 MIN_SEP_DEG = 25.0
-order = np.argsort(-score)                      # descending
+order = np.argsort(-score_raw)
 selected, selected_th = [], []
 for i in order:
     if len(selected) == N_CABLES:
@@ -130,28 +147,27 @@ for i in order:
     if all(angle_diff_deg(th_i, t) > MIN_SEP_DEG for t in selected_th):
         selected.append(bdry_list[i])
         selected_th.append(th_i)
-# Sort by angle for nicer printing
-ord_th = np.argsort(selected_th)
+
+ord_th      = np.argsort(selected_th)
 selected    = [selected[i] for i in ord_th]
 selected_th = [selected_th[i] for i in ord_th]
-SPOKE_ANGLES = list(selected_th)
-print(f"\n8 cable endpoints (angle, dist) — by min-q-distance from apex:")
+print(f"\n8 boundary endpoints (greedy, min-sep={MIN_SEP_DEG}°):")
 for k, (bk, th) in enumerate(zip(selected, selected_th)):
-    print(f"  cable {k}: vertex {bk}  θ={th:6.2f}°  dist={dist[bk]:.3f}")
+    print(f"  cable {k}: vertex {bk}  θ={th:6.2f}°  Dijkstra-dist={dist[bk]:.3f}")
 
-cables = {}
-print("\nReconstructing high-q paths:")
+# ── Reconstruct full apex→boundary paths ──────────────────────────────────────
+full_paths = []
+print("\nFull spoke paths (apex→boundary):")
 for k, (bk, theta) in enumerate(zip(selected, selected_th)):
     path = reconstruct(bk)
-    name = f"S{k}_{theta:.2f}deg"
-    cables[name] = [int(v) for v in path]
+    full_paths.append(path)
     end_xy = V[key_to_idx[path[-1]], :2]
-    end_th = np.degrees(np.arctan2(end_xy[1], end_xy[0]))
-    end_r  = np.linalg.norm(end_xy)
-    # mean q along path
-    qs = [edge_q[tuple(sorted([path[i], path[i+1]]))] for i in range(len(path)-1)]
-    print(f"  {name}: {len(path)} verts, end θ={end_th:6.2f}°, r={end_r:.4f}, "
-          f"mean q={np.mean(qs):.3f}, min q={min(qs):.3f}")
+    qs_path = [edge_q[tuple(sorted([path[i], path[i+1]]))] for i in range(len(path)-1)]
+    print(f"  S{k} θ={theta:6.2f}°: {len(path)} verts, "
+          f"mean q={np.mean(qs_path):.3f}, min q={min(qs_path):.3f}")
+
+cables    = {}        # filled after hoop detection (16 spoke sections + hoop)
+r_hoop_mid = None    # set during hoop detection, used to split spokes
 
 # ── Circular (hoop) cable: high-q INNER circumferential ring ─────────────────
 # The FDM force flow shows a clear inner polygonal ring (around r ≈ 0.2 for
@@ -254,11 +270,32 @@ if edge_circ:
             if len(path) > 200: break
 
         cables["H0_inner_hoop"] = [int(v) for v in path]
+        r_hoop_mid = 0.5 * (r_lo + r_hi)
         hoop_added = True
         print(f"  inner hoop: {len(path)} verts at r ≈ [{r_lo:.3f}, {r_hi:.3f}], "
               f"closed = {path[0] == path[-1]}")
     else:
-        print(f"  no inner ring found (max bin count {int(hist.max()) if len(hist) else 0})")
+        print(f"  no inner ring found (max bin count {int(bin_count.max())})")
+
+# ── Split each spoke at the inner hoop → 16 cable sections ────────────────────
+# Each full apex→boundary path crosses the inner hoop around r ≈ r_hoop_mid.
+# Find the vertex on the path with r closest to r_hoop_mid and split there.
+# Inner section: apex → hoop node (converges at center)
+# Outer section: hoop node → boundary
+print("\nSplitting spokes at inner hoop (16 sections):")
+r_xy_verts = np.linalg.norm(V[:, :2], axis=1)
+for k, (path, theta) in enumerate(zip(full_paths, selected_th)):
+    r_path = np.array([r_xy_verts[key_to_idx[vk]] for vk in path])
+    if r_hoop_mid is not None:
+        split_i = int(np.argmin(np.abs(r_path - r_hoop_mid)))
+    else:
+        split_i = len(path) // 2      # fallback: midpoint
+    inner = path[:split_i + 1]       # apex … hoop-node  (ends at center-side hoop)
+    outer = path[split_i:]           # hoop-node … boundary
+    cables[f"Si{k}_{theta:.1f}deg"] = [int(v) for v in inner]
+    cables[f"So{k}_{theta:.1f}deg"] = [int(v) for v in outer]
+    print(f"  S{k} θ={theta:5.1f}°: split at idx {split_i} (r={r_path[split_i]:.3f})  "
+          f"inner {len(inner)}v, outer {len(outer)}v")
 
 with open(OUT_JSON, "w") as f:
     json.dump(cables, f, indent=2)
@@ -283,19 +320,21 @@ poly = Poly3DCollection(face_verts, alpha=0.7,
                         edgecolor="white", linewidth=0.08)
 ax1.add_collection3d(poly)
 
+def cable_color(name):
+    if name.startswith("H"):  return "lime",   "yellow"
+    if name.startswith("Si"): return "orange", "gold"
+    return "red", "tomato"                         # "So" outer sections
+
 for name, path in cables.items():
     pts = np.array([V[key_to_idx[v]] for v in path])
-    is_hoop = name.startswith("H")
-    col   = "lime"   if is_hoop else "red"
-    msize = 10       if is_hoop else 14
+    col, mcol = cable_color(name)
     ax1.plot(pts[:, 0], pts[:, 1], pts[:, 2],
-             color=col, linewidth=2.0, alpha=0.95)
+             color=col, linewidth=2.2, alpha=0.95)
     ax1.scatter(pts[:, 0], pts[:, 1], pts[:, 2],
-                color="yellow" if is_hoop else "orange",
-                s=msize, edgecolors=col, linewidths=0.4, zorder=5)
+                color=mcol, s=10, edgecolors=col, linewidths=0.4, zorder=5)
 
-ax1.set_title(f"C5 dense FDM result — {len(V)}v / {len(F)}f  "
-              f"(red = 8 spokes, lime = inner hoop)",
+ax1.set_title(f"C5 dense FDM — {len(V)}v/{len(F)}f  "
+              f"(orange=inner, red=outer, lime=hoop)",
               color="white", fontsize=11)
 ax1.set_xlabel("x", color="white", fontsize=8)
 ax1.set_ylabel("y", color="white", fontsize=8)
@@ -332,25 +371,23 @@ ax2.scatter(bdry_pts[:, 0], bdry_pts[:, 1], c="cyan", s=18, zorder=4,
             label=f"boundary ({len(bdry_keys)})")
 
 for name, path in cables.items():
-    is_hoop = name.startswith("H")
     pts = np.array([V[key_to_idx[v]] for v in path])
-    line_col = "lime" if is_hoop else "red"
-    pt_col   = "yellow" if is_hoop else "orange"
-    ax2.plot(pts[:, 0], pts[:, 1], color=line_col, linewidth=2.4, alpha=0.95)
-    ax2.scatter(pts[:, 0], pts[:, 1], color=pt_col, s=18,
-                edgecolors=line_col, linewidths=0.5, zorder=5)
-    if is_hoop:
+    col, mcol = cable_color(name)
+    ax2.plot(pts[:, 0], pts[:, 1], color=col, linewidth=2.4, alpha=0.95)
+    ax2.scatter(pts[:, 0], pts[:, 1], color=mcol, s=14,
+                edgecolors=col, linewidths=0.5, zorder=5)
+    if name.startswith("H") or name.startswith("Si"):
         continue
+    # annotate only outer sections at the boundary
     end = pts[-1]
     angle = float(name.split("_")[1].rstrip("deg"))
     ax2.scatter(end[0], end[1], c="yellow", s=90, zorder=6, marker="*",
                 edgecolors="red", linewidths=1)
     ax2.annotate(f"{angle:.1f}°", xy=(end[0], end[1]),
-                 xytext=(end[0]*1.13, end[1]*1.13), color="red", fontsize=8,
+                 xytext=(end[0]*1.13, end[1]*1.13), color="white", fontsize=8,
                  ha="center", va="center")
 
-ax2.set_title("Top-down — edge colour/thickness ∝ q (FDM force flow), "
-              "red = 8 cables along high-q paths from apex",
+ax2.set_title("Top-down — q flow (plasma), orange=inner 8, red=outer 8, lime=hoop",
               color="white", fontsize=9)
 ax2.set_xlabel("x", color="white", fontsize=8)
 ax2.set_ylabel("y", color="white", fontsize=8)
