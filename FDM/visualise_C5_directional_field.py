@@ -206,10 +206,30 @@ spoke_mask = dist_spoke < CDIST
 face_lambda[spoke_mask] = LAMBDA_SPOKE
 face_d1_tgt[spoke_mask] = d1[spoke_mask]   # spoke d1 already radial
 
-print(f"Constraints: {spoke_mask.sum()} spoke (λ={LAMBDA_SPOKE:.0f})  "
-      f"{(hoop_mask & ~spoke_mask).sum()} hoop  "
-      f"{sum(1 for fi in bdry_face_set if not spoke_mask[fi] and not hoop_mask[fi])} boundary"
-      f"  (λ={LAMBDA_HOOP:.0f} each)")
+# Extend spoke constraint to immediate face-neighbours of spoke faces.
+# This pulls junction faces (next to spoke + hoop/boundary) toward radial.
+spoke_nbr_mask = np.zeros(nf, dtype=bool)
+for fi in range(nf):
+    if spoke_mask[fi]:
+        for fj in face_adj[fi]:
+            if not spoke_mask[fj]:
+                spoke_nbr_mask[fj] = True
+
+for fi in np.where(spoke_nbr_mask)[0]:
+    n = normals[fi]
+    radial = centroids[fi] - apex_pos
+    radial -= np.dot(radial, n) * n
+    L = np.linalg.norm(radial)
+    if L > 1e-10:
+        face_lambda[fi] = LAMBDA_SPOKE
+        face_d1_tgt[fi] = radial / L
+
+print(f"Constraints: {spoke_mask.sum()} spoke  "
+      f"{spoke_nbr_mask.sum()} spoke-neighbours  "
+      f"(λ={LAMBDA_SPOKE:.0f})")
+print(f"             {(hoop_mask & ~spoke_mask & ~spoke_nbr_mask).sum()} hoop  "
+      f"{sum(1 for fi in bdry_face_set if not spoke_mask[fi] and not spoke_nbr_mask[fi])} boundary"
+      f"  (λ={LAMBDA_HOOP:.0f})")
 
 # Penalty Laplacian solve per component
 L_mat = lil_matrix((nf, nf))
