@@ -127,9 +127,13 @@ for fi in range(len(F)):
 
 print("Directional field computed (initial, cable-aligned).")
 
-# ── Laplacian smoothing with cable constraints ────────────────────────────────
-# Face-face adjacency (shared edge)
+# ── Laplacian smoothing — tiered constraints ──────────────────────────────────
+# Priority 1 (λ=1000): radial spokes (Si, So)
+# Priority 2 (λ=150):  inner hoop ring + outer mesh boundary (d1 ⊥ those curves)
+
 nf = len(F)
+
+# Face-face adjacency (shared edge)
 edge_to_faces = {}
 for fi, tri in enumerate(F):
     for a, b in [(0,1),(1,2),(2,0)]:
@@ -141,7 +145,10 @@ for fl in edge_to_faces.values():
         face_adj[fl[0]].append(fl[1])
         face_adj[fl[1]].append(fl[0])
 
-# Distance from each face centroid to the nearest point on any cable segment
+# Outer boundary faces (edges with only one adjacent face)
+bdry_face_set = {fl[0] for fl in edge_to_faces.values() if len(fl) == 1}
+
+# Distance from each face centroid to cable segments, split by type
 def pt_seg_dist_batch(pts, p0, p1):
     d = p1 - p0
     L2 = float(np.dot(d, d))
@@ -150,55 +157,86 @@ def pt_seg_dist_batch(pts, p0, p1):
     t = np.clip(((pts - p0) @ d) / L2, 0.0, 1.0)
     return np.linalg.norm(pts - (p0 + t[:, None] * d), axis=1)
 
-dist_to_cable = np.full(nf, np.inf)
+dist_spoke = np.full(nf, np.inf)
+dist_hoop  = np.full(nf, np.inf)
 for si in range(len(seg_p0)):
-    dist_to_cable = np.minimum(dist_to_cable,
-                               pt_seg_dist_batch(centroids, seg_p0[si], seg_p1[si]))
+    d = pt_seg_dist_batch(centroids, seg_p0[si], seg_p1[si])
+    if seg_is_hoop[si]:
+        dist_hoop = np.minimum(dist_hoop, d)
+    else:
+        dist_spoke = np.minimum(dist_spoke, d)
 
-# Mean edge length → constraint distance threshold
 edge_vecs = (V[F[:, 1]] - V[F[:, 0]],
              V[F[:, 2]] - V[F[:, 1]],
              V[F[:, 0]] - V[F[:, 2]])
 mean_edge = float(np.mean([np.linalg.norm(ev, axis=1).mean() for ev in edge_vecs]))
-CONSTRAINT_DIST = 0.8 * mean_edge
-constrained = dist_to_cable < CONSTRAINT_DIST
-print(f"Constrained faces: {constrained.sum()}/{nf}  (dist < {CONSTRAINT_DIST:.4f})")
+CDIST = 0.8 * mean_edge
 
-# Ensure consistent outward orientation before averaging
+LAMBDA_SPOKE = 1000.0
+LAMBDA_HOOP  =  150.0
+LAMBDA_BDRY  =  150.0
+
+# Consistent outward orientation before averaging
 apex_pos = V[1091]
 for fi in range(nf):
     if np.dot(d1[fi], centroids[fi] - apex_pos) < 0:
         d1[fi] = -d1[fi]
 
-# Penalty Laplacian:  (L + λ·I_constrained) x = λ · d1_constrained
-LAMBDA = 500.0
+# Build per-face penalty and target; higher priority overwrites lower
+face_lambda = np.zeros(nf)
+face_d1_tgt = d1.copy()
+
+# Priority 2a: hoop constraints (d1 already set to radial for hoop faces)
+hoop_mask = dist_hoop < CDIST
+face_lambda[hoop_mask] = LAMBDA_HOOP
+
+# Priority 2b: outer boundary faces — d1 = radial (outward from apex)
+for fi in bdry_face_set:
+    if face_lambda[fi] < LAMBDA_BDRY:
+        n = normals[fi]
+        radial = centroids[fi] - apex_pos
+        radial -= np.dot(radial, n) * n
+        L = np.linalg.norm(radial)
+        if L > 1e-10:
+            face_lambda[fi] = LAMBDA_BDRY
+            face_d1_tgt[fi] = radial / L
+
+# Priority 1: spoke constraints (overwrite anything below)
+spoke_mask = dist_spoke < CDIST
+face_lambda[spoke_mask] = LAMBDA_SPOKE
+face_d1_tgt[spoke_mask] = d1[spoke_mask]   # spoke d1 already radial
+
+print(f"Constraints: {spoke_mask.sum()} spoke (λ={LAMBDA_SPOKE:.0f})  "
+      f"{(hoop_mask & ~spoke_mask).sum()} hoop  "
+      f"{sum(1 for fi in bdry_face_set if not spoke_mask[fi] and not hoop_mask[fi])} boundary"
+      f"  (λ={LAMBDA_HOOP:.0f} each)")
+
+# Penalty Laplacian solve per component
 L_mat = lil_matrix((nf, nf))
 for fi in range(nf):
-    deg = len(face_adj[fi])
-    L_mat[fi, fi] = deg + (LAMBDA if constrained[fi] else 0.0)
+    L_mat[fi, fi] = len(face_adj[fi]) + face_lambda[fi]
     for fj in face_adj[fi]:
         L_mat[fi, fj] = -1.0
 L_csr = L_mat.tocsr()
 
 d1_smooth = np.zeros((nf, 3))
 for c in range(3):
-    b = np.where(constrained, LAMBDA * d1[:, c], 0.0)
-    d1_smooth[:, c] = spsolve(L_csr, b)
+    d1_smooth[:, c] = spsolve(L_csr, face_lambda * face_d1_tgt[:, c])
 
-# Project smoothed vectors back onto each face tangent plane and renormalise
+# Project back onto tangent planes and renormalise
 for fi in range(nf):
     n = normals[fi]
     v = d1_smooth[fi] - np.dot(d1_smooth[fi], n) * n
     L = np.linalg.norm(v)
     if L < 1e-10:
-        v = d1[fi]   # fallback
+        v = d1[fi]
         L = np.linalg.norm(v)
     d1[fi] = v / max(L, 1e-10)
     d2[fi] = np.cross(n, d1[fi])
     L2 = np.linalg.norm(d2[fi])
     if L2 > 1e-10: d2[fi] /= L2
 
-print("Directional field smoothed.")
+print("Directional field smoothed (spoke > hoop = boundary).")
 
 # ── Save JSON ─────────────────────────────────────────────────────────────────
 field_out = {str(fi): {"d1": d1[fi].tolist(), "d2": d2[fi].tolist(),
