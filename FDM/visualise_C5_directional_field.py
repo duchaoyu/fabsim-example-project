@@ -201,17 +201,14 @@ for fi in bdry_face_set:
             face_lambda[fi] = LAMBDA_BDRY
             face_d1_tgt[fi] = radial / L
 
-# Priority 1: spoke faces — hard Dirichlet
+# Priority 1: spoke faces — hard Dirichlet (directly on cable)
 spoke_mask = dist_spoke < CDIST
 face_d1_tgt[spoke_mask] = d1[spoke_mask]
 
-# Immediate neighbours of spoke faces — also hard Dirichlet (same radial direction)
-spoke_nbr_mask = np.zeros(nf, dtype=bool)
-for fi in range(nf):
-    if spoke_mask[fi]:
-        for fj in face_adj[fi]:
-            if not spoke_mask[fj]:
-                spoke_nbr_mask[fj] = True
+# Spoke-neighbour zone — spatial dilation (avoids disconnected-component problem:
+# face_adj cannot cross cable boundaries, but dist_spoke can).
+# All faces within 2×CDIST of a spoke get the same hard radial constraint.
+spoke_nbr_mask = (dist_spoke < 2.0 * CDIST) & ~spoke_mask
 
 for fi in np.where(spoke_nbr_mask)[0]:
     n = normals[fi]
@@ -221,7 +218,7 @@ for fi in np.where(spoke_nbr_mask)[0]:
     if L > 1e-10:
         face_d1_tgt[fi] = radial / L
 
-# Hard mask = spokes + their neighbours
+# Hard mask = spokes + their spatial neighbours
 hard_mask = spoke_mask | spoke_nbr_mask
 
 # Remaining soft constraints (hoop / boundary) — penalty only where not hard
