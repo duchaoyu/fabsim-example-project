@@ -50,106 +50,42 @@ apex_key = verts_keys[apex_idx]
 print(f"Apex: vert {apex_key}, xy_r={r_xy[apex_idx]:.5f}, z={V[apex_idx,2]:.4f}")
 
 
-# ── Detect 8 ridge angles directly from this FDM result ──────────────────────
-from scipy.interpolate import LinearNDInterpolator
-from scipy.signal import find_peaks
-interp = LinearNDInterpolator(V[:, :2], V[:, 2])
-
-N_TH = 1440
-th_grid = np.linspace(0, 360, N_TH, endpoint=False)
-radii_sample = np.linspace(0.20 * r_xy.max(), 0.92 * r_xy.max(), 19)
-ridge_avg = np.zeros(N_TH)
-for r in radii_sample:
-    z_ring = np.array([interp(r * np.cos(np.radians(t)), r * np.sin(np.radians(t)))
-                       for t in th_grid])
-    if np.any(~np.isfinite(z_ring)):
-        z_ring = np.where(np.isfinite(z_ring), z_ring, np.nanmean(z_ring))
-    z_centred = z_ring - z_ring.mean()
-    if z_centred.std() > 1e-6:
-        ridge_avg += z_centred / z_centred.std()
-ridge_avg /= len(radii_sample)
-
-# Smooth the ridge profile
-rs = ridge_avg.copy()
-for _ in range(5):
-    rs = (np.roll(rs, -1) + 2*rs + np.roll(rs, 1)) / 4
-
-peaks, props = find_peaks(rs, distance=N_TH // 12, prominence=0.001)
-order = np.argsort(props["prominences"])[::-1][:8]
-SPOKE_ANGLES = sorted(float(th_grid[p]) for p in peaks[order])
-print(f"Detected ridge angles from FDM result:")
-for i, a in enumerate(SPOKE_ANGLES):
-    print(f"  spoke {i}: θ = {a:6.2f}°")
-
-
-# ── Dijkstra cable extraction along radial spoke lines ───────────────────────
-# For each spoke at angle θ, build a graph whose edge weight = midpoint
-# perpendicular distance to the radial line (apex → boundary @ θ), plus a tiny
-# Euclidean term to break ties. Dijkstra from apex to the boundary vertex
-# nearest θ gives the cleanest mesh-edge path that hugs the spoke.
+# ── Force-density-driven cable extraction ────────────────────────────────────
+# Cables = paths from apex to boundary that maximise force-density. We use
+# Dijkstra from apex with edge weight = 1/q (so high-q edges are short),
+# pick 8 distinct boundary endpoints with smallest distance, then take their
+# Dijkstra paths back to apex. This recovers exactly the radial high-q
+# "spokes" that the FDM optimisation produced.
 import heapq
 
-def angle_diff_deg(a, b):
-    return abs(((a - b + 180.0) % 360.0) - 180.0)
+edges_list = list(mesh.edges())
+edge_q = {tuple(sorted([u, v])): float(mesh.edge_attribute((u, v), "qpre"))
+          for u, v in edges_list}
+print(f"FDM q range: [{min(edge_q.values()):.3f}, {max(edge_q.values()):.3f}], "
+      f"mean={np.mean(list(edge_q.values())):.3f}")
 
-# All mesh edges (both directions) for adjacency
-edges_set = set()
-for k1 in verts_keys:
-    for k2 in adj[k1]:
-        if k1 < k2:
-            edges_set.add((k1, k2))
-        else:
-            edges_set.add((k2, k1))
 
-apex_xy = V[apex_idx, :2]
-
-def dijkstra_spoke(theta_deg):
-    # Spoke direction unit vector and its 90° normal
-    th = np.radians(theta_deg)
-    u  = np.array([np.cos(th), np.sin(th)])
-    n  = np.array([-np.sin(th), np.cos(th)])
-
-    # Pick boundary target: vertex with smallest angular deviation from θ that
-    # also has a positive projection along u (i.e. on the correct half-plane).
-    proj_u = (V[:, :2] - apex_xy) @ u
-    proj_n = (V[:, :2] - apex_xy) @ n
-    best_t, best_score = None, np.inf
-    for k in bdry_keys:
-        i = key_to_idx[k]
-        if proj_u[i] <= 0:
-            continue
-        # angular deviation from spoke direction
-        bv = V[i, :2] - apex_xy
-        bth = np.degrees(np.arctan2(bv[1], bv[0]))
-        s = angle_diff_deg(bth, theta_deg)
-        if s < best_score:
-            best_t, best_score = k, s
-    target = best_t
-
-    # Edge weight: midpoint |perpendicular distance from spoke line|
-    # plus tiny eucl-length term to break ties for vertices already on the line.
+# ── Dijkstra from apex with weight = 1/q (force-density-driven) ──────────────
+def dijkstra_from_apex():
     dist = {k: np.inf for k in verts_keys}
     prev = {k: None for k in verts_keys}
     dist[apex_key] = 0.0
     pq = [(0.0, apex_key)]
     while pq:
-        d, u_k = heapq.heappop(pq)
-        if d > dist[u_k]: continue
-        if u_k == target: break
-        u_idx = key_to_idx[u_k]
-        for v_k in adj[u_k]:
-            v_idx = key_to_idx[v_k]
-            mid_xy = 0.5 * (V[u_idx, :2] + V[v_idx, :2])
-            perp   = abs((mid_xy - apex_xy) @ n)
-            eucl   = np.linalg.norm(V[v_idx, :2] - V[u_idx, :2])
-            w = perp + 0.001 * eucl              # heavy bias toward the radial line
+        d, uk = heapq.heappop(pq)
+        if d > dist[uk]: continue
+        for vk in adj[uk]:
+            qe = edge_q[tuple(sorted([uk, vk]))]
+            w = 1.0 / max(qe, 1e-6)             # high q → short edge → preferred
             nd = d + w
-            if nd < dist[v_k]:
-                dist[v_k] = nd
-                prev[v_k] = u_k
-                heapq.heappush(pq, (nd, v_k))
+            if nd < dist[vk]:
+                dist[vk] = nd
+                prev[vk] = uk
+                heapq.heappush(pq, (nd, vk))
+    return dist, prev
 
-    # Reconstruct
+dist, prev = dijkstra_from_apex()
+def reconstruct(target):
     path = []
     cur = target
     while cur is not None:
@@ -157,18 +93,55 @@ def dijkstra_spoke(theta_deg):
         cur = prev[cur]
     return list(reversed(path))
 
+# Pick 8 boundary endpoints: smallest-distance per 45° angular bucket
+def angle_diff_deg(a, b):
+    return abs(((a - b + 180.0) % 360.0) - 180.0)
+
+apex_xy = V[apex_idx, :2]
+bdry_list = list(bdry_keys)
+bdry_th = []
+for bk in bdry_list:
+    bv = V[key_to_idx[bk], :2] - apex_xy
+    bdry_th.append(np.degrees(np.arctan2(bv[1], bv[0])) % 360.0)
+bdry_th = np.array(bdry_th)
+bdry_dist = np.array([dist[k] for k in bdry_list])
+
+# Angular non-maximum suppression:
+#   sort boundary verts by ascending q-distance, greedily take the lowest-distance
+#   vertex that is more than MIN_SEP_DEG away from anything already picked.
+N_CABLES    = 8
+MIN_SEP_DEG = 25.0
+order = np.argsort(bdry_dist)
+selected, selected_th = [], []
+for i in order:
+    if len(selected) == N_CABLES:
+        break
+    th_i = float(bdry_th[i])
+    if all(angle_diff_deg(th_i, t) > MIN_SEP_DEG for t in selected_th):
+        selected.append(bdry_list[i])
+        selected_th.append(th_i)
+# Sort by angle for nicer printing
+ord_th = np.argsort(selected_th)
+selected    = [selected[i] for i in ord_th]
+selected_th = [selected_th[i] for i in ord_th]
+SPOKE_ANGLES = list(selected_th)
+print(f"\n8 cable endpoints (angle, dist) — by min-q-distance from apex:")
+for k, (bk, th) in enumerate(zip(selected, selected_th)):
+    print(f"  cable {k}: vertex {bk}  θ={th:6.2f}°  dist={dist[bk]:.3f}")
 
 cables = {}
-print("\nExtracting cables along detected ridges:")
-for k, theta in enumerate(SPOKE_ANGLES):
-    path = dijkstra_spoke(theta)
+print("\nReconstructing high-q paths:")
+for k, (bk, theta) in enumerate(zip(selected, selected_th)):
+    path = reconstruct(bk)
     name = f"S{k}_{theta:.2f}deg"
     cables[name] = [int(v) for v in path]
     end_xy = V[key_to_idx[path[-1]], :2]
     end_th = np.degrees(np.arctan2(end_xy[1], end_xy[0]))
     end_r  = np.linalg.norm(end_xy)
-    print(f"  {name}: {len(path)} verts, end θ={end_th:6.2f}° (target {theta:5.2f}°), "
-          f"end r={end_r:.4f}, on boundary={path[-1] in bdry_keys}")
+    # mean q along path
+    qs = [edge_q[tuple(sorted([path[i], path[i+1]]))] for i in range(len(path)-1)]
+    print(f"  {name}: {len(path)} verts, end θ={end_th:6.2f}°, r={end_r:.4f}, "
+          f"mean q={np.mean(qs):.3f}, min q={min(qs):.3f}")
 
 with open(OUT_JSON, "w") as f:
     json.dump(cables, f, indent=2)
@@ -217,20 +190,21 @@ ax2 = fig.add_subplot(1, 2, 2)
 ax2.set_facecolor("#1a1a2e")
 ax2.set_aspect("equal")
 
-# Top-down: face elevation (viridis). Brighter = higher z.
-from matplotlib.patches import Polygon as MplPoly
-from matplotlib.collections import PatchCollection
-patches = [MplPoly(V[F[i], :2]) for i in range(len(F))]
-pc = PatchCollection(patches, alpha=0.85, edgecolor="white", linewidths=0.1)
-pc.set_facecolor(cm.viridis(face_z_mean / zmax))
-ax2.add_collection(pc)
+# Top-down: edges coloured & sized by q (force-density flow). Cables overlay.
+edges_xy = [(V[key_to_idx[u], :2], V[key_to_idx[v], :2]) for u, v in edges_list]
+qs = np.array([edge_q[tuple(sorted([u, v]))] for u, v in edges_list])
+q_norm = matplotlib.colors.LogNorm(vmin=max(qs.min(), 0.01), vmax=qs.max())
+order = np.argsort(qs)
+for ei in order:
+    p0, p1 = edges_xy[ei]
+    qq = qs[ei]
+    lw = 0.2 + 4 * (np.log10(qq + 0.01) - np.log10(0.01)) / (
+            np.log10(qs.max()) - np.log10(0.01))
+    ax2.plot([p0[0], p1[0]], [p0[1], p1[1]],
+             color=cm.plasma(q_norm(qq)), linewidth=lw, alpha=0.7,
+             solid_capstyle='round')
 
-# Dashed guide lines at the detected ridge angles
 R_max = r_xy_all.max() * 1.05
-for sa_deg in SPOKE_ANGLES:
-    sa = np.radians(sa_deg)
-    ax2.plot([0, R_max * np.cos(sa)], [0, R_max * np.sin(sa)],
-             color="white", linestyle="--", linewidth=0.6, alpha=0.4)
 
 bdry_pts = np.array([V[key_to_idx[k]] for k in bdry_keys])
 ax2.scatter(bdry_pts[:, 0], bdry_pts[:, 1], c="cyan", s=18, zorder=4,
@@ -249,8 +223,8 @@ for name, path in cables.items():
                  xytext=(end[0]*1.13, end[1]*1.13), color="red", fontsize=8,
                  ha="center", va="center")
 
-ax2.set_title("Top-down — viridis = z elevation, red = 8 cables, "
-              "white-- = ridge angles detected from FDM result",
+ax2.set_title("Top-down — edge colour/thickness ∝ q (FDM force flow), "
+              "red = 8 cables along high-q paths from apex",
               color="white", fontsize=9)
 ax2.set_xlabel("x", color="white", fontsize=8)
 ax2.set_ylabel("y", color="white", fontsize=8)
