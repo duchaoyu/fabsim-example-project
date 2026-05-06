@@ -299,88 +299,96 @@ zmax        = float(V_obj[:, 2].max())
 xr          = float(np.abs(V_obj[:, :2]).max()) * 1.08
 
 BG = "#0d0d1a"
-fig = plt.figure(figsize=(16, 8))
+fig = plt.figure(figsize=(18, 9))
 fig.patch.set_facecolor(BG)
 
-# cable colour/width lookup
 def cable_style(name):
     if name.startswith("Ha"): return "#00ff88", 3.0   # lime hoop arcs
     if name.startswith("Si"): return "#ff8c00", 2.8   # orange inner spokes
     return                           "#ff2244", 2.8   # red outer spokes
 
-# ── 3D view ───────────────────────────────────────────────────────────────────
-ax1 = fig.add_subplot(1, 2, 1, projection="3d")
-ax1.set_facecolor(BG)
-poly = Poly3DCollection(face_verts, alpha=0.55,
-                        facecolor=cm.Blues(face_z_mean / max(zmax, 1e-6) * 0.7 + 0.15),
-                        edgecolor="#334466", linewidth=0.06)
-ax1.add_collection3d(poly)
+# ── Layout: top-down (large) left, two 3D angles right ───────────────────────
+gs  = fig.add_gridspec(2, 2, width_ratios=[1.4, 1], hspace=0.08, wspace=0.05)
+ax2 = fig.add_subplot(gs[:, 0])          # top-down (full left column)
+ax1 = fig.add_subplot(gs[0, 1], projection="3d")   # 3D oblique
+ax3 = fig.add_subplot(gs[1, 1], projection="3d")   # 3D top-down
 
-for name, path in cables.items():
-    pts = np.array([V_obj[v] for v in path])
-    col, lw = cable_style(name)
-    ax1.plot(pts[:,0], pts[:,1], pts[:,2], color=col, linewidth=lw,
-             alpha=1.0, solid_capstyle="round")
+# ── Top-down ─────────────────────────────────────────────────────────────────
+ax2.set_facecolor(BG); ax2.set_aspect("equal")
 
-# junction dots: hoop vertices (white) + boundary endpoints (cyan) + centroid (yellow)
-centroid_pt = V_obj[CABLES_DEF[0][0]]
-ax1.scatter(*centroid_pt, color="yellow", s=60, zorder=10)
-for v_src, v_hoop, v_dst in CABLES_DEF:
-    ax1.scatter(*V_obj[v_hoop], color="white",  s=30, zorder=10)
-    ax1.scatter(*V_obj[v_dst],  color="#00cfff", s=30, zorder=10)
-
-ax1.set_title("C5 — 3D  (orange=inner · red=outer · green=hoop)",
-              color="white", fontsize=10, pad=6)
-ax1.tick_params(colors="#556677", labelsize=6)
-for pane in (ax1.xaxis.pane, ax1.yaxis.pane, ax1.zaxis.pane):
-    pane.fill = False; pane.set_edgecolor("#223344")
-ax1.set_xlim(-xr, xr); ax1.set_ylim(-xr, xr); ax1.set_zlim(0, zmax * 1.15)
-ax1.view_init(elev=30, azim=-55)
-
-# ── Top-down — clean (mesh edges faint, cables bold) ─────────────────────────
-ax2 = fig.add_subplot(1, 2, 2)
-ax2.set_facecolor(BG)
-ax2.set_aspect("equal")
-
-# faint mesh wireframe
 for tri in F_obj:
     for i, j in [(0,1),(1,2),(2,0)]:
         u, v = tri[i], tri[j]
         ax2.plot([V_obj[u,0], V_obj[v,0]], [V_obj[u,1], V_obj[v,1]],
-                 color="#1e2a3a", linewidth=0.25, alpha=0.8)
+                 color="#1a2535", linewidth=0.3, alpha=1.0)
 
-# cables
 for name, path in cables.items():
     pts = np.array([V_obj[v] for v in path])
     col, lw = cable_style(name)
     ax2.plot(pts[:,0], pts[:,1], color=col, linewidth=lw,
-             alpha=1.0, solid_capstyle="round", zorder=4)
+             solid_capstyle="round", zorder=4)
 
-# centroid marker
-cx, cy = V_obj[CABLES_DEF[0][0], :2]
-ax2.scatter(cx, cy, color="yellow", s=80, zorder=10, marker="*")
+# centroid
+v_c0 = CABLES_DEF[0][0]
+ax2.scatter(*V_obj[v_c0, :2], color="yellow", s=120, zorder=10, marker="*",
+            label=f"centroid ({v_c0})")
 
-# hoop junction dots + boundary dots + angle labels
+# hoop junctions + boundary with vertex-index labels
 for v_src, v_hoop, v_dst in CABLES_DEF:
-    ax2.scatter(*V_obj[v_hoop, :2], color="white",  s=40, zorder=8)
-    ax2.scatter(*V_obj[v_dst,  :2], color="#00cfff", s=40, zorder=8)
-    bx, by = V_obj[v_dst, :2]
-    th = float(np.degrees(np.arctan2(by, bx)) % 360)
-    ax2.annotate(f"{th:.0f}°", xy=(bx, by),
-                 xytext=(bx * 1.14, by * 1.14),
-                 color="#00cfff", fontsize=8, ha="center", va="center",
-                 fontweight="bold")
+    hx, hy = V_obj[v_hoop, :2]
+    bx, by = V_obj[v_dst,  :2]
+    ax2.scatter(hx, hy, color="white",   s=55, zorder=9, edgecolors="#888", linewidths=0.5)
+    ax2.scatter(bx, by, color="#00cfff", s=55, zorder=9, edgecolors="#006688", linewidths=0.5)
+    # vertex index at hoop junction (inside ring)
+    ax2.annotate(str(v_hoop), xy=(hx, hy), xytext=(hx*0.82, hy*0.82),
+                 color="white", fontsize=6.5, ha="center", va="center", zorder=11)
+    # vertex index at boundary (outside ring)
+    ax2.annotate(str(v_dst), xy=(bx, by), xytext=(bx*1.16, by*1.16),
+                 color="#00cfff", fontsize=6.5, ha="center", va="center",
+                 fontweight="bold", zorder=11)
 
-ax2.set_title("Top-down  (orange=inner · red=outer · green=hoop · ●=junction · ★=centroid)",
-              color="white", fontsize=9)
-ax2.tick_params(colors="#556677", labelsize=7)
+ax2.set_title("Top-down — vertex indices at junctions",
+              color="white", fontsize=10, pad=5)
+ax2.tick_params(colors="#445566", labelsize=7)
 for sp in ax2.spines.values(): sp.set_color("#223344")
 ax2.set_xlim(-xr, xr); ax2.set_ylim(-xr, xr)
-ax2.set_xlabel("x", color="#556677", fontsize=8)
-ax2.set_ylabel("y", color="#556677", fontsize=8)
+ax2.set_xlabel("x", color="#445566", fontsize=8)
+ax2.set_ylabel("y", color="#445566", fontsize=8)
+# legend patches
+import matplotlib.patches as mpatches
+ax2.legend(handles=[
+    mpatches.Patch(color="#ff8c00", label="inner spokes (8)"),
+    mpatches.Patch(color="#ff2244", label="outer spokes (8)"),
+    mpatches.Patch(color="#00ff88", label="hoop arcs (8)"),
+], loc="lower right", fontsize=8, facecolor="#111827", labelcolor="white",
+   edgecolor="#334455", framealpha=0.8)
 
-fig.suptitle("C5  —  8 inner spokes  +  8 outer spokes  +  8 hoop arcs  =  24 cable sections",
-             color="white", fontsize=13, y=1.0)
-plt.tight_layout(rect=[0, 0, 1, 0.97])
+# ── 3D oblique ───────────────────────────────────────────────────────────────
+for ax, elev, azim in [(ax1, 28, -55), (ax3, 88, -90)]:
+    ax.set_facecolor(BG)
+    poly3 = Poly3DCollection(face_verts, alpha=0.5,
+                             facecolor=cm.Blues(face_z_mean / max(zmax,1e-6) * 0.65 + 0.2),
+                             edgecolor="#1e3050", linewidth=0.05)
+    ax.add_collection3d(poly3)
+    for name, path in cables.items():
+        pts = np.array([V_obj[v] for v in path])
+        col, lw = cable_style(name)
+        ax.plot(pts[:,0], pts[:,1], pts[:,2], color=col, linewidth=lw,
+                alpha=1.0, solid_capstyle="round")
+    ax.scatter(*V_obj[CABLES_DEF[0][0]], color="yellow", s=50, zorder=10)
+    for _, v_hoop, v_dst in CABLES_DEF:
+        ax.scatter(*V_obj[v_hoop], color="white",   s=22, zorder=10)
+        ax.scatter(*V_obj[v_dst],  color="#00cfff", s=22, zorder=10)
+    ax.tick_params(colors="#334455", labelsize=5)
+    for pane in (ax.xaxis.pane, ax.yaxis.pane, ax.zaxis.pane):
+        pane.fill = False; pane.set_edgecolor("#1a2a3a")
+    ax.set_xlim(-xr,xr); ax.set_ylim(-xr,xr); ax.set_zlim(0, zmax*1.1)
+    ax.view_init(elev=elev, azim=azim)
+
+ax1.set_title("3D oblique", color="white", fontsize=9, pad=3)
+ax3.set_title("3D top",     color="white", fontsize=9, pad=3)
+
+fig.suptitle("C5  ·  8 inner spokes + 8 outer spokes + 8 hoop arcs = 24 sections",
+             color="white", fontsize=13, y=1.01)
 plt.savefig(OUT_PNG, dpi=160, bbox_inches="tight", facecolor=fig.get_facecolor())
 print(f"Saved {OUT_PNG}")
