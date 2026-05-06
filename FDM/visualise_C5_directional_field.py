@@ -1,14 +1,17 @@
 """Directional (cross) field on the C5 dome guided by cable stiffeners.
 
 For every mesh face, the two principal directions are:
-  d1 : tangent projection of the nearest cable segment onto the face plane
-  d2 : face_normal × d1  (perpendicular to cable, in the tangent plane)
+  d1 : radial (along spokes / perpendicular to hoop and boundary)
+  d2 : face_normal × d1  (circumferential)
 
-Cable paths are the exact user-specified waypoints — no path computation.
+Cables are hard constraints; interior faces are smoothed via a
+Laplacian linear solve (penalty formulation).
 """
 import os, json
 import numpy as np
 from scipy.spatial import cKDTree
+from scipy.sparse import lil_matrix
+from scipy.sparse.linalg import spsolve
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -122,7 +125,80 @@ for fi in range(len(F)):
     L2 = np.linalg.norm(d2[fi])
     if L2 > 1e-10: d2[fi] /= L2
 
-print("Directional field computed.")
+print("Directional field computed (initial, cable-aligned).")
+
+# ── Laplacian smoothing with cable constraints ────────────────────────────────
+# Face-face adjacency (shared edge)
+nf = len(F)
+edge_to_faces = {}
+for fi, tri in enumerate(F):
+    for a, b in [(0,1),(1,2),(2,0)]:
+        key = tuple(sorted([tri[a], tri[b]]))
+        edge_to_faces.setdefault(key, []).append(fi)
+face_adj = [[] for _ in range(nf)]
+for fl in edge_to_faces.values():
+    if len(fl) == 2:
+        face_adj[fl[0]].append(fl[1])
+        face_adj[fl[1]].append(fl[0])
+
+# Distance from each face centroid to the nearest point on any cable segment
+def pt_seg_dist_batch(pts, p0, p1):
+    d = p1 - p0
+    L2 = float(np.dot(d, d))
+    if L2 < 1e-12:
+        return np.linalg.norm(pts - p0, axis=1)
+    t = np.clip(((pts - p0) @ d) / L2, 0.0, 1.0)
+    return np.linalg.norm(pts - (p0 + t[:, None] * d), axis=1)
+
+dist_to_cable = np.full(nf, np.inf)
+for si in range(len(seg_p0)):
+    dist_to_cable = np.minimum(dist_to_cable,
+                               pt_seg_dist_batch(centroids, seg_p0[si], seg_p1[si]))
+
+# Mean edge length → constraint distance threshold
+edge_vecs = (V[F[:, 1]] - V[F[:, 0]],
+             V[F[:, 2]] - V[F[:, 1]],
+             V[F[:, 0]] - V[F[:, 2]])
+mean_edge = float(np.mean([np.linalg.norm(ev, axis=1).mean() for ev in edge_vecs]))
+CONSTRAINT_DIST = 0.8 * mean_edge
+constrained = dist_to_cable < CONSTRAINT_DIST
+print(f"Constrained faces: {constrained.sum()}/{nf}  (dist < {CONSTRAINT_DIST:.4f})")
+
+# Ensure consistent outward orientation before averaging
+apex_pos = V[1091]
+for fi in range(nf):
+    if np.dot(d1[fi], centroids[fi] - apex_pos) < 0:
+        d1[fi] = -d1[fi]
+
+# Penalty Laplacian:  (L + λ·I_constrained) x = λ · d1_constrained
+LAMBDA = 500.0
+L_mat = lil_matrix((nf, nf))
+for fi in range(nf):
+    deg = len(face_adj[fi])
+    L_mat[fi, fi] = deg + (LAMBDA if constrained[fi] else 0.0)
+    for fj in face_adj[fi]:
+        L_mat[fi, fj] = -1.0
+L_csr = L_mat.tocsr()
+
+d1_smooth = np.zeros((nf, 3))
+for c in range(3):
+    b = np.where(constrained, LAMBDA * d1[:, c], 0.0)
+    d1_smooth[:, c] = spsolve(L_csr, b)
+
+# Project smoothed vectors back onto each face tangent plane and renormalise
+for fi in range(nf):
+    n = normals[fi]
+    v = d1_smooth[fi] - np.dot(d1_smooth[fi], n) * n
+    L = np.linalg.norm(v)
+    if L < 1e-10:
+        v = d1[fi]   # fallback
+        L = np.linalg.norm(v)
+    d1[fi] = v / max(L, 1e-10)
+    d2[fi] = np.cross(n, d1[fi])
+    L2 = np.linalg.norm(d2[fi])
+    if L2 > 1e-10: d2[fi] /= L2
+
+print("Directional field smoothed.")
 
 # ── Save JSON ─────────────────────────────────────────────────────────────────
 field_out = {str(fi): {"d1": d1[fi].tolist(), "d2": d2[fi].tolist(),
@@ -265,7 +341,7 @@ for pane in (ax1.xaxis.pane,ax1.yaxis.pane,ax1.zaxis.pane):
     pane.fill=False; pane.set_edgecolor("#1a2a3a")
 ax1.set_title("3D — cross field (white=∥cable · cyan=⊥cable)",color="white",fontsize=9,pad=3)
 
-fig.suptitle("C5  —  directional field aligned with cable stiffeners",
+fig.suptitle("C5  —  smoothed directional field  (cables = hard constraints)",
              color="white",fontsize=13,y=1.01)
 plt.savefig(OUT_PNG,dpi=160,bbox_inches="tight",facecolor=fig.get_facecolor())
 print(f"Saved {OUT_PNG}")
