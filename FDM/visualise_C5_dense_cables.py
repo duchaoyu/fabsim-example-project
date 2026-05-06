@@ -310,82 +310,91 @@ print(f"\nSaved {OUT_JSON}")
 face_verts  = [[V_obj[F_obj[i,j]] for j in range(3)] for i in range(len(F_obj))]
 face_z_mean = V_obj[F_obj].mean(axis=1)[:, 2]
 zmax        = float(V_obj[:, 2].max())
+xr          = float(np.abs(V_obj[:, :2]).max()) * 1.08
 
-fig = plt.figure(figsize=(14, 7))
-fig.patch.set_facecolor("#1a1a2e")
+BG = "#0d0d1a"
+fig = plt.figure(figsize=(16, 8))
+fig.patch.set_facecolor(BG)
 
-# ── 3D view ──────────────────────────────────────────────────────────────────
+# cable colour/width lookup
+def cable_style(name):
+    if name.startswith("Ha"): return "#00ff88", 3.0   # lime hoop arcs
+    if name.startswith("Si"): return "#ff8c00", 2.8   # orange inner spokes
+    return                           "#ff2244", 2.8   # red outer spokes
+
+# ── 3D view ───────────────────────────────────────────────────────────────────
 ax1 = fig.add_subplot(1, 2, 1, projection="3d")
-ax1.set_facecolor("#1a1a2e")
-poly = Poly3DCollection(face_verts, alpha=0.65,
-                        facecolor=cm.viridis(face_z_mean / max(zmax, 1e-6)),
-                        edgecolor="white", linewidth=0.08)
+ax1.set_facecolor(BG)
+poly = Poly3DCollection(face_verts, alpha=0.55,
+                        facecolor=cm.Blues(face_z_mean / max(zmax, 1e-6) * 0.7 + 0.15),
+                        edgecolor="#334466", linewidth=0.06)
 ax1.add_collection3d(poly)
 
-def cable_style(name):
-    if name.startswith("Ha"): return "lime",   "yellow",  2.5, 10   # hoop arc
-    if name.startswith("Si"): return "orange", "gold",    2.2, 12   # inner spoke
-    return                           "red",    "tomato",  2.2, 12   # outer spoke
-
 for name, path in cables.items():
     pts = np.array([V_obj[v] for v in path])
-    col, mcol, lw, ms = cable_style(name)
-    ax1.plot(pts[:,0], pts[:,1], pts[:,2], color=col, linewidth=lw, alpha=0.95)
-    ax1.scatter(pts[:,0], pts[:,1], pts[:,2], color=mcol, s=ms,
-                edgecolors=col, linewidths=0.4, zorder=5)
+    col, lw = cable_style(name)
+    ax1.plot(pts[:,0], pts[:,1], pts[:,2], color=col, linewidth=lw,
+             alpha=1.0, solid_capstyle="round")
 
-ax1.set_title(f"C5 FDM — {N_obj}v/{len(F_obj)}f\n"
-              f"orange=inner spokes · red=outer spokes · lime=hoop arcs (8+8+8=24)",
-              color="white", fontsize=10)
-for lab in (ax1.xaxis, ax1.yaxis, ax1.zaxis):
-    lab.label.set_color("white"); lab.label.set_fontsize(8)
-ax1.tick_params(colors="white", labelsize=7)
+# junction dots: hoop vertices (white) + boundary endpoints (cyan) + centroid (yellow)
+centroid_pt = V_obj[CABLES_DEF[0][0]]
+ax1.scatter(*centroid_pt, color="yellow", s=60, zorder=10)
+for v_src, v_hoop, v_dst in CABLES_DEF:
+    ax1.scatter(*V_obj[v_hoop], color="white",  s=30, zorder=10)
+    ax1.scatter(*V_obj[v_dst],  color="#00cfff", s=30, zorder=10)
+
+ax1.set_title("C5 — 3D  (orange=inner · red=outer · green=hoop)",
+              color="white", fontsize=10, pad=6)
+ax1.tick_params(colors="#556677", labelsize=6)
 for pane in (ax1.xaxis.pane, ax1.yaxis.pane, ax1.zaxis.pane):
-    pane.fill = False
-xr = float(np.abs(V_obj[:,:2]).max()) * 1.05
-ax1.set_xlim(-xr,xr); ax1.set_ylim(-xr,xr); ax1.set_zlim(0, zmax*1.2)
-ax1.view_init(elev=25, azim=-50)
+    pane.fill = False; pane.set_edgecolor("#223344")
+ax1.set_xlim(-xr, xr); ax1.set_ylim(-xr, xr); ax1.set_zlim(0, zmax * 1.15)
+ax1.view_init(elev=30, azim=-55)
 
-# ── Top-down with FDM q flow ──────────────────────────────────────────────────
+# ── Top-down — clean (mesh edges faint, cables bold) ─────────────────────────
 ax2 = fig.add_subplot(1, 2, 2)
-ax2.set_facecolor("#1a1a2e")
+ax2.set_facecolor(BG)
 ax2.set_aspect("equal")
 
-qs_edges = np.array([edge_q_obj.get(tuple(sorted([u_obj,v_obj])), 0.1)
-                     for u_obj in range(N_obj) for v_obj in adj_obj[u_obj] if v_obj > u_obj])
-q_norm = matplotlib.colors.LogNorm(vmin=max(qs_all.min(), 0.01), vmax=qs_all.max())
-for u_obj in range(N_obj):
-    for v_obj in adj_obj[u_obj]:
-        if v_obj <= u_obj: continue
-        qe = edge_q_obj.get(tuple(sorted([u_obj,v_obj])), 0.1)
-        lw = 0.15 + 3.5*(np.log10(qe+0.01)-np.log10(0.01))/(np.log10(qs_all.max())-np.log10(0.01))
-        ax2.plot([V_obj[u_obj,0],V_obj[v_obj,0]], [V_obj[u_obj,1],V_obj[v_obj,1]],
-                 color=cm.plasma(q_norm(qe)), linewidth=max(lw,0.1), alpha=0.6,
-                 solid_capstyle='round')
+# faint mesh wireframe
+for tri in F_obj:
+    for i, j in [(0,1),(1,2),(2,0)]:
+        u, v = tri[i], tri[j]
+        ax2.plot([V_obj[u,0], V_obj[v,0]], [V_obj[u,1], V_obj[v,1]],
+                 color="#1e2a3a", linewidth=0.25, alpha=0.8)
 
+# cables
 for name, path in cables.items():
     pts = np.array([V_obj[v] for v in path])
-    col, mcol, lw, ms = cable_style(name)
-    ax2.plot(pts[:,0], pts[:,1], color=col, linewidth=lw+0.3, alpha=0.95, zorder=4)
-    ax2.scatter(pts[:,0], pts[:,1], color=mcol, s=ms, edgecolors=col,
-                linewidths=0.5, zorder=5)
-    if name.startswith("So"):
-        end = pts[-1]
-        th  = float(name.split("_")[1])
-        ax2.annotate(f"{th:.0f}°", xy=(end[0], end[1]),
-                     xytext=(end[0]*1.12, end[1]*1.12), color="white", fontsize=7,
-                     ha="center", va="center")
+    col, lw = cable_style(name)
+    ax2.plot(pts[:,0], pts[:,1], color=col, linewidth=lw,
+             alpha=1.0, solid_capstyle="round", zorder=4)
 
-ax2.set_title("Top-down — q flow (plasma) · orange=inner spokes · red=outer spokes · lime=hoop arcs",
-              color="white", fontsize=8)
-for lab, txt in [(ax2.xaxis,"x"), (ax2.yaxis,"y")]:
-    ax2.set_xlabel(txt, color="white", fontsize=8) if txt=="x" else ax2.set_ylabel(txt, color="white", fontsize=8)
-ax2.tick_params(colors="white", labelsize=7)
-for sp in ax2.spines.values(): sp.set_color("white")
-ax2.set_xlim(-xr,xr); ax2.set_ylim(-xr,xr)
+# centroid marker
+cx, cy = V_obj[CABLES_DEF[0][0], :2]
+ax2.scatter(cx, cy, color="yellow", s=80, zorder=10, marker="*")
 
-fig.suptitle("C5 dense FDM — 8 inner spokes + 8 outer spokes + 8 hoop arcs = 24 sections",
-             color="white", fontsize=12, y=0.99)
-plt.tight_layout(rect=[0,0.01,1,0.96])
-plt.savefig(OUT_PNG, dpi=150, bbox_inches="tight", facecolor=fig.get_facecolor())
+# hoop junction dots + boundary dots + angle labels
+for v_src, v_hoop, v_dst in CABLES_DEF:
+    ax2.scatter(*V_obj[v_hoop, :2], color="white",  s=40, zorder=8)
+    ax2.scatter(*V_obj[v_dst,  :2], color="#00cfff", s=40, zorder=8)
+    bx, by = V_obj[v_dst, :2]
+    th = float(np.degrees(np.arctan2(by, bx)) % 360)
+    ax2.annotate(f"{th:.0f}°", xy=(bx, by),
+                 xytext=(bx * 1.14, by * 1.14),
+                 color="#00cfff", fontsize=8, ha="center", va="center",
+                 fontweight="bold")
+
+ax2.set_title("Top-down  (orange=inner · red=outer · green=hoop · ●=junction · ★=centroid)",
+              color="white", fontsize=9)
+ax2.tick_params(colors="#556677", labelsize=7)
+for sp in ax2.spines.values(): sp.set_color("#223344")
+ax2.set_xlim(-xr, xr); ax2.set_ylim(-xr, xr)
+ax2.set_xlabel("x", color="#556677", fontsize=8)
+ax2.set_ylabel("y", color="#556677", fontsize=8)
+
+fig.suptitle("C5  —  8 inner spokes  +  8 outer spokes  +  8 hoop arcs  =  24 cable sections",
+             color="white", fontsize=13, y=1.0)
+plt.tight_layout(rect=[0, 0, 1, 0.97])
+plt.savefig(OUT_PNG, dpi=160, bbox_inches="tight", facecolor=fig.get_facecolor())
 print(f"Saved {OUT_PNG}")
