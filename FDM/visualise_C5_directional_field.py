@@ -10,8 +10,6 @@ Laplacian linear solve (penalty formulation).
 import os, json
 import numpy as np
 from scipy.spatial import cKDTree
-from scipy.sparse import lil_matrix
-from scipy.sparse.linalg import spsolve
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -94,189 +92,27 @@ normals = np.cross(e1, e2)
 norms   = np.linalg.norm(normals, axis=1, keepdims=True)
 normals = normals / np.maximum(norms, 1e-10)               # (nf, 3) unit normals
 
-# ── Nearest cable segment for each face (via KD-tree on segment midpoints) ────
-midpoints = 0.5 * (seg_p0 + seg_p1)
-tree      = cKDTree(midpoints)
-_, nn_idx = tree.query(centroids, k=1)   # nearest segment index per face
-
-# ── Directional field ─────────────────────────────────────────────────────────
-# Spokes:   d1 ∥ cable tangent (radial)
-# Hoop:     d1 ⊥ hoop tangent  (also radial — perpendicular to ring)
-# In both cases d2 = n × d1 (circumferential)
+# ── Directional field: purely radial ─────────────────────────────────────────
+# d1 = outward radial from apex, projected onto each face tangent plane.
+# No hoop or boundary constraints — the radial direction is uniform everywhere.
+apex_pos = V[1091]
 d1 = np.zeros((len(F), 3))
 d2 = np.zeros((len(F), 3))
 
 for fi in range(len(F)):
-    n   = normals[fi]
-    tan = seg_tan[nn_idx[fi]]
-    along = tan - np.dot(tan, n) * n
-    L = np.linalg.norm(along)
-    if L < 1e-9:
-        along = e1[fi] - np.dot(e1[fi], n) * n
-        L = np.linalg.norm(along)
-    along /= max(L, 1e-10)
-    if seg_is_hoop[nn_idx[fi]]:
-        # rotate 90° in tangent plane: d1 = n × along  (radial direction)
-        along = np.cross(n, along)
-        L2 = np.linalg.norm(along)
-        if L2 > 1e-10: along /= L2
-    d1[fi] = along
-    d2[fi] = np.cross(n, d1[fi])
-    L2 = np.linalg.norm(d2[fi])
-    if L2 > 1e-10: d2[fi] /= L2
-
-print("Directional field computed (initial, cable-aligned).")
-
-# ── Laplacian smoothing — tiered constraints ──────────────────────────────────
-# Priority 1 (λ=1000): radial spokes (Si, So)
-# Priority 2 (λ=150):  inner hoop ring + outer mesh boundary (d1 ⊥ those curves)
-
-nf = len(F)
-
-# Face-face adjacency (shared edge)
-edge_to_faces = {}
-for fi, tri in enumerate(F):
-    for a, b in [(0,1),(1,2),(2,0)]:
-        key = tuple(sorted([tri[a], tri[b]]))
-        edge_to_faces.setdefault(key, []).append(fi)
-face_adj = [[] for _ in range(nf)]
-for fl in edge_to_faces.values():
-    if len(fl) == 2:
-        face_adj[fl[0]].append(fl[1])
-        face_adj[fl[1]].append(fl[0])
-
-# Outer boundary faces (edges with only one adjacent face)
-bdry_face_set = {fl[0] for fl in edge_to_faces.values() if len(fl) == 1}
-
-# Distance from each face centroid to cable segments, split by type
-def pt_seg_dist_batch(pts, p0, p1):
-    d = p1 - p0
-    L2 = float(np.dot(d, d))
-    if L2 < 1e-12:
-        return np.linalg.norm(pts - p0, axis=1)
-    t = np.clip(((pts - p0) @ d) / L2, 0.0, 1.0)
-    return np.linalg.norm(pts - (p0 + t[:, None] * d), axis=1)
-
-dist_spoke = np.full(nf, np.inf)
-dist_hoop  = np.full(nf, np.inf)
-for si in range(len(seg_p0)):
-    d = pt_seg_dist_batch(centroids, seg_p0[si], seg_p1[si])
-    if seg_is_hoop[si]:
-        dist_hoop = np.minimum(dist_hoop, d)
-    else:
-        dist_spoke = np.minimum(dist_spoke, d)
-
-edge_vecs = (V[F[:, 1]] - V[F[:, 0]],
-             V[F[:, 2]] - V[F[:, 1]],
-             V[F[:, 0]] - V[F[:, 2]])
-mean_edge = float(np.mean([np.linalg.norm(ev, axis=1).mean() for ev in edge_vecs]))
-CDIST = 0.8 * mean_edge
-
-LAMBDA_SPOKE = 1000.0
-LAMBDA_HOOP  =  150.0
-LAMBDA_BDRY  =  150.0
-
-# Consistent outward orientation before averaging
-apex_pos = V[1091]
-for fi in range(nf):
-    if np.dot(d1[fi], centroids[fi] - apex_pos) < 0:
-        d1[fi] = -d1[fi]
-
-# Build per-face penalty and target; higher priority overwrites lower
-face_lambda = np.zeros(nf)
-face_d1_tgt = d1.copy()
-
-# Priority 2a: hoop constraints (d1 already set to radial for hoop faces)
-hoop_mask = dist_hoop < CDIST
-face_lambda[hoop_mask] = LAMBDA_HOOP
-
-# Priority 2b: outer boundary faces — d1 = radial (outward from apex)
-for fi in bdry_face_set:
-    if face_lambda[fi] < LAMBDA_BDRY:
-        n = normals[fi]
-        radial = centroids[fi] - apex_pos
-        radial -= np.dot(radial, n) * n
-        L = np.linalg.norm(radial)
-        if L > 1e-10:
-            face_lambda[fi] = LAMBDA_BDRY
-            face_d1_tgt[fi] = radial / L
-
-# Priority 1: spoke faces — hard Dirichlet (directly on cable)
-spoke_mask = dist_spoke < CDIST
-face_d1_tgt[spoke_mask] = d1[spoke_mask]
-
-# Spoke-neighbour zone — spatial dilation (avoids disconnected-component problem:
-# face_adj cannot cross cable boundaries, but dist_spoke can).
-# All faces within 2×CDIST of a spoke get the same hard radial constraint.
-spoke_nbr_mask = (dist_spoke < 2.0 * CDIST) & ~spoke_mask
-
-for fi in np.where(spoke_nbr_mask)[0]:
-    n = normals[fi]
+    n      = normals[fi]
     radial = centroids[fi] - apex_pos
     radial -= np.dot(radial, n) * n
     L = np.linalg.norm(radial)
-    if L > 1e-10:
-        face_d1_tgt[fi] = radial / L
-
-# Hard mask = spokes + their spatial neighbours
-hard_mask = spoke_mask | spoke_nbr_mask
-
-# Remaining soft constraints (hoop / boundary) — penalty only where not hard
-LAMBDA_SOFT = 150.0
-soft_mask = ~hard_mask & (
-    (dist_hoop < CDIST) |
-    np.array([fi in bdry_face_set for fi in range(nf)])
-)
-for fi in np.where(soft_mask & np.array([fi in bdry_face_set for fi in range(nf)]))[0]:
-    n = normals[fi]
-    radial = centroids[fi] - apex_pos
-    radial -= np.dot(radial, n) * n
-    L = np.linalg.norm(radial)
-    if L > 1e-10:
-        face_d1_tgt[fi] = radial / L
-
-print(f"Hard Dirichlet: {spoke_mask.sum()} spoke  {spoke_nbr_mask.sum()} spoke-neighbours")
-print(f"Soft penalty:   {soft_mask.sum()} hoop/boundary  (λ={LAMBDA_SOFT:.0f})")
-
-# ── Reduced Laplacian: unknowns = all non-hard faces ─────────────────────────
-unk_idx = np.where(~hard_mask)[0]
-unk_map  = {int(fi): i for i, fi in enumerate(unk_idx)}
-n_unk    = len(unk_idx)
-
-L_red = lil_matrix((n_unk, n_unk))
-rhs   = np.zeros((n_unk, 3))
-
-for ii, fi in enumerate(unk_idx):
-    lam = LAMBDA_SOFT if soft_mask[fi] else 0.0
-    L_red[ii, ii] = len(face_adj[fi]) + lam
-    for fj in face_adj[fi]:
-        if hard_mask[fj]:
-            rhs[ii] += face_d1_tgt[fj]      # hard neighbour → RHS
-        else:
-            L_red[ii, unk_map[fj]] = -1.0
-    if soft_mask[fi]:
-        rhs[ii] += lam * face_d1_tgt[fi]
-
-L_red_csr = L_red.tocsr()
-d1_smooth = np.zeros((nf, 3))
-d1_smooth[hard_mask] = face_d1_tgt[hard_mask]   # exact
-for c in range(3):
-    d1_smooth[unk_idx, c] = spsolve(L_red_csr, rhs[:, c])
-
-# Project back onto tangent planes and renormalise
-for fi in range(nf):
-    n = normals[fi]
-    v = d1_smooth[fi] - np.dot(d1_smooth[fi], n) * n
-    L = np.linalg.norm(v)
     if L < 1e-10:
-        v = d1[fi]
-        L = np.linalg.norm(v)
-    d1[fi] = v / max(L, 1e-10)
+        radial = e1[fi] - np.dot(e1[fi], n) * n
+        L = np.linalg.norm(radial)
+    d1[fi] = radial / max(L, 1e-10)
     d2[fi] = np.cross(n, d1[fi])
     L2 = np.linalg.norm(d2[fi])
     if L2 > 1e-10: d2[fi] /= L2
 
-print("Directional field smoothed (hard: spokes+neighbours · soft: hoop/boundary).")
+print("Directional field computed (radial everywhere).")
 
 # ── Save JSON ─────────────────────────────────────────────────────────────────
 field_out = {str(fi): {"d1": d1[fi].tolist(), "d2": d2[fi].tolist(),
