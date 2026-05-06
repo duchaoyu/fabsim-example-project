@@ -105,14 +105,11 @@ qs_all = np.array(list(edge_q_obj.values()))
 print(f"OBJ mapped q: [{qs_all.min():.3f},{qs_all.max():.3f}] mean={qs_all.mean():.3f}")
 
 
-# ── Dijkstra on COMPAS mesh (OBJ is disconnected; COMPAS is fully connected) ──
-# Weight = 1/q^4 + λ*(1 - cos θ) where θ is the angle between edge and the
-# outward radial direction from the apex.
-LAMBDA_RADIAL = 3.0
+# ── Shortest-path Dijkstra on COMPAS mesh (Euclidean 3D edge length) ─────────
+# OBJ mesh is disconnected; COMPAS is fully connected.
+# Weight = 3D edge length → true geodesic shortest path.
 adj_c_nb = {k: list(cmesh.vertex_neighbors(k)) for k in ck_list}
 r_xy_c   = np.linalg.norm(V_c[:, :2], axis=1)
-apex_c_i = int(np.argmin(r_xy_c))
-apex_c_xy = V_c[apex_c_i, :2]
 
 def dijkstra_compas(src_key):
     dist = {k: np.inf for k in ck_list}
@@ -122,21 +119,10 @@ def dijkstra_compas(src_key):
     while pq:
         d, uk = heapq.heappop(pq)
         if d > dist[uk]: continue
-        iu   = ck_to_i[uk]
-        u_xy = V_c[iu, :2]
-        r_u  = float(np.linalg.norm(u_xy - apex_c_xy))
+        iu = ck_to_i[uk]
         for vk in adj_c_nb[uk]:
-            qe     = edge_q_c.get(tuple(sorted([uk, vk])), 0.1)
-            q_cost = 1.0 / max(qe, 1e-6) ** 4
-            iv     = ck_to_i[vk]
-            e_vec  = V_c[iv, :2] - u_xy
-            e_len  = float(np.linalg.norm(e_vec))
-            if r_u > 1e-6 and e_len > 1e-9:
-                radial_dir = (u_xy - apex_c_xy) / r_u
-                cos_r = float(np.dot(e_vec / e_len, radial_dir))
-            else:
-                cos_r = 0.0
-            w  = q_cost + LAMBDA_RADIAL * (1.0 - cos_r)
+            iv = ck_to_i[vk]
+            w  = float(np.linalg.norm(V_c[iv] - V_c[iu]))   # 3D edge length
             nd = d + w
             if nd < dist[vk]:
                 dist[vk] = nd
