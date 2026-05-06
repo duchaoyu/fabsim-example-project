@@ -201,13 +201,11 @@ for fi in bdry_face_set:
             face_lambda[fi] = LAMBDA_BDRY
             face_d1_tgt[fi] = radial / L
 
-# Priority 1: spoke constraints (overwrite anything below)
+# Priority 1: spoke faces — hard Dirichlet
 spoke_mask = dist_spoke < CDIST
-face_lambda[spoke_mask] = LAMBDA_SPOKE
-face_d1_tgt[spoke_mask] = d1[spoke_mask]   # spoke d1 already radial
+face_d1_tgt[spoke_mask] = d1[spoke_mask]
 
-# Extend spoke constraint to immediate face-neighbours of spoke faces.
-# This pulls junction faces (next to spoke + hoop/boundary) toward radial.
+# Immediate neighbours of spoke faces — also hard Dirichlet (same radial direction)
 spoke_nbr_mask = np.zeros(nf, dtype=bool)
 for fi in range(nf):
     if spoke_mask[fi]:
@@ -221,27 +219,52 @@ for fi in np.where(spoke_nbr_mask)[0]:
     radial -= np.dot(radial, n) * n
     L = np.linalg.norm(radial)
     if L > 1e-10:
-        face_lambda[fi] = LAMBDA_SPOKE
         face_d1_tgt[fi] = radial / L
 
-print(f"Constraints: {spoke_mask.sum()} spoke  "
-      f"{spoke_nbr_mask.sum()} spoke-neighbours  "
-      f"(λ={LAMBDA_SPOKE:.0f})")
-print(f"             {(hoop_mask & ~spoke_mask & ~spoke_nbr_mask).sum()} hoop  "
-      f"{sum(1 for fi in bdry_face_set if not spoke_mask[fi] and not spoke_nbr_mask[fi])} boundary"
-      f"  (λ={LAMBDA_HOOP:.0f})")
+# Hard mask = spokes + their neighbours
+hard_mask = spoke_mask | spoke_nbr_mask
 
-# Penalty Laplacian solve per component
-L_mat = lil_matrix((nf, nf))
-for fi in range(nf):
-    L_mat[fi, fi] = len(face_adj[fi]) + face_lambda[fi]
+# Remaining soft constraints (hoop / boundary) — penalty only where not hard
+LAMBDA_SOFT = 150.0
+soft_mask = ~hard_mask & (
+    (dist_hoop < CDIST) |
+    np.array([fi in bdry_face_set for fi in range(nf)])
+)
+for fi in np.where(soft_mask & np.array([fi in bdry_face_set for fi in range(nf)]))[0]:
+    n = normals[fi]
+    radial = centroids[fi] - apex_pos
+    radial -= np.dot(radial, n) * n
+    L = np.linalg.norm(radial)
+    if L > 1e-10:
+        face_d1_tgt[fi] = radial / L
+
+print(f"Hard Dirichlet: {spoke_mask.sum()} spoke  {spoke_nbr_mask.sum()} spoke-neighbours")
+print(f"Soft penalty:   {soft_mask.sum()} hoop/boundary  (λ={LAMBDA_SOFT:.0f})")
+
+# ── Reduced Laplacian: unknowns = all non-hard faces ─────────────────────────
+unk_idx = np.where(~hard_mask)[0]
+unk_map  = {int(fi): i for i, fi in enumerate(unk_idx)}
+n_unk    = len(unk_idx)
+
+L_red = lil_matrix((n_unk, n_unk))
+rhs   = np.zeros((n_unk, 3))
+
+for ii, fi in enumerate(unk_idx):
+    lam = LAMBDA_SOFT if soft_mask[fi] else 0.0
+    L_red[ii, ii] = len(face_adj[fi]) + lam
     for fj in face_adj[fi]:
-        L_mat[fi, fj] = -1.0
-L_csr = L_mat.tocsr()
+        if hard_mask[fj]:
+            rhs[ii] += face_d1_tgt[fj]      # hard neighbour → RHS
+        else:
+            L_red[ii, unk_map[fj]] = -1.0
+    if soft_mask[fi]:
+        rhs[ii] += lam * face_d1_tgt[fi]
 
+L_red_csr = L_red.tocsr()
 d1_smooth = np.zeros((nf, 3))
+d1_smooth[hard_mask] = face_d1_tgt[hard_mask]   # exact
 for c in range(3):
-    d1_smooth[:, c] = spsolve(L_csr, face_lambda * face_d1_tgt[:, c])
+    d1_smooth[unk_idx, c] = spsolve(L_red_csr, rhs[:, c])
 
 # Project back onto tangent planes and renormalise
 for fi in range(nf):
@@ -256,7 +279,7 @@ for fi in range(nf):
     L2 = np.linalg.norm(d2[fi])
     if L2 > 1e-10: d2[fi] /= L2
 
-print("Directional field smoothed (spoke > hoop = boundary).")
+print("Directional field smoothed (hard: spokes+neighbours · soft: hoop/boundary).")
 
 # ── Save JSON ─────────────────────────────────────────────────────────────────
 field_out = {str(fi): {"d1": d1[fi].tolist(), "d2": d2[fi].tolist(),
