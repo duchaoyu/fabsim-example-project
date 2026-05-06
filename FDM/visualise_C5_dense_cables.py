@@ -33,10 +33,6 @@ OUT_JSON = os.path.join(HERE, "data", "C5", "cable_paths_C5_dense.json")
 SRC_OBJ = 1091
 DST_OBJ = [949, 1032, 1193, 1218, 1212, 1128, 973, 942]
 
-# Radii where each cable is split into 3 sections
-R_SPLIT1 = 0.30   # inner hoop radius (coincides with lime ring)
-R_SPLIT2 = 0.45   # outer split (midway between hoop and boundary)
-
 
 # ── Load OBJ mesh (0-based vertices) ─────────────────────────────────────────
 def load_obj(path):
@@ -238,31 +234,67 @@ print(f"Finding COMPAS paths to {len(dst_keys)} destinations...")
 dist_src, prev_src = dijkstra_compas(src_key)
 
 cables = {}
-cables["H0_inner_hoop"] = hoop_path
 
-print(f"\n{'cable':>6}  {'θ°':>7}  {'len':>4}  {'qmin':>6}  sec1  sec2  sec3")
+# Hoop ring without closing duplicate
+hoop_closed = len(hoop_path) > 1 and hoop_path[0] == hoop_path[-1]
+hoop_ring   = hoop_path[:-1] if hoop_closed else list(hoop_path)
+n_ring      = len(hoop_ring)
+r_hoop_mid  = 0.5 * (r_lo + r_hi)
+
+# ── 8 spokes: centroid → boundary, split at hoop intersection ────────────────
+print(f"\n{'cable':>6}  {'θ°':>7}  {'total':>6}  inner  outer  hoop_v")
+spoke_hoop_pos = []    # position in hoop_ring for each spoke's hoop vertex
+
 for k, (dst_obj, dst_key) in enumerate(zip(DST_OBJ, dst_keys)):
     path_c = reconstruct_compas(dst_key, prev_src)
     path   = compas_path_to_obj(path_c)
     r_path = r_xy_obj[path]
     theta  = float(np.degrees(np.arctan2(V_obj[dst_obj, 1], V_obj[dst_obj, 0])) % 360)
 
-    s1 = int(np.argmin(np.abs(r_path - R_SPLIT1)))
-    s2 = s1 + int(np.argmin(np.abs(r_path[s1:] - R_SPLIT2)))
-    s1 = max(s1, 1);  s2 = max(s2, s1 + 1);  s2 = min(s2, len(path) - 2)
+    # Split at the path vertex whose radius is closest to the hoop mid-radius
+    split_i = int(np.argmin(np.abs(r_path - r_hoop_mid)))
+    split_i = max(split_i, 1)
+    split_i = min(split_i, len(path) - 2)
+    hoop_v  = path[split_i]
 
-    sec1 = path[:s1 + 1]
-    sec2 = path[s1:s2 + 1]
-    sec3 = path[s2:]
+    # Find where this spoke meets the hoop ring (nearest hoop vertex in xy)
+    dists_to_ring = np.sum((V_obj[hoop_ring, :2] - V_obj[hoop_v, :2])**2, axis=1)
+    ring_pos      = int(np.argmin(dists_to_ring))
+    # Snap the split point to the nearest hoop ring vertex
+    hoop_v_snapped = hoop_ring[ring_pos]
+    spoke_hoop_pos.append(ring_pos)
 
-    qs = [edge_q_obj.get(tuple(sorted([path[i], path[i+1]])), 0.1) for i in range(len(path)-1)]
-    qmin_str = f"{min(qs):.3f}" if qs else "N/A  "
-    print(f"  {k:>4d}  {theta:7.2f}  {len(path):4d}  {qmin_str:>6}  "
-          f"{len(sec1):4d}  {len(sec2):4d}  {len(sec3):4d}")
+    # Rebuild sections with hoop vertex snapped to actual ring vertex
+    # Inner: centroid → snapped hoop vertex
+    # Outer: snapped hoop vertex → boundary
+    sec_inner = path[:split_i] + [hoop_v_snapped]
+    sec_outer = [hoop_v_snapped] + path[split_i + 1:]
 
-    cables[f"Si{k}_{theta:.1f}"] = sec1   # innermost (orange)
-    cables[f"Sm{k}_{theta:.1f}"] = sec2   # middle    (gold)
-    cables[f"So{k}_{theta:.1f}"] = sec3   # outer     (red)
+    print(f"  {k:>4d}  {theta:7.2f}  {len(path):6d}  {len(sec_inner):5d}  "
+          f"{len(sec_outer):5d}  ring[{ring_pos}]={hoop_v_snapped}")
+
+    cables[f"Si{k}_{theta:.1f}"] = sec_inner  # orange: centroid → hoop
+    cables[f"So{k}_{theta:.1f}"] = sec_outer  # red:    hoop → boundary
+
+# ── Hoop split into 8 arcs between spoke connection points ───────────────────
+# Sort spoke connection positions CCW around the ring
+order     = np.argsort(spoke_hoop_pos)
+positions = [spoke_hoop_pos[i] for i in order]
+thetas    = [float(np.degrees(np.arctan2(V_obj[DST_OBJ[i], 1], V_obj[DST_OBJ[i], 0])) % 360)
+             for i in order]
+
+print(f"\nHoop arcs (CCW):")
+for i in range(8):
+    p0  = positions[i]
+    p1  = positions[(i + 1) % 8]
+    th0 = thetas[i]
+    if p1 > p0:
+        arc = [hoop_ring[j] for j in range(p0, p1 + 1)]
+    else:
+        arc = [hoop_ring[j] for j in range(p0, n_ring)] + \
+              [hoop_ring[j] for j in range(0, p1 + 1)]
+    print(f"  arc {i}: ring[{p0}..{p1}] → {len(arc)} verts  (spoke θ={th0:.1f}°)")
+    cables[f"Ha{i}_{th0:.1f}"] = arc   # lime: hoop arc
 
 with open(OUT_JSON, "w") as f:
     json.dump(cables, f, indent=2)
@@ -286,10 +318,9 @@ poly = Poly3DCollection(face_verts, alpha=0.65,
 ax1.add_collection3d(poly)
 
 def cable_style(name):
-    if name.startswith("H"):  return "lime",   "yellow",  2.5, 10
-    if name.startswith("Si"): return "orange", "gold",    2.2, 12
-    if name.startswith("Sm"): return "gold",   "white",   2.2, 12
-    return                           "red",    "tomato",  2.2, 12
+    if name.startswith("Ha"): return "lime",   "yellow",  2.5, 10   # hoop arc
+    if name.startswith("Si"): return "orange", "gold",    2.2, 12   # inner spoke
+    return                           "red",    "tomato",  2.2, 12   # outer spoke
 
 for name, path in cables.items():
     pts = np.array([V_obj[v] for v in path])
@@ -299,7 +330,7 @@ for name, path in cables.items():
                 edgecolors=col, linewidths=0.4, zorder=5)
 
 ax1.set_title(f"C5 FDM — {N_obj}v/{len(F_obj)}f\n"
-              f"orange=inner·gold=mid·red=outer·lime=hoop (24+1)",
+              f"orange=inner spokes · red=outer spokes · lime=hoop arcs (8+8+8=24)",
               color="white", fontsize=10)
 for lab in (ax1.xaxis, ax1.yaxis, ax1.zaxis):
     lab.label.set_color("white"); lab.label.set_fontsize(8)
@@ -340,7 +371,7 @@ for name, path in cables.items():
                      xytext=(end[0]*1.12, end[1]*1.12), color="white", fontsize=7,
                      ha="center", va="center")
 
-ax2.set_title("Top-down — q flow (plasma) · orange=inner · gold=mid · red=outer · lime=hoop",
+ax2.set_title("Top-down — q flow (plasma) · orange=inner spokes · red=outer spokes · lime=hoop arcs",
               color="white", fontsize=8)
 for lab, txt in [(ax2.xaxis,"x"), (ax2.yaxis,"y")]:
     ax2.set_xlabel(txt, color="white", fontsize=8) if txt=="x" else ax2.set_ylabel(txt, color="white", fontsize=8)
@@ -348,7 +379,7 @@ ax2.tick_params(colors="white", labelsize=7)
 for sp in ax2.spines.values(): sp.set_color("white")
 ax2.set_xlim(-xr,xr); ax2.set_ylim(-xr,xr)
 
-fig.suptitle("C5 dense FDM — 8 cables × 3 sections = 24 (+ inner hoop)",
+fig.suptitle("C5 dense FDM — 8 inner spokes + 8 outer spokes + 8 hoop arcs = 24 sections",
              color="white", fontsize=12, y=0.99)
 plt.tight_layout(rect=[0,0.01,1,0.96])
 plt.savefig(OUT_PNG, dpi=150, bbox_inches="tight", facecolor=fig.get_facecolor())
