@@ -29,19 +29,7 @@ RESULT   = os.path.join(HERE, "data", "C5", "mesh_out_C5_dense_latest.json")
 OUT_PNG  = os.path.join(HERE, "data", "C5", "C5_dense_cables.png")
 OUT_JSON = os.path.join(HERE, "data", "C5", "cable_paths_C5_dense.json")
 
-# ── User-specified cable waypoints (0-based OBJ indices) ─────────────────────
-# Each tuple: (centroid, hoop_vertex, boundary_vertex)
-CABLES_DEF = [
-    (1091,  995,  949),
-    (1091, 1059, 1032),
-    (1091, 1138, 1193),
-    (1091, 1187, 1218),
-    (1091, 1170, 1212),
-    (1091, 1105, 1128),
-    (1091, 1028,  973),
-    (1091,  977,  942),
-]
-HOOP_VERTS = [c[1] for c in CABLES_DEF]   # the 8 spoke-hoop junction vertices
+N_CABLES = 8   # D8 symmetry → 8 spokes
 
 
 # ── Load OBJ mesh (0-based vertices) ─────────────────────────────────────────
@@ -105,11 +93,17 @@ qs_all = np.array(list(edge_q_obj.values()))
 print(f"OBJ mapped q: [{qs_all.min():.3f},{qs_all.max():.3f}] mean={qs_all.mean():.3f}")
 
 
-# ── Shortest-path Dijkstra on COMPAS mesh (Euclidean 3D edge length) ─────────
+# ── Dijkstra on COMPAS mesh: weight = (1/q²) · (1 + λ·sin²θ_radial) ─────────
 # OBJ mesh is disconnected; COMPAS is fully connected.
-# Weight = 3D edge length → true geodesic shortest path.
-adj_c_nb = {k: list(cmesh.vertex_neighbors(k)) for k in ck_list}
-r_xy_c   = np.linalg.norm(V_c[:, :2], axis=1)
+# Tilt penalty: sin² of angle between edge and outward radial at current vertex.
+# No target angle — radial direction computed locally from apex at each step.
+# Multiplicative form: q dominates on true cable edges; tilt only breaks ties.
+LAMBDA_TILT = 4.0
+
+adj_c_nb  = {k: list(cmesh.vertex_neighbors(k)) for k in ck_list}
+r_xy_c    = np.linalg.norm(V_c[:, :2], axis=1)
+apex_c_i  = int(np.argmin(r_xy_c))
+apex_c_xy = V_c[apex_c_i, :2]
 
 def dijkstra_compas(src_key):
     dist = {k: np.inf for k in ck_list}
@@ -119,16 +113,52 @@ def dijkstra_compas(src_key):
     while pq:
         d, uk = heapq.heappop(pq)
         if d > dist[uk]: continue
-        iu = ck_to_i[uk]
+        iu   = ck_to_i[uk]
+        u_xy = V_c[iu, :2]
+        r_u  = float(np.linalg.norm(u_xy - apex_c_xy))
         for vk in adj_c_nb[uk]:
-            iv = ck_to_i[vk]
-            w  = float(np.linalg.norm(V_c[iv] - V_c[iu]))   # 3D edge length
+            iv    = ck_to_i[vk]
+            qe    = edge_q_c.get(tuple(sorted([uk, vk])), 0.1)
+            e_xy  = V_c[iv, :2] - u_xy
+            e_len = float(np.linalg.norm(e_xy))
+            if r_u > 1e-6 and e_len > 1e-9:
+                radial = (u_xy - apex_c_xy) / r_u
+                cos_r  = float(np.dot(e_xy / e_len, radial))
+                sin2_r = max(0.0, 1.0 - cos_r ** 2)   # sin²(tilt from radial)
+            else:
+                sin2_r = 0.0
+            w  = (1.0 / max(qe, 1e-6) ** 2) * (1.0 + LAMBDA_TILT * sin2_r)
             nd = d + w
             if nd < dist[vk]:
                 dist[vk] = nd
                 prev[vk] = uk
                 heapq.heappush(pq, (nd, vk))
     return dist, prev
+
+# ── Cable-node detection ──────────────────────────────────────────────────────
+# A cable node is a vertex where high-q edges arrive from ≥2 distinct directions.
+# These are the junctions where cables meet: centroid, hoop joints, boundary anchors.
+CABLE_NODE_Q_THR   = float(np.percentile(list(edge_q_c.values()), 65))
+CABLE_NODE_ANG_THR = 30.0   # degrees
+
+def is_cable_node(vk):
+    angles = []
+    for nk in adj_c_nb[vk]:
+        qe = edge_q_c.get(tuple(sorted([vk, nk])), 0.0)
+        if qe < CABLE_NODE_Q_THR: continue
+        iv = ck_to_i[nk]; iu = ck_to_i[vk]
+        a  = float(np.degrees(np.arctan2(V_c[iv,1]-V_c[iu,1],
+                                          V_c[iv,0]-V_c[iu,0])) % 360)
+        angles.append(a)
+    for i in range(len(angles)):
+        for j in range(i+1, len(angles)):
+            diff = abs(((angles[i]-angles[j]+180) % 360) - 180)
+            if diff > CABLE_NODE_ANG_THR:
+                return True
+    return False
+
+cable_nodes = {k for k in ck_list if is_cable_node(k)}
+print(f"Cable nodes detected: {len(cable_nodes)}")
 
 def reconstruct_compas(target_key, prev):
     path = []
@@ -220,72 +250,92 @@ else:
     print("  no hoop found")
 
 
-# ── Build cables from exact user-specified waypoints ─────────────────────────
-# Each cable: centroid --[inner]--> hoop_vertex --[outer]--> boundary_vertex
-# Paths computed on COMPAS mesh (OBJ is disconnected), mapped back to OBJ.
-cables = {}
+# ── Auto-detect boundary anchors (cable nodes on boundary, one per sector) ────
+# A good boundary anchor is a boundary vertex that is also a cable node (high-q
+# edges from ≥2 directions), one picked per 45° sector.
+bdry_cable_nodes = [(k, r_xy_c[ck_to_i[k]],
+                     float(np.degrees(np.arctan2(V_c[ck_to_i[k],1],
+                                                  V_c[ck_to_i[k],0])) % 360))
+                    for k in cable_nodes if k in bdry_c]
+print(f"Boundary cable nodes: {len(bdry_cable_nodes)}")
 
-# Hoop ring without closing duplicate (for arc extraction)
+# One per 45° sector: pick by highest max-q of incident edges
+sector_best = {}   # sector → (key, max_q)
+for ck, r, th in bdry_cable_nodes:
+    sec = int(th // 45)
+    mq  = max(edge_q_c.get(tuple(sorted([ck, nk])), 0.0) for nk in adj_c_nb[ck])
+    if sec not in sector_best or mq > sector_best[sec][1]:
+        sector_best[sec] = (ck, mq)
+
+boundary_anchors = [sector_best[s][0] for s in sorted(sector_best)]
+print(f"Selected {len(boundary_anchors)} boundary anchors (sectors: {sorted(sector_best)})")
+
+# ── Centroid: COMPAS vertex nearest the geometric apex ───────────────────────
+src_key = ck_list[apex_c_i]
+print(f"Centroid: COMPAS key {src_key}  r={r_xy_c[apex_c_i]:.4f}")
+
+# ── Hoop ring (OBJ) ─────────────────────────────────────────────────────────
 hoop_closed = len(hoop_path) > 1 and hoop_path[0] == hoop_path[-1]
 hoop_ring   = hoop_path[:-1] if hoop_closed else list(hoop_path)
 n_ring      = len(hoop_ring)
 
-print(f"\n{'k':>2}  {'θ°':>7}  inner  outer")
-spoke_ring_pos = []   # position of each hoop_vertex in hoop_ring
+# ── Spoke paths: centroid → boundary anchor, split at first hoop cable node ──
+cables = {}
+spoke_ring_pos = []
 
-for k, (v_src, v_hoop, v_dst) in enumerate(CABLES_DEF):
-    theta = float(np.degrees(np.arctan2(V_obj[v_dst, 1], V_obj[v_dst, 0])) % 360)
+print(f"\n{'k':>2}  {'θ°':>7}  inner  outer  hoop_junction")
+_, prev_from_centroid = dijkstra_compas(src_key)
 
-    # inner leg: centroid → hoop vertex
-    src_key  = obj_to_compas_key(v_src)
-    hoop_key = obj_to_compas_key(v_hoop)
-    _, prev_inner = dijkstra_compas(src_key)
-    path_inner_c  = reconstruct_compas(hoop_key, prev_inner)
-    path_inner    = compas_path_to_obj(path_inner_c)
-    # ensure it ends exactly at v_hoop
-    if path_inner[-1] != v_hoop:
-        path_inner.append(v_hoop)
+for k, anchor_key in enumerate(boundary_anchors):
+    theta = float(np.degrees(np.arctan2(V_c[ck_to_i[anchor_key],1],
+                                         V_c[ck_to_i[anchor_key],0])) % 360)
+    # Full path: centroid → boundary anchor
+    full_path_c = reconstruct_compas(anchor_key, prev_from_centroid)
 
-    # outer leg: hoop vertex → boundary
-    dst_key  = obj_to_compas_key(v_dst)
-    _, prev_outer = dijkstra_compas(hoop_key)
-    path_outer_c  = reconstruct_compas(dst_key, prev_outer)
-    path_outer    = compas_path_to_obj(path_outer_c)
-    # ensure it starts exactly at v_hoop
-    if path_outer[0] != v_hoop:
-        path_outer.insert(0, v_hoop)
+    # Split at first cable node beyond apex that also lies on/near hoop ring
+    # (= hoop junction). Walk from centroid end; first cable node with r ≥ r_hoop_mid.
+    r_hoop_mid = 0.5 * (r_lo + r_hi)
+    split_i = 1
+    for i, ck in enumerate(full_path_c[1:-1], start=1):
+        ri = r_xy_c[ck_to_i[ck]]
+        if ri >= r_hoop_mid * 0.85 and is_cable_node(ck):
+            split_i = i
+            break
 
-    print(f"{k:>2}  {theta:7.2f}  {len(path_inner):5d}  {len(path_outer):5d}")
+    path_inner_c = full_path_c[:split_i + 1]
+    path_outer_c = full_path_c[split_i:]
 
-    cables[f"Si{k}_{theta:.1f}"] = path_inner   # orange
-    cables[f"So{k}_{theta:.1f}"] = path_outer   # red
+    path_inner = compas_path_to_obj(path_inner_c)
+    path_outer = compas_path_to_obj(path_outer_c)
 
-    # Find v_hoop's position in the hoop ring (for arc extraction)
-    if v_hoop in hoop_ring:
-        pos = hoop_ring.index(v_hoop)
-    else:
-        dists = np.sum((V_obj[hoop_ring, :2] - V_obj[v_hoop, :2])**2, axis=1)
-        pos   = int(np.argmin(dists))
-    spoke_ring_pos.append(pos)
+    hoop_v_obj = path_inner[-1]
+    # Position of hoop junction on the OBJ hoop ring
+    dists = np.sum((V_obj[hoop_ring,:2] - V_obj[hoop_v_obj,:2])**2, axis=1)
+    ring_pos = int(np.argmin(dists))
+    spoke_ring_pos.append(ring_pos)
 
-# ── Hoop arcs: split ring at the 8 spoke connection points ───────────────────
+    print(f"{k:>2}  {theta:7.2f}  {len(path_inner):5d}  {len(path_outer):5d}"
+          f"  OBJ={hoop_v_obj} ring[{ring_pos}]")
+
+    cables[f"Si{k}_{theta:.1f}"] = path_inner
+    cables[f"So{k}_{theta:.1f}"] = path_outer
+
+# ── Hoop arcs: split ring at the 8 junction positions ────────────────────────
 order     = np.argsort(spoke_ring_pos)
 positions = [spoke_ring_pos[i] for i in order]
-thetas    = [float(np.degrees(np.arctan2(V_obj[CABLES_DEF[i][2], 1],
-                                          V_obj[CABLES_DEF[i][2], 0])) % 360)
-             for i in order]
+thetas_arc = [float(np.degrees(np.arctan2(V_c[ck_to_i[boundary_anchors[i]],1],
+                                            V_c[ck_to_i[boundary_anchors[i]],0])) % 360)
+              for i in order]
 
 print(f"\nHoop arcs:")
-for i in range(8):
+for i in range(N_CABLES):
     p0 = positions[i]
-    p1 = positions[(i + 1) % 8]
-    if p1 > p0:
-        arc = [hoop_ring[j] for j in range(p0, p1 + 1)]
-    else:
-        arc = ([hoop_ring[j] for j in range(p0, n_ring)] +
-               [hoop_ring[j] for j in range(0, p1 + 1)])
+    p1 = positions[(i + 1) % N_CABLES]
+    arc = ([hoop_ring[j] for j in range(p0, p1 + 1)] if p1 > p0
+           else [hoop_ring[j] for j in range(p0, n_ring)] +
+                [hoop_ring[j] for j in range(0, p1 + 1)])
     print(f"  arc {i}: ring[{p0}..{p1}] → {len(arc)} verts")
-    cables[f"Ha{i}_{thetas[i]:.1f}"] = arc   # lime
+    cables[f"Ha{i}_{thetas_arc[i]:.1f}"] = arc
 
 with open(OUT_JSON, "w") as f:
     json.dump(cables, f, indent=2)
@@ -375,19 +425,21 @@ for name, path in cables.items():
     ax2.plot(pts[:,0], pts[:,1], color=col, linewidth=lw,
              solid_capstyle="round", zorder=5)
 
-# centroid + junction markers + vertex labels
-v_c0 = CABLES_DEF[0][0]
-ax2.scatter(*V_obj[v_c0, :2], color="white", s=100, zorder=10, marker="*")
-for _, v_hoop, v_dst in CABLES_DEF:
-    hx, hy = V_obj[v_hoop, :2]
-    bx, by = V_obj[v_dst,  :2]
-    ax2.scatter(hx, hy, color="white", s=40, zorder=9)
-    ax2.scatter(bx, by, color="white", s=40, zorder=9)
-    ax2.annotate(str(v_hoop), (hx, hy), xytext=(hx*0.80, hy*0.80),
-                 color="white", fontsize=6.5, ha="center", va="center", zorder=11)
-    ax2.annotate(str(v_dst),  (bx, by), xytext=(bx*1.15, by*1.15),
-                 color="white", fontsize=6.5, ha="center", va="center",
-                 fontweight="bold", zorder=11)
+# centroid + junction markers + vertex labels (derived from auto-detected paths)
+centroid_obj = compas_path_to_obj([src_key])[0]
+ax2.scatter(*V_obj[centroid_obj, :2], color="white", s=100, zorder=10, marker="*")
+for name, path in cables.items():
+    if name.startswith("Si"):   # mark start (hoop junction) and end
+        hx, hy = V_obj[path[-1], :2]
+        ax2.scatter(hx, hy, color="white", s=40, zorder=9)
+        ax2.annotate(str(path[-1]), (hx, hy), xytext=(hx*0.80, hy*0.80),
+                     color="white", fontsize=6.5, ha="center", va="center", zorder=11)
+    if name.startswith("So"):
+        bx, by = V_obj[path[-1], :2]
+        ax2.scatter(bx, by, color="white", s=40, zorder=9)
+        ax2.annotate(str(path[-1]), (bx, by), xytext=(bx*1.15, by*1.15),
+                     color="white", fontsize=6.5, ha="center", va="center",
+                     fontweight="bold", zorder=11)
 
 ax2.set_title("16 regions coloured by wedge  (light=inner · saturated=outer)",
               color="white", fontsize=10, pad=5)
@@ -412,7 +464,7 @@ for ax, elev, azim in [(ax1, 28, -55), (ax3, 88, -90)]:
         pts = np.array([V_obj[v] for v in path])
         col, lw = cable_style(name)
         ax.plot(pts[:,0], pts[:,1], pts[:,2], color=col, linewidth=lw, alpha=1.0)
-    ax.scatter(*V_obj[CABLES_DEF[0][0]], color="white", s=40, zorder=10)
+    ax.scatter(*V_obj[centroid_obj], color="white", s=40, zorder=10)
     ax.tick_params(colors="#334455", labelsize=5)
     for pane in (ax.xaxis.pane, ax.yaxis.pane, ax.zaxis.pane):
         pane.fill = False; pane.set_edgecolor("#1a2a3a")
