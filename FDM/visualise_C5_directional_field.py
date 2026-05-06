@@ -4,8 +4,7 @@ For every mesh face, the two principal directions are:
   d1 : tangent projection of the nearest cable segment onto the face plane
   d2 : face_normal × d1  (perpendicular to cable, in the tangent plane)
 
-The result is saved as a JSON of {face_index: [d1_xyz, d2_xyz]} and
-visualised as a cross field overlaid on the coloured-region mesh.
+Cable paths are the exact user-specified waypoints — no path computation.
 """
 import os, json
 import numpy as np
@@ -34,6 +33,7 @@ CABLES_DEF = [
     (1091, 1028,  973),
     (1091,  977,  942),
 ]
+HOOP_VERTS_OBJ = [ 995, 1059, 1138, 1187, 1170, 1105, 1028,  977]
 
 # ── Load OBJ ──────────────────────────────────────────────────────────────────
 def load_obj(path):
@@ -49,150 +49,38 @@ def load_obj(path):
 V, F = load_obj(OBJ_PATH)
 print(f"OBJ: {len(V)} verts, {len(F)} faces")
 
-# ── Build cable segments from waypoints via geodesic shortest path on COMPAS ──
-# (Re-use the COMPAS mesh + Dijkstra from the main pipeline)
-from compas.datastructures import Mesh
-import heapq
-
-RESULT = os.path.join(HERE, "data", "C5", "mesh_out_C5_dense_latest.json")
-cmesh   = Mesh.from_json(RESULT)
-ck_list = list(cmesh.vertices())
-V_c     = np.array([cmesh.vertex_coordinates(k) for k in ck_list])
-ck_to_i = {k: i for i, k in enumerate(ck_list)}
-adj_c   = {k: list(cmesh.vertex_neighbors(k)) for k in ck_list}
-edges_c = list(cmesh.edges())
-edge_q  = {tuple(sorted([u,v])): float(cmesh.edge_attribute((u,v),"qpre"))
-           for u,v in edges_c}
-
-r_xy_c    = np.linalg.norm(V_c[:,:2], axis=1)
-apex_c_i  = int(np.argmin(r_xy_c))
-apex_c_xy = V_c[apex_c_i, :2]
-LAMBDA_TILT = 4.0
-
-def dijkstra(src_key):
-    dist = {k: np.inf for k in ck_list}
-    prev = {k: None   for k in ck_list}
-    dist[src_key] = 0.0
-    pq = [(0.0, src_key)]
-    while pq:
-        d, uk = heapq.heappop(pq)
-        if d > dist[uk]: continue
-        iu   = ck_to_i[uk]
-        u_xy = V_c[iu, :2]
-        r_u  = float(np.linalg.norm(u_xy - apex_c_xy))
-        for vk in adj_c[uk]:
-            iv    = ck_to_i[vk]
-            qe    = edge_q.get(tuple(sorted([uk,vk])), 0.1)
-            e_xy  = V_c[iv,:2] - u_xy
-            e_len = float(np.linalg.norm(e_xy))
-            if r_u > 1e-6 and e_len > 1e-9:
-                radial = (u_xy - apex_c_xy) / r_u
-                cos_r  = float(np.dot(e_xy/e_len, radial))
-                sin2_r = max(0.0, 1.0 - cos_r**2)
-            else:
-                sin2_r = 0.0
-            w  = (1.0/max(qe,1e-6)**2) * (1.0 + LAMBDA_TILT*sin2_r)
-            nd = d + w
-            if nd < dist[vk]:
-                dist[vk] = nd; prev[vk] = uk
-                heapq.heappush(pq, (nd, vk))
-    return dist, prev
-
-def reconstruct(tgt, prev):
-    path=[]; cur=tgt
-    while cur is not None: path.append(cur); cur=prev[cur]
-    return list(reversed(path))
-
-def nearest_compas(obj_idx):
-    best = int(np.argmin(np.sum((V_c - V[obj_idx])**2, axis=1)))
-    return ck_list[best]
-
-def path_to_obj(path_c):
-    return [int(np.argmin(np.sum((V[:,:2]-V_c[ck_to_i[ck],:2])**2,axis=1)))
-            for ck in path_c]
-
-# Build cable vertex lists
-print("Computing cable paths...")
-cable_paths = {}   # name → list of OBJ vertex indices
+# ── Cable segments: straight connections between waypoints ────────────────────
+cable_paths = {}
 for k, (v_src, v_hoop, v_dst) in enumerate(CABLES_DEF):
     theta = float(np.degrees(np.arctan2(V[v_dst,1], V[v_dst,0])) % 360)
+    cable_paths[f"Si{k}_{theta:.1f}"] = [v_src,  v_hoop]   # inner spoke
+    cable_paths[f"So{k}_{theta:.1f}"] = [v_hoop, v_dst ]   # outer spoke
 
-    src_key  = nearest_compas(v_src)
-    hoop_key = nearest_compas(v_hoop)
-    dst_key  = nearest_compas(v_dst)
+# Hoop ring: connect consecutive hoop vertices in CCW order
+hoop_ring_cable = HOOP_VERTS_OBJ + [HOOP_VERTS_OBJ[0]]   # closed
+cable_paths["H0_hoop"] = hoop_ring_cable
+print(f"Cable segments built from waypoints: {sum(len(p)-1 for p in cable_paths.values())} segments")
 
-    _, pi = dijkstra(src_key)
-    inner = path_to_obj(reconstruct(hoop_key, pi))
-    if inner[-1] != v_hoop: inner.append(v_hoop)
-
-    _, po = dijkstra(hoop_key)
-    outer = path_to_obj(reconstruct(dst_key, po))
-    if outer[0] != v_hoop: outer.insert(0, v_hoop)
-
-    cable_paths[f"Si{k}_{theta:.1f}"] = inner
-    cable_paths[f"So{k}_{theta:.1f}"] = outer
-    print(f"  cable {k}: θ={theta:.1f}°  inner={len(inner)}  outer={len(outer)}")
-
-# Add hoop arcs (reuse hoop detection)
-qs_all = np.array(list(edge_q.values()))
-bdry_c = set(cmesh.vertices_on_boundary())
-R_max  = float(np.linalg.norm(V_c[:,:2],axis=1).max())
-R_BDRY = 0.85 * R_max
-q_thr  = float(np.percentile(qs_all, 70))
-
-edge_circ = {}
-for (u,v), qe in edge_q.items():
-    if u in bdry_c or v in bdry_c: continue
-    iu,iv = ck_to_i[u], ck_to_i[v]
-    pu,pv = V_c[iu,:2], V_c[iv,:2]
-    r_m = 0.5*(np.linalg.norm(pu)+np.linalg.norm(pv))
-    if r_m > R_BDRY or qe < q_thr: continue
-    L = np.linalg.norm(pv-pu)+1e-9; dr = abs(np.linalg.norm(pv)-np.linalg.norm(pu))
-    if (1.0-dr/L) > 0.6: edge_circ[(u,v)] = (qe, r_m)
-
-bin_w=0.04; bins=np.arange(0,R_BDRY+bin_w,bin_w)
-bc=np.zeros(len(bins)-1); bq=np.zeros(len(bins)-1)
-for (qe,r) in edge_circ.values():
-    b=int(r//bin_w)
-    if 0<=b<len(bc): bc[b]+=1; bq[b]+=qe
-cands=[b for b in range(len(bc)) if bc[b]>=6]
-hoop_obj=[]
-if cands:
-    pk=max(cands,key=lambda b:bq[b])
-    r_lo,r_hi=bins[pk],bins[pk+1]
-    if pk+1<len(bc) and bc[pk+1]>=4: r_hi=bins[pk+2]
-    if pk>0 and bc[pk-1]>=4: r_lo=bins[pk-1]
-    re=[(u,v) for (u,v),(qe,r) in edge_circ.items() if r_lo<=r<r_hi]
-    ra={}
-    for u,v in re: ra.setdefault(u,[]).append(v); ra.setdefault(v,[]).append(u)
-    st=min(ra,key=lambda k: np.arctan2(V_c[ck_to_i[k],1],V_c[ck_to_i[k],0]))
-    hp,pv2,cur=[st],None,st
-    while True:
-        nbs=[n for n in ra.get(cur,[]) if n!=pv2 and n not in hp]
-        if not nbs:
-            if st in ra.get(cur,[]) and len(hp)>4: hp.append(st)
-            break
-        ct=np.arctan2(V_c[ck_to_i[cur],1],V_c[ck_to_i[cur],0])
-        nxt=min(nbs,key=lambda n:(np.arctan2(V_c[ck_to_i[n],1],V_c[ck_to_i[n],0])-ct)%(2*np.pi))
-        hp.append(nxt); pv2,cur=cur,nxt
-        if cur==st or len(hp)>300: break
-    hoop_obj=[int(np.argmin(np.sum((V[:,:2]-V_c[ck_to_i[ck],:2])**2,axis=1))) for ck in hp]
-    cable_paths["H0_hoop"] = hoop_obj
-    print(f"Hoop: {len(hoop_obj)} verts")
+# ── Hoop mid-radius (for region colouring) ────────────────────────────────────
+r_hoop_mid = float(np.linalg.norm(V[HOOP_VERTS_OBJ, :2], axis=1).mean())
 
 # ── Build cable segment list in 3D ────────────────────────────────────────────
-seg_p0, seg_p1, seg_tan = [], [], []
-for path in cable_paths.values():
+# seg_is_hoop=True → d1 should be ⊥ to the segment (radial), not ∥ to it
+seg_p0, seg_p1, seg_tan, seg_is_hoop = [], [], [], []
+for name, path in cable_paths.items():
+    is_hoop = name.startswith("H")
     for i in range(len(path)-1):
         p0, p1 = V[path[i]], V[path[i+1]]
         d = p1 - p0
         L = np.linalg.norm(d)
         if L < 1e-9: continue
-        seg_p0.append(p0); seg_p1.append(p1); seg_tan.append(d/L)
+        seg_p0.append(p0); seg_p1.append(p1)
+        seg_tan.append(d/L); seg_is_hoop.append(is_hoop)
 
-seg_p0  = np.array(seg_p0)   # (N_segs, 3)
-seg_p1  = np.array(seg_p1)
-seg_tan = np.array(seg_tan)
+seg_p0      = np.array(seg_p0)    # (N_segs, 3)
+seg_p1      = np.array(seg_p1)
+seg_tan     = np.array(seg_tan)
+seg_is_hoop = np.array(seg_is_hoop, dtype=bool)
 print(f"Total cable segments: {len(seg_p0)}")
 
 # ── Face geometry ─────────────────────────────────────────────────────────────
@@ -208,21 +96,28 @@ midpoints = 0.5 * (seg_p0 + seg_p1)
 tree      = cKDTree(midpoints)
 _, nn_idx = tree.query(centroids, k=1)   # nearest segment index per face
 
-# ── Directional field: project cable tangent onto face tangent plane ──────────
+# ── Directional field ─────────────────────────────────────────────────────────
+# Spokes:   d1 ∥ cable tangent (radial)
+# Hoop:     d1 ⊥ hoop tangent  (also radial — perpendicular to ring)
+# In both cases d2 = n × d1 (circumferential)
 d1 = np.zeros((len(F), 3))
 d2 = np.zeros((len(F), 3))
 
 for fi in range(len(F)):
     n   = normals[fi]
     tan = seg_tan[nn_idx[fi]]
-    # remove normal component
     along = tan - np.dot(tan, n) * n
     L = np.linalg.norm(along)
     if L < 1e-9:
-        # degenerate: cable parallel to normal — pick arbitrary tangent
         along = e1[fi] - np.dot(e1[fi], n) * n
         L = np.linalg.norm(along)
-    d1[fi] = along / max(L, 1e-10)
+    along /= max(L, 1e-10)
+    if seg_is_hoop[nn_idx[fi]]:
+        # rotate 90° in tangent plane: d1 = n × along  (radial direction)
+        along = np.cross(n, along)
+        L2 = np.linalg.norm(along)
+        if L2 > 1e-10: along /= L2
+    d1[fi] = along
     d2[fi] = np.cross(n, d1[fi])
     L2 = np.linalg.norm(d2[fi])
     if L2 > 1e-10: d2[fi] /= L2
@@ -254,7 +149,7 @@ for s in range(len(V)):
     visited|=comp; comps.append(sorted(comp))
 comps.sort(key=lambda c: float(np.linalg.norm(V[c,:2],axis=1).mean()))
 
-r_hoop_mid = 0.5*(r_lo+r_hi)
+r_hoop_mid = float(np.linalg.norm(V[HOOP_VERTS_OBJ, :2], axis=1).mean())
 region_info=[]
 for comp in comps:
     xy=V[comp,:2]
