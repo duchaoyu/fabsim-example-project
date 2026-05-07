@@ -25,7 +25,7 @@ OUT_PNG = os.path.join(HERE, "data", "C5", "C5_optim_best.png")
 BG      = "#0f0f1a"
 
 N_REGIONS = 16
-RUN_PREFIX = "c5_1042v3"
+RUN_PREFIX = "c5_1032w_1042c_v2"
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -134,6 +134,9 @@ for sf_path in scalars_files:
         crown = float(rows[0]["crown_height"])
     V_sim = np.loadtxt(vf, delimiter=",", skiprows=1)[:, 1:]
     if V_sim.shape[0] != len(V_target):
+        continue
+    # Reject unconverged runs that returned the undeformed rest shape
+    if float(np.max(np.linalg.norm(V_sim - V_target, axis=1))) < 1e-5:
         continue
     diff = V_sim[interior_idx] - V_target[interior_idx]
     rmse = float(np.sqrt(np.mean(np.sum(diff ** 2, axis=1))))

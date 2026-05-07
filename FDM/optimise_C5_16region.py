@@ -160,8 +160,11 @@ _call_count = [0]
 _out_prefix  = ["c5_16r"]   # mutable default; overridden in main()
 
 # Minimum displacement from rest shape for a valid FEM result (m).
-# Scaled to mesh: 0.5% of r_max. For 1.2 m mesh ≈ 0.003 m; 10 m ≈ 0.05 m.
-_MIN_DISPLACEMENT = 0.001
+# Only rejects truly unconverged runs (Newton returned undeformed rest shape).
+# For 1.2 m mesh, valid runs near sf≈1.032 give max_disp ~ 0.0006 m, so
+# keep threshold well below that. Set to 1e-5 m (10 µm) — anything smaller
+# means the solver returned the rest shape unchanged.
+_MIN_DISPLACEMENT = 1e-5
 
 def run_fem(sf_wale, sf_course, knit_dirs,
             pressure, motif, region_map_path,
@@ -274,6 +277,10 @@ def main():
                         help="Prefix for output files in optimisation/")
     parser.add_argument("--symmetric",  action="store_true",
                         help="Use 7-parameter D8-symmetric mode instead of 56 params")
+    parser.add_argument("--sf0-wale",   type=float, default=None,
+                        help="Initial sf_wale (inner and outer); default 1.042")
+    parser.add_argument("--sf0-course", type=float, default=None,
+                        help="Initial sf_course (inner and outer); default 1.042")
     args = parser.parse_args()
     _out_prefix[0] = args.out_prefix
 
@@ -318,8 +325,10 @@ def main():
         # ── Symmetric mode: 7 params exploiting D8 symmetry ──────────────────
         # p = [sf_wale_in, sf_course_in, sf_wale_out, sf_course_out,
         #      scale_Si, scale_So, scale_Ha]
-        SF0_SYM = 1.042
-        p0_sym = np.array([SF0_SYM, SF0_SYM, SF0_SYM, SF0_SYM, 1.0, 1.0, 1.0])
+        sf0_w = args.sf0_wale   if args.sf0_wale   is not None else 1.042
+        sf0_c = args.sf0_course if args.sf0_course is not None else 1.042
+        p0_sym = np.array([sf0_w, sf0_c, sf0_w, sf0_c, 1.0, 1.0, 1.0])
+        print(f"Start:   sf_wale={sf0_w:.4f}  sf_course={sf0_c:.4f}")
 
         print(f"\nSanity check (symmetric warm-start) …")
         sf_w0, sf_c0, sc0 = expand_symmetric(p0_sym)
