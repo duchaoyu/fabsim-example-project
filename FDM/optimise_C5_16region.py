@@ -152,10 +152,15 @@ def region_knit_dirs(V, F, face_region):
 
 # ── Run FEM binary ─────────────────────────────────────────────────────────────
 _call_count = [0]
+_out_prefix  = ["c5_16r"]   # mutable default; overridden in main()
+
+# Minimum displacement from rest shape for a valid FEM result (m).
+# If max ||V_sim − V_rest|| < this, the solver returned the undeformed mesh.
+_MIN_DISPLACEMENT = 0.05
 
 def run_fem(sf_wale, sf_course, knit_dirs,
             pressure, motif, region_map_path,
-            cable_paths, cable_ea, cable_rest_scales):
+            cable_paths, cable_ea, cable_rest_scales, V_rest):
     os.makedirs(OUT_DIR, exist_ok=True)
     _call_count[0] += 1
 
@@ -176,26 +181,34 @@ def run_fem(sf_wale, sf_course, knit_dirs,
         json.dump(params, pf)
         params_path = pf.name
 
-    prefix = os.path.join(OUT_DIR, f"c5_16r_{_call_count[0]:05d}")
+    prefix = os.path.join(OUT_DIR, f"{_out_prefix[0]}_{_call_count[0]:05d}")
     cmd    = [BINARY, MESH_PATH, region_map_path, params_path, prefix]
 
     try:
         res = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
         if res.returncode != 0:
-            print(f"  FEM error: {res.stderr[:300]}")
+            print(f"  [{_call_count[0]:4d}] FEM error (rc={res.returncode}): "
+                  f"{res.stderr[:200]}")
             return None
         scalars_path = prefix + "_scalars.csv"
         verts_path   = prefix + "_verts.csv"
         if not os.path.exists(scalars_path):
+            print(f"  [{_call_count[0]:4d}] FEM error: no scalars output")
             return None
         with open(scalars_path) as f:
             row = next(csv.DictReader(f))
         out = {k: float(v) for k, v in row.items()}
         if os.path.exists(verts_path):
             out["verts"] = np.loadtxt(verts_path, delimiter=",", skiprows=1)[:, 1:]
+            # Validity gate: reject if solver returned the undeformed rest shape
+            max_disp = float(np.max(np.linalg.norm(out["verts"] - V_rest, axis=1)))
+            if max_disp < _MIN_DISPLACEMENT:
+                print(f"  [{_call_count[0]:4d}] FEM INVALID: "
+                      f"max disp={max_disp:.4f} m — Newton did not converge")
+                return None
         return out
     except Exception as e:
-        print(f"  FEM exception: {e}")
+        print(f"  [{_call_count[0]:4d}] FEM exception: {e}")
         return None
     finally:
         try: os.unlink(params_path)
@@ -203,7 +216,7 @@ def run_fem(sf_wale, sf_course, knit_dirs,
 
 
 # ── Objective ─────────────────────────────────────────────────────────────────
-def make_objective(V_target, interior_idx, knit_dirs,
+def make_objective(V_target, V_rest, interior_idx, knit_dirs,
                    region_map_path, pressure, motif, cable_paths, cable_ea):
     t_crown = float(V_target[:, 2].max())
     history = []
@@ -213,10 +226,9 @@ def make_objective(V_target, interior_idx, knit_dirs,
         sf_c   = p[N_REGIONS:2 * N_REGIONS]
         scales = p[2 * N_REGIONS:]
         out = run_fem(sf_w, sf_c, knit_dirs, pressure, motif,
-                      region_map_path, cable_paths, cable_ea, scales)
+                      region_map_path, cable_paths, cable_ea, scales, V_rest)
         if out is None or "verts" not in out:
-            loss = (abs(out["crown_height"] - t_crown) / max(t_crown, 1e-6)
-                    if out else 1e3)
+            loss = 1e3   # penalise invalid FEM result heavily
         else:
             diff = out["verts"][interior_idx] - V_target[interior_idx]
             loss = float(np.sqrt(np.mean(np.sum(diff ** 2, axis=1))))
@@ -231,10 +243,13 @@ def make_objective(V_target, interior_idx, knit_dirs,
 # ── Main ──────────────────────────────────────────────────────────────────────
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--motif",    type=int,   default=1)
-    parser.add_argument("--pressure", type=float, default=1000.0)
-    parser.add_argument("--maxiter",  type=int,   default=300)
+    parser.add_argument("--motif",      type=int,   default=1)
+    parser.add_argument("--pressure",   type=float, default=1000.0)
+    parser.add_argument("--maxiter",    type=int,   default=300)
+    parser.add_argument("--out-prefix", type=str,   default="c5_16r",
+                        help="Prefix for output files in optimisation/")
     args = parser.parse_args()
+    _out_prefix[0] = args.out_prefix
 
     os.makedirs(OUT_DIR, exist_ok=True)
     for path, label in [(BINARY, "FEM binary"), (MESH_PATH, "FEM mesh"),
@@ -242,8 +257,9 @@ def main():
         if not os.path.exists(path):
             print(f"{label} not found: {path}"); sys.exit(1)
 
-    V, F         = load_off(MESH_PATH)
-    V_target, _  = load_off(TARGET_OFF)
+    V, F        = load_off(MESH_PATH)
+    V_rest      = V.copy()           # undeformed rest shape for validity checks
+    V_target, _ = load_off(TARGET_OFF)
     bdry_mask    = np.hypot(V_target[:, 0], V_target[:, 1]) > \
                    (np.hypot(V_target[:, 0], V_target[:, 1]).max() * 0.98)
     interior_idx = np.where(~bdry_mask)[0]
@@ -272,17 +288,19 @@ def main():
     print(f"Knit dirs: {[round(d, 1) for d in knit_dirs]}°")
     print(f"Pressure : {args.pressure} Pa  |  motif: {args.motif}")
 
-    # sf≈2.5 gives crown≈4.9m (target≈5.05m) with the C5 mesh at p=1000Pa
+    # sf≈2.35 is the uniform starting point where crown ≈ target (5.055 m).
+    # The FEM Newton solver diverges below sf≈1.3, so bounds start at 2.0.
+    SF0 = 2.35
     p0 = np.concatenate([
-        np.full(N_REGIONS, 2.5),
-        np.full(N_REGIONS, 2.5),
+        np.full(N_REGIONS, SF0),
+        np.full(N_REGIONS, SF0),
         np.full(N_CABLES,  1.000),
     ])
 
-    print(f"\nSanity check at sf=2.5, cable_scale=1.0 …")
+    print(f"\nSanity check at sf={SF0}, cable_scale=1.0 …")
     out0 = run_fem(p0[:N_REGIONS], p0[N_REGIONS:2*N_REGIONS], knit_dirs,
                    args.pressure, args.motif, region_map_path,
-                   cable_paths, cable_ea, p0[2*N_REGIONS:])
+                   cable_paths, cable_ea, p0[2*N_REGIONS:], V_rest)
     if out0 is None:
         print("ERROR: FEM failed at initial guess"); sys.exit(1)
     print(f"  crown={out0['crown_height']:.4f} m  (target {t_crown:.4f} m)")
@@ -295,8 +313,9 @@ def main():
         return
 
     n_params = len(p0)
-    bounds = ([(1.0, 5.0)] * N_REGIONS +
-              [(1.0, 5.0)] * N_REGIONS +
+    # Lower bound 2.0: FEM Newton diverges below sf≈1.3; safe margin at 2.0.
+    bounds = ([(2.0, 5.0)] * N_REGIONS +
+              [(2.0, 5.0)] * N_REGIONS +
               [(0.85, 1.05)] * N_CABLES)
 
     print(f"\nOptimising {n_params} params "
@@ -304,7 +323,7 @@ def main():
           f"maxiter={args.maxiter} …")
 
     objective, history = make_objective(
-        V_target, interior_idx, knit_dirs,
+        V_target, V_rest, interior_idx, knit_dirs,
         region_map_path, args.pressure, args.motif, cable_paths, cable_ea)
 
     result = minimize(
@@ -333,7 +352,7 @@ def main():
 
     print("\nRunning final FEM …")
     out_f = run_fem(sf_w, sf_c, knit_dirs, args.pressure, args.motif,
-                    region_map_path, cable_paths, cable_ea, scales)
+                    region_map_path, cable_paths, cable_ea, scales, V_rest)
     if out_f:
         print(f"  crown = {out_f['crown_height']:.4f} m  (target {t_crown:.4f} m)")
         if "verts" in out_f:
