@@ -356,7 +356,7 @@ def main():
         result = minimize(sym_objective, p0_sym, method="L-BFGS-B",
                           bounds=bounds_sym,
                           options={"maxiter": args.maxiter, "ftol": 1e-9,
-                                   "gtol": 1e-5, "eps": 0.01})
+                                   "gtol": 1e-5, "eps": 0.002})
 
         print(f"\nConverged: {result.success}  |  {result.message}")
         print(f"Final RMSE: {result.fun:.4f} m   FEM calls: {_call_count[0]}")
