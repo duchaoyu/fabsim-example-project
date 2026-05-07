@@ -13,7 +13,7 @@ Symmetric mode (--symmetric, 7 free variables):
 Knit directions are fixed from the radial directional field:
   knit_dir_deg = azimuth(region centroid) % 180   (wale = radial)
 
-FEM mesh + cable paths: FDM/data/C5_remeshed.off + data/cable_paths_C5.json
+FEM mesh + cable paths: FDM/data/C5/C5_remeshed.off + FDM/data/C5/cable_paths_C5.json
 
 Usage:
     python3 optimise_C5_16region.py [--motif 1] [--pressure 1000] [--maxiter 300]
@@ -26,11 +26,11 @@ from scipy.optimize import minimize
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 MESH_PATH        = os.environ.get("FEM_MESH",
-    os.path.join(HERE, "data", "C5_remeshed.off"))
+    os.path.join(HERE, "data", "C5", "C5_remeshed_fem.off"))
 TARGET_OFF       = os.environ.get("FEM_TARGET",
-    os.path.join(HERE, "data", "C5_remeshed.off"))
+    os.path.join(HERE, "data", "C5", "C5_remeshed_fem.off"))
 SPOKE_PATHS_FILE = os.environ.get("FEM_CABLE_PATHS",
-    os.path.join(HERE, "..", "data", "cable_paths_C5.json"))
+    os.path.join(HERE, "data", "C5", "cable_paths_C5_obj.json"))
 BINARY           = os.environ.get("FEM_BINARY_NREGION",
     os.path.join(HERE, "..", "build-linux", "fem_batch_nregion"))
 OUT_DIR          = os.path.join(HERE, "optimisation")
@@ -59,9 +59,10 @@ def build_cable_paths(V):
     # Sort spokes by name (S0 < S1 < … < S7)
     spoke_list = sorted(spokes.items())
 
-    # Split each 16-vert spoke at its hoop crossing (vertex closest to r_hoop).
-    # First pass: find all split vertices to compute a consistent r_hoop.
-    r_guess   = 5.33
+    # Split each 16-vert spoke at its hoop crossing.
+    # r_guess at 53% of max radius (works for both 10 m and 1.2 m meshes).
+    r_max   = r_xy.max()
+    r_guess = 0.53 * r_max
     split_idx = [int(np.argmin(np.abs(r_xy[path] - r_guess)))
                  for _, path in spoke_list]
     hoop_junctions = [spoke_list[k][1][split_idx[k]] for k in range(8)]
@@ -76,8 +77,9 @@ def build_cable_paths(V):
         outer_paths.append(path[si:])
         spoke_names.append(name)
 
-    # Hoop ring: all vertices at r_hoop ± 0.4 m, sorted by azimuth
-    ring_mask = np.abs(r_xy - r_hoop) < 0.4
+    # Hoop ring: all vertices within 4% of r_max around r_hoop, sorted by azimuth
+    tol      = 0.04 * r_max
+    ring_mask = np.abs(r_xy - r_hoop) < tol
     ring_idx  = np.where(ring_mask)[0]
     ring_az   = np.arctan2(V[ring_idx, 1], V[ring_idx, 0])
     hoop_ring = ring_idx[np.argsort(ring_az)].tolist()   # 64 verts, CCW

@@ -29,11 +29,11 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 
 # Inputs
 MESH_PATH        = os.environ.get("FEM_MESH",
-    os.path.join(HERE, "data", "C5_remeshed.off"))
+    os.path.join(HERE, "data", "C5", "C5_remeshed.off"))
 TARGET_OFF       = os.environ.get("FEM_TARGET",
-    os.path.join(HERE, "data", "C5_remeshed.off"))
+    os.path.join(HERE, "data", "C5", "C5_remeshed.off"))
 CABLE_PATHS_FILE = os.environ.get("FEM_CABLE_PATHS",
-    os.path.join(HERE, "..", "data", "cable_paths_C5.json"))
+    os.path.join(HERE, "data", "C5", "cable_paths_C5.json"))
 BINARY           = os.environ.get("FEM_BINARY_NREGION",
     os.path.join(HERE, "..", "build-linux", "fem_batch_nregion"))
 
