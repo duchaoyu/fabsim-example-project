@@ -160,8 +160,8 @@ _call_count = [0]
 _out_prefix  = ["c5_16r"]   # mutable default; overridden in main()
 
 # Minimum displacement from rest shape for a valid FEM result (m).
-# If max ||V_sim − V_rest|| < this, the solver returned the undeformed mesh.
-_MIN_DISPLACEMENT = 0.05
+# Scaled to mesh: 0.5% of r_max. For 1.2 m mesh ≈ 0.003 m; 10 m ≈ 0.05 m.
+_MIN_DISPLACEMENT = 0.001
 
 def run_fem(sf_wale, sf_course, knit_dirs,
             pressure, motif, region_map_path,
@@ -316,10 +316,10 @@ def main():
 
     if args.symmetric:
         # ── Symmetric mode: 7 params exploiting D8 symmetry ──────────────────
-        # Warm-start from best v2 result (empirically found symmetric solution).
         # p = [sf_wale_in, sf_course_in, sf_wale_out, sf_course_out,
         #      scale_Si, scale_So, scale_Ha]
-        p0_sym = np.array([2.038, 2.232, 2.327, 2.016, 0.932, 0.880, 0.993])
+        SF0_SYM = 1.042
+        p0_sym = np.array([SF0_SYM, SF0_SYM, SF0_SYM, SF0_SYM, 1.0, 1.0, 1.0])
 
         print(f"\nSanity check (symmetric warm-start) …")
         sf_w0, sf_c0, sc0 = expand_symmetric(p0_sym)
@@ -335,9 +335,9 @@ def main():
         if args.maxiter == 0:
             print("maxiter=0 — sanity check only."); return
 
-        bounds_sym = ([(2.0, 5.0)] * 4 +          # sf_wale/sf_course inner/outer
-                      [(0.70, 1.05)] * 2 +          # scale_Si, scale_So (wider)
-                      [(0.85, 1.05),])               # scale_Ha
+        bounds_sym = ([(0.7, 2.0)] * 4 +            # sf_wale/sf_course inner/outer
+                      [(0.70, 1.05)] * 2 +            # scale_Si, scale_So
+                      [(0.85, 1.05),])                 # scale_Ha
 
         def sym_objective(p_sym):
             sf_w, sf_c, scales = expand_symmetric(p_sym)
@@ -403,9 +403,7 @@ def main():
         return
 
     # ── Full 56-parameter mode ─────────────────────────────────────────────────
-    # sf≈2.35 is the uniform starting point where crown ≈ target (5.055 m).
-    # The FEM Newton solver diverges below sf≈1.3, so bounds start at 2.0.
-    SF0 = 2.35
+    SF0 = 1.042
     p0 = np.concatenate([
         np.full(N_REGIONS, SF0),
         np.full(N_REGIONS, SF0),
@@ -428,9 +426,8 @@ def main():
         return
 
     n_params = len(p0)
-    # Lower bound 2.0: FEM Newton diverges below sf≈1.3; safe margin at 2.0.
-    bounds = ([(2.0, 5.0)] * N_REGIONS +
-              [(2.0, 5.0)] * N_REGIONS +
+    bounds = ([(0.7, 2.0)] * N_REGIONS +
+              [(0.7, 2.0)] * N_REGIONS +
               [(0.85, 1.05)] * N_CABLES)
 
     print(f"\nOptimising {n_params} params "
