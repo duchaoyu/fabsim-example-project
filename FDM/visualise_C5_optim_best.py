@@ -25,7 +25,7 @@ OUT_PNG = os.path.join(HERE, "data", "C5", "C5_optim_best.png")
 BG      = "#0f0f1a"
 
 N_REGIONS = 16
-RUN_PREFIX = "c5_v5"
+RUN_PREFIX = "c5_p2"
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────

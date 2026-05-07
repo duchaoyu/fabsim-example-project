@@ -1,23 +1,23 @@
 {
   "geometry": "C5",
   "n_regions": 16,
-  "n_cables": 24,
-  "mode": "symmetric_D8",
+  "phase": 2,
   "motif": 1,
   "pressure": 1000.0,
   "fem_mesh": "/home/chaoyu/phd_simulation/FDM/data/C5/C5_remeshed_fem.off",
   "target_crown_m": 0.31226557,
-  "converged": true,
-  "loss_rmse_m": 0.0007156170770637253,
-  "n_calls": 130,
+  "phase1_converged": false,
+  "phase2_converged": false,
+  "phase2_rmse_m": 0.0003608253616347453,
+  "n_calls_phase2": 34,
   "symmetric_params": {
-    "sf_wale_in": 1.0315150654056549,
-    "sf_course_in": 1.0417151799211648,
-    "sf_wale_out": 1.0345206670772158,
-    "sf_course_out": 1.045945931897683,
-    "scale_Si": 1.0098299419791046,
-    "scale_So": 0.9906878697659125,
-    "scale_Ha": 0.9965735376106296
+    "sf_wale_in": 1.031807074665688,
+    "sf_course_in": 1.041886687790121,
+    "sf_wale_out": 1.0330028167216883,
+    "sf_course_out": 1.0435698409912062,
+    "scale_Si": 1.0039107226291786,
+    "scale_So": 0.9962952819861176,
+    "scale_Ha": 1.0
   },
   "regions": [
     {
@@ -25,226 +25,226 @@
       "zone": "inner",
       "sector": 0,
       "knit_dir_deg": 9.83285438097931,
-      "sf_wale": 1.0315150654056549,
-      "sf_course": 1.0417151799211648
+      "sf_wale": 1.031807074665688,
+      "sf_course": 1.041886687790121
     },
     {
       "region_id": 1,
       "zone": "inner",
       "sector": 1,
       "knit_dir_deg": 56.301510186280524,
-      "sf_wale": 1.0315150654056549,
-      "sf_course": 1.0417151799211648
+      "sf_wale": 1.031807074665688,
+      "sf_course": 1.041886687790121
     },
     {
       "region_id": 2,
       "zone": "inner",
       "sector": 2,
       "knit_dir_deg": 103.2181499972703,
-      "sf_wale": 1.0315150654056549,
-      "sf_course": 1.0417151799211648
+      "sf_wale": 1.031807074665688,
+      "sf_course": 1.041886687790121
     },
     {
       "region_id": 3,
       "zone": "inner",
       "sector": 3,
       "knit_dir_deg": 148.02361454555012,
-      "sf_wale": 1.0315150654056549,
-      "sf_course": 1.0417151799211648
+      "sf_wale": 1.031807074665688,
+      "sf_course": 1.041886687790121
     },
     {
       "region_id": 4,
       "zone": "inner",
       "sector": 4,
       "knit_dir_deg": 12.191637280191657,
-      "sf_wale": 1.0315150654056549,
-      "sf_course": 1.0417151799211648
+      "sf_wale": 1.031807074665688,
+      "sf_course": 1.041886687790121
     },
     {
       "region_id": 5,
       "zone": "inner",
       "sector": 5,
       "knit_dir_deg": 55.11019838160239,
-      "sf_wale": 1.0315150654056549,
-      "sf_course": 1.0417151799211648
+      "sf_wale": 1.031807074665688,
+      "sf_course": 1.041886687790121
     },
     {
       "region_id": 6,
       "zone": "inner",
       "sector": 6,
       "knit_dir_deg": 99.97817200121862,
-      "sf_wale": 1.0315150654056549,
-      "sf_course": 1.0417151799211648
+      "sf_wale": 1.031807074665688,
+      "sf_course": 1.041886687790121
     },
     {
       "region_id": 7,
       "zone": "inner",
       "sector": 7,
       "knit_dir_deg": 144.11935443837748,
-      "sf_wale": 1.0315150654056549,
-      "sf_course": 1.0417151799211648
+      "sf_wale": 1.031807074665688,
+      "sf_course": 1.041886687790121
     },
     {
       "region_id": 8,
       "zone": "outer",
       "sector": 0,
       "knit_dir_deg": 10.395512576305878,
-      "sf_wale": 1.0345206670772158,
-      "sf_course": 1.045945931897683
+      "sf_wale": 1.0330028167216883,
+      "sf_course": 1.0435698409912062
     },
     {
       "region_id": 9,
       "zone": "outer",
       "sector": 1,
       "knit_dir_deg": 56.88767459889995,
-      "sf_wale": 1.0345206670772158,
-      "sf_course": 1.045945931897683
+      "sf_wale": 1.0330028167216883,
+      "sf_course": 1.0435698409912062
     },
     {
       "region_id": 10,
       "zone": "outer",
       "sector": 2,
       "knit_dir_deg": 103.4563570660596,
-      "sf_wale": 1.0345206670772158,
-      "sf_course": 1.045945931897683
+      "sf_wale": 1.0330028167216883,
+      "sf_course": 1.0435698409912062
     },
     {
       "region_id": 11,
       "zone": "outer",
       "sector": 3,
       "knit_dir_deg": 146.96675440462226,
-      "sf_wale": 1.0345206670772158,
-      "sf_course": 1.045945931897683
+      "sf_wale": 1.0330028167216883,
+      "sf_course": 1.0435698409912062
     },
     {
       "region_id": 12,
       "zone": "outer",
       "sector": 4,
       "knit_dir_deg": 9.932270758031393,
-      "sf_wale": 1.0345206670772158,
-      "sf_course": 1.045945931897683
+      "sf_wale": 1.0330028167216883,
+      "sf_course": 1.0435698409912062
     },
     {
       "region_id": 13,
       "zone": "outer",
       "sector": 5,
       "knit_dir_deg": 55.1410216006321,
-      "sf_wale": 1.0345206670772158,
-      "sf_course": 1.045945931897683
+      "sf_wale": 1.0330028167216883,
+      "sf_course": 1.0435698409912062
     },
     {
       "region_id": 14,
       "zone": "outer",
       "sector": 6,
       "knit_dir_deg": 101.14907154345471,
-      "sf_wale": 1.0345206670772158,
-      "sf_course": 1.045945931897683
+      "sf_wale": 1.0330028167216883,
+      "sf_course": 1.0435698409912062
     },
     {
       "region_id": 15,
       "zone": "outer",
       "sector": 7,
       "knit_dir_deg": 145.42996506284453,
-      "sf_wale": 1.0345206670772158,
-      "sf_course": 1.045945931897683
+      "sf_wale": 1.0330028167216883,
+      "sf_course": 1.0435698409912062
     }
   ],
   "cables": [
     {
       "name": "Si0",
-      "rest_scale": 1.0098299419791046
+      "rest_scale": 1.0039107226291786
     },
     {
       "name": "So0",
-      "rest_scale": 0.9906878697659125
+      "rest_scale": 0.9962952819861176
     },
     {
       "name": "Si1",
-      "rest_scale": 1.0098299419791046
+      "rest_scale": 1.0039107226291786
     },
     {
       "name": "So1",
-      "rest_scale": 0.9906878697659125
+      "rest_scale": 0.9962952819861176
     },
     {
       "name": "Si2",
-      "rest_scale": 1.0098299419791046
+      "rest_scale": 1.0039107226291786
     },
     {
       "name": "So2",
-      "rest_scale": 0.9906878697659125
+      "rest_scale": 0.9962952819861176
     },
     {
       "name": "Si3",
-      "rest_scale": 1.0098299419791046
+      "rest_scale": 1.0039107226291786
     },
     {
       "name": "So3",
-      "rest_scale": 0.9906878697659125
+      "rest_scale": 0.9962952819861176
     },
     {
       "name": "Si4",
-      "rest_scale": 1.0098299419791046
+      "rest_scale": 1.0039107226291786
     },
     {
       "name": "So4",
-      "rest_scale": 0.9906878697659125
+      "rest_scale": 0.9962952819861176
     },
     {
       "name": "Si5",
-      "rest_scale": 1.0098299419791046
+      "rest_scale": 1.0039107226291786
     },
     {
       "name": "So5",
-      "rest_scale": 0.9906878697659125
+      "rest_scale": 0.9962952819861176
     },
     {
       "name": "Si6",
-      "rest_scale": 1.0098299419791046
+      "rest_scale": 1.0039107226291786
     },
     {
       "name": "So6",
-      "rest_scale": 0.9906878697659125
+      "rest_scale": 0.9962952819861176
     },
     {
       "name": "Si7",
-      "rest_scale": 1.0098299419791046
+      "rest_scale": 1.0039107226291786
     },
     {
       "name": "So7",
-      "rest_scale": 0.9906878697659125
+      "rest_scale": 0.9962952819861176
     },
     {
-      "name": "Ha0",
-      "rest_scale": 0.9965735376106296
+      "name": "Hj0",
+      "rest_scale": 1.0
     },
     {
-      "name": "Ha1",
-      "rest_scale": 0.9965735376106296
+      "name": "Hj1",
+      "rest_scale": 1.0
     },
     {
-      "name": "Ha2",
-      "rest_scale": 0.9965735376106296
+      "name": "Hj2",
+      "rest_scale": 1.0
     },
     {
-      "name": "Ha3",
-      "rest_scale": 0.9965735376106296
+      "name": "Hj3",
+      "rest_scale": 1.0
     },
     {
-      "name": "Ha4",
-      "rest_scale": 0.9965735376106296
+      "name": "Hj4",
+      "rest_scale": 1.0
     },
     {
-      "name": "Ha5",
-      "rest_scale": 0.9965735376106296
+      "name": "Hj5",
+      "rest_scale": 1.0
     },
     {
-      "name": "Ha6",
-      "rest_scale": 0.9965735376106296
+      "name": "Hj6",
+      "rest_scale": 1.0
     },
     {
-      "name": "Ha7",
-      "rest_scale": 0.9965735376106296
+      "name": "Hj7",
+      "rest_scale": 1.0
     }
   ]
 }

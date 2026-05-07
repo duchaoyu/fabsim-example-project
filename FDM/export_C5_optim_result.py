@@ -22,8 +22,8 @@ OBJ_OUT = os.path.join(HERE, "data", "C5", "C5_optim_inflated.obj")
 PNG_OUT = os.path.join(HERE, "data", "C5", "C5_optim_result_3d.png")
 BG      = "#0f0f1a"
 
-BEST_CALL = 24
-RUN_PREFIX = "c5_v5"
+BEST_CALL = 34
+RUN_PREFIX = "c5_p2"
 
 
 # ── Loaders ───────────────────────────────────────────────────────────────────
@@ -69,8 +69,8 @@ print(f"Mean deviation:  {dev.mean()*1000:.3f} mm")
 with open(OBJ_OUT, "w") as f:
     f.write(f"# C5 optimal inflated shape (FEM result, call #{BEST_CALL})\n")
     f.write(f"# RMSE={rmse*1000:.3f} mm  max_dev={dev.max()*1000:.3f} mm\n")
-    f.write(f"# sf_wale_in=1.0315 sf_course_in=1.0417 sf_wale_out=1.0345 sf_course_out=1.0459\n")
-    f.write(f"# scale_Si=1.0098 scale_So=0.9907 scale_Ha=0.9966 (D8-symmetric, 7 params)\n")
+    f.write(f"# sf_wale_in=1.0318 sf_course_in=1.0419 sf_wale_out=1.0330 sf_course_out=1.0436\n")
+    f.write(f"# scale_Si=1.0039 scale_So=0.9963 scale_Ha=1.0000 (two-phase, 7 params)\n")
     f.write(f"# pressure=1000 Pa, motif=1\n")
     f.write("g C5_inflated\n")
     for v in V_inflated:
@@ -188,9 +188,9 @@ ax_prof.text(0.02, 0.02,
              f"Mean deviation: {dev.mean()*1000:.3f} mm\n"
              f"Crown target:   {V_target[:,2].max()*1000:.1f} mm\n"
              f"Crown inflated: {V_inflated[:,2].max()*1000:.1f} mm\n"
-             f"\nsf_w_in=1.0315  sf_c_in=1.0417\n"
-             f"sf_w_out=1.0345  sf_c_out=1.0459\n"
-             f"Si=1.010  So=0.991  Ha=0.997",
+             f"\nsf_w_in=1.0318  sf_c_in=1.0419\n"
+             f"sf_w_out=1.0330  sf_c_out=1.0436\n"
+             f"Si=1.0039  So=0.9963  Ha=1.0000",
              transform=ax_prof.transAxes, va="bottom", ha="left",
              color="white", fontsize=8, fontfamily="monospace",
              bbox=dict(facecolor="#0d0d1a", edgecolor="#444", alpha=0.9, pad=4))
