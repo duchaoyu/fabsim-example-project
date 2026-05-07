@@ -161,20 +161,21 @@ _out_prefix  = ["c5_16r"]   # mutable default; overridden in main()
 _target_crown = [None]       # set in main() for validity gate
 
 
-def _check_fem_valid(verts, crown, stderr, call_n):
+def _check_fem_valid(verts, crown, V_rest):
     """
     Multi-check validity gate.  Returns (ok, reason_string).
 
     Failure modes observed in practice:
       1. NaN/Inf — Newton diverged
-      2. crown ≈ t_crown — solver returned the undeformed rest shape
-         (our rest == target, so crown matches exactly when unconverged)
-         Triggered by "Regularization failed" in stderr
-      3. crown out of physical range — catastrophic solver failure
+      2. max_disp_from_rest == 0 exactly — "Regularization failed": solver
+         returned the byte-identical rest shape.  Valid runs always displace
+         by >= 1e-4 m regardless of sf value or cable count.
+      3. crown outside [0.3×, 3×] t_crown — catastrophic solver failure
       4. Interior vertices below base plane — mesh folded
 
-    "Line search failed" in stderr is normal — Newton reduces step size;
-    the solver still converges as long as crown shifts away from t_crown.
+    Do NOT gate on crown proximity to t_crown: valid runs near the optimal
+    sf also have crown close to t_crown and would be wrongly rejected.
+    "Line search failed" in stderr is normal Newton behaviour — ignore it.
     """
     t_crown = _target_crown[0]
 
@@ -182,9 +183,11 @@ def _check_fem_valid(verts, crown, stderr, call_n):
     if not np.all(np.isfinite(verts)):
         return False, "NaN/Inf in vertices"
 
-    # 2. Returned rest shape — crown matches target exactly (rest == target)
-    if t_crown is not None and abs(crown - t_crown) / (t_crown + 1e-9) < 1e-3:
-        return False, f"crown={crown:.4f} ≈ t_crown={t_crown:.4f} — rest shape returned"
+    # 2. Exact rest-shape return (Regularization failed → zero displacement)
+    if V_rest is not None:
+        max_disp = float(np.max(np.linalg.norm(verts - V_rest, axis=1)))
+        if max_disp < 1e-8:
+            return False, f"max_disp={max_disp:.2e} — rest shape returned (Newton did not move)"
 
     # 3. Crown physically out of range [0.3×t, 3×t]
     if t_crown is not None and (crown < 0.3 * t_crown or crown > 3.0 * t_crown):
@@ -241,7 +244,7 @@ def run_fem(sf_wale, sf_course, knit_dirs,
         if os.path.exists(verts_path):
             out["verts"] = np.loadtxt(verts_path, delimiter=",", skiprows=1)[:, 1:]
             ok, reason = _check_fem_valid(
-                out["verts"], out.get("crown_height", 0.0), res.stderr, _call_count[0])
+                out["verts"], out.get("crown_height", 0.0), V_rest)
             if not ok:
                 print(f"  [{_call_count[0]:4d}] FEM INVALID: {reason}")
                 return None

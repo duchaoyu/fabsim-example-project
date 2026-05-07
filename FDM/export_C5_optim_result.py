@@ -23,7 +23,7 @@ PNG_OUT = os.path.join(HERE, "data", "C5", "C5_optim_result_3d.png")
 BG      = "#0f0f1a"
 
 BEST_CALL = 24
-RUN_PREFIX = "c5_1032w_1042c_v2"
+RUN_PREFIX = "c5_v5"
 
 
 # ── Loaders ───────────────────────────────────────────────────────────────────
