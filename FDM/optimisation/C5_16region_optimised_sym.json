@@ -1,0 +1,250 @@
+{
+  "geometry": "C5",
+  "n_regions": 16,
+  "n_cables": 24,
+  "mode": "symmetric_D8",
+  "motif": 1,
+  "pressure": 1000.0,
+  "fem_mesh": "/home/chaoyu/phd_simulation/FDM/data/C5_remeshed.off",
+  "target_crown_m": 5.054903,
+  "converged": true,
+  "loss_rmse_m": 0.2811709617488155,
+  "n_calls": 314,
+  "symmetric_params": {
+    "sf_wale_in": 2.013314007574712,
+    "sf_course_in": 2.0944965833597946,
+    "sf_wale_out": 2.1408246541686737,
+    "sf_course_out": 2.0,
+    "scale_Si": 0.8817375448465877,
+    "scale_So": 0.7697648240862903,
+    "scale_Ha": 1.0251754419064838
+  },
+  "regions": [
+    {
+      "region_id": 0,
+      "zone": "inner",
+      "sector": 0,
+      "knit_dir_deg": 11.421334847098498,
+      "sf_wale": 2.013314007574712,
+      "sf_course": 2.0944965833597946
+    },
+    {
+      "region_id": 1,
+      "zone": "inner",
+      "sector": 1,
+      "knit_dir_deg": 56.421338935016905,
+      "sf_wale": 2.013314007574712,
+      "sf_course": 2.0944965833597946
+    },
+    {
+      "region_id": 2,
+      "zone": "inner",
+      "sector": 2,
+      "knit_dir_deg": 101.42133484709849,
+      "sf_wale": 2.013314007574712,
+      "sf_course": 2.0944965833597946
+    },
+    {
+      "region_id": 3,
+      "zone": "inner",
+      "sector": 3,
+      "knit_dir_deg": 146.42133893501693,
+      "sf_wale": 2.013314007574712,
+      "sf_course": 2.0944965833597946
+    },
+    {
+      "region_id": 4,
+      "zone": "inner",
+      "sector": 4,
+      "knit_dir_deg": 11.421334847098478,
+      "sf_wale": 2.013314007574712,
+      "sf_course": 2.0944965833597946
+    },
+    {
+      "region_id": 5,
+      "zone": "inner",
+      "sector": 5,
+      "knit_dir_deg": 56.42133893501692,
+      "sf_wale": 2.013314007574712,
+      "sf_course": 2.0944965833597946
+    },
+    {
+      "region_id": 6,
+      "zone": "inner",
+      "sector": 6,
+      "knit_dir_deg": 101.42133484709849,
+      "sf_wale": 2.013314007574712,
+      "sf_course": 2.0944965833597946
+    },
+    {
+      "region_id": 7,
+      "zone": "inner",
+      "sector": 7,
+      "knit_dir_deg": 146.4213389350169,
+      "sf_wale": 2.013314007574712,
+      "sf_course": 2.0944965833597946
+    },
+    {
+      "region_id": 8,
+      "zone": "outer",
+      "sector": 0,
+      "knit_dir_deg": 11.306127847335052,
+      "sf_wale": 2.1408246541686737,
+      "sf_course": 2.0
+    },
+    {
+      "region_id": 9,
+      "zone": "outer",
+      "sector": 1,
+      "knit_dir_deg": 56.306128410311324,
+      "sf_wale": 2.1408246541686737,
+      "sf_course": 2.0
+    },
+    {
+      "region_id": 10,
+      "zone": "outer",
+      "sector": 2,
+      "knit_dir_deg": 101.30612784733505,
+      "sf_wale": 2.1408246541686737,
+      "sf_course": 2.0
+    },
+    {
+      "region_id": 11,
+      "zone": "outer",
+      "sector": 3,
+      "knit_dir_deg": 146.30612841031132,
+      "sf_wale": 2.1408246541686737,
+      "sf_course": 2.0
+    },
+    {
+      "region_id": 12,
+      "zone": "outer",
+      "sector": 4,
+      "knit_dir_deg": 11.306127847335034,
+      "sf_wale": 2.1408246541686737,
+      "sf_course": 2.0
+    },
+    {
+      "region_id": 13,
+      "zone": "outer",
+      "sector": 5,
+      "knit_dir_deg": 56.30612841031132,
+      "sf_wale": 2.1408246541686737,
+      "sf_course": 2.0
+    },
+    {
+      "region_id": 14,
+      "zone": "outer",
+      "sector": 6,
+      "knit_dir_deg": 101.30612784733505,
+      "sf_wale": 2.1408246541686737,
+      "sf_course": 2.0
+    },
+    {
+      "region_id": 15,
+      "zone": "outer",
+      "sector": 7,
+      "knit_dir_deg": 146.30612841031132,
+      "sf_wale": 2.1408246541686737,
+      "sf_course": 2.0
+    }
+  ],
+  "cables": [
+    {
+      "name": "Si0",
+      "rest_scale": 0.8817375448465877
+    },
+    {
+      "name": "So0",
+      "rest_scale": 0.7697648240862903
+    },
+    {
+      "name": "Si1",
+      "rest_scale": 0.8817375448465877
+    },
+    {
+      "name": "So1",
+      "rest_scale": 0.7697648240862903
+    },
+    {
+      "name": "Si2",
+      "rest_scale": 0.8817375448465877
+    },
+    {
+      "name": "So2",
+      "rest_scale": 0.7697648240862903
+    },
+    {
+      "name": "Si3",
+      "rest_scale": 0.8817375448465877
+    },
+    {
+      "name": "So3",
+      "rest_scale": 0.7697648240862903
+    },
+    {
+      "name": "Si4",
+      "rest_scale": 0.8817375448465877
+    },
+    {
+      "name": "So4",
+      "rest_scale": 0.7697648240862903
+    },
+    {
+      "name": "Si5",
+      "rest_scale": 0.8817375448465877
+    },
+    {
+      "name": "So5",
+      "rest_scale": 0.7697648240862903
+    },
+    {
+      "name": "Si6",
+      "rest_scale": 0.8817375448465877
+    },
+    {
+      "name": "So6",
+      "rest_scale": 0.7697648240862903
+    },
+    {
+      "name": "Si7",
+      "rest_scale": 0.8817375448465877
+    },
+    {
+      "name": "So7",
+      "rest_scale": 0.7697648240862903
+    },
+    {
+      "name": "Ha0",
+      "rest_scale": 1.0251754419064838
+    },
+    {
+      "name": "Ha1",
+      "rest_scale": 1.0251754419064838
+    },
+    {
+      "name": "Ha2",
+      "rest_scale": 1.0251754419064838
+    },
+    {
+      "name": "Ha3",
+      "rest_scale": 1.0251754419064838
+    },
+    {
+      "name": "Ha4",
+      "rest_scale": 1.0251754419064838
+    },
+    {
+      "name": "Ha5",
+      "rest_scale": 1.0251754419064838
+    },
+    {
+      "name": "Ha6",
+      "rest_scale": 1.0251754419064838
+    },
+    {
+      "name": "Ha7",
+      "rest_scale": 1.0251754419064838
+    }
+  ]
+}

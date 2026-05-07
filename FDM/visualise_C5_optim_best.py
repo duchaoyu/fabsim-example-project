@@ -1,16 +1,13 @@
 """
-Visualise C5 16-region FEM optimisation result.
+Visualise C5 16-region FEM optimisation result (symmetric D8 run).
 
 Panels:
   A – sf_wale per region (top-down ring map)
   B – sf_course per region (top-down ring map)
-  C – deviation distance |V_sim − V_target| for the final state (iter 481)
-  D – convergence history (max_stress + crown height vs FEM call)
+  C – deviation |V_sim − V_target| for the best call
+  D – convergence history (RMSE vs FEM call)
 
-Best result (call #59): deviation = 0 m everywhere (exact equilibrium).
-Final state (call #481): non-zero deviation shown in panel C.
-Stretch factors shown are from the stored parameter file closest to
-the optimizer's explored space (tmpu6alj3z9.json).
+Parameters loaded from C5_16region_optimised_sym.json (7-param D8 run).
 """
 import glob, json, os
 import numpy as np
@@ -96,14 +93,14 @@ vsect  = (vaz / 45.0).astype(int) % 8
 vreg   = np.where(vr < R_HOOP, vsect, vsect + 8)
 
 
-# ── Load stretch-factor params ────────────────────────────────────────────────
-SF_FILE = os.path.join(OPT_DIR, "tmpu6alj3z9.json")
+# ── Load stretch-factor params from symmetric optimisation result ─────────────
+SF_FILE = os.path.join(OPT_DIR, "C5_16region_optimised_sym.json")
 with open(SF_FILE) as f:
     sf_params = json.load(f)
 
-sf_wale  = np.array([r["sf_wale"]   for r in sf_params["regions"]])
-sf_course = np.array([r["sf_course"] for r in sf_params["regions"]])
-knit_dirs = np.array([r["knit_dir_deg"] for r in sf_params["regions"]])
+sf_wale   = np.array([r["sf_wale"]       for r in sf_params["regions"]])
+sf_course = np.array([r["sf_course"]     for r in sf_params["regions"]])
+knit_dirs = np.array([r["knit_dir_deg"]  for r in sf_params["regions"]])
 
 # Per-face sf values
 face_sf_w = sf_wale[freg]
@@ -117,33 +114,41 @@ reg_cy = np.array([cy_t[freg == r].mean() if (freg == r).any() else 0.0
                    for r in range(N_REGIONS)])
 
 
-# ── Convergence history ───────────────────────────────────────────────────────
-scalars_files = sorted(glob.glob(os.path.join(OPT_DIR, "c5_16r_*_scalars.csv")))
+# ── Convergence history (symmetric run) ──────────────────────────────────────
+bdry_mask    = np.hypot(V_target[:, 0], V_target[:, 1]) > \
+               (np.hypot(V_target[:, 0], V_target[:, 1]).max() * 0.98)
+interior_idx = np.where(~bdry_mask)[0]
+
+scalars_files = sorted(glob.glob(os.path.join(OPT_DIR, "c5_sym_0*_scalars.csv")))
 history = []
-for sf in scalars_files:
-    it = int(os.path.basename(sf).split("_")[-2])
-    with open(sf) as fp:
+for sf_path in scalars_files:
+    call_n = int(os.path.basename(sf_path).replace("c5_sym_", "").split("_")[0])
+    vf = sf_path.replace("_scalars.csv", "_verts.csv")
+    if not os.path.exists(vf):
+        continue
+    with open(sf_path) as fp:
         rows = list(csv.DictReader(fp))
-        if rows:
-            r = rows[0]
-            history.append((it, float(r["crown_height"]),
-                            float(r["max_stress"]), float(r["mean_stress"])))
-history.sort()
-iters      = np.array([h[0] for h in history])
-crowns     = np.array([h[1] for h in history])
-max_stress = np.array([h[2] for h in history])
+        if not rows:
+            continue
+        crown = float(rows[0]["crown_height"])
+    V_sim = np.loadtxt(vf, delimiter=",", skiprows=1)[:, 1:]
+    max_disp = float(np.max(np.linalg.norm(V_sim - V_target, axis=1)))
+    if max_disp < 0.05:
+        continue
+    diff = V_sim[interior_idx] - V_target[interior_idx]
+    rmse = float(np.sqrt(np.mean(np.sum(diff ** 2, axis=1))))
+    history.append((call_n, crown, rmse, V_sim))
 
-best_idx = int(np.argmin(max_stress))
-best_it  = iters[best_idx]
+history.sort(key=lambda h: h[0])
+calls  = np.array([h[0] for h in history])
+crowns = np.array([h[1] for h in history])
+rmses  = np.array([h[2] for h in history])
 
+best_idx = int(np.argmin(rmses))
+best_call = calls[best_idx]
 
-# ── Deviation: best (iter 59) and final (iter 481) ────────────────────────────
-def load_verts(it):
-    p = os.path.join(OPT_DIR, f"c5_16r_{it:05d}_verts.csv")
-    return np.loadtxt(p, delimiter=",", skiprows=1)[:, 1:]
-
-V_best  = load_verts(best_it)
-V_final = load_verts(int(iters[-1]))
+V_best  = history[best_idx][3]
+V_final = history[-1][3]
 
 dev_best  = np.linalg.norm(V_best  - V_target, axis=1)
 dev_final = np.linalg.norm(V_final - V_target, axis=1)
@@ -151,10 +156,10 @@ dev_final = np.linalg.norm(V_final - V_target, axis=1)
 face_dev_best  = dev_best[F].mean(axis=1)
 face_dev_final = dev_final[F].mean(axis=1)
 
-print(f"Best   (call #{best_it}):  max_dev={dev_best.max():.4f} m  "
-      f"mean_dev={dev_best.mean():.4f} m  crown={V_best[:,2].max():.3f} m")
-print(f"Final  (call #{iters[-1]:.0f}): max_dev={dev_final.max():.4f} m  "
-      f"mean_dev={dev_final.mean():.4f} m  crown={V_final[:,2].max():.3f} m")
+print(f"Best   (call #{best_call}):  RMSE={rmses[best_idx]:.4f} m  "
+      f"max_dev={dev_best.max():.4f} m  crown={V_best[:,2].max():.3f} m")
+print(f"Final  (call #{calls[-1]}):  RMSE={rmses[-1]:.4f} m  "
+      f"max_dev={dev_final.max():.4f} m  crown={V_final[:,2].max():.3f} m")
 
 
 # ── Figure: 2×2 grid ──────────────────────────────────────────────────────────
@@ -167,8 +172,9 @@ ax_dev  = fig.add_subplot(gs[1, 0])   # deviation map
 ax_hist = fig.add_subplot(gs[1, 1])   # convergence history
 
 fig.suptitle(
-    f"C5 16-region FEM optimisation  |  best call #{best_it}: dev=0 m, σ_vm={max_stress[best_idx]:.0f} Pa  "
-    f"|  final call #{int(iters[-1])}: max_dev={dev_final.max():.3f} m, mean_dev={dev_final.mean():.3f} m",
+    f"C5 16-region FEM optimisation (D8-symmetric, 7 params)  |  "
+    f"best call #{best_call}: RMSE={rmses[best_idx]:.3f} m  |  "
+    f"final call #{calls[-1]}: RMSE={rmses[-1]:.3f} m",
     color="white", fontsize=11, y=0.98)
 
 
@@ -216,12 +222,12 @@ for ax, face_sf, sf_vals, cmap_name, label, title_str in [
     add_colorbar(ax, cmap, norm, label)
 
 
-# ── Deviation map (final state) ───────────────────────────────────────────────
-style_ax(ax_dev, f"Deviation |V_sim − V_target|  (call #{int(iters[-1])})", equal=True)
+# ── Deviation map (best call) ─────────────────────────────────────────────────
+style_ax(ax_dev, f"Deviation |V_sim − V_target|  (best call #{best_call})", equal=True)
 
-norm_dev = Normalize(vmin=0, vmax=dev_final.max())
+norm_dev = Normalize(vmin=0, vmax=dev_best.max())
 cmap_dev = plt.cm.inferno
-fill_faces(ax_dev, V_target[:, 0], V_target[:, 1], F, face_dev_final,
+fill_faces(ax_dev, V_target[:, 0], V_target[:, 1], F, face_dev_best,
            norm_dev, cmap_dev, edge_alpha=0.03)
 
 # Hoop ring + spokes overlay
@@ -237,9 +243,13 @@ for k in range(8):
 cb_dev = add_colorbar(ax_dev, cmap_dev, norm_dev, "Deviation (m)")
 
 # Annotate best-result box
+sp = sf_params["symmetric_params"]
 ax_dev.text(0.02, 0.98,
-            f"Best call #{best_it}: max=0.000 m  mean=0.000 m\n"
-            f"Final call #{int(iters[-1])}: max={dev_final.max():.3f} m  mean={dev_final.mean():.3f} m",
+            f"Best call #{best_call}: RMSE={rmses[best_idx]:.3f} m  "
+            f"max_dev={dev_best.max():.3f} m\n"
+            f"sf_w_in={sp['sf_wale_in']:.3f}  sf_c_in={sp['sf_course_in']:.3f}  "
+            f"sf_w_out={sp['sf_wale_out']:.3f}  sf_c_out={sp['sf_course_out']:.3f}\n"
+            f"Si={sp['scale_Si']:.3f}  So={sp['scale_So']:.3f}  Ha={sp['scale_Ha']:.3f}",
             transform=ax_dev.transAxes, va="top", ha="left",
             color="white", fontsize=7.5, fontfamily="monospace",
             bbox=dict(facecolor="#0d0d1a", edgecolor="#444", alpha=0.9, pad=4))
@@ -247,24 +257,26 @@ ax_dev.text(0.02, 0.98,
 
 # ── Convergence history ───────────────────────────────────────────────────────
 ax_hist.set_facecolor(BG)
-ax_hist.set_title("Convergence history", color="white", fontsize=10, pad=5)
+ax_hist.set_title("Convergence history (D8-symmetric, 7 params)", color="white",
+                  fontsize=10, pad=5)
 ax_hist.set_xlabel("FEM call #", color="white", fontsize=8)
-ax_hist.set_ylabel("Max von Mises stress (Pa)", color="#ff6b35", fontsize=8)
+ax_hist.set_ylabel("RMSE (m)", color="#ff6b35", fontsize=8)
 ax_hist.tick_params(colors="#ff6b35", labelsize=7)
 ax_hist.spines["left"].set_color("#ff6b35")
-for sp in ["top", "bottom", "right"]:
-    ax_hist.spines[sp].set_color("#555")
+for sp_name in ["top", "bottom", "right"]:
+    ax_hist.spines[sp_name].set_color("#555")
 
-ax_hist.semilogy(iters, max_stress, color="#ff6b35", linewidth=1.2, zorder=3,
-                 label="max σ_vm")
-ax_hist.scatter([best_it], [max_stress[best_idx]], color="#ffdd00", s=80,
-                zorder=5, label=f"Best #{best_it}: dev=0 m")
-ax_hist.scatter([iters[-1]], [max_stress[-1]], color="#00d4ff", s=60,
-                zorder=5, marker="s", label=f"Final #{int(iters[-1])}: dev={dev_final.max():.2f} m")
+ax_hist.plot(calls, rmses, color="#ff6b35", linewidth=1.2, zorder=3, label="RMSE")
+ax_hist.scatter([best_call], [rmses[best_idx]], color="#ffdd00", s=80, zorder=5,
+                label=f"Best #{best_call}: {rmses[best_idx]:.3f} m")
+ax_hist.scatter([calls[-1]], [rmses[-1]], color="#00d4ff", s=60, zorder=5,
+                marker="s", label=f"Final #{calls[-1]}: {rmses[-1]:.3f} m")
 
 ax2 = ax_hist.twinx()
-ax2.plot(iters, crowns, color="#b0e87c", linewidth=1.0, linestyle="--",
+ax2.plot(calls, crowns, color="#b0e87c", linewidth=1.0, linestyle="--",
          alpha=0.8, label="crown h")
+ax2.axhline(V_target[:, 2].max(), color="#b0e87c", linewidth=0.8,
+            linestyle=":", alpha=0.5, label=f"target {V_target[:,2].max():.3f} m")
 ax2.set_ylabel("Crown height (m)", color="#b0e87c", fontsize=8)
 ax2.tick_params(colors="#b0e87c", labelsize=7)
 ax2.spines["right"].set_color("#b0e87c")
@@ -276,8 +288,9 @@ ax_hist.legend(lines1 + lines2, lab1 + lab2,
                loc="upper right", facecolor=BG, labelcolor="white", fontsize=7)
 ax_hist.grid(color="#333", linestyle="--", linewidth=0.5, alpha=0.6)
 
-ax_hist.annotate(f"#{best_it}\ndev=0", xy=(best_it, max_stress[best_idx]),
-                 xytext=(best_it + 20, max_stress[best_idx] * 5),
+ax_hist.annotate(f"#{best_call}\n{rmses[best_idx]:.3f} m",
+                 xy=(best_call, rmses[best_idx]),
+                 xytext=(best_call + 15, rmses[best_idx] + 0.03),
                  color="#ffdd00", fontsize=7,
                  arrowprops=dict(arrowstyle="->", color="#ffdd00", lw=0.8))
 
