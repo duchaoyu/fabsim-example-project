@@ -158,13 +158,45 @@ def region_knit_dirs(V, F, face_region):
 # ── Run FEM binary ─────────────────────────────────────────────────────────────
 _call_count = [0]
 _out_prefix  = ["c5_16r"]   # mutable default; overridden in main()
+_target_crown = [None]       # set in main() for validity gate
 
-# Minimum displacement from rest shape for a valid FEM result (m).
-# Only rejects truly unconverged runs (Newton returned undeformed rest shape).
-# For 1.2 m mesh, valid runs near sf≈1.032 give max_disp ~ 0.0006 m, so
-# keep threshold well below that. Set to 1e-5 m (10 µm) — anything smaller
-# means the solver returned the rest shape unchanged.
-_MIN_DISPLACEMENT = 1e-5
+
+def _check_fem_valid(verts, crown, stderr, call_n):
+    """
+    Multi-check validity gate.  Returns (ok, reason_string).
+
+    Failure modes observed in practice:
+      1. NaN/Inf — Newton diverged
+      2. crown ≈ t_crown — solver returned the undeformed rest shape
+         (our rest == target, so crown matches exactly when unconverged)
+         Triggered by "Regularization failed" in stderr
+      3. crown out of physical range — catastrophic solver failure
+      4. Interior vertices below base plane — mesh folded
+
+    "Line search failed" in stderr is normal — Newton reduces step size;
+    the solver still converges as long as crown shifts away from t_crown.
+    """
+    t_crown = _target_crown[0]
+
+    # 1. NaN / Inf
+    if not np.all(np.isfinite(verts)):
+        return False, "NaN/Inf in vertices"
+
+    # 2. Returned rest shape — crown matches target exactly (rest == target)
+    if t_crown is not None and abs(crown - t_crown) / (t_crown + 1e-9) < 1e-3:
+        return False, f"crown={crown:.4f} ≈ t_crown={t_crown:.4f} — rest shape returned"
+
+    # 3. Crown physically out of range [0.3×t, 3×t]
+    if t_crown is not None and (crown < 0.3 * t_crown or crown > 3.0 * t_crown):
+        return False, f"crown={crown:.4f} outside physical range"
+
+    # 4. Mesh folded through base plane (z < -1% of crown)
+    min_z = float(verts[:, 2].min())
+    if t_crown is not None and min_z < -0.01 * t_crown:
+        return False, f"min z={min_z:.4f} — mesh folded"
+
+    return True, "OK"
+
 
 def run_fem(sf_wale, sf_course, knit_dirs,
             pressure, motif, region_map_path,
@@ -208,11 +240,10 @@ def run_fem(sf_wale, sf_course, knit_dirs,
         out = {k: float(v) for k, v in row.items()}
         if os.path.exists(verts_path):
             out["verts"] = np.loadtxt(verts_path, delimiter=",", skiprows=1)[:, 1:]
-            # Validity gate: reject if solver returned the undeformed rest shape
-            max_disp = float(np.max(np.linalg.norm(out["verts"] - V_rest, axis=1)))
-            if max_disp < _MIN_DISPLACEMENT:
-                print(f"  [{_call_count[0]:4d}] FEM INVALID: "
-                      f"max disp={max_disp:.4f} m — Newton did not converge")
+            ok, reason = _check_fem_valid(
+                out["verts"], out.get("crown_height", 0.0), res.stderr, _call_count[0])
+            if not ok:
+                print(f"  [{_call_count[0]:4d}] FEM INVALID: {reason}")
                 return None
         return out
     except Exception as e:
@@ -297,6 +328,7 @@ def main():
                    (np.hypot(V_target[:, 0], V_target[:, 1]).max() * 0.98)
     interior_idx = np.where(~bdry_mask)[0]
     t_crown      = float(V_target[:, 2].max())
+    _target_crown[0] = t_crown   # used by validity gate in run_fem()
 
     print(f"FEM mesh : {len(V)} verts, {len(F)} faces")
     print(f"Target   : {len(V_target)} verts, {len(interior_idx)} interior, "
