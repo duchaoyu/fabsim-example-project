@@ -191,90 +191,89 @@ print(f"Saved JSON: {out}")
 
 # ── Visualise ─────────────────────────────────────────────────────────────────
 from mpl_toolkits.mplot3d.art3d import Line3DCollection
+from matplotlib.collections import LineCollection
 
-norm_q  = Normalize(vmin=q_opt.min(), vmax=np.percentile(q_opt, 98))
-cmap_q  = plt.cm.hot
+norm_q = Normalize(vmin=q_opt.min(), vmax=np.percentile(q_opt, 98))
+cmap_q = plt.cm.hot
 
 fig = plt.figure(figsize=(20, 8), facecolor=BG)
-gs  = fig.add_gridspec(1, 3, wspace=0.05, left=0.02, right=0.98, top=0.90, bottom=0.05)
-ax_t = fig.add_subplot(gs[0, 0], projection="3d")
-ax_r = fig.add_subplot(gs[0, 1], projection="3d")
-ax_p = fig.add_subplot(gs[0, 2])
+gs  = fig.add_gridspec(1, 3, wspace=0.08, left=0.03, right=0.97, top=0.90, bottom=0.06)
+ax3d = fig.add_subplot(gs[0, 0], projection="3d")
+ax2d = fig.add_subplot(gs[0, 1])
+ax_h = fig.add_subplot(gs[0, 2])
 
 fig.suptitle(
-    f"D5 FDM  |  force densities q  |  "
-    f"q range [{q_opt.min():.2f}, {q_opt.max():.2f}]  |  "
+    f"D5 FDM  |  force densities q  |  q range [{q_opt.min():.2f}, {q_opt.max():.2f}]  |  "
     f"crown={V_result[:,2].max():.4f} m  (target {height:.4f} m)",
     color="white", fontsize=11, y=0.97)
 
+# Left: 3D perspective
+ax3d.set_facecolor(BG)
+cr = Poly3DCollection([V_result[t] for t in F], zsort="min", linewidth=0)
+cr.set_facecolor(np.full((n_f, 4), [0.12, 0.12, 0.15, 0.7]))
+cr.set_edgecolor("none")
+ax3d.add_collection3d(cr)
+lc3d = Line3DCollection([[V_result[a], V_result[b]] for (a, b) in edges],
+                         linewidths=0.7, cmap=cmap_q, norm=norm_q)
+lc3d.set_array(q_opt)
+ax3d.add_collection3d(lc3d)
+ax3d.set_xlim(V_result[:, 0].min(), V_result[:, 0].max())
+ax3d.set_ylim(V_result[:, 1].min(), V_result[:, 1].max())
+ax3d.set_zlim(0, V_result[:, 2].max() * 1.15)
+ax3d.set_xlabel("x", color="white", fontsize=7, labelpad=1)
+ax3d.set_ylabel("y", color="white", fontsize=7, labelpad=1)
+ax3d.set_zlabel("z", color="white", fontsize=7, labelpad=1)
+ax3d.tick_params(colors="white", labelsize=6, pad=1)
+ax3d.set_title("3D perspective", color="white", fontsize=9, pad=4)
+ax3d.view_init(elev=30, azim=-60)
+ax3d.set_box_aspect([1, 1, 0.5])
+for pane in [ax3d.xaxis.pane, ax3d.yaxis.pane, ax3d.zaxis.pane]:
+    pane.fill = False; pane.set_edgecolor("#333")
+ax3d.grid(color="#333", linewidth=0.4)
 
-def setup_ax3d(ax, V, title):
-    ax.set_facecolor(BG)
-    ax.set_xlim(V[:, 0].min(), V[:, 0].max())
-    ax.set_ylim(V[:, 1].min(), V[:, 1].max())
-    ax.set_zlim(0, max(V[:, 2].max(), 0.01) * 1.15)
-    ax.set_xlabel("x", color="white", fontsize=7, labelpad=1)
-    ax.set_ylabel("y", color="white", fontsize=7, labelpad=1)
-    ax.set_zlabel("z", color="white", fontsize=7, labelpad=1)
-    ax.tick_params(colors="white", labelsize=6, pad=1)
-    ax.set_title(title, color="white", fontsize=9, pad=4)
-    ax.view_init(elev=30, azim=-60)
-    ax.set_box_aspect([1, 1, 0.5])
-    for pane in [ax.xaxis.pane, ax.yaxis.pane, ax.zaxis.pane]:
-        pane.fill = False; pane.set_edgecolor("#333")
-    ax.grid(color="#333", linewidth=0.4)
+# Middle: top-down plan view (XY projection)
+ax2d.set_facecolor(BG)
+ax2d.set_aspect("equal")
+ax2d.set_title("Top view — edges coloured by force density q", color="white", fontsize=9, pad=4)
+ax2d.set_xlabel("x (m)", color="white", fontsize=8)
+ax2d.set_ylabel("y (m)", color="white", fontsize=8)
+ax2d.tick_params(colors="white", labelsize=7)
+for sp in ax2d.spines.values(): sp.set_color("#444")
 
+segs2d = [[(V_result[a, 0], V_result[a, 1]), (V_result[b, 0], V_result[b, 1])]
+          for (a, b) in edges]
+lc2d = LineCollection(segs2d, linewidths=0.8, cmap=cmap_q, norm=norm_q, zorder=3)
+lc2d.set_array(q_opt)
+ax2d.add_collection(lc2d)
+ax2d.set_xlim(V_result[:, 0].min() - 0.02, V_result[:, 0].max() + 0.02)
+ax2d.set_ylim(V_result[:, 1].min() - 0.02, V_result[:, 1].max() + 0.02)
 
-# Left: target mesh (flat blue faces)
-ax_t.set_facecolor(BG)
-coll_t = Poly3DCollection([V_target[tri] for tri in F],
-                           zsort="min", linewidth=0, antialiased=False)
-coll_t.set_facecolor(np.full((n_f, 4), [0.25, 0.45, 0.75, 0.85]))
-coll_t.set_edgecolor("none")
-ax_t.add_collection3d(coll_t)
-setup_ax3d(ax_t, V_target, "Target (D5_remeshed.obj)")
-
-# Middle: FDM mesh (grey faces) + edges coloured by force density q
-ax_r.set_facecolor(BG)
-coll_r = Poly3DCollection([V_result[tri] for tri in F],
-                           zsort="min", linewidth=0, antialiased=False)
-coll_r.set_facecolor(np.full((n_f, 4), [0.15, 0.15, 0.18, 0.6]))
-coll_r.set_edgecolor("none")
-ax_r.add_collection3d(coll_r)
-
-segs      = [[V_result[a], V_result[b]] for (a, b) in edges]
-lc        = Line3DCollection(segs, linewidths=0.8, cmap=cmap_q, norm=norm_q, zorder=5)
-lc.set_array(q_opt)
-ax_r.add_collection3d(lc)
-setup_ax3d(ax_r, V_result, "FDM equilibrium — edges coloured by force density q")
-
-sm_q = ScalarMappable(cmap=cmap_q, norm=norm_q)
-sm_q.set_array([])
-cb = fig.colorbar(sm_q, ax=ax_r, fraction=0.03, pad=0.08, shrink=0.6)
+sm = ScalarMappable(cmap=cmap_q, norm=norm_q)
+sm.set_array([])
+cb = fig.colorbar(sm, ax=ax2d, fraction=0.035, pad=0.03, shrink=0.85)
 cb.set_label("Force density q", color="white", fontsize=7)
 cb.ax.yaxis.set_tick_params(color="white", labelsize=6)
 cb.outline.set_edgecolor("white")
 plt.setp(plt.getp(cb.ax.axes, "yticklabels"), color="white")
 
-# Right: force density histogram
-ax_p.set_facecolor(BG)
-ax_p.set_title("Force density distribution", color="white", fontsize=9, pad=4)
-ax_p.set_xlabel("q (force density)", color="white", fontsize=8)
-ax_p.set_ylabel("edge count", color="white", fontsize=8)
-ax_p.tick_params(colors="white", labelsize=7)
-for sp in ax_p.spines.values(): sp.set_color("#555")
+# Right: histogram
+ax_h.set_facecolor(BG)
+ax_h.set_title("Force density distribution", color="white", fontsize=9, pad=4)
+ax_h.set_xlabel("q", color="white", fontsize=8)
+ax_h.set_ylabel("edge count", color="white", fontsize=8)
+ax_h.tick_params(colors="white", labelsize=7)
+for sp in ax_h.spines.values(): sp.set_color("#555")
 
 counts, bin_edges = np.histogram(q_opt, bins=60)
 bin_centers = 0.5 * (bin_edges[:-1] + bin_edges[1:])
-bar_colors  = cmap_q(norm_q(bin_centers))
-ax_p.bar(bin_centers, counts, width=bin_edges[1]-bin_edges[0],
-         color=bar_colors, edgecolor="none", alpha=0.9)
-ax_p.axvline(q_opt.mean(), color="white", linewidth=1.0, linestyle="--", alpha=0.7,
+ax_h.bar(bin_centers, counts, width=bin_edges[1] - bin_edges[0],
+         color=cmap_q(norm_q(bin_centers)), edgecolor="none", alpha=0.9)
+ax_h.axvline(q_opt.mean(), color="white", linewidth=1.0, linestyle="--", alpha=0.7,
              label=f"mean = {q_opt.mean():.3f}")
-ax_p.legend(facecolor=BG, labelcolor="white", fontsize=8)
-ax_p.grid(color="#333", linestyle="--", linewidth=0.5, alpha=0.4, axis="y")
+ax_h.legend(facecolor=BG, labelcolor="white", fontsize=8)
+ax_h.grid(color="#333", linestyle="--", linewidth=0.5, alpha=0.4, axis="y")
 
-ax_p.text(0.97, 0.97,
+ax_h.text(0.97, 0.97,
           f"n edges:  {n_e}\n"
           f"q min:    {q_opt.min():.4f}\n"
           f"q max:    {q_opt.max():.4f}\n"
@@ -283,7 +282,7 @@ ax_p.text(0.97, 0.97,
           f"\ncrown target: {height*1000:.1f} mm\n"
           f"crown FDM:    {V_result[:,2].max()*1000:.1f} mm\n"
           f"RMSE:         {rmse*1000:.2f} mm",
-          transform=ax_p.transAxes, va="top", ha="right",
+          transform=ax_h.transAxes, va="top", ha="right",
           color="white", fontsize=8, fontfamily="monospace",
           bbox=dict(facecolor="#0d0d1a", edgecolor="#444", alpha=0.9, pad=4))
 
