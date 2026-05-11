@@ -18,6 +18,7 @@ OPT_J   = os.path.join(HERE, "optimisation", "D5_4region_adaptive_optimised.json
 RMAP_J  = os.path.join(HERE, "optimisation", "D5_4region_adaptive_map.json")
 VERTS   = os.path.join(HERE, "optimisation", "d5_4ra_02756_verts.csv")
 OUT     = os.path.join(HERE, "data", "D5", "D5_4region_adaptive_result.png")
+OUT_OFF = os.path.join(HERE, "data", "D5", "D5_4region_adaptive_optimised.off")
 
 REGION_COLORS = ["#4C72B0", "#DD8452", "#55A868", "#C44E52"]  # blue, orange, green, red
 RMSE_1R = 7.61
@@ -129,17 +130,16 @@ def main():
     ax3.axis("off")
     ax3.set_title("Per-region optimised parameters", fontsize=10)
 
-    col_labels = ["Region", "Faces", "knit θ (°)", "sf_wale", "sf_course"]
+    col_labels = ["Region", "Faces", "sf_wale", "sf_course"]
     rows = []
     for r in range(n_regions):
         rr = opt["regions"][r]
         rows.append([f"R{r}", str(rr["n_faces"]),
-                     f"{rr['knit_dir_deg']:.1f}",
                      f"{rr['sf_wale']:.4f}", f"{rr['sf_course']:.4f}"])
 
     table = ax3.table(cellText=rows, colLabels=col_labels,
                       cellLoc="center", loc="center",
-                      bbox=[0.0, 0.25, 1.0, 0.55])
+                      bbox=[0.0, 0.28, 1.0, 0.52])
     table.auto_set_font_size(False); table.set_fontsize(9)
     for (row, col), cell in table.get_celld().items():
         if row == 0:
@@ -149,6 +149,9 @@ def main():
             cell.set_facecolor(REGION_COLORS[row - 1])
             cell.set_text_props(fontweight="bold")
         cell.set_edgecolor("#cccccc")
+
+    ax3.text(0.5, 0.27, "Knit direction fixed from directional field (not optimised)",
+             transform=ax3.transAxes, fontsize=7, ha="center", color="#666666", style="italic")
 
     ax_bar = ax3.inset_axes([0.1, 0.02, 0.8, 0.18])
     rmse_vals = [RMSE_1R, RMSE_3R, rmse_4r]
@@ -164,6 +167,15 @@ def main():
 
     plt.savefig(OUT, dpi=150, bbox_inches="tight")
     print(f"Saved: {OUT}")
+
+    with open(OUT_OFF, "w") as f:
+        f.write("OFF\n")
+        f.write(f"{len(V_opt)} {len(F)} 0\n")
+        for v in V_opt:
+            f.write(f"{v[0]:.8f} {v[1]:.8f} {v[2]:.8f}\n")
+        for face in F:
+            f.write(f"3 {face[0]} {face[1]} {face[2]}\n")
+    print(f"Saved: {OUT_OFF}")
 
 
 if __name__ == "__main__":
