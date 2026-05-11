@@ -1,0 +1,752 @@
+Generating 150 extra samples per group (IDs 1800–2399), seed=77819
+
+Running 600 FEA simulations (16 workers)...
+  [01808] h=0.0000m
+  [01803] h=0.0213m
+  [01807] h=0.0742m
+  [01812] h=0.0714m
+  [01802] h=0.0859m
+  [01815] h=0.1175m
+  [01809] h=0.0805m
+  [01806] h=0.0544m
+  [01818] h=0.0000m
+  [01819] h=0.0272m
+  [01822] h=0.0457m
+  [01820] h=0.0766m
+  [01817] h=0.0757m
+  [01821] h=0.0605m
+  [01824] h=0.1835m
+  [01823] h=0.2349m
+  [01813] h=0.1946m
+  [01810] h=0.2278m
+  [01825] h=0.1090m
+  [01826] h=0.0591m
+  [01805] h=0.0714m
+  [01816] h=0.0621m
+  [01833] h=0.0393m
+  [01831] h=0.0785m
+  [01811] h=0.1854m
+  [01837] h=0.1152m
+  [01814] h=0.2161m
+  [01832] h=0.2305m
+  [01840] h=0.0000m
+  [01839] h=0.1855m
+  [01801] h=0.2884m
+  [01838] h=0.1459m
+  [01828] h=0.1285m
+  [01829] h=0.2372m
+  [01841] h=0.0600m
+  [01845] h=0.0399m
+  [01847] h=0.0996m
+  [01851] h=0.0000m
+  [01848] h=0.0473m
+  [01849] h=0.0188m
+  [01850] h=0.0508m
+  [01835] h=0.2135m
+  [01834] h=0.0432m
+  [01858] h=0.0000m
+  [01800] h=0.2391m
+  [01843] h=0.2003m
+  [01827] h=0.2249m
+  [01830] h=0.2563m
+  [01860] h=0.1208m
+  [01863] h=0.0000m
+  [01862] h=0.1491m
+  [01853] h=0.1453m
+  [01846] h=0.2504m
+  [01855] h=0.1251m
+  [01859] h=0.0572m
+  [01866] h=0.0000m
+  [01861] h=0.0988m
+  [01854] h=0.1309m
+  [01869] h=0.0228m
+  [01842] h=0.2050m
+  [01857] h=0.1682m
+  [01872] h=0.0974m
+  [01874] h=0.0988m
+  [01873] h=0.1553m
+  [01870] h=0.0582m
+  [01856] h=0.2143m
+  [01864] h=0.2595m
+  [01877] h=0.1606m
+  [01868] h=0.1525m
+  [01880] h=0.0324m
+  [01871] h=0.0121m
+  [01875] h=0.2453m
+  [01883] h=0.0182m
+  [01865] h=0.1723m
+  [01886] h=0.0556m
+  [01890] h=0.0000m
+  [01889] h=0.0484m
+  [01884] h=0.0716m
+  [01876] h=0.1611m
+  [01891] h=0.0242m
+  [01892] h=0.0500m
+  [01894] h=0.0706m
+  [01895] h=0.0299m
+  [01836] h=0.2334m
+  [01878] h=0.2545m
+  [01867] h=0.2597m
+  [01885] h=0.0856m
+  [01897] h=0.0330m
+  [01888] h=0.1382m
+  [01879] h=0.1938m
+  [01901] h=0.0805m
+  [01881] h=0.1930m
+  [01898] h=0.0841m
+  [01887] h=0.1197m
+  [01904] h=0.1858m
+  [01905] h=0.1014m
+  [01882] h=0.1967m
+  [01896] h=0.1439m
+  [01910] h=0.0000m
+  [01908] h=0.0591m
+  [01900] h=0.0886m
+  [01911] h=0.0782m
+  [01912] h=0.0935m
+  [01913] h=0.0517m
+  [01914] h=0.0306m
+  [01919] h=0.0000m
+  [01915] h=0.1329m
+  [01909] h=0.1549m
+  [01902] h=0.0987m
+  [01921] h=0.0552m
+  [01916] h=0.1721m
+  [01903] h=0.2303m
+  [01923] h=0.0392m
+  [01918] h=0.0666m
+  [01907] h=0.2045m
+  [01906] h=0.1382m
+  [01929] h=0.0225m
+  [01928] h=0.0888m
+  [01925] h=0.0708m
+  [01893] h=0.0593m
+  [01933] h=0.0189m
+  [01917] h=0.1358m
+  [01934] h=0.1268m
+  [01936] h=0.1058m
+  [01924] h=0.1537m
+  [01920] h=0.2160m
+  [01935] h=0.0801m
+  [01940] h=0.0368m
+  [01942] h=0.0000m
+  [01939] h=0.1111m
+  [01941] h=0.0272m
+  [01943] h=0.0391m
+  [01944] h=0.1943m
+  [01946] h=0.0953m
+  [01930] h=0.2534m
+  [01947] h=0.1358m
+  [01948] h=0.1289m
+  [01949] h=0.0450m
+  [01938] h=0.1987m
+  [01926] h=0.1861m
+  [01954] h=0.0393m
+  [01950] h=0.0029m
+  [01956] h=0.0000m
+  [01937] h=0.2406m
+  [01953] h=0.0876m
+  [01952] h=0.0729m
+  [01960] h=0.0368m
+  [01957] h=0.0554m
+  [01945] h=0.2909m
+  [01959] h=0.0223m
+  [01899] h=0.0471m
+  [01961] h=0.1234m
+  [01955] h=0.2552m
+  [01967] h=0.0478m
+  [01964] h=0.0853m
+  [01852] h=0.0586m
+  [01958] h=0.0825m
+  [01932] h=0.0339m
+  [01966] h=0.0913m
+  [01969] h=0.0208m
+  [01974] h=0.0000m
+  [01971] h=0.0260m
+  [01976] h=0.1105m
+  [01972] h=0.2497m
+  [01978] h=0.0315m
+  [01977] h=0.2462m
+  [01968] h=0.1280m
+  [01982] h=0.0276m
+  [01980] h=0.1563m
+  [01984] h=0.0593m
+  [01985] h=0.0000m
+  [01973] h=0.1805m
+  [01986] h=0.0070m
+  [01988] h=0.0644m
+  [01989] h=0.0000m
+  [01987] h=0.0324m
+  [01965] h=0.1717m
+  [01962] h=0.3184m
+  [01992] h=0.0416m
+  [01983] h=0.0801m
+  [01927] h=0.1805m
+  [01994] h=0.0442m
+  [01997] h=0.0000m
+  [01995] h=0.1391m
+  [01996] h=0.0875m
+  [02000] h=0.0000m
+  [02001] h=0.0000m
+  [01999] h=0.1361m
+  [02002] h=0.0296m
+  [02003] h=0.0738m
+  [01991] h=0.2244m
+  [02004] h=0.1704m
+  [02005] h=0.0663m
+  [02008] h=0.0000m
+  [02009] h=0.1315m
+  [02006] h=0.0708m
+  [02007] h=0.1829m
+  [01990] h=0.2250m
+  [02012] h=0.1122m
+  [01979] h=0.1306m
+  [02015] h=0.0110m
+  [02016] h=0.0355m
+  [02013] h=0.0544m
+  [01998] h=0.2167m
+  [02019] h=0.1617m
+  [02020] h=0.0136m
+  [02018] h=0.3235m
+  [02021] h=0.1329m
+  [02022] h=0.1112m
+  [02024] h=0.1539m
+  [02025] h=0.0774m
+  [02026] h=0.0000m
+  [02027] h=0.0321m
+  [02028] h=0.0433m
+  [02023] h=0.1966m
+  [02030] h=0.1166m
+  [02031] h=0.1095m
+  [02032] h=0.0028m
+  [02033] h=0.0000m
+  [02029] h=0.1067m
+  [02035] h=0.1923m
+  [02036] h=0.1387m
+  [01804] h=0.0391m
+  [01844] h=0.2571m
+  [01922] h=0.0312m
+  [01931] h=0.1657m
+  [02039] h=0.0656m
+  [02042] h=0.0000m
+  [02041] h=0.0476m
+  [02044] h=0.0408m
+  [02038] h=0.1768m
+  [02045] h=0.0214m
+  [02037] h=0.0888m
+  [02047] h=0.1360m
+  [02043] h=0.2719m
+  [02049] h=0.1887m
+  [02046] h=0.2849m
+  [02051] h=0.1673m
+  [02050] h=0.0632m
+  [02052] h=0.2257m
+  [02055] h=0.1396m
+  [02048] h=0.3288m
+  [02057] h=0.0000m
+  [02056] h=0.0972m
+  [02058] h=0.1611m
+  [02059] h=0.2386m
+  [02054] h=0.3179m
+  [02061] h=0.1021m
+  [02062] h=0.0805m
+  [02063] h=0.0389m
+  [02064] h=0.0357m
+  [02066] h=0.0383m
+  [02067] h=0.0366m
+  [02068] h=0.0210m
+  [02069] h=0.0569m
+  [02070] h=0.0000m
+  [02071] h=0.0000m
+  [02072] h=0.0523m
+  [02073] h=0.0650m
+  [02074] h=0.0508m
+  [02075] h=0.0709m
+  [02076] h=0.1379m
+  [01970] h=0.0677m
+  [02078] h=0.0423m
+  [02079] h=0.0613m
+  [02014] h=0.1290m
+  [02081] h=0.1703m
+  [01951] h=0.0494m
+  [02083] h=0.0055m
+  [02082] h=0.0339m
+  [02085] h=0.1470m
+  [02086] h=0.0000m
+  [02087] h=0.1038m
+  [02080] h=0.0133m
+  [02089] h=0.0000m
+  [02090] h=0.0267m
+  [01993] h=0.0203m
+  [02092] h=0.1107m
+  [02093] h=0.2131m
+  [02094] h=0.1485m
+  [01963] FAILED: FEA failed: Command '['/home/chaoyu/phd_simulation/build/fem_batch_sensitivity', '/home/chaoyu/phd_simulation/data/circu
+  [02096] h=0.0441m
+  [02097] h=0.0128m
+  [01975] FAILED: FEA failed: Command '['/home/chaoyu/phd_simulation/build/fem_batch_sensitivity', '/home/chaoyu/phd_simulation/data/circu
+  [02099] h=0.0352m
+  [02100] h=0.0549m
+  [02101] h=0.1552m
+  [02102] h=0.1265m
+  [02103] h=0.2620m
+  [01981] FAILED: FEA failed: Command '['/home/chaoyu/phd_simulation/build/fem_batch_sensitivity', '/home/chaoyu/phd_simulation/data/circu
+  [02105] h=0.0901m
+  [02106] h=0.0346m
+  [02107] h=0.0291m
+  [02104] h=0.2464m
+  [02108] h=0.1434m
+  [02109] h=0.0650m
+  [02111] h=0.1316m
+  [02112] h=0.0468m
+  [02113] h=0.0000m
+  [02110] h=0.1517m
+  [02115] h=0.0997m
+  [02114] h=0.2315m
+  [02117] h=0.0514m
+  [02116] h=0.2430m
+  [02118] h=0.0670m
+  [02119] h=0.0767m
+  [02120] h=0.0880m
+  [02122] h=0.1064m
+  [02121] h=0.2479m
+  [02124] h=0.1504m
+  [02125] h=0.0610m
+  [02126] h=0.0378m
+  [02123] h=0.1164m
+  [02127] h=0.0746m
+  [02128] h=0.2611m
+  [02130] h=0.0835m
+  [02131] h=0.1757m
+  [02132] h=0.3506m
+  [02129] h=0.0418m
+  [02134] h=0.2391m
+  [02135] h=0.2011m
+  [02136] h=0.0567m
+  [02137] h=0.1734m
+  [02138] h=0.1787m
+  [02139] h=0.0430m
+  [02140] h=0.2680m
+  [02010] FAILED: FEA failed: Command '['/home/chaoyu/phd_simulation/build/fem_batch_sensitivity', '/home/chaoyu/phd_simulation/data/circu
+  [02011] FAILED: FEA failed: Command '['/home/chaoyu/phd_simulation/build/fem_batch_sensitivity', '/home/chaoyu/phd_simulation/data/circu
+  [02143] h=0.1849m
+  [02144] h=0.1672m
+  [02142] h=0.1764m
+  [02141] h=0.3630m
+  [02147] h=0.1737m
+  [02145] h=0.0168m
+  [02148] h=0.0623m
+  [02146] h=0.2332m
+  [02151] h=0.0554m
+  [02150] h=0.0406m
+  [02149] h=0.1329m
+  [02153] h=0.0628m
+  [02154] h=0.0908m
+  [02156] h=0.0000m
+  [02157] h=0.1179m
+  [02152] h=0.0701m
+  [02159] h=0.0935m
+  [02155] h=0.2318m
+  [02158] h=0.0934m
+  [02162] h=0.0000m
+  [02161] h=0.0760m
+  [02160] h=0.2260m
+  [02017] FAILED: FEA failed: Command '['/home/chaoyu/phd_simulation/build/fem_batch_sensitivity', '/home/chaoyu/phd_simulation/data/circu
+  [02165] h=0.0509m
+  [02164] h=0.0765m
+  [02166] h=0.1305m
+  [02169] h=0.0338m
+  [02170] h=0.1565m
+  [02171] h=0.0000m
+  [02172] h=0.0000m
+  [02167] h=0.1359m
+  [02174] h=0.0372m
+  [02168] h=0.2376m
+  [02173] h=0.1652m
+  [02176] h=0.0902m
+  [02175] h=0.2586m
+  [02179] h=0.1721m
+  [02178] h=0.1505m
+  [02181] h=0.0702m
+  [02180] h=0.1862m
+  [02182] h=0.0201m
+  [02184] h=0.1268m
+  [02183] h=0.0856m
+  [02185] h=0.0441m
+  [02186] h=0.1633m
+  [02177] h=0.2782m
+  [02188] h=0.1083m
+  [02053] h=0.0170m
+  [02187] h=0.2230m
+  [02191] h=0.0832m
+  [02192] h=0.0732m
+  [02193] h=0.1219m
+  [02195] h=0.0466m
+  [02189] h=0.0376m
+  [02197] h=0.0979m
+  [02198] h=0.0455m
+  [02196] h=0.1237m
+  [02199] h=0.1320m
+  [02194] h=0.2567m
+  [02190] h=0.3218m
+  [02203] h=0.0000m
+  [02202] h=0.0902m
+  [02163] h=0.0824m
+  [02204] h=0.1074m
+  [02205] h=0.0778m
+  [02207] h=0.0182m
+  [02208] h=0.0216m
+  [02209] h=0.0644m
+  [02206] h=0.0975m
+  [02210] h=0.1203m
+  [02200] h=0.2102m
+  [02212] h=0.0694m
+  [02214] h=0.0879m
+  [02215] h=0.1180m
+  [02216] h=0.1159m
+  [02217] h=0.0547m
+  [02201] h=0.3133m
+  [02219] h=0.1078m
+  [02218] h=0.1583m
+  [02213] h=0.2308m
+  [02220] h=0.0631m
+  [02221] h=0.0533m
+  [02224] h=0.1159m
+  [02225] h=0.0701m
+  [02226] h=0.0179m
+  [02228] h=0.0179m
+  [02227] h=0.0889m
+  [02229] h=0.1768m
+  [02222] h=0.2170m
+  [02232] h=0.0411m
+  [02223] h=0.2490m
+  [02211] h=0.0501m
+  [02233] h=0.0189m
+  [02236] h=0.0000m
+  [02234] h=0.0552m
+  [02237] h=0.0000m
+  [02238] h=0.0291m
+  [02239] h=0.1088m
+  [02231] h=0.2054m
+  [02240] h=0.1522m
+  [02241] h=0.1760m
+  [02244] h=0.1089m
+  [02245] h=0.0937m
+  [02246] h=0.0450m
+  [02247] h=0.1886m
+  [02248] h=0.1120m
+  [02249] h=0.0784m
+  [02230] h=0.2921m
+  [02251] h=0.1072m
+  [02242] h=0.0414m
+  [02253] h=0.1347m
+  [02077] h=0.0628m
+  [02255] h=0.0361m
+  [02256] h=0.0066m
+  [02257] h=0.0704m
+  [02258] h=0.0190m
+  [02254] h=0.0383m
+  [02260] h=0.0748m
+  [02034] FAILED: FEA failed: Command '['/home/chaoyu/phd_simulation/build/fem_batch_sensitivity', '/home/chaoyu/phd_simulation/data/circu
+  [02261] h=0.1178m
+  [02263] h=0.1476m
+  [02264] h=0.0000m
+  [02250] h=0.0986m
+  [02266] h=0.0557m
+  [02267] h=0.1040m
+  [02268] h=0.2300m
+  [02269] h=0.2597m
+  [02270] h=0.1017m
+  [02271] h=0.0000m
+  [02272] h=0.0902m
+  [02273] h=0.0359m
+  [02040] FAILED: FEA failed: Command '['/home/chaoyu/phd_simulation/build/fem_batch_sensitivity', '/home/chaoyu/phd_simulation/data/circu
+  [02275] h=0.0836m
+  [02276] h=0.0746m
+  [02277] h=0.0000m
+  [02278] h=0.0904m
+  [02133] h=0.0569m
+  [02279] h=0.0311m
+  [02281] h=0.0499m
+  [02282] h=0.0000m
+  [02243] h=0.0313m
+  [02284] h=0.0457m
+  [02285] h=0.1781m
+  [02060] FAILED: FEA failed: Command '['/home/chaoyu/phd_simulation/build/fem_batch_sensitivity', '/home/chaoyu/phd_simulation/data/circu
+  [02065] FAILED: FEA failed: Command '['/home/chaoyu/phd_simulation/build/fem_batch_sensitivity', '/home/chaoyu/phd_simulation/data/circu
+  [02288] h=0.0145m
+  [02235] h=0.0252m
+  [02290] h=0.3149m
+  [02286] h=0.1169m
+  [02291] h=0.0451m
+  [02292] h=0.0219m
+  [02289] h=0.1195m
+  [02295] h=0.0000m
+  [02293] h=0.1018m
+  [02297] h=0.0948m
+  [02298] h=0.0527m
+  [02262] h=0.2347m
+  [02300] h=0.0209m
+  [02084] FAILED: FEA failed: Command '['/home/chaoyu/phd_simulation/build/fem_batch_sensitivity', '/home/chaoyu/phd_simulation/data/circu
+  [02088] FAILED: FEA failed: Command '['/home/chaoyu/phd_simulation/build/fem_batch_sensitivity', '/home/chaoyu/phd_simulation/data/circu
+  [02303] h=0.0357m
+  [02296] h=0.0236m
+  [02305] h=0.0000m
+  [02306] h=0.0000m
+  [02098] h=0.0140m
+  [02308] h=0.0504m
+  [02309] h=0.0482m
+  [02310] h=0.0610m
+  [02307] h=0.1448m
+  [02312] h=0.0318m
+  [02311] h=0.0511m
+  [02314] h=0.0000m
+  [02315] h=0.2519m
+  [02316] h=0.0588m
+  [02317] h=0.1025m
+  [02280] h=0.0305m
+  [02318] h=0.2237m
+  [02320] h=0.1412m
+  [02321] h=0.0276m
+  [02322] h=0.0000m
+  [02323] h=0.2178m
+  [02324] h=0.0885m
+  [02274] h=0.0670m
+  [02287] h=0.0997m
+  [02327] h=0.2748m
+  [02294] h=0.1248m
+  [02329] h=0.0484m
+  [02328] h=0.2291m
+  [02330] h=0.1106m
+  [02332] h=0.0248m
+  [02333] h=0.2106m
+  [02334] h=0.0000m
+  [02331] h=0.0828m
+  [02335] h=0.1158m
+  [02336] h=0.0829m
+  [02337] h=0.0081m
+  [02339] h=0.0000m
+  [02338] h=0.0537m
+  [02341] h=0.0530m
+  [02342] h=0.0000m
+  [02343] h=0.1635m
+  [02313] h=0.0448m
+  [02340] h=0.3487m
+  [02344] h=0.0841m
+  [02347] h=0.1499m
+  [02348] h=0.2546m
+  [02346] h=0.2110m
+  [02349] h=0.0603m
+  [02091] FAILED: FEA failed: Command '['/home/chaoyu/phd_simulation/build/fem_batch_sensitivity', '/home/chaoyu/phd_simulation/data/circu
+  [02351] h=0.0528m
+  [02352] h=0.0618m
+  [02354] h=0.1178m
+  [02353] h=0.1667m
+  [02355] h=0.0585m
+  [02357] h=0.0432m
+  [02356] h=0.1618m
+  [02350] h=0.2171m
+  [02360] h=0.0276m
+  [02359] h=0.0995m
+  [02361] h=0.0125m
+  [02363] h=0.0284m
+  [02095] FAILED: FEA failed: Command '['/home/chaoyu/phd_simulation/build/fem_batch_sensitivity', '/home/chaoyu/phd_simulation/data/circu
+  [02345] h=0.2371m
+  [02364] h=0.0126m
+  [02365] h=0.0691m
+  [02367] h=0.0736m
+  [02369] h=0.0863m
+  [02368] h=0.2096m
+  [02370] h=0.0987m
+  [02371] h=0.0599m
+  [02373] h=0.0658m
+  [02372] h=0.0548m
+  [02362] h=0.0161m
+  [02376] h=0.0000m
+  [02375] h=0.0416m
+  [02378] h=0.0493m
+  [02379] h=0.0000m
+  [02366] h=0.2098m
+  [02381] h=0.1162m
+  [02382] h=0.0889m
+  [02380] h=0.1015m
+  [02384] h=0.0051m
+  [02383] h=0.0570m
+  [02386] h=0.0000m
+  [02387] h=0.0000m
+  [02377] h=0.2191m
+  [02389] h=0.2267m
+  [02385] h=0.2574m
+  [02390] h=0.0000m
+  [02392] h=0.0000m
+  [02391] h=0.1208m
+  [02388] h=0.2027m
+  [02395] h=0.0830m
+  [02252] FAILED: FEA failed: Command '['/home/chaoyu/phd_simulation/build/fem_batch_sensitivity', '/home/chaoyu/phd_simulation/data/circu
+  [02259] FAILED: FEA failed: Command '['/home/chaoyu/phd_simulation/build/fem_batch_sensitivity', '/home/chaoyu/phd_simulation/data/circu
+  [02398] h=0.0000m
+  [02397] h=0.2705m
+  [02304] h=0.0144m
+  [02399] h=0.1216m
+  [02265] FAILED: FEA failed: Command '['/home/chaoyu/phd_simulation/build/fem_batch_sensitivity', '/home/chaoyu/phd_simulation/data/circu
+  [02283] FAILED: FEA failed: Command '['/home/chaoyu/phd_simulation/build/fem_batch_sensitivity', '/home/chaoyu/phd_simulation/data/circu
+  [02326] h=0.0994m
+  [02299] h=0.0821m
+  [02302] h=0.0712m
+  [02301] FAILED: FEA failed: Command '['/home/chaoyu/phd_simulation/build/fem_batch_sensitivity', '/home/chaoyu/phd_simulation/data/circu
+  [02319] FAILED: FEA failed: Command '['/home/chaoyu/phd_simulation/build/fem_batch_sensitivity', '/home/chaoyu/phd_simulation/data/circu
+  [02393] h=0.0801m
+  [02325] FAILED: FEA failed: Command '['/home/chaoyu/phd_simulation/build/fem_batch_sensitivity', '/home/chaoyu/phd_simulation/data/circu
+  [02358] FAILED: FEA failed: Command '['/home/chaoyu/phd_simulation/build/fem_batch_sensitivity', '/home/chaoyu/phd_simulation/data/circu
+  [02394] h=0.0192m
+  [02374] FAILED: FEA failed: Command '['/home/chaoyu/phd_simulation/build/fem_batch_sensitivity', '/home/chaoyu/phd_simulation/data/circu
+  [02396] FAILED: FEA failed: Command '['/home/chaoyu/phd_simulation/build/fem_batch_sensitivity', '/home/chaoyu/phd_simulation/data/circu
+/home/chaoyu/.local/lib/python3.13/site-packages/sklearn/gaussian_process/kernels.py:440: ConvergenceWarning: The optimal value found for dimension 0 of parameter k2__noise_level is close to the specified lower bound 1e-05. Decreasing the bound and calling fit again may find a better value.
+  warnings.warn(
+/home/chaoyu/.local/lib/python3.13/site-packages/sklearn/gaussian_process/kernels.py:440: ConvergenceWarning: The optimal value found for dimension 0 of parameter k2__noise_level is close to the specified lower bound 1e-05. Decreasing the bound and calling fit again may find a better value.
+  warnings.warn(
+/home/chaoyu/.local/lib/python3.13/site-packages/sklearn/gaussian_process/kernels.py:440: ConvergenceWarning: The optimal value found for dimension 0 of parameter k2__noise_level is close to the specified lower bound 1e-05. Decreasing the bound and calling fit again may find a better value.
+  warnings.warn(
+/home/chaoyu/.local/lib/python3.13/site-packages/sklearn/gaussian_process/kernels.py:440: ConvergenceWarning: The optimal value found for dimension 0 of parameter k2__noise_level is close to the specified lower bound 1e-05. Decreasing the bound and calling fit again may find a better value.
+  warnings.warn(
+/home/chaoyu/.local/lib/python3.13/site-packages/sklearn/gaussian_process/kernels.py:440: ConvergenceWarning: The optimal value found for dimension 0 of parameter k2__noise_level is close to the specified lower bound 1e-05. Decreasing the bound and calling fit again may find a better value.
+  warnings.warn(
+/home/chaoyu/.local/lib/python3.13/site-packages/sklearn/gaussian_process/kernels.py:440: ConvergenceWarning: The optimal value found for dimension 0 of parameter k1__k1__constant_value is close to the specified lower bound 1e-05. Decreasing the bound and calling fit again may find a better value.
+  warnings.warn(
+/home/chaoyu/.local/lib/python3.13/site-packages/sklearn/gaussian_process/kernels.py:450: ConvergenceWarning: The optimal value found for dimension 0 of parameter k1__k2__length_scale is close to the specified upper bound 100000.0. Increasing the bound and calling fit again may find a better value.
+  warnings.warn(
+/home/chaoyu/.local/lib/python3.13/site-packages/sklearn/gaussian_process/kernels.py:440: ConvergenceWarning: The optimal value found for dimension 0 of parameter k2__noise_level is close to the specified lower bound 1e-05. Decreasing the bound and calling fit again may find a better value.
+  warnings.warn(
+/home/chaoyu/.local/lib/python3.13/site-packages/sklearn/gaussian_process/kernels.py:440: ConvergenceWarning: The optimal value found for dimension 0 of parameter k2__noise_level is close to the specified lower bound 1e-05. Decreasing the bound and calling fit again may find a better value.
+  warnings.warn(
+/home/chaoyu/.local/lib/python3.13/site-packages/sklearn/gaussian_process/kernels.py:440: ConvergenceWarning: The optimal value found for dimension 0 of parameter k2__noise_level is close to the specified lower bound 1e-05. Decreasing the bound and calling fit again may find a better value.
+  warnings.warn(
+/home/chaoyu/.local/lib/python3.13/site-packages/sklearn/gaussian_process/kernels.py:440: ConvergenceWarning: The optimal value found for dimension 0 of parameter k2__noise_level is close to the specified lower bound 1e-05. Decreasing the bound and calling fit again may find a better value.
+  warnings.warn(
+/home/chaoyu/.local/lib/python3.13/site-packages/sklearn/gaussian_process/kernels.py:440: ConvergenceWarning: The optimal value found for dimension 0 of parameter k2__noise_level is close to the specified lower bound 1e-05. Decreasing the bound and calling fit again may find a better value.
+  warnings.warn(
+/home/chaoyu/.local/lib/python3.13/site-packages/sklearn/gaussian_process/kernels.py:440: ConvergenceWarning: The optimal value found for dimension 0 of parameter k2__noise_level is close to the specified lower bound 1e-05. Decreasing the bound and calling fit again may find a better value.
+  warnings.warn(
+/home/chaoyu/.local/lib/python3.13/site-packages/sklearn/gaussian_process/kernels.py:440: ConvergenceWarning: The optimal value found for dimension 0 of parameter k2__noise_level is close to the specified lower bound 1e-05. Decreasing the bound and calling fit again may find a better value.
+  warnings.warn(
+/home/chaoyu/.local/lib/python3.13/site-packages/sklearn/gaussian_process/_gpr.py:670: ConvergenceWarning: lbfgs failed to converge after 6 iteration(s) (status=2):
+ABNORMAL: 
+
+You might also want to scale the data as shown in:
+    https://scikit-learn.org/stable/modules/preprocessing.html
+  _check_optimize_result("lbfgs", opt_res)
+/home/chaoyu/.local/lib/python3.13/site-packages/sklearn/gaussian_process/kernels.py:440: ConvergenceWarning: The optimal value found for dimension 0 of parameter k2__noise_level is close to the specified lower bound 1e-05. Decreasing the bound and calling fit again may find a better value.
+  warnings.warn(
+/home/chaoyu/.local/lib/python3.13/site-packages/sklearn/gaussian_process/kernels.py:440: ConvergenceWarning: The optimal value found for dimension 0 of parameter k2__noise_level is close to the specified lower bound 1e-05. Decreasing the bound and calling fit again may find a better value.
+  warnings.warn(
+/home/chaoyu/.local/lib/python3.13/site-packages/sklearn/gaussian_process/kernels.py:440: ConvergenceWarning: The optimal value found for dimension 0 of parameter k2__noise_level is close to the specified lower bound 1e-05. Decreasing the bound and calling fit again may find a better value.
+  warnings.warn(
+/home/chaoyu/.local/lib/python3.13/site-packages/sklearn/gaussian_process/kernels.py:440: ConvergenceWarning: The optimal value found for dimension 0 of parameter k2__noise_level is close to the specified lower bound 1e-05. Decreasing the bound and calling fit again may find a better value.
+  warnings.warn(
+/home/chaoyu/.local/lib/python3.13/site-packages/sklearn/gaussian_process/kernels.py:440: ConvergenceWarning: The optimal value found for dimension 0 of parameter k2__noise_level is close to the specified lower bound 1e-05. Decreasing the bound and calling fit again may find a better value.
+  warnings.warn(
+/home/chaoyu/.local/lib/python3.13/site-packages/sklearn/gaussian_process/kernels.py:440: ConvergenceWarning: The optimal value found for dimension 0 of parameter k2__noise_level is close to the specified lower bound 1e-05. Decreasing the bound and calling fit again may find a better value.
+  warnings.warn(
+/home/chaoyu/.local/lib/python3.13/site-packages/sklearn/gaussian_process/kernels.py:440: ConvergenceWarning: The optimal value found for dimension 0 of parameter k2__noise_level is close to the specified lower bound 1e-05. Decreasing the bound and calling fit again may find a better value.
+  warnings.warn(
+/home/chaoyu/.local/lib/python3.13/site-packages/sklearn/gaussian_process/kernels.py:440: ConvergenceWarning: The optimal value found for dimension 0 of parameter k1__k1__constant_value is close to the specified lower bound 1e-05. Decreasing the bound and calling fit again may find a better value.
+  warnings.warn(
+/home/chaoyu/.local/lib/python3.13/site-packages/sklearn/gaussian_process/kernels.py:450: ConvergenceWarning: The optimal value found for dimension 0 of parameter k1__k2__length_scale is close to the specified upper bound 100000.0. Increasing the bound and calling fit again may find a better value.
+  warnings.warn(
+/home/chaoyu/.local/lib/python3.13/site-packages/sklearn/gaussian_process/kernels.py:440: ConvergenceWarning: The optimal value found for dimension 0 of parameter k2__noise_level is close to the specified lower bound 1e-05. Decreasing the bound and calling fit again may find a better value.
+  warnings.warn(
+/home/chaoyu/.local/lib/python3.13/site-packages/sklearn/gaussian_process/kernels.py:440: ConvergenceWarning: The optimal value found for dimension 0 of parameter k2__noise_level is close to the specified lower bound 1e-05. Decreasing the bound and calling fit again may find a better value.
+  warnings.warn(
+/home/chaoyu/.local/lib/python3.13/site-packages/sklearn/gaussian_process/kernels.py:440: ConvergenceWarning: The optimal value found for dimension 0 of parameter k2__noise_level is close to the specified lower bound 1e-05. Decreasing the bound and calling fit again may find a better value.
+  warnings.warn(
+/home/chaoyu/.local/lib/python3.13/site-packages/sklearn/gaussian_process/kernels.py:440: ConvergenceWarning: The optimal value found for dimension 0 of parameter k2__noise_level is close to the specified lower bound 1e-05. Decreasing the bound and calling fit again may find a better value.
+  warnings.warn(
+/home/chaoyu/.local/lib/python3.13/site-packages/sklearn/gaussian_process/kernels.py:440: ConvergenceWarning: The optimal value found for dimension 0 of parameter k2__noise_level is close to the specified lower bound 1e-05. Decreasing the bound and calling fit again may find a better value.
+  warnings.warn(
+/home/chaoyu/.local/lib/python3.13/site-packages/sklearn/gaussian_process/kernels.py:440: ConvergenceWarning: The optimal value found for dimension 0 of parameter k2__noise_level is close to the specified lower bound 1e-05. Decreasing the bound and calling fit again may find a better value.
+  warnings.warn(
+/home/chaoyu/.local/lib/python3.13/site-packages/sklearn/gaussian_process/kernels.py:440: ConvergenceWarning: The optimal value found for dimension 0 of parameter k2__noise_level is close to the specified lower bound 1e-05. Decreasing the bound and calling fit again may find a better value.
+  warnings.warn(
+/home/chaoyu/.local/lib/python3.13/site-packages/sklearn/gaussian_process/kernels.py:440: ConvergenceWarning: The optimal value found for dimension 0 of parameter k2__noise_level is close to the specified lower bound 1e-05. Decreasing the bound and calling fit again may find a better value.
+  warnings.warn(
+/home/chaoyu/.local/lib/python3.13/site-packages/sklearn/gaussian_process/kernels.py:440: ConvergenceWarning: The optimal value found for dimension 0 of parameter k2__noise_level is close to the specified lower bound 1e-05. Decreasing the bound and calling fit again may find a better value.
+  warnings.warn(
+/home/chaoyu/.local/lib/python3.13/site-packages/SALib/analyze/sobol.py:141: RuntimeWarning: invalid value encountered in divide
+  Y = (Y - Y.mean()) / Y.std()
+/home/chaoyu/.local/lib/python3.13/site-packages/SALib/analyze/sobol.py:141: RuntimeWarning: invalid value encountered in divide
+  Y = (Y - Y.mean()) / Y.std()
+
+FEA done: 576 OK, 24 failed.
+
+Computing section curvature for new samples...
+Merged → /home/chaoyu/phd_simulation/sensitivity_analysis/data/results_with_curvature.csv  (2328 total rows)
+
+Retraining GP surrogates...
+  motif1_nocable: 600 samples
+    crown_height                    R²=0.987  RMSE=0.0087
+    H_mean_x0                       R²=0.913  RMSE=0.2667
+    H_mean_y0                       R²=0.804  RMSE=0.3830
+    max_stress                      R²=0.998  RMSE=53.6859
+    mean_stress                     R²=0.999  RMSE=42.8885
+    cable_tension                   R²=1.000  RMSE=0.0000
+    boundary_reaction_mean          R²=0.996  RMSE=5.5403
+  motif1_cable: 558 samples
+    crown_height                    R²=0.807  RMSE=0.0355
+    H_mean_x0                       R²=0.818  RMSE=0.5642
+    H_mean_y0                       R²=0.771  RMSE=0.7914
+    max_stress                      R²=0.994  RMSE=121.0500
+    mean_stress                     R²=0.994  RMSE=125.4227
+    cable_tension                   R²=0.161  RMSE=28.8601
+    boundary_reaction_mean          R²=0.994  RMSE=8.4639
+  motif2_nocable: 600 samples
+    crown_height                    R²=0.890  RMSE=0.0261
+    H_mean_x0                       R²=0.776  RMSE=0.5158
+    H_mean_y0                       R²=0.804  RMSE=0.4184
+    max_stress                      R²=0.996  RMSE=94.6734
+    mean_stress                     R²=0.993  RMSE=134.8489
+    cable_tension                   R²=1.000  RMSE=0.0000
+    boundary_reaction_mean          R²=0.995  RMSE=6.4213
+  motif2_cable: 570 samples
+    crown_height                    R²=0.816  RMSE=0.0317
+    H_mean_x0                       R²=0.831  RMSE=0.4086
+    H_mean_y0                       R²=0.662  RMSE=0.5828
+    max_stress                      R²=0.987  RMSE=197.0435
+    mean_stress                     R²=0.998  RMSE=83.5075
+    cable_tension                   R²=0.108  RMSE=16.7980
+    boundary_reaction_mean          R²=0.996  RMSE=7.2961
+
+Running Sobol analysis...
+  Sobol analysis for motif1_nocable...
+    crown_height: top param = sf_course (ST=0.686)
+    H_mean_x0: top param = sf_course (ST=0.868)
+    H_mean_y0: top param = sf_course (ST=0.888)
+    max_stress: top param = sf_course (ST=0.955)
+    mean_stress: top param = sf_course (ST=0.956)
+    cable_tension: top param = nan (ST=nan)
+    boundary_reaction_mean: top param = sf_course (ST=0.934)
+  Sobol analysis for motif1_cable...
+    crown_height: top param = sf_course (ST=0.663)
+    H_mean_x0: top param = sf_course (ST=0.770)
+    H_mean_y0: top param = sf_course (ST=0.760)
+    max_stress: top param = sf_course (ST=0.964)
+    mean_stress: top param = sf_course (ST=0.966)
+    cable_tension: top param = cable_angle (ST=0.626)
+    boundary_reaction_mean: top param = sf_course (ST=0.931)
+  Sobol analysis for motif2_nocable...
+    crown_height: top param = sf_wale (ST=0.702)
+    H_mean_x0: top param = sf_wale (ST=0.849)
+    H_mean_y0: top param = sf_wale (ST=0.873)
+    max_stress: top param = sf_wale (ST=0.958)
+    mean_stress: top param = sf_wale (ST=0.960)
+    cable_tension: top param = nan (ST=nan)
+    boundary_reaction_mean: top param = sf_wale (ST=0.934)
+  Sobol analysis for motif2_cable...
+    crown_height: top param = sf_wale (ST=0.704)
+    H_mean_x0: top param = sf_wale (ST=0.855)
+    H_mean_y0: top param = sf_wale (ST=0.769)
+    max_stress: top param = sf_wale (ST=0.962)
+    mean_stress: top param = sf_wale (ST=0.958)
+    cable_tension: top param = cable_angle (ST=0.566)
+    boundary_reaction_mean: top param = sf_wale (ST=0.929)
+
+Done. Run  python3 plot_paper_figures.py  to regenerate figures.

@@ -1,0 +1,51 @@
+FEM mesh : 847 verts, 1563 faces
+Target   : 762 interior verts, crown=0.1978 m
+  Loaded region map from /home/chaoyu/phd_simulation/FDM/optimisation/D5_4region_map.json
+  Region sizes: R0=117 R1=121 R2=213 R3=1112
+Knit dirs (fixed): [94.5, 83.5, 177.8, 90.4]°
+  Init from FDM/optimisation/D5_4region_adaptive_optimised.json
+
+Warm-start check …
+  RMSE = 6.31 mm
+
+══ Outer 1/12  R0=117 R1=121 R2=213 R3=1112 ══
+  (A) Inner L-BFGS …
+  [   5] exception: Command '['/home/chaoyu/phd_simulation/FDM/../build-linux/fem_batch_nregion', '/home/chaoyu/phd_simulation/FDM/data/D5/D5_remeshed_fem.off', '/home/chaoyu/phd_simulation/FDM/optimisation/D5_4region_adaptive_map.json', '/home/chaoyu/phd_simulation/FDM/optimisation/tmpnyxz4vfu.json', '/home/chaoyu/phd_simulation/FDM/optimisation/d5_4ra_cable2_00005']' timed out after 20 seconds
+  [   6] exception: Command '['/home/chaoyu/phd_simulation/FDM/../build-linux/fem_batch_nregion', '/home/chaoyu/phd_simulation/FDM/data/D5/D5_remeshed_fem.off', '/home/chaoyu/phd_simulation/FDM/optimisation/D5_4region_adaptive_map.json', '/home/chaoyu/phd_simulation/FDM/optimisation/tmp5lr2zuok.json', '/home/chaoyu/phd_simulation/FDM/optimisation/d5_4ra_cable2_00006']' timed out after 20 seconds
+    [   8] RMSE=0.0063 m  sf_w=[1.2368,1.2533,1.0855,1.2640]  sf_c=[0.9345,0.9352,1.1312,1.0032]
+  [   9] exception: Command '['/home/chaoyu/phd_simulation/FDM/../build-linux/fem_batch_nregion', '/home/chaoyu/phd_simulation/FDM/data/D5/D5_remeshed_fem.off', '/home/chaoyu/phd_simulation/FDM/optimisation/D5_4region_adaptive_map.json', '/home/chaoyu/phd_simulation/FDM/optimisation/tmpzvq56bxw.json', '/home/chaoyu/phd_simulation/FDM/optimisation/d5_4ra_cable2_00009']' timed out after 20 seconds
+  [  11] INVALID: rest shape returned
+  [  12] INVALID: rest shape returned
+  [  13] INVALID: rest shape returned
+  [  14] INVALID: rest shape returned
+  [  15] INVALID: rest shape returned
+  [  16] INVALID: rest shape returned
+  [  17] INVALID: rest shape returned
+  [  18] INVALID: rest shape returned
+  [  19] INVALID: rest shape returned
+    [  23] RMSE=0.0232 m  sf_w=[1.2369,1.2534,0.9927,1.1099]  sf_c=[0.9343,0.9330,1.0212,0.9844]
+    [  28] RMSE=0.0228 m  sf_w=[1.2369,1.2534,0.9907,1.1099]  sf_c=[0.9343,0.9330,1.0212,0.9864]
+    [  33] RMSE=0.0082 m  sf_w=[1.2369,1.2534,1.0539,1.2146]  sf_c=[0.9344,0.9331,1.0946,0.9970]
+  [  37] exception: Command '['/home/chaoyu/phd_simulation/FDM/../build-linux/fem_batch_nregion', '/home/chaoyu/phd_simulation/FDM/data/D5/D5_remeshed_fem.off', '/home/chaoyu/phd_simulation/FDM/optimisation/D5_4region_adaptive_map.json', '/home/chaoyu/phd_simulation/FDM/optimisation/tmpi0aqrxta.json', '/home/chaoyu/phd_simulation/FDM/optimisation/d5_4ra_cable2_00037']' timed out after 20 seconds
+    [  39] RMSE=0.0059 m  sf_w=[1.2388,1.2533,1.0752,1.2473]  sf_c=[0.9345,0.9331,1.1193,1.0012]
+    [  44] RMSE=0.0059 m  sf_w=[1.2368,1.2533,1.0752,1.2473]  sf_c=[0.9345,0.9351,1.1193,1.0012]
+    [  49] RMSE=0.0060 m  sf_w=[1.2368,1.2553,1.0820,1.2584]  sf_c=[0.9345,0.9331,1.1273,1.0025]
+    [  54] RMSE=0.0061 m  sf_w=[1.2368,1.2533,1.0820,1.2584]  sf_c=[0.9345,0.9331,1.1293,1.0025]
+    [  59] RMSE=0.0062 m  sf_w=[1.2368,1.2533,1.0863,1.2621]  sf_c=[0.9345,0.9331,1.1299,1.0030]
+    [  64] RMSE=0.0063 m  sf_w=[1.2368,1.2533,1.0843,1.2621]  sf_c=[0.9345,0.9331,1.1299,1.0050]
+  [  67] exception: Command '['/home/chaoyu/phd_simulation/FDM/../build-linux/fem_batch_nregion', '/home/chaoyu/phd_simulation/FDM/data/D5/D5_remeshed_fem.off', '/home/chaoyu/phd_simulation/FDM/optimisation/D5_4region_adaptive_map.json', '/home/chaoyu/phd_simulation/FDM/optimisation/tmpvhknddet.json', '/home/chaoyu/phd_simulation/FDM/optimisation/d5_4ra_cable2_00067']' timed out after 20 seconds
+  [  70] exception: Command '['/home/chaoyu/phd_simulation/FDM/../build-linux/fem_batch_nregion', '/home/chaoyu/phd_simulation/FDM/data/D5/D5_remeshed_fem.off', '/home/chaoyu/phd_simulation/FDM/optimisation/D5_4region_adaptive_map.json', '/home/chaoyu/phd_simulation/FDM/optimisation/tmpmjzs7_0v.json', '/home/chaoyu/phd_simulation/FDM/optimisation/d5_4ra_cable2_00070']' timed out after 20 seconds
+  [  71] exception: Command '['/home/chaoyu/phd_simulation/FDM/../build-linux/fem_batch_nregion', '/home/chaoyu/phd_simulation/FDM/data/D5/D5_remeshed_fem.off', '/home/chaoyu/phd_simulation/FDM/optimisation/D5_4region_adaptive_map.json', '/home/chaoyu/phd_simulation/FDM/optimisation/tmp2foo10dq.json', '/home/chaoyu/phd_simulation/FDM/optimisation/d5_4ra_cable2_00071']' timed out after 20 seconds
+    [  72] RMSE=0.0063 m  sf_w=[1.2368,1.2533,1.0851,1.2633]  sf_c=[0.9345,0.9332,1.1328,1.0031]
+    [  77] RMSE=0.0063 m  sf_w=[1.2368,1.2533,1.0873,1.2638]  sf_c=[0.9345,0.9332,1.1311,1.0032]
+  [  78] exception: Command '['/home/chaoyu/phd_simulation/FDM/../build-linux/fem_batch_nregion', '/home/chaoyu/phd_simulation/FDM/data/D5/D5_remeshed_fem.off', '/home/chaoyu/phd_simulation/FDM/optimisation/D5_4region_adaptive_map.json', '/home/chaoyu/phd_simulation/FDM/optimisation/tmppd7w8ey5.json', '/home/chaoyu/phd_simulation/FDM/optimisation/d5_4ra_cable2_00078']' timed out after 20 seconds
+  [  81] exception: Command '['/home/chaoyu/phd_simulation/FDM/../build-linux/fem_batch_nregion', '/home/chaoyu/phd_simulation/FDM/data/D5/D5_remeshed_fem.off', '/home/chaoyu/phd_simulation/FDM/optimisation/D5_4region_adaptive_map.json', '/home/chaoyu/phd_simulation/FDM/optimisation/tmpfts8ppxl.json', '/home/chaoyu/phd_simulation/FDM/optimisation/d5_4ra_cable2_00081']' timed out after 20 seconds
+    [  84] RMSE=0.0063 m  sf_w=[1.2388,1.2533,1.0854,1.2639]  sf_c=[0.9345,0.9332,1.1312,1.0032]
+  [  85] exception: Command '['/home/chaoyu/phd_simulation/FDM/../build-linux/fem_batch_nregion', '/home/chaoyu/phd_simulation/FDM/data/D5/D5_remeshed_fem.off', '/home/chaoyu/phd_simulation/FDM/optimisation/D5_4region_adaptive_map.json', '/home/chaoyu/phd_simulation/FDM/optimisation/tmpa8jr70zj.json', '/home/chaoyu/phd_simulation/FDM/optimisation/d5_4ra_cable2_00085']' timed out after 20 seconds
+  [  89] exception: Command '['/home/chaoyu/phd_simulation/FDM/../build-linux/fem_batch_nregion', '/home/chaoyu/phd_simulation/FDM/data/D5/D5_remeshed_fem.off', '/home/chaoyu/phd_simulation/FDM/optimisation/D5_4region_adaptive_map.json', '/home/chaoyu/phd_simulation/FDM/optimisation/tmpcfe75j91.json', '/home/chaoyu/phd_simulation/FDM/optimisation/d5_4ra_cable2_00089']' timed out after 20 seconds
+    [  91] RMSE=0.0064 m  sf_w=[1.2368,1.2533,1.0854,1.2639]  sf_c=[0.9345,0.9332,1.1312,1.0052]
+  [  92] exception: Command '['/home/chaoyu/phd_simulation/FDM/../build-linux/fem_batch_nregion', '/home/chaoyu/phd_simulation/FDM/data/D5/D5_remeshed_fem.off', '/home/chaoyu/phd_simulation/FDM/optimisation/D5_4region_adaptive_map.json', '/home/chaoyu/phd_simulation/FDM/optimisation/tmpnntz0a57.json', '/home/chaoyu/phd_simulation/FDM/optimisation/d5_4ra_cable2_00092']' timed out after 20 seconds
+  [  93] exception: Command '['/home/chaoyu/phd_simulation/FDM/../build-linux/fem_batch_nregion', '/home/chaoyu/phd_simulation/FDM/data/D5/D5_remeshed_fem.off', '/home/chaoyu/phd_simulation/FDM/optimisation/D5_4region_adaptive_map.json', '/home/chaoyu/phd_simulation/FDM/optimisation/tmpd6ujbud7.json', '/home/chaoyu/phd_simulation/FDM/optimisation/d5_4ra_cable2_00093']' timed out after 20 seconds
+  [  96] exception: Command '['/home/chaoyu/phd_simulation/FDM/../build-linux/fem_batch_nregion', '/home/chaoyu/phd_simulation/FDM/data/D5/D5_remeshed_fem.off', '/home/chaoyu/phd_simulation/FDM/optimisation/D5_4region_adaptive_map.json', '/home/chaoyu/phd_simulation/FDM/optimisation/tmp5zpv6dv9.json', '/home/chaoyu/phd_simulation/FDM/optimisation/d5_4ra_cable2_00096']' timed out after 20 seconds
+  [  98] exception: Command '['/home/chaoyu/phd_simulation/FDM/../build-linux/fem_batch_nregion', '/home/chaoyu/phd_simulation/FDM/data/D5/D5_remeshed_fem.off', '/home/chaoyu/phd_simulation/FDM/optimisation/D5_4region_adaptive_map.json', '/home/chaoyu/phd_simulation/FDM/optimisation/tmpwkt0ys30.json', '/home/chaoyu/phd_simulation/FDM/optimisation/d5_4ra_cable2_00098']' timed out after 20 seconds
+    [ 100] RMSE=0.0064 m  sf_w=[1.2368,1.2533,1.0854,1.2639]  sf_c=[0.9345,0.9332,1.1312,1.0052]

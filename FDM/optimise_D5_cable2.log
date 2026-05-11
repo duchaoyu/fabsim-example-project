@@ -1,0 +1,46 @@
+FEM mesh : 847 verts, 1563 faces
+Target   : 762 interior verts, crown=0.1978 m
+Regions  : [266, 333, 329, 257, 139, 54, 51, 134]
+KnitDirs : [102.3, 147.9, 29.8, 75.8, 102.7, 108.3, 73.7, 77.0]°
+Cable    : 42 segments (inner loop) + cross-cable v89→v88 (scale=1.0)
+Pressure : 1000.0 Pa  |  motif: 1
+
+Sanity check (sf_w=1.032, sf_c=1.042, sc=0.95) …
+  crown=0.2065 m  RMSE=0.0188 m
+
+Optimising 3 params, maxiter=500 …
+  [   5]  RMSE=0.0188 m  p=[sf_w=1.0320, sf_c=1.0420, sc=0.9520]
+  [  10]  RMSE=0.0089 m  p=[sf_w=1.0551, sf_c=1.0939, sc=0.9500]
+  [  15]  RMSE=0.0087 m  p=[sf_w=1.0658, sf_c=1.0972, sc=0.9500]
+  [  20]  RMSE=0.0085 m  p=[sf_w=1.0764, sf_c=1.0967, sc=0.9500]
+  [  25]  RMSE=0.0076 m  p=[sf_w=1.1520, sf_c=1.0727, sc=0.9520]
+  [  30]  RMSE=0.0076 m  p=[sf_w=1.1533, sf_c=1.0723, sc=0.9500]
+  [  35]  RMSE=0.0076 m  p=[sf_w=1.1543, sf_c=1.0726, sc=0.9500]
+  [  40]  RMSE=0.0076 m  p=[sf_w=1.1529, sf_c=1.0744, sc=0.9500]
+  [  45]  RMSE=0.0076 m  p=[sf_w=1.1524, sf_c=1.0726, sc=0.9520]
+  [  50]  RMSE=0.0076 m  p=[sf_w=1.1524, sf_c=1.0726, sc=0.9500]
+  [  55]  RMSE=0.0076 m  p=[sf_w=1.1543, sf_c=1.0726, sc=0.9500]
+  [  60]  RMSE=0.0076 m  p=[sf_w=1.1523, sf_c=1.0746, sc=0.9500]
+  [  65]  RMSE=0.0076 m  p=[sf_w=1.1599, sf_c=1.0703, sc=0.9520]
+  [  70]  RMSE=0.0076 m  p=[sf_w=1.1526, sf_c=1.0725, sc=0.9500]
+  [  75]  RMSE=0.0076 m  p=[sf_w=1.1553, sf_c=1.0723, sc=0.9500]
+  [  80]  RMSE=0.0076 m  p=[sf_w=1.1527, sf_c=1.0745, sc=0.9500]
+  [  85]  RMSE=0.0076 m  p=[sf_w=1.1526, sf_c=1.0725, sc=0.9520]
+  [  90]  RMSE=0.0076 m  p=[sf_w=1.1599, sf_c=1.0703, sc=0.9500]
+  [  95]  RMSE=0.0076 m  p=[sf_w=1.1558, sf_c=1.0722, sc=0.9500]
+  [ 100]  RMSE=0.0076 m  p=[sf_w=1.1528, sf_c=1.0745, sc=0.9500]
+  [ 105]  RMSE=0.0076 m  p=[sf_w=1.1526, sf_c=1.0725, sc=0.9520]
+  [ 110]  RMSE=0.0076 m  p=[sf_w=1.1526, sf_c=1.0725, sc=0.9500]
+  [ 115]  RMSE=0.0076 m  p=[sf_w=1.1546, sf_c=1.0725, sc=0.9500]
+  [ 120]  RMSE=0.0076 m  p=[sf_w=1.1526, sf_c=1.0745, sc=0.9500]
+  [ 125]  RMSE=0.0076 m  p=[sf_w=1.1526, sf_c=1.0725, sc=0.9520]
+
+Converged: True  |  CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH
+Final RMSE: 0.0076 m   FEM calls: 129
+  sf_wale=1.1526  sf_course=1.0725  scale_cable=0.9500
+
+Running final FEM …
+  crown=0.1933 m  (target 0.1978 m)
+  RMSE =0.0076 m
+
+Saved: /home/chaoyu/phd_simulation/FDM/optimisation/D5_optimised.json

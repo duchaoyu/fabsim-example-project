@@ -1,0 +1,13 @@
+{
+  "geometry": "D5",
+  "n_regions": 10,
+  "lambda_smooth": 0.01,
+  "pressure": 1000.0,
+  "cable_ea": 157000.0,
+  "converged": false,
+  "message": "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT",
+  "rmse_mm": 8.79642081213219,
+  "n_calls": 44,
+  "region_adj": [
+    [
+      

@@ -1,0 +1,111 @@
+FEM mesh:   497 verts, 929 faces, span=1.20 m
+Target:     497 verts, 434 interior, crown=0.2317 m
+Cables:     12 sections, EA=157000 N
+Regions:    [69, 147, 73, 120, 117, 148, 64, 126, 65]
+Knit dirs:  [0, 0, 0, 0, 0, 0, 0, 0, 0]
+Pressure:   1000.0 Pa  |  motif: 1
+
+Sanity check (sf=1.041 uniform, cable_rest_scale=1.0)...
+  crown=0.2307 m  (target 0.2317)
+  RMSE = 0.0082 m
+
+Optimising 30 params (9×sf_wale + 9×sf_course + 12×cable_rest_scale), maxiter=200...
+  L-BFGS-B, sf bounds (0.9, 2.0), cable bounds (0.85, 1.05), FD eps=0.05
+
+  [  10]  rmse=0.0079 m  crown=0.2297 m  (target 0.2317)
+  [  20]  rmse=0.0080 m  crown=0.2290 m  (target 0.2317)
+  [  30]  rmse=0.0106 m  crown=0.2355 m  (target 0.2317)
+  [  40]  rmse=0.0659 m  crown=0.1610 m  (target 0.2317)
+  [  50]  rmse=0.0667 m  crown=0.1610 m  (target 0.2317)
+  [  60]  rmse=0.0618 m  crown=0.1622 m  (target 0.2317)
+  [  70]  rmse=0.0069 m  crown=0.2221 m  (target 0.2317)
+  [  80]  rmse=0.0065 m  crown=0.2204 m  (target 0.2317)
+  [  90]  rmse=0.0091 m  crown=0.2264 m  (target 0.2317)
+  [ 100]  rmse=0.0181 m  crown=0.2052 m  (target 0.2317)
+  [ 110]  rmse=0.0185 m  crown=0.2056 m  (target 0.2317)
+  [ 120]  rmse=0.0133 m  crown=0.2097 m  (target 0.2317)
+  [ 130]  rmse=0.0068 m  crown=0.2197 m  (target 0.2317)
+  [ 140]  rmse=0.0074 m  crown=0.2152 m  (target 0.2317)
+  [ 150]  rmse=0.0078 m  crown=0.2223 m  (target 0.2317)
+  [ 160]  rmse=0.0067 m  crown=0.2210 m  (target 0.2317)
+  [ 170]  rmse=0.0065 m  crown=0.2203 m  (target 0.2317)
+  [ 180]  rmse=0.0083 m  crown=0.2218 m  (target 0.2317)
+  [ 190]  rmse=0.0067 m  crown=0.2205 m  (target 0.2317)
+  [ 200]  rmse=0.0070 m  crown=0.2206 m  (target 0.2317)
+  [ 210]  rmse=0.0086 m  crown=0.2246 m  (target 0.2317)
+  [ 220]  rmse=0.0065 m  crown=0.2211 m  (target 0.2317)
+  [ 230]  rmse=0.0076 m  crown=0.2216 m  (target 0.2317)
+  [ 240]  rmse=0.0072 m  crown=0.2235 m  (target 0.2317)
+  [ 250]  rmse=0.0065 m  crown=0.2218 m  (target 0.2317)
+  [ 260]  rmse=0.0065 m  crown=0.2204 m  (target 0.2317)
+  [ 270]  rmse=0.0079 m  crown=0.2215 m  (target 0.2317)
+  [ 280]  rmse=0.0082 m  crown=0.2276 m  (target 0.2317)
+  [ 290]  rmse=0.0065 m  crown=0.2211 m  (target 0.2317)
+  [ 300]  rmse=0.0080 m  crown=0.2244 m  (target 0.2317)
+  [ 310]  rmse=0.0080 m  crown=0.2265 m  (target 0.2317)
+  [ 320]  rmse=0.0064 m  crown=0.2209 m  (target 0.2317)
+  [ 330]  rmse=0.0070 m  crown=0.2202 m  (target 0.2317)
+  [ 340]  rmse=0.0077 m  crown=0.2271 m  (target 0.2317)
+  [ 350]  rmse=0.0064 m  crown=0.2211 m  (target 0.2317)
+  [ 360]  rmse=0.0068 m  crown=0.2202 m  (target 0.2317)
+  [ 370]  rmse=0.0091 m  crown=0.2276 m  (target 0.2317)
+  [ 380]  rmse=0.0069 m  crown=0.2221 m  (target 0.2317)
+  [ 390]  rmse=0.0065 m  crown=0.2204 m  (target 0.2317)
+  [ 400]  rmse=0.0091 m  crown=0.2264 m  (target 0.2317)
+  [ 410]  rmse=0.0066 m  crown=0.2193 m  (target 0.2317)
+  [ 420]  rmse=0.0070 m  crown=0.2205 m  (target 0.2317)
+  [ 430]  rmse=0.0089 m  crown=0.2274 m  (target 0.2317)
+  [ 440]  rmse=0.0063 m  crown=0.2216 m  (target 0.2317)
+  [ 450]  rmse=0.0069 m  crown=0.2171 m  (target 0.2317)
+  [ 460]  rmse=0.0078 m  crown=0.2241 m  (target 0.2317)
+  [ 470]  rmse=0.0066 m  crown=0.2212 m  (target 0.2317)
+  [ 480]  rmse=0.0065 m  crown=0.2206 m  (target 0.2317)
+  [ 490]  rmse=0.0084 m  crown=0.2220 m  (target 0.2317)
+  [ 500]  rmse=0.0067 m  crown=0.2206 m  (target 0.2317)
+  [ 510]  rmse=0.0070 m  crown=0.2206 m  (target 0.2317)
+  [ 520]  rmse=0.0086 m  crown=0.2247 m  (target 0.2317)
+  [ 530]  rmse=0.0065 m  crown=0.2211 m  (target 0.2317)
+  [ 540]  rmse=0.0076 m  crown=0.2216 m  (target 0.2317)
+  [ 550]  rmse=0.0072 m  crown=0.2236 m  (target 0.2317)
+  [ 560]  rmse=0.0065 m  crown=0.2218 m  (target 0.2317)
+  [ 570]  rmse=0.0065 m  crown=0.2204 m  (target 0.2317)
+  [ 580]  rmse=0.0079 m  crown=0.2215 m  (target 0.2317)
+  [ 590]  rmse=0.0082 m  crown=0.2276 m  (target 0.2317)
+  [ 600]  rmse=0.0065 m  crown=0.2211 m  (target 0.2317)
+  [ 610]  rmse=0.0080 m  crown=0.2244 m  (target 0.2317)
+  [ 620]  rmse=0.0080 m  crown=0.2265 m  (target 0.2317)
+
+Converged: True  |  CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH
+Final RMSE: 0.0065 m   calls: 621
+
+=== Optimal parameters per region ===
+Region   row   col  knit_dir   sf_wale  sf_course
+     0     0     0         0°    1.0415     1.0425
+     1     0     1         0°    1.0412     1.0396
+     2     0     2         0°    1.0411     1.0409
+     3     1     0         0°    1.0421     1.0417
+     4     1     1         0°    1.0412     1.0410
+     5     1     2         0°    1.0409     1.0410
+     6     2     0         0°    1.0417     1.0423
+     7     2     1         0°    1.0417     1.0427
+     8     2     2         0°    1.0416     1.0413
+
+=== Optimal cable rest-length scales ===
+    A1  scale=0.9943  (1.0=no pre-stress)
+    A2  scale=0.9946  (1.0=no pre-stress)
+    A3  scale=0.9963  (1.0=no pre-stress)
+    B1  scale=0.9930  (1.0=no pre-stress)
+    B2  scale=0.9934  (1.0=no pre-stress)
+    B3  scale=0.9947  (1.0=no pre-stress)
+    C1  scale=0.9914  (1.0=no pre-stress)
+    C2  scale=0.9907  (1.0=no pre-stress)
+    C3  scale=0.9911  (1.0=no pre-stress)
+    D1  scale=0.9944  (1.0=no pre-stress)
+    D2  scale=0.9934  (1.0=no pre-stress)
+    D3  scale=0.9936  (1.0=no pre-stress)
+
+Running final FEM simulation...
+  crown = 0.2218 m  (target 0.2317)
+  RMSE  = 0.0065 m
+
+Saved: /home/chaoyu/phd_simulation/FDM/optimisation/B5_optimised_params.json

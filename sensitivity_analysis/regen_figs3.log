@@ -1,0 +1,11 @@
+/home/chaoyu/.local/lib/python3.13/site-packages/SALib/analyze/sobol.py:141: RuntimeWarning: invalid value encountered in divide
+  Y = (Y - Y.mean()) / Y.std()
+/home/chaoyu/.local/lib/python3.13/site-packages/SALib/analyze/sobol.py:141: RuntimeWarning: invalid value encountered in divide
+  Y = (Y - Y.mean()) / Y.std()
+Saved: /home/chaoyu/phd_simulation/sensitivity_analysis/figures/fig1_response_surface_crown_height.png / .pdf
+Saved: /home/chaoyu/phd_simulation/sensitivity_analysis/figures/fig2_pressure_curve_crown_height.png / .pdf
+Saved: /home/chaoyu/phd_simulation/sensitivity_analysis/figures/fig3_sobol_motif1_nocable.png / .pdf
+Saved: /home/chaoyu/phd_simulation/sensitivity_analysis/figures/fig3_sobol_motif1_cable.png / .pdf
+Saved: /home/chaoyu/phd_simulation/sensitivity_analysis/figures/fig3_sobol_motif2_nocable.png / .pdf
+Saved: /home/chaoyu/phd_simulation/sensitivity_analysis/figures/fig3_sobol_motif2_cable.png / .pdf
+fig1-3 done

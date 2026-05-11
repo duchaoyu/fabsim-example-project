@@ -1,0 +1,129 @@
+{
+  "geometry": "C5",
+  "symmetry": "D8",
+  "motif": 1,
+  "pressure": 1000.0,
+  "fem_mesh": "/home/chaoyu/phd_simulation/FDM/data/C5_remeshed.off",
+  "target_crown_m": 5.054903,
+  "converged": false,
+  "loss_rmse_m": 9.143136281556355,
+  "n_calls": 12,
+  "optimum": {
+    "sf_wale": 2.0,
+    "sf_course": 2.0,
+    "knit_rel_deg": 0.0001931062508184732,
+    "cable_rest_scale": 1.05
+  },
+  "wedge_centres_deg": [
+    33.75,
+    78.75,
+    123.75,
+    168.75,
+    213.75,
+    258.75,
+    303.75,
+    348.75
+  ],
+  "cable_names": [
+    "S0_11.25deg",
+    "S1_56.25deg",
+    "S2_101.25deg",
+    "S3_146.25deg",
+    "S4_191.25deg",
+    "S5_236.25deg",
+    "S6_281.25deg",
+    "S7_326.25deg"
+  ],
+  "history": [
+    {
+      "call": 2,
+      "loss": 12.805871272796221,
+      "crown_height": 0.0,
+      "sf_wale": 1.041,
+      "sf_course": 1.041,
+      "knit_rel": 0.0,
+      "cable_scale": 1.0
+    },
+    {
+      "call": 3,
+      "loss": 3.935835529302019,
+      "crown_height": 1.01687088,
+      "sf_wale": 1.091,
+      "sf_course": 1.041,
+      "knit_rel": 0.0,
+      "cable_scale": 1.0
+    },
+    {
+      "call": 4,
+      "loss": 12.707465064008423,
+      "crown_height": 0.0,
+      "sf_wale": 1.041,
+      "sf_course": 1.091,
+      "knit_rel": 0.0,
+      "cable_scale": 1.0
+    },
+    {
+      "call": 5,
+      "loss": 12.80586161848467,
+      "crown_height": 0.0,
+      "sf_wale": 1.041,
+      "sf_course": 1.041,
+      "knit_rel": 0.05,
+      "cable_scale": 1.0
+    },
+    {
+      "call": 6,
+      "loss": 4.161580613212678,
+      "crown_height": 1.43900702,
+      "sf_wale": 1.041,
+      "sf_course": 1.041,
+      "knit_rel": 0.0,
+      "cable_scale": 1.05
+    },
+    {
+      "call": 7,
+      "loss": 9.143136281556355,
+      "crown_height": 0.0,
+      "sf_wale": 2.0,
+      "sf_course": 2.0,
+      "knit_rel": 0.0001931062508184732,
+      "cable_scale": 1.05
+    },
+    {
+      "call": 8,
+      "loss": 9.242789665007265,
+      "crown_height": 0.0,
+      "sf_wale": 1.95,
+      "sf_course": 2.0,
+      "knit_rel": 0.0001931062508184732,
+      "cable_scale": 1.05
+    },
+    {
+      "call": 9,
+      "loss": 9.191582385715137,
+      "crown_height": 0.0,
+      "sf_wale": 2.0,
+      "sf_course": 1.95,
+      "knit_rel": 0.0001931062508184732,
+      "cable_scale": 1.05
+    },
+    {
+      "call": 10,
+      "loss": 9.143131243355874,
+      "crown_height": 0.0,
+      "sf_wale": 2.0,
+      "sf_course": 2.0,
+      "knit_rel": 0.05019310625081848,
+      "cable_scale": 1.05
+    },
+    {
+      "call": 11,
+      "loss": 8.918688262532063,
+      "crown_height": 0.0,
+      "sf_wale": 2.0,
+      "sf_course": 2.0,
+      "knit_rel": 0.0001931062508184732,
+      "cable_scale": 1.0
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+/home/chaoyu/.local/lib/python3.13/site-packages/SALib/analyze/sobol.py:141: RuntimeWarning: invalid value encountered in divide
+  Y = (Y - Y.mean()) / Y.std()
+/home/chaoyu/.local/lib/python3.13/site-packages/SALib/analyze/sobol.py:141: RuntimeWarning: invalid value encountered in divide
+  Y = (Y - Y.mean()) / Y.std()
+Generating paper figures...
+Saved: /home/chaoyu/phd_simulation/sensitivity_analysis/figures/figA_sobol_heatmap.pdf
+Saved: /home/chaoyu/phd_simulation/sensitivity_analysis/figures/figB_correlation_heatmap.pdf
+Done.

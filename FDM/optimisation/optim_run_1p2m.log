@@ -1,0 +1,166 @@
+FEM mesh:   497 verts, 929 faces, span=1.20 m
+Target:     497 verts, 434 interior, crown=0.2317 m
+Cables:     12 sections, EA=157000 N
+Regions:    [69, 147, 73, 120, 117, 148, 64, 126, 65]
+Knit dirs:  [0, 0, 0, 0, 0, 0, 0, 0, 0]
+Pressure:   1000.0 Pa  |  motif: 1
+
+Sanity check (sf=2.25 uniform)...
+  crown=0.0160 m  (target 0.2317)
+  RMSE = 0.1219 m
+
+Optimising 18 params (9×sf_wale + 9×sf_course), maxiter=200...
+  L-BFGS-B, bounds (1.5, 4.0), FD eps=0.05
+
+  [  10]  rmse=0.1220 m  crown=0.0160 m  (target 0.2317)
+  [  20]  rmse=0.1220 m  crown=0.0159 m  (target 0.2317)
+  [  30]  rmse=0.1219 m  crown=0.0160 m  (target 0.2317)
+  [  40]  rmse=0.1190 m  crown=0.0259 m  (target 0.2317)
+  [  50]  rmse=0.1191 m  crown=0.0250 m  (target 0.2317)
+  [  60]  rmse=0.1178 m  crown=0.0276 m  (target 0.2317)
+  [  70]  rmse=0.1176 m  crown=0.0288 m  (target 0.2317)
+  [  80]  rmse=0.1206 m  crown=0.0214 m  (target 0.2317)
+  [  90]  rmse=0.1206 m  crown=0.0214 m  (target 0.2317)
+  [ 100]  rmse=0.1190 m  crown=0.0226 m  (target 0.2317)
+  [ 110]  rmse=0.1191 m  crown=0.0225 m  (target 0.2317)
+  [ 120]  rmse=0.1174 m  crown=0.0284 m  (target 0.2317)
+  [ 130]  rmse=0.1174 m  crown=0.0281 m  (target 0.2317)
+  [ 140]  rmse=0.1199 m  crown=0.0228 m  (target 0.2317)
+  [ 150]  rmse=0.1199 m  crown=0.0226 m  (target 0.2317)
+  [ 160]  rmse=0.1183 m  crown=0.0221 m  (target 0.2317)
+  [ 170]  rmse=0.1186 m  crown=0.0212 m  (target 0.2317)
+  [ 180]  rmse=0.1172 m  crown=0.0288 m  (target 0.2317)
+  [ 190]  rmse=0.1174 m  crown=0.0289 m  (target 0.2317)
+  [ 200]  rmse=0.1173 m  crown=0.0274 m  (target 0.2317)
+  [ 210]  rmse=0.1173 m  crown=0.0259 m  (target 0.2317)
+  [ 220]  rmse=0.1171 m  crown=0.0292 m  (target 0.2317)
+  [ 230]  rmse=0.1188 m  crown=0.0242 m  (target 0.2317)
+  [ 240]  rmse=0.1189 m  crown=0.0240 m  (target 0.2317)
+  [ 250]  rmse=0.1190 m  crown=0.0228 m  (target 0.2317)
+  [ 260]  rmse=0.1191 m  crown=0.0228 m  (target 0.2317)
+  [ 270]  rmse=0.1172 m  crown=0.0288 m  (target 0.2317)
+  [ 280]  rmse=0.1172 m  crown=0.0290 m  (target 0.2317)
+  [ 290]  rmse=0.1186 m  crown=0.0234 m  (target 0.2317)
+  [ 300]  rmse=0.1186 m  crown=0.0234 m  (target 0.2317)
+  [ 310]  rmse=0.1173 m  crown=0.0258 m  (target 0.2317)
+  [ 320]  rmse=0.1174 m  crown=0.0254 m  (target 0.2317)
+  [ 330]  rmse=0.1172 m  crown=0.0291 m  (target 0.2317)
+  [ 340]  rmse=0.1172 m  crown=0.0273 m  (target 0.2317)
+  [ 350]  rmse=0.1171 m  crown=0.0287 m  (target 0.2317)
+  [ 360]  rmse=0.1171 m  crown=0.0281 m  (target 0.2317)
+  [ 370]  rmse=0.1172 m  crown=0.0273 m  (target 0.2317)
+  [ 380]  rmse=0.1172 m  crown=0.0287 m  (target 0.2317)
+  [ 390]  rmse=0.1172 m  crown=0.0294 m  (target 0.2317)
+  [ 400]  rmse=0.1172 m  crown=0.0286 m  (target 0.2317)
+  [ 410]  rmse=0.1171 m  crown=0.0286 m  (target 0.2317)
+  [ 420]  rmse=0.1171 m  crown=0.0288 m  (target 0.2317)
+  [ 430]  rmse=0.1173 m  crown=0.0289 m  (target 0.2317)
+  [ 440]  rmse=0.1175 m  crown=0.0251 m  (target 0.2317)
+  [ 450]  rmse=0.1173 m  crown=0.0267 m  (target 0.2317)
+  [ 460]  rmse=0.1178 m  crown=0.0227 m  (target 0.2317)
+  [ 470]  rmse=0.1186 m  crown=0.0234 m  (target 0.2317)
+  [ 480]  rmse=0.1172 m  crown=0.0274 m  (target 0.2317)
+  [ 490]  rmse=0.1173 m  crown=0.0258 m  (target 0.2317)
+  [ 500]  rmse=0.1172 m  crown=0.0271 m  (target 0.2317)
+  [ 510]  rmse=0.1174 m  crown=0.0256 m  (target 0.2317)
+  [ 520]  rmse=0.1172 m  crown=0.0291 m  (target 0.2317)
+  [ 530]  rmse=0.1172 m  crown=0.0273 m  (target 0.2317)
+  [ 540]  rmse=0.1171 m  crown=0.0287 m  (target 0.2317)
+  [ 550]  rmse=0.1171 m  crown=0.0282 m  (target 0.2317)
+  [ 560]  rmse=0.1172 m  crown=0.0273 m  (target 0.2317)
+  [ 570]  rmse=0.1172 m  crown=0.0287 m  (target 0.2317)
+  [ 580]  rmse=0.1172 m  crown=0.0294 m  (target 0.2317)
+  [ 590]  rmse=0.1172 m  crown=0.0286 m  (target 0.2317)
+  [ 600]  rmse=0.1171 m  crown=0.0286 m  (target 0.2317)
+  [ 610]  rmse=0.1171 m  crown=0.0288 m  (target 0.2317)
+  [ 620]  rmse=0.1173 m  crown=0.0289 m  (target 0.2317)
+  [ 630]  rmse=0.1175 m  crown=0.0251 m  (target 0.2317)
+  [ 640]  rmse=0.1173 m  crown=0.0267 m  (target 0.2317)
+  [ 650]  rmse=0.1178 m  crown=0.0227 m  (target 0.2317)
+  [ 660]  rmse=0.1186 m  crown=0.0234 m  (target 0.2317)
+  [ 670]  rmse=0.1172 m  crown=0.0274 m  (target 0.2317)
+  [ 680]  rmse=0.1173 m  crown=0.0258 m  (target 0.2317)
+  [ 690]  rmse=0.1172 m  crown=0.0271 m  (target 0.2317)
+  [ 700]  rmse=0.1174 m  crown=0.0256 m  (target 0.2317)
+  [ 710]  rmse=0.1172 m  crown=0.0291 m  (target 0.2317)
+  [ 720]  rmse=0.1172 m  crown=0.0273 m  (target 0.2317)
+  [ 730]  rmse=0.1171 m  crown=0.0287 m  (target 0.2317)
+  [ 740]  rmse=0.1171 m  crown=0.0282 m  (target 0.2317)
+  [ 750]  rmse=0.1172 m  crown=0.0273 m  (target 0.2317)
+  [ 760]  rmse=0.1172 m  crown=0.0287 m  (target 0.2317)
+  [ 770]  rmse=0.1172 m  crown=0.0294 m  (target 0.2317)
+  [ 780]  rmse=0.1172 m  crown=0.0286 m  (target 0.2317)
+  [ 790]  rmse=0.1171 m  crown=0.0286 m  (target 0.2317)
+  [ 800]  rmse=0.1171 m  crown=0.0288 m  (target 0.2317)
+  [ 810]  rmse=0.1173 m  crown=0.0289 m  (target 0.2317)
+  [ 820]  rmse=0.1175 m  crown=0.0251 m  (target 0.2317)
+  [ 830]  rmse=0.1173 m  crown=0.0267 m  (target 0.2317)
+  [ 840]  rmse=0.1171 m  crown=0.0289 m  (target 0.2317)
+  [ 850]  rmse=0.1172 m  crown=0.0290 m  (target 0.2317)
+  [ 860]  rmse=0.1171 m  crown=0.0290 m  (target 0.2317)
+  [ 870]  rmse=0.1172 m  crown=0.0273 m  (target 0.2317)
+  [ 880]  rmse=0.1186 m  crown=0.0232 m  (target 0.2317)
+  [ 890]  rmse=0.1186 m  crown=0.0232 m  (target 0.2317)
+  [ 900]  rmse=0.1172 m  crown=0.0284 m  (target 0.2317)
+  [ 910]  rmse=0.1172 m  crown=0.0270 m  (target 0.2317)
+  [ 920]  rmse=0.1171 m  crown=0.0287 m  (target 0.2317)
+  [ 930]  rmse=0.1171 m  crown=0.0281 m  (target 0.2317)
+  [ 940]  rmse=0.1172 m  crown=0.0273 m  (target 0.2317)
+  [ 950]  rmse=0.1173 m  crown=0.0287 m  (target 0.2317)
+  [ 960]  rmse=0.1172 m  crown=0.0294 m  (target 0.2317)
+  [ 970]  rmse=0.1172 m  crown=0.0286 m  (target 0.2317)
+  [ 980]  rmse=0.1171 m  crown=0.0286 m  (target 0.2317)
+  [ 990]  rmse=0.1171 m  crown=0.0288 m  (target 0.2317)
+  [1000]  rmse=0.1173 m  crown=0.0289 m  (target 0.2317)
+  [1010]  rmse=0.1175 m  crown=0.0251 m  (target 0.2317)
+  [1020]  rmse=0.1173 m  crown=0.0267 m  (target 0.2317)
+  [1030]  rmse=0.1171 m  crown=0.0289 m  (target 0.2317)
+  [1040]  rmse=0.1172 m  crown=0.0290 m  (target 0.2317)
+  [1050]  rmse=0.1171 m  crown=0.0290 m  (target 0.2317)
+  [1060]  rmse=0.1172 m  crown=0.0273 m  (target 0.2317)
+  [1070]  rmse=0.1172 m  crown=0.0272 m  (target 0.2317)
+  [1080]  rmse=0.1174 m  crown=0.0256 m  (target 0.2317)
+  [1090]  rmse=0.1184 m  crown=0.0234 m  (target 0.2317)
+  [1100]  rmse=0.1185 m  crown=0.0233 m  (target 0.2317)
+  [1110]  rmse=0.1171 m  crown=0.0282 m  (target 0.2317)
+  [1120]  rmse=0.1172 m  crown=0.0273 m  (target 0.2317)
+  [1130]  rmse=0.1172 m  crown=0.0273 m  (target 0.2317)
+  [1140]  rmse=0.1173 m  crown=0.0283 m  (target 0.2317)
+  [1150]  rmse=0.1172 m  crown=0.0294 m  (target 0.2317)
+  [1160]  rmse=0.1172 m  crown=0.0286 m  (target 0.2317)
+  [1170]  rmse=0.1171 m  crown=0.0286 m  (target 0.2317)
+  [1180]  rmse=0.1171 m  crown=0.0288 m  (target 0.2317)
+  [1190]  rmse=0.1173 m  crown=0.0289 m  (target 0.2317)
+  [1200]  rmse=0.1175 m  crown=0.0251 m  (target 0.2317)
+  [1210]  rmse=0.1173 m  crown=0.0267 m  (target 0.2317)
+  [1220]  rmse=0.1171 m  crown=0.0289 m  (target 0.2317)
+  [1230]  rmse=0.1172 m  crown=0.0290 m  (target 0.2317)
+  [1240]  rmse=0.1171 m  crown=0.0290 m  (target 0.2317)
+  [1250]  rmse=0.1172 m  crown=0.0273 m  (target 0.2317)
+  [1260]  rmse=0.1172 m  crown=0.0272 m  (target 0.2317)
+  [1270]  rmse=0.1174 m  crown=0.0256 m  (target 0.2317)
+  [1280]  rmse=0.1172 m  crown=0.0291 m  (target 0.2317)
+  [1290]  rmse=0.1172 m  crown=0.0273 m  (target 0.2317)
+  [1300]  rmse=0.1171 m  crown=0.0287 m  (target 0.2317)
+  [1310]  rmse=0.1171 m  crown=0.0282 m  (target 0.2317)
+
+Converged: True  |  CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH
+Final RMSE: 0.1171 m   calls: 1312
+
+=== Optimal parameters per region ===
+Region   row   col  knit_dir   sf_wale  sf_course
+     0     0     0         0°    2.1220     1.7768
+     1     0     1         0°    1.7767     2.3215
+     2     0     2         0°    2.2492     1.9766
+     3     1     0         0°    2.0835     2.0125
+     4     1     1         0°    1.8636     2.0296
+     5     1     2         0°    2.3469     1.9688
+     6     2     0         0°    2.0938     1.6324
+     7     2     1         0°    1.9779     1.5000
+     8     2     2         0°    2.2522     1.6996
+
+Running final FEM simulation...
+  crown = 0.0288 m  (target 0.2317)
+  RMSE  = 0.1171 m
+
+Saved: /home/chaoyu/phd_simulation/FDM/optimisation/B5_optimised_params.json

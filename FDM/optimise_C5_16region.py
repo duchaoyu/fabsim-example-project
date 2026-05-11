@@ -1,0 +1,747 @@
+"""
+C5 16-region FEM inverse optimisation — two-phase approach.
+
+Phase 1  (--phase 1, 6 params, spokes only):
+  Optimise sf_wale / sf_course for the smooth bulk dome shape.
+  Cables: 16 spoke sections only (8 inner + 8 outer).  No hoop arcs.
+  p = [sf_wale_in, sf_course_in, sf_wale_out, sf_course_out,
+       scale_Si, scale_So]
+
+Phase 2  (--phase 2, 1 param, junction-pair hoops):
+  Fix sf from Phase 1. Optimise hoop cable rest-length to reproduce
+  the crease geometry.  Each hoop arc is a single 2-vertex cable
+  connecting adjacent spoke junction points only — no intermediate
+  mesh vertices.  This creates crease depth without over-constraining
+  the membrane.
+  p = [scale_Ha]
+
+Legacy symmetric mode (--symmetric, 7 params) kept for reference.
+
+Usage:
+    python3 optimise_C5_16region.py --phase 1 [--sf0-wale 1.032 --sf0-course 1.042]
+    python3 optimise_C5_16region.py --phase 2 [--phase1-json optimisation/C5_phase1.json]
+    python3 optimise_C5_16region.py --symmetric   # legacy 7-param mode
+"""
+import argparse, csv, json, os, subprocess, sys, tempfile
+import numpy as np
+from scipy.optimize import minimize
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+
+MESH_PATH        = os.environ.get("FEM_MESH",
+    os.path.join(HERE, "data", "C5", "C5_remeshed_fem.off"))
+TARGET_OFF       = os.environ.get("FEM_TARGET",
+    os.path.join(HERE, "data", "C5", "C5_remeshed_fem.off"))
+SPOKE_PATHS_FILE = os.environ.get("FEM_CABLE_PATHS",
+    os.path.join(HERE, "data", "C5", "cable_paths_C5_obj.json"))
+BINARY           = os.environ.get("FEM_BINARY_NREGION",
+    os.path.join(HERE, "..", "build-linux", "fem_batch_nregion"))
+OUT_DIR          = os.path.join(HERE, "optimisation")
+
+N_REGIONS = 16   # 8 inner + 8 outer wedges
+N_CABLES  = 24   # 8 inner spokes + 8 outer spokes + 8 hoop arcs
+
+
+# ── Mesh loader ───────────────────────────────────────────────────────────────
+def load_off(path):
+    with open(path) as f:
+        lines = f.readlines()
+    nv, nf = int(lines[1].split()[0]), int(lines[1].split()[1])
+    V = np.array([[float(x) for x in lines[2 + i].split()] for i in range(nv)])
+    F = np.array([[int(x) for x in lines[2 + nv + i].split()[1:4]] for i in range(nf)])
+    return V, F
+
+
+# ── Build 24 cable sections from existing spoke paths ─────────────────────────
+def build_cable_paths(V):
+    r_xy = np.hypot(V[:, 0], V[:, 1])
+
+    with open(SPOKE_PATHS_FILE) as f:
+        spokes = json.load(f)
+
+    # Sort spokes by name (S0 < S1 < … < S7)
+    spoke_list = sorted(spokes.items())
+
+    # Split each 16-vert spoke at its hoop crossing.
+    # r_guess at 53% of max radius (works for both 10 m and 1.2 m meshes).
+    r_max   = r_xy.max()
+    r_guess = 0.53 * r_max
+    split_idx = [int(np.argmin(np.abs(r_xy[path] - r_guess)))
+                 for _, path in spoke_list]
+    hoop_junctions = [spoke_list[k][1][split_idx[k]] for k in range(8)]
+    r_hoop = float(np.mean(r_xy[hoop_junctions]))
+
+    # Build inner / outer spoke sections
+    inner_paths, outer_paths = [], []
+    spoke_names = []
+    for k, (name, path) in enumerate(spoke_list):
+        si  = split_idx[k]
+        inner_paths.append(path[:si + 1])
+        outer_paths.append(path[si:])
+        spoke_names.append(name)
+
+    # Hoop ring: all vertices within 4% of r_max around r_hoop, sorted by azimuth
+    tol      = 0.04 * r_max
+    ring_mask = np.abs(r_xy - r_hoop) < tol
+    ring_idx  = np.where(ring_mask)[0]
+    ring_az   = np.arctan2(V[ring_idx, 1], V[ring_idx, 0])
+    hoop_ring = ring_idx[np.argsort(ring_az)].tolist()   # 64 verts, CCW
+
+    def ring_arc(v_start, v_end):
+        """Extract the short arc of hoop_ring from v_start to v_end (CCW)."""
+        n = len(hoop_ring)
+        i0 = hoop_ring.index(v_start)
+        i1 = hoop_ring.index(v_end)
+        if i1 >= i0:
+            return hoop_ring[i0:i1 + 1]
+        return hoop_ring[i0:] + hoop_ring[:i1 + 1]   # wrap-around
+
+    # 8 hoop arcs between consecutive spoke junctions (in spoke angular order)
+    junc_az  = np.degrees(np.arctan2(V[hoop_junctions, 1],
+                                      V[hoop_junctions, 0])) % 360
+    order    = np.argsort(junc_az).tolist()   # sort junctions by azimuth
+    hoop_arc_paths = []
+    hoop_arc_names = []
+    for i in range(8):
+        k0 = order[i]
+        k1 = order[(i + 1) % 8]
+        arc = ring_arc(hoop_junctions[k0], hoop_junctions[k1])
+        hoop_arc_paths.append(arc)
+        hoop_arc_names.append(f"Ha{i}")
+
+    # Concatenate: Si0,So0, Si1,So1, …, Ha0…Ha7
+    paths, names = [], []
+    for k in range(8):
+        paths.append(inner_paths[k]); names.append(f"Si{k}")
+        paths.append(outer_paths[k]); names.append(f"So{k}")
+    paths.extend(hoop_arc_paths); names.extend(hoop_arc_names)
+
+    # Junction-pair hoop arcs: 2-vertex cables connecting adjacent spoke
+    # junctions only.  Used in Phase 2 to enforce crease depth without
+    # adding intermediate stiffness to the membrane.
+    junc_pair_paths = []
+    junc_pair_names = []
+    for i in range(8):
+        k0 = order[i]
+        k1 = order[(i + 1) % 8]
+        junc_pair_paths.append([hoop_junctions[k0], hoop_junctions[k1]])
+        junc_pair_names.append(f"Hj{i}")
+
+    return paths, names, hoop_junctions, r_hoop, junc_pair_paths, junc_pair_names
+
+
+# ── 16-region map on OFF mesh ─────────────────────────────────────────────────
+def build_region_map(V, F, hoop_junctions, r_hoop):
+    centroids = V[F].mean(axis=1)
+    cx, cy    = centroids[:, 0], centroids[:, 1]
+    r_face    = np.hypot(cx, cy)
+    az_face   = np.degrees(np.arctan2(cy, cx)) % 360
+
+    # Sector boundaries = midpoints between consecutive spoke junction azimuths
+    junc_az = np.sort(np.degrees(
+        np.arctan2(V[hoop_junctions, 1], V[hoop_junctions, 0])) % 360)
+    mid_az  = []
+    for k in range(8):
+        a1, a2 = junc_az[k], junc_az[(k + 1) % 8]
+        if a2 < a1: a2 += 360
+        mid_az.append((a1 + a2) / 2 % 360)
+    mid_az = np.sort(mid_az)
+
+    def sector(az):
+        return int(np.searchsorted(mid_az, az) % 8)
+
+    face_region = [sector(az) + (0 if r_face[fi] < r_hoop else 8)
+                   for fi, az in enumerate(az_face)]
+    return face_region, mid_az
+
+
+# ── Per-region knit direction (wale = radial, circular mean) ──────────────────
+def region_knit_dirs(V, F, face_region):
+    centroids = V[F].mean(axis=1)
+    cx, cy    = centroids[:, 0], centroids[:, 1]
+    sin_sum   = np.zeros(N_REGIONS)
+    cos_sum   = np.zeros(N_REGIONS)
+    for fi, r in enumerate(face_region):
+        az = np.arctan2(cy[fi], cx[fi])
+        sin_sum[r] += np.sin(az)
+        cos_sum[r] += np.cos(az)
+    return [float(np.degrees(np.arctan2(sin_sum[r], cos_sum[r])) % 180)
+            for r in range(N_REGIONS)]
+
+
+# ── Run FEM binary ─────────────────────────────────────────────────────────────
+_call_count = [0]
+_out_prefix  = ["c5_16r"]   # mutable default; overridden in main()
+_target_crown = [None]       # set in main() for validity gate
+
+
+def _check_fem_valid(verts, crown, V_rest):
+    """
+    Multi-check validity gate.  Returns (ok, reason_string).
+
+    Failure modes observed in practice:
+      1. NaN/Inf — Newton diverged
+      2. max_disp_from_rest == 0 exactly — "Regularization failed": solver
+         returned the byte-identical rest shape.  Valid runs always displace
+         by >= 1e-4 m regardless of sf value or cable count.
+      3. crown outside [0.3×, 3×] t_crown — catastrophic solver failure
+      4. Interior vertices below base plane — mesh folded
+
+    Do NOT gate on crown proximity to t_crown: valid runs near the optimal
+    sf also have crown close to t_crown and would be wrongly rejected.
+    "Line search failed" in stderr is normal Newton behaviour — ignore it.
+    """
+    t_crown = _target_crown[0]
+
+    # 1. NaN / Inf
+    if not np.all(np.isfinite(verts)):
+        return False, "NaN/Inf in vertices"
+
+    # 2. Exact rest-shape return (Regularization failed → zero displacement)
+    if V_rest is not None:
+        max_disp = float(np.max(np.linalg.norm(verts - V_rest, axis=1)))
+        if max_disp < 1e-8:
+            return False, f"max_disp={max_disp:.2e} — rest shape returned (Newton did not move)"
+
+    # 3. Crown physically out of range [0.3×t, 3×t]
+    if t_crown is not None and (crown < 0.3 * t_crown or crown > 3.0 * t_crown):
+        return False, f"crown={crown:.4f} outside physical range"
+
+    # 4. Mesh folded through base plane (z < -1% of crown)
+    min_z = float(verts[:, 2].min())
+    if t_crown is not None and min_z < -0.01 * t_crown:
+        return False, f"min z={min_z:.4f} — mesh folded"
+
+    return True, "OK"
+
+
+def run_fem(sf_wale, sf_course, knit_dirs,
+            pressure, motif, region_map_path,
+            cable_paths, cable_ea, cable_rest_scales, V_rest):
+    os.makedirs(OUT_DIR, exist_ok=True)
+    _call_count[0] += 1
+
+    params = {
+        "pressure":          float(pressure),
+        "motif":             int(motif),
+        "cable_ea":          float(cable_ea),
+        "cable_paths":       cable_paths,
+        "regions":           [{"sf_wale":      float(sf_wale[r]),
+                               "sf_course":    float(sf_course[r]),
+                               "knit_dir_deg": float(knit_dirs[r])}
+                              for r in range(N_REGIONS)],
+        "cable_rest_scales": [float(s) for s in cable_rest_scales],
+    }
+
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json",
+                                     delete=False, dir=OUT_DIR) as pf:
+        json.dump(params, pf)
+        params_path = pf.name
+
+    prefix = os.path.join(OUT_DIR, f"{_out_prefix[0]}_{_call_count[0]:05d}")
+    cmd    = [BINARY, MESH_PATH, region_map_path, params_path, prefix]
+
+    try:
+        res = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+        if res.returncode != 0:
+            print(f"  [{_call_count[0]:4d}] FEM error (rc={res.returncode}): "
+                  f"{res.stderr[:200]}")
+            return None
+        scalars_path = prefix + "_scalars.csv"
+        verts_path   = prefix + "_verts.csv"
+        if not os.path.exists(scalars_path):
+            print(f"  [{_call_count[0]:4d}] FEM error: no scalars output")
+            return None
+        with open(scalars_path) as f:
+            row = next(csv.DictReader(f))
+        out = {k: float(v) for k, v in row.items()}
+        if os.path.exists(verts_path):
+            out["verts"] = np.loadtxt(verts_path, delimiter=",", skiprows=1)[:, 1:]
+            ok, reason = _check_fem_valid(
+                out["verts"], out.get("crown_height", 0.0), V_rest)
+            if not ok:
+                print(f"  [{_call_count[0]:4d}] FEM INVALID: {reason}")
+                return None
+        return out
+    except Exception as e:
+        print(f"  [{_call_count[0]:4d}] FEM exception: {e}")
+        return None
+    finally:
+        try: os.unlink(params_path)
+        except: pass
+
+
+# ── Objective ─────────────────────────────────────────────────────────────────
+def make_objective(V_target, V_rest, interior_idx, knit_dirs,
+                   region_map_path, pressure, motif, cable_paths, cable_ea):
+    t_crown = float(V_target[:, 2].max())
+    history = []
+
+    def objective(p):
+        sf_w   = p[:N_REGIONS]
+        sf_c   = p[N_REGIONS:2 * N_REGIONS]
+        scales = p[2 * N_REGIONS:]
+        out = run_fem(sf_w, sf_c, knit_dirs, pressure, motif,
+                      region_map_path, cable_paths, cable_ea, scales, V_rest)
+        if out is None or "verts" not in out:
+            loss = 1e3   # penalise invalid FEM result heavily
+        else:
+            diff = out["verts"][interior_idx] - V_target[interior_idx]
+            loss = float(np.sqrt(np.mean(np.sum(diff ** 2, axis=1))))
+        history.append(loss)
+        if len(history) % 10 == 0:
+            print(f"  [{_call_count[0]:4d}]  RMSE={loss:.4f} m")
+        return loss
+
+    return objective, history
+
+
+# ── Parameter expansion helpers ───────────────────────────────────────────────
+def expand_phase1(p):
+    """Phase 1: 6 params, 16 spoke cables (no hoop).
+    p = [sf_wale_in, sf_course_in, sf_wale_out, sf_course_out,
+         scale_Si, scale_So]
+    Cable order: Si0,So0, Si1,So1, ..., Si7,So7  (16 total)
+    """
+    sf_wi, sf_ci, sf_wo, sf_co, s_si, s_so = p
+    sf_w   = np.array([sf_wi] * 8 + [sf_wo] * 8)
+    sf_c   = np.array([sf_ci] * 8 + [sf_co] * 8)
+    scales = np.empty(16)
+    for k in range(8):
+        scales[2 * k]     = s_si
+        scales[2 * k + 1] = s_so
+    return sf_w, sf_c, scales
+
+
+def expand_phase2(scale_ha, p1):
+    """Phase 2: 1 param (scale_Ha), sf and spoke scales fixed from Phase 1.
+    Cable order: Si0,So0,...,Si7,So7, Hj0..Hj7  (16 spokes + 8 junction pairs)
+    p1 is the phase1 symmetric_params dict.
+    """
+    sf_w   = np.array([p1["sf_wale_in"]]   * 8 + [p1["sf_wale_out"]]   * 8)
+    sf_c   = np.array([p1["sf_course_in"]] * 8 + [p1["sf_course_out"]] * 8)
+    scales = np.empty(24)
+    for k in range(8):
+        scales[2 * k]     = p1["scale_Si"]
+        scales[2 * k + 1] = p1["scale_So"]
+    scales[16:] = float(scale_ha)
+    return sf_w, sf_c, scales
+
+
+def expand_symmetric(p_sym):
+    """Legacy 7-param symmetric mode (kept for reference).
+    p_sym = [sf_wale_in, sf_course_in, sf_wale_out, sf_course_out,
+             scale_Si, scale_So, scale_Ha]
+    Cable order: Si0,So0,...,Si7,So7, Ha0..Ha7  (24 total)
+    """
+    sf_wi, sf_ci, sf_wo, sf_co, s_si, s_so, s_ha = p_sym
+    sf_w   = np.array([sf_wi] * 8 + [sf_wo] * 8)
+    sf_c   = np.array([sf_ci] * 8 + [sf_co] * 8)
+    scales = np.empty(N_CABLES)
+    for k in range(8):
+        scales[2 * k]     = s_si
+        scales[2 * k + 1] = s_so
+    scales[16:] = s_ha
+    return sf_w, sf_c, scales
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--motif",      type=int,   default=1)
+    parser.add_argument("--pressure",   type=float, default=1000.0)
+    parser.add_argument("--maxiter",    type=int,   default=300)
+    parser.add_argument("--out-prefix", type=str,   default="c5_16r",
+                        help="Prefix for output files in optimisation/")
+    parser.add_argument("--symmetric",   action="store_true",
+                        help="Legacy 7-parameter D8-symmetric mode")
+    parser.add_argument("--phase",       type=int, default=None, choices=[1, 2],
+                        help="Two-phase optimisation: 1=sf (spokes only), 2=scale_Ha (junction hoops)")
+    parser.add_argument("--phase1-json", type=str,
+                        default=os.path.join(OUT_DIR, "C5_phase1.json"),
+                        help="Phase 1 result JSON (read by Phase 2)")
+    parser.add_argument("--sf0-wale",    type=float, default=None,
+                        help="Phase 1 initial sf_wale; default 1.032")
+    parser.add_argument("--sf0-course",  type=float, default=None,
+                        help="Phase 1 initial sf_course; default 1.042")
+    args = parser.parse_args()
+    _out_prefix[0] = args.out_prefix
+
+    os.makedirs(OUT_DIR, exist_ok=True)
+    for path, label in [(BINARY, "FEM binary"), (MESH_PATH, "FEM mesh"),
+                         (SPOKE_PATHS_FILE, "spoke paths")]:
+        if not os.path.exists(path):
+            print(f"{label} not found: {path}"); sys.exit(1)
+
+    V, F        = load_off(MESH_PATH)
+    V_rest      = V.copy()           # undeformed rest shape for validity checks
+    V_target, _ = load_off(TARGET_OFF)
+    bdry_mask    = np.hypot(V_target[:, 0], V_target[:, 1]) > \
+                   (np.hypot(V_target[:, 0], V_target[:, 1]).max() * 0.98)
+    interior_idx = np.where(~bdry_mask)[0]
+    t_crown      = float(V_target[:, 2].max())
+    _target_crown[0] = t_crown   # used by validity gate in run_fem()
+
+    print(f"FEM mesh : {len(V)} verts, {len(F)} faces")
+    print(f"Target   : {len(V_target)} verts, {len(interior_idx)} interior, "
+          f"crown={t_crown:.4f} m")
+
+    (cable_paths, cable_names, hoop_junctions, r_hoop,
+     junc_pair_paths, junc_pair_names) = build_cable_paths(V)
+    cable_ea = 157000.0
+    print(f"Cables   : {len(cable_paths)} sections  (inner+outer spokes + hoop arcs)")
+    print(f"           lens = {[len(p) for p in cable_paths]}")
+    print(f"Hoop r   : {r_hoop:.3f} m")
+
+    face_region, mid_az = build_region_map(V, F, hoop_junctions, r_hoop)
+    knit_dirs            = region_knit_dirs(V, F, face_region)
+
+    region_map_path = os.path.join(OUT_DIR, "C5_16region_map.json")
+    with open(region_map_path, "w") as f:
+        json.dump({"face_regions": face_region}, f)
+
+    counts = np.bincount(face_region, minlength=N_REGIONS)
+    print(f"Regions  : inner={counts[:8].tolist()}")
+    print(f"           outer={counts[8:].tolist()}")
+    print(f"Knit dirs: {[round(d, 1) for d in knit_dirs]}°")
+    print(f"Pressure : {args.pressure} Pa  |  motif: {args.motif}")
+
+    # ── Phase 1: optimise sf with spokes only ─────────────────────────────────
+    if args.phase == 1:
+        spoke_paths  = cable_paths[:16]   # Si0,So0,...,Si7,So7
+        spoke_names  = cable_names[:16]
+        sf0_w = args.sf0_wale   if args.sf0_wale   is not None else 1.032
+        sf0_c = args.sf0_course if args.sf0_course is not None else 1.042
+        p0 = np.array([sf0_w, sf0_c, sf0_w, sf0_c, 1.0, 1.0])
+        print(f"\nPhase 1 — spokes only (16 cables), 6 params")
+        print(f"Start: sf_wale={sf0_w:.4f}  sf_course={sf0_c:.4f}")
+
+        print(f"\nSanity check …")
+        sf_w0, sf_c0, sc0 = expand_phase1(p0)
+        out0 = run_fem(sf_w0, sf_c0, knit_dirs, args.pressure, args.motif,
+                       region_map_path, spoke_paths, cable_ea, sc0, V_rest)
+        if out0 is None:
+            print("ERROR: FEM failed at warm-start"); sys.exit(1)
+        d0 = out0["verts"][interior_idx] - V_target[interior_idx]
+        print(f"  crown={out0['crown_height']:.4f} m  (target {t_crown:.4f} m)")
+        print(f"  RMSE = {np.sqrt(np.mean(np.sum(d0**2, axis=1))):.4f} m")
+        if args.maxiter == 0:
+            print("maxiter=0 — sanity check only."); return
+
+        bounds1 = ([(0.7, 2.0)] * 4 +       # sf inner/outer wale+course
+                   [(0.70, 1.05)] * 2)        # scale_Si, scale_So
+
+        def obj1(p):
+            sf_w, sf_c, sc = expand_phase1(p)
+            out = run_fem(sf_w, sf_c, knit_dirs, args.pressure, args.motif,
+                          region_map_path, spoke_paths, cable_ea, sc, V_rest)
+            if out is None or "verts" not in out:
+                return 1e3
+            diff = out["verts"][interior_idx] - V_target[interior_idx]
+            loss = float(np.sqrt(np.mean(np.sum(diff**2, axis=1))))
+            if _call_count[0] % 5 == 0:
+                print(f"  [{_call_count[0]:4d}]  RMSE={loss:.4f} m  "
+                      f"p=[{','.join(f'{v:.4f}' for v in p)}]")
+            return loss
+
+        print(f"\nOptimising 6 params (Phase 1), maxiter={args.maxiter} …")
+        res1 = minimize(obj1, p0, method="L-BFGS-B", bounds=bounds1,
+                        options={"maxiter": args.maxiter, "ftol": 1e-9,
+                                 "gtol": 1e-5, "eps": 0.002})
+
+        print(f"\nConverged: {res1.success}  |  {res1.message}")
+        print(f"Final RMSE: {res1.fun:.4f} m   FEM calls: {_call_count[0]}")
+        p1 = res1.x
+        print(f"  sf_wale_in={p1[0]:.4f}  sf_course_in={p1[1]:.4f}")
+        print(f"  sf_wale_out={p1[2]:.4f}  sf_course_out={p1[3]:.4f}")
+        print(f"  scale_Si={p1[4]:.4f}  scale_So={p1[5]:.4f}")
+
+        phase1_result = {
+            "phase": 1, "converged": bool(res1.success),
+            "loss_rmse_m": float(res1.fun), "n_calls": _call_count[0],
+            "pressure": args.pressure, "motif": args.motif,
+            "symmetric_params": {
+                "sf_wale_in":   float(p1[0]), "sf_course_in":  float(p1[1]),
+                "sf_wale_out":  float(p1[2]), "sf_course_out": float(p1[3]),
+                "scale_Si": float(p1[4]), "scale_So": float(p1[5]),
+                "scale_Ha": 1.0,   # not yet optimised
+            },
+        }
+        with open(args.phase1_json, "w") as f:
+            json.dump(phase1_result, f, indent=2)
+        print(f"\nSaved Phase 1 result: {args.phase1_json}")
+        return
+
+    # ── Phase 2: optimise scale_Ha with junction-pair hoop cables ─────────────
+    if args.phase == 2:
+        if not os.path.exists(args.phase1_json):
+            print(f"Phase 1 result not found: {args.phase1_json}"); sys.exit(1)
+        with open(args.phase1_json) as f:
+            p1_data = json.load(f)
+        p1_params = p1_data["symmetric_params"]
+        print(f"\nPhase 2 — junction-pair hoop cables (1 param)")
+        print(f"  Fixed sf: wale_in={p1_params['sf_wale_in']:.4f}  "
+              f"course_in={p1_params['sf_course_in']:.4f}  "
+              f"wale_out={p1_params['sf_wale_out']:.4f}  "
+              f"course_out={p1_params['sf_course_out']:.4f}")
+        print(f"  Fixed scales: Si={p1_params['scale_Si']:.4f}  "
+              f"So={p1_params['scale_So']:.4f}")
+        print(f"  Junction pairs: {[p for p in junc_pair_paths]}")
+
+        # Cable set: 16 spokes + 8 junction pairs
+        phase2_cables = cable_paths[:16] + junc_pair_paths
+        phase2_names  = cable_names[:16] + junc_pair_names
+
+        print(f"\nSanity check (scale_Ha=1.0) …")
+        sf_w0, sf_c0, sc0 = expand_phase2(1.0, p1_params)
+        out0 = run_fem(sf_w0, sf_c0, knit_dirs, args.pressure, args.motif,
+                       region_map_path, phase2_cables, cable_ea, sc0, V_rest)
+        if out0 is None:
+            print("ERROR: FEM failed at Phase 2 warm-start"); sys.exit(1)
+        d0 = out0["verts"][interior_idx] - V_target[interior_idx]
+        print(f"  crown={out0['crown_height']:.4f} m  (target {t_crown:.4f} m)")
+        print(f"  RMSE = {np.sqrt(np.mean(np.sum(d0**2, axis=1))):.4f} m")
+        if args.maxiter == 0:
+            print("maxiter=0 — sanity check only."); return
+
+        def obj2(p):
+            scale_ha = float(p[0])
+            sf_w, sf_c, sc = expand_phase2(scale_ha, p1_params)
+            out = run_fem(sf_w, sf_c, knit_dirs, args.pressure, args.motif,
+                          region_map_path, phase2_cables, cable_ea, sc, V_rest)
+            if out is None or "verts" not in out:
+                return 1e3
+            diff = out["verts"][interior_idx] - V_target[interior_idx]
+            loss = float(np.sqrt(np.mean(np.sum(diff**2, axis=1))))
+            if _call_count[0] % 5 == 0:
+                print(f"  [{_call_count[0]:4d}]  RMSE={loss:.4f} m  "
+                      f"scale_Ha={scale_ha:.4f}")
+            return loss
+
+        print(f"\nOptimising scale_Ha (Phase 2), maxiter={args.maxiter} …")
+        res2 = minimize(obj2, [1.0], method="L-BFGS-B",
+                        bounds=[(0.70, 1.05)],
+                        options={"maxiter": args.maxiter, "ftol": 1e-9,
+                                 "gtol": 1e-5, "eps": 0.005})
+
+        print(f"\nConverged: {res2.success}  |  {res2.message}")
+        print(f"Final RMSE: {res2.fun:.4f} m   FEM calls: {_call_count[0]}")
+        scale_ha_opt = float(res2.x[0])
+        print(f"  scale_Ha = {scale_ha_opt:.4f}")
+
+        # Final FEM with optimal parameters
+        sf_w_f, sf_c_f, sc_f = expand_phase2(scale_ha_opt, p1_params)
+        print("\nRunning final FEM (Phase 2) …")
+        out_f = run_fem(sf_w_f, sf_c_f, knit_dirs, args.pressure, args.motif,
+                        region_map_path, phase2_cables, cable_ea, sc_f, V_rest)
+        if out_f:
+            print(f"  crown = {out_f['crown_height']:.4f} m  (target {t_crown:.4f} m)")
+            if "verts" in out_f:
+                d = out_f["verts"][interior_idx] - V_target[interior_idx]
+                print(f"  RMSE  = {np.sqrt(np.mean(np.sum(d**2,axis=1))):.4f} m")
+
+        # Merge Phase 1 + Phase 2 into final result JSON
+        p1_params["scale_Ha"] = scale_ha_opt
+        final_result = {
+            "geometry": "C5", "n_regions": N_REGIONS, "phase": 2,
+            "motif": args.motif, "pressure": args.pressure,
+            "fem_mesh": MESH_PATH, "target_crown_m": float(t_crown),
+            "phase1_converged": p1_data.get("converged", None),
+            "phase2_converged": bool(res2.success),
+            "phase2_rmse_m": float(res2.fun),
+            "n_calls_phase2": _call_count[0],
+            "symmetric_params": p1_params,
+            "regions": [{"region_id": r, "zone": "inner" if r<8 else "outer",
+                         "sector": r%8, "knit_dir_deg": knit_dirs[r],
+                         "sf_wale": float(sf_w_f[r]),
+                         "sf_course": float(sf_c_f[r])}
+                        for r in range(N_REGIONS)],
+            "cables": [{"name": phase2_names[i], "rest_scale": float(sc_f[i])}
+                       for i in range(len(phase2_cables))],
+        }
+        out_json = os.path.join(OUT_DIR, "C5_16region_optimised_sym.json")
+        with open(out_json, "w") as f:
+            json.dump(final_result, f, indent=2)
+        print(f"\nSaved: {out_json}")
+        return
+
+    if args.symmetric:
+        # ── Symmetric mode: 7 params exploiting D8 symmetry ──────────────────
+        # p = [sf_wale_in, sf_course_in, sf_wale_out, sf_course_out,
+        #      scale_Si, scale_So, scale_Ha]
+        sf0_w = args.sf0_wale   if args.sf0_wale   is not None else 1.042
+        sf0_c = args.sf0_course if args.sf0_course is not None else 1.042
+        p0_sym = np.array([sf0_w, sf0_c, sf0_w, sf0_c, 1.0, 1.0, 1.0])
+        print(f"Start:   sf_wale={sf0_w:.4f}  sf_course={sf0_c:.4f}")
+
+        print(f"\nSanity check (symmetric warm-start) …")
+        sf_w0, sf_c0, sc0 = expand_symmetric(p0_sym)
+        out0 = run_fem(sf_w0, sf_c0, knit_dirs, args.pressure, args.motif,
+                       region_map_path, cable_paths, cable_ea, sc0, V_rest)
+        if out0 is None:
+            print("ERROR: FEM failed at symmetric warm-start"); sys.exit(1)
+        print(f"  crown={out0['crown_height']:.4f} m  (target {t_crown:.4f} m)")
+        if "verts" in out0:
+            d = out0["verts"][interior_idx] - V_target[interior_idx]
+            print(f"  RMSE = {np.sqrt(np.mean(np.sum(d**2, axis=1))):.4f} m")
+
+        if args.maxiter == 0:
+            print("maxiter=0 — sanity check only."); return
+
+        bounds_sym = ([(0.7, 2.0)] * 4 +            # sf_wale/sf_course inner/outer
+                      [(0.70, 1.05)] * 2 +            # scale_Si, scale_So
+                      [(0.85, 1.05),])                 # scale_Ha
+
+        def sym_objective(p_sym):
+            sf_w, sf_c, scales = expand_symmetric(p_sym)
+            out = run_fem(sf_w, sf_c, knit_dirs, args.pressure, args.motif,
+                          region_map_path, cable_paths, cable_ea, scales, V_rest)
+            if out is None or "verts" not in out:
+                return 1e3
+            diff = out["verts"][interior_idx] - V_target[interior_idx]
+            loss = float(np.sqrt(np.mean(np.sum(diff ** 2, axis=1))))
+            if _call_count[0] % 5 == 0:
+                print(f"  [{_call_count[0]:4d}]  RMSE={loss:.4f} m  "
+                      f"p=[{','.join(f'{v:.3f}' for v in p_sym)}]")
+            return loss
+
+        print(f"\nOptimising 7 symmetric params, maxiter={args.maxiter} …")
+        result = minimize(sym_objective, p0_sym, method="L-BFGS-B",
+                          bounds=bounds_sym,
+                          options={"maxiter": args.maxiter, "ftol": 1e-9,
+                                   "gtol": 1e-5, "eps": 0.002})
+
+        print(f"\nConverged: {result.success}  |  {result.message}")
+        print(f"Final RMSE: {result.fun:.4f} m   FEM calls: {_call_count[0]}")
+        p_opt = result.x
+        print(f"Optimal: sf_wale_in={p_opt[0]:.4f}  sf_course_in={p_opt[1]:.4f}")
+        print(f"         sf_wale_out={p_opt[2]:.4f}  sf_course_out={p_opt[3]:.4f}")
+        print(f"         scale_Si={p_opt[4]:.4f}  scale_So={p_opt[5]:.4f}  "
+              f"scale_Ha={p_opt[6]:.4f}")
+
+        sf_w, sf_c, scales = expand_symmetric(p_opt)
+
+        print("\nRunning final FEM (symmetric) …")
+        out_f = run_fem(sf_w, sf_c, knit_dirs, args.pressure, args.motif,
+                        region_map_path, cable_paths, cable_ea, scales, V_rest)
+        if out_f:
+            print(f"  crown = {out_f['crown_height']:.4f} m  (target {t_crown:.4f} m)")
+            if "verts" in out_f:
+                d = out_f["verts"][interior_idx] - V_target[interior_idx]
+                print(f"  RMSE  = {np.sqrt(np.mean(np.sum(d**2, axis=1))):.4f} m")
+
+        results = {
+            "geometry": "C5", "n_regions": N_REGIONS, "n_cables": N_CABLES,
+            "mode": "symmetric_D8", "motif": args.motif, "pressure": args.pressure,
+            "fem_mesh": MESH_PATH, "target_crown_m": float(t_crown),
+            "converged": bool(result.success),
+            "loss_rmse_m": float(result.fun), "n_calls": _call_count[0],
+            "symmetric_params": {
+                "sf_wale_in":   float(p_opt[0]), "sf_course_in":  float(p_opt[1]),
+                "sf_wale_out":  float(p_opt[2]), "sf_course_out": float(p_opt[3]),
+                "scale_Si": float(p_opt[4]), "scale_So": float(p_opt[5]),
+                "scale_Ha": float(p_opt[6]),
+            },
+            "regions": [{"region_id": r, "zone": "inner" if r<8 else "outer",
+                         "sector": r%8, "knit_dir_deg": knit_dirs[r],
+                         "sf_wale": float(sf_w[r]), "sf_course": float(sf_c[r])}
+                        for r in range(N_REGIONS)],
+            "cables": [{"name": cable_names[i], "rest_scale": float(scales[i])}
+                       for i in range(N_CABLES)],
+        }
+        out_json = os.path.join(OUT_DIR, "C5_16region_optimised_sym.json")
+        with open(out_json, "w") as f:
+            json.dump(results, f, indent=2)
+        print(f"\nSaved: {out_json}")
+        return
+
+    # ── Full 56-parameter mode ─────────────────────────────────────────────────
+    SF0 = 1.042
+    p0 = np.concatenate([
+        np.full(N_REGIONS, SF0),
+        np.full(N_REGIONS, SF0),
+        np.full(N_CABLES,  1.000),
+    ])
+
+    print(f"\nSanity check at sf={SF0}, cable_scale=1.0 …")
+    out0 = run_fem(p0[:N_REGIONS], p0[N_REGIONS:2*N_REGIONS], knit_dirs,
+                   args.pressure, args.motif, region_map_path,
+                   cable_paths, cable_ea, p0[2*N_REGIONS:], V_rest)
+    if out0 is None:
+        print("ERROR: FEM failed at initial guess"); sys.exit(1)
+    print(f"  crown={out0['crown_height']:.4f} m  (target {t_crown:.4f} m)")
+    if "verts" in out0:
+        d = out0["verts"][interior_idx] - V_target[interior_idx]
+        print(f"  RMSE = {np.sqrt(np.mean(np.sum(d**2, axis=1))):.4f} m")
+
+    if args.maxiter == 0:
+        print("maxiter=0 — sanity check only, skipping optimisation.")
+        return
+
+    n_params = len(p0)
+    bounds = ([(0.7, 2.0)] * N_REGIONS +
+              [(0.7, 2.0)] * N_REGIONS +
+              [(0.85, 1.05)] * N_CABLES)
+
+    print(f"\nOptimising {n_params} params "
+          f"({N_REGIONS}×sf_wale + {N_REGIONS}×sf_course + {N_CABLES}×cable_scale), "
+          f"maxiter={args.maxiter} …")
+
+    objective, history = make_objective(
+        V_target, V_rest, interior_idx, knit_dirs,
+        region_map_path, args.pressure, args.motif, cable_paths, cable_ea)
+
+    result = minimize(
+        objective, p0, method="L-BFGS-B", bounds=bounds,
+        options={"maxiter": args.maxiter, "ftol": 1e-8, "gtol": 1e-5, "eps": 0.05},
+    )
+
+    print(f"\nConverged: {result.success}  |  {result.message}")
+    print(f"Final RMSE: {result.fun:.4f} m   FEM calls: {_call_count[0]}")
+
+    p_opt  = result.x
+    sf_w   = p_opt[:N_REGIONS]
+    sf_c   = p_opt[N_REGIONS:2*N_REGIONS]
+    scales = p_opt[2*N_REGIONS:]
+
+    print("\n=== Optimal per-region parameters ===")
+    print(f"{'r':>3}  {'zone':>6}  {'sect':>5}  {'knit°':>6}  "
+          f"{'sf_wale':>8}  {'sf_course':>9}")
+    for r in range(N_REGIONS):
+        print(f"{r:3d}  {'inner' if r<8 else 'outer':>6}  {r%8:5d}  "
+              f"{knit_dirs[r]:6.1f}  {sf_w[r]:8.4f}  {sf_c[r]:9.4f}")
+
+    print("\n=== Optimal cable rest-length scales ===")
+    for i, name in enumerate(cable_names):
+        print(f"  {name:>4}  scale={scales[i]:.4f}")
+
+    print("\nRunning final FEM …")
+    out_f = run_fem(sf_w, sf_c, knit_dirs, args.pressure, args.motif,
+                    region_map_path, cable_paths, cable_ea, scales, V_rest)
+    if out_f:
+        print(f"  crown = {out_f['crown_height']:.4f} m  (target {t_crown:.4f} m)")
+        if "verts" in out_f:
+            d = out_f["verts"][interior_idx] - V_target[interior_idx]
+            print(f"  RMSE  = {np.sqrt(np.mean(np.sum(d**2,axis=1))):.4f} m")
+
+    results = {
+        "geometry": "C5", "n_regions": N_REGIONS, "n_cables": N_CABLES,
+        "motif": args.motif, "pressure": args.pressure,
+        "fem_mesh": MESH_PATH, "target_crown_m": float(t_crown),
+        "converged": bool(result.success),
+        "loss_rmse_m": float(result.fun), "n_calls": _call_count[0],
+        "regions": [{"region_id": r, "zone": "inner" if r<8 else "outer",
+                     "sector": r%8, "knit_dir_deg": knit_dirs[r],
+                     "sf_wale": float(sf_w[r]), "sf_course": float(sf_c[r])}
+                    for r in range(N_REGIONS)],
+        "cables": [{"name": cable_names[i], "rest_scale": float(scales[i])}
+                   for i in range(N_CABLES)],
+        "history": history[-50:],
+    }
+    out_json = os.path.join(OUT_DIR, "C5_16region_optimised.json")
+    with open(out_json, "w") as f:
+        json.dump(results, f, indent=2)
+    print(f"\nSaved: {out_json}")
+
+
+if __name__ == "__main__":
+    main()

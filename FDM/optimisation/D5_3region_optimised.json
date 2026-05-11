@@ -1,0 +1,49 @@
+{
+  "geometry": "D5",
+  "n_regions": 3,
+  "pressure": 1000.0,
+  "cable_ea": 157000.0,
+  "cable_scale_fixed": 0.95,
+  "seed_vertices": [
+    781,
+    140,
+    95
+  ],
+  "seed_faces": [
+    184,
+    69,
+    150
+  ],
+  "converged": false,
+  "rmse_m": 0.0059373139883652495,
+  "n_calls": 408,
+  "regions": [
+    {
+      "region_id": 0,
+      "seed_vertex": 781,
+      "seed_face": 184,
+      "n_faces": 537,
+      "knit_dir_deg": 96.75031584237789,
+      "sf_wale": 1.2961207349588464,
+      "sf_course": 0.9883628527998699
+    },
+    {
+      "region_id": 1,
+      "seed_vertex": 140,
+      "seed_face": 69,
+      "n_faces": 548,
+      "knit_dir_deg": 81.61932916815947,
+      "sf_wale": 1.3246959775016842,
+      "sf_course": 0.9778686623288807
+    },
+    {
+      "region_id": 2,
+      "seed_vertex": 95,
+      "seed_face": 150,
+      "n_faces": 478,
+      "knit_dir_deg": 176.78945087379103,
+      "sf_wale": 0.9864416403354371,
+      "sf_course": 1.157363010958859
+    }
+  ]
+}

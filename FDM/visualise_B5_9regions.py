@@ -99,9 +99,9 @@ REGION_NAMES = [
 # knit direction per region (degrees, 0=horizontal/wale, 90=vertical/course)
 # Aligned with cable direction bounding the region
 KNIT_DIR = {
-    (0, 0): 45,  (0, 1):  0,  (0, 2): 45,   # bottom row
-    (1, 0): 90,  (1, 1): 45,  (1, 2): 90,   # middle row
-    (2, 0): 45,  (2, 1):  0,  (2, 2): 45,   # top row
+    (0, 0): 0,  (0, 1): 0,  (0, 2): 0,   # uniform 0° everywhere
+    (1, 0): 0,  (1, 1): 0,  (1, 2): 0,   # (wale along x-axis,
+    (2, 0): 0,  (2, 1): 0,  (2, 2): 0,   #  aligned with cables C/D)
 }
 REGION_COLORS = {
     (0,0): "#2a3a5a", (0,1): "#2a5a3a", (0,2): "#2a3a5a",

@@ -1,0 +1,65 @@
+{
+  "geometry": "D5",
+  "n_regions": 8,
+  "pressure": 1000.0,
+  "cable_ea": 157000.0,
+  "converged": true,
+  "rmse_m": 0.00760962777632536,
+  "n_calls": 162,
+  "params": {
+    "sf_wale": 1.152601249682363,
+    "sf_course": 1.0725321595541732,
+    "scale_cable": 0.95,
+    "scale_cable2": 1.0
+  },
+  "regions": [
+    {
+      "region_id": 0,
+      "knit_dir_deg": 102.25172708616768,
+      "sf_wale": 1.152601249682363,
+      "sf_course": 1.0725321595541732
+    },
+    {
+      "region_id": 1,
+      "knit_dir_deg": 147.90285665048384,
+      "sf_wale": 1.152601249682363,
+      "sf_course": 1.0725321595541732
+    },
+    {
+      "region_id": 2,
+      "knit_dir_deg": 29.808286689741973,
+      "sf_wale": 1.152601249682363,
+      "sf_course": 1.0725321595541732
+    },
+    {
+      "region_id": 3,
+      "knit_dir_deg": 75.78159769914318,
+      "sf_wale": 1.152601249682363,
+      "sf_course": 1.0725321595541732
+    },
+    {
+      "region_id": 4,
+      "knit_dir_deg": 102.69203992122341,
+      "sf_wale": 1.152601249682363,
+      "sf_course": 1.0725321595541732
+    },
+    {
+      "region_id": 5,
+      "knit_dir_deg": 108.3458936033324,
+      "sf_wale": 1.152601249682363,
+      "sf_course": 1.0725321595541732
+    },
+    {
+      "region_id": 6,
+      "knit_dir_deg": 73.74257162181927,
+      "sf_wale": 1.152601249682363,
+      "sf_course": 1.0725321595541732
+    },
+    {
+      "region_id": 7,
+      "knit_dir_deg": 77.04559536478585,
+      "sf_wale": 1.152601249682363,
+      "sf_course": 1.0725321595541732
+    }
+  ]
+}

@@ -1,0 +1,118 @@
+FEM mesh : 847 verts, 1563 faces
+Target   : 762 interior verts, crown=0.1978 m
+Seed verts  : [781, 140, 95]  →  seed faces: [184, 69, 150]
+Region sizes: [537, 548, 478]
+Knit dirs   : [96.8, 81.6, 176.8]°
+Cable       : 42 segments, fixed scale=0.95
+Pressure    : 1000.0 Pa  |  motif: 1
+
+Warm-start check (sf_w=1.1526, sf_c=1.0725) …
+  crown=0.1941 m  RMSE=0.0081 m
+
+Optimising 6 params (3×sf_wale + 3×sf_course), maxiter=500 …
+  [   5]  RMSE=0.0081 m  sf_w=[1.1526,1.1526,1.1546]  sf_c=[1.0725,1.0725,1.0725]
+  [  10]  RMSE=0.0073 m  sf_w=[1.1450,1.1442,1.1698]  sf_c=[1.0396,1.0415,1.1214]
+  [  12] FEM exception: Command '['/home/chaoyu/phd_simulation/FDM/../build-linux/fem_batch_nregion', '/home/chaoyu/phd_simulation/FDM/data/D5/D5_remeshed_fem.off', '/home/chaoyu/phd_simulation/FDM/optimisation/D5_3region_map.json', '/home/chaoyu/phd_simulation/FDM/optimisation/tmpub8ynax_.json', '/home/chaoyu/phd_simulation/FDM/optimisation/d5_3r_run2_00012']' timed out after 120 seconds
+  [  15]  RMSE=0.0074 m  sf_w=[1.1430,1.1442,1.1698]  sf_c=[1.0396,1.0415,1.1234]
+  [  20]  RMSE=0.0082 m  sf_w=[1.1526,1.1526,1.1526]  sf_c=[1.0745,1.0725,1.0725]
+  [  25]  RMSE=0.0066 m  sf_w=[1.1478,1.1504,1.1612]  sf_c=[1.0560,1.0570,1.0969]
+  [  30]  RMSE=0.0066 m  sf_w=[1.1467,1.1480,1.1633]  sf_c=[1.0444,1.0463,1.0974]
+  [  35]  RMSE=0.0066 m  sf_w=[1.1467,1.1480,1.1633]  sf_c=[1.0444,1.0483,1.0974]
+  [  40]  RMSE=0.0065 m  sf_w=[1.1474,1.1482,1.1641]  sf_c=[1.0511,1.0525,1.0971]
+  [  45]  RMSE=0.0065 m  sf_w=[1.1506,1.1499,1.1637]  sf_c=[1.0487,1.0503,1.0985]
+  [  50]  RMSE=0.0065 m  sf_w=[1.1486,1.1499,1.1637]  sf_c=[1.0487,1.0503,1.1005]
+  [  55]  RMSE=0.0064 m  sf_w=[1.1531,1.1551,1.1668]  sf_c=[1.0477,1.0472,1.0989]
+  [  60]  RMSE=0.0064 m  sf_w=[1.1697,1.1765,1.1764]  sf_c=[1.0381,1.0389,1.0983]
+  [  65]  RMSE=0.0063 m  sf_w=[1.1873,1.1942,1.1813]  sf_c=[1.0340,1.0316,1.0963]
+  [  70]  RMSE=0.0063 m  sf_w=[1.1873,1.1942,1.1813]  sf_c=[1.0340,1.0336,1.0963]
+  [  75]  RMSE=0.0064 m  sf_w=[1.2013,1.2147,1.1824]  sf_c=[1.0258,1.0330,1.0949]
+  [  80]  RMSE=0.0063 m  sf_w=[1.1934,1.2001,1.1810]  sf_c=[1.0317,1.0320,1.0959]
+  [  85]  RMSE=0.0063 m  sf_w=[1.1914,1.2001,1.1810]  sf_c=[1.0317,1.0320,1.0979]
+  [  90]  RMSE=0.0063 m  sf_w=[1.1963,1.2053,1.1793]  sf_c=[1.0342,1.0308,1.0952]
+  [  95]  RMSE=0.0063 m  sf_w=[1.1971,1.2081,1.1766]  sf_c=[1.0327,1.0308,1.0956]
+  [ 100]  RMSE=0.0063 m  sf_w=[1.1998,1.2093,1.1667]  sf_c=[1.0331,1.0303,1.0979]
+  [ 105]  RMSE=0.0063 m  sf_w=[1.1998,1.2093,1.1667]  sf_c=[1.0331,1.0323,1.0979]
+  [ 106] FEM exception: Command '['/home/chaoyu/phd_simulation/FDM/../build-linux/fem_batch_nregion', '/home/chaoyu/phd_simulation/FDM/data/D5/D5_remeshed_fem.off', '/home/chaoyu/phd_simulation/FDM/optimisation/D5_3region_map.json', '/home/chaoyu/phd_simulation/FDM/optimisation/tmphxt4wyxt.json', '/home/chaoyu/phd_simulation/FDM/optimisation/d5_3r_run2_00106']' timed out after 120 seconds
+  [ 110]  RMSE=0.0063 m  sf_w=[1.1971,1.2061,1.1786]  sf_c=[1.0327,1.0308,1.0956]
+  [ 115]  RMSE=0.0063 m  sf_w=[1.2009,1.2083,1.1700]  sf_c=[1.0330,1.0304,1.0972]
+  [ 120]  RMSE=0.0063 m  sf_w=[1.1989,1.2083,1.1700]  sf_c=[1.0330,1.0304,1.0992]
+  [ 125]  RMSE=0.0062 m  sf_w=[1.2078,1.2190,1.1441]  sf_c=[1.0338,1.0272,1.1043]
+  [ 130]  RMSE=0.0062 m  sf_w=[1.2245,1.2414,1.1021]  sf_c=[1.0270,1.0197,1.1168]
+  [ 135]  RMSE=0.0061 m  sf_w=[1.2566,1.2785,1.0309]  sf_c=[1.0139,1.0031,1.1368]
+  [ 140]  RMSE=0.0061 m  sf_w=[1.2566,1.2785,1.0309]  sf_c=[1.0139,1.0051,1.1368]
+  [ 145]  RMSE=0.0065 m  sf_w=[1.2987,1.3277,0.9700]  sf_c=[0.9985,0.9843,1.1725]
+  [ 150]  RMSE=0.0061 m  sf_w=[1.2664,1.2876,1.0193]  sf_c=[1.0111,0.9996,1.1434]
+  [ 155]  RMSE=0.0061 m  sf_w=[1.2644,1.2876,1.0193]  sf_c=[1.0111,0.9996,1.1454]
+  [ 160]  RMSE=0.0060 m  sf_w=[1.2739,1.2988,1.0122]  sf_c=[1.0054,0.9925,1.1471]
+  [ 165]  RMSE=0.0059 m  sf_w=[1.2961,1.3267,0.9864]  sf_c=[0.9884,0.9779,1.1574]
+  [ 170]  RMSE=0.0059 m  sf_w=[1.3000,1.3282,0.9816]  sf_c=[0.9864,0.9758,1.1590]
+  [ 175]  RMSE=0.0059 m  sf_w=[1.3000,1.3282,0.9816]  sf_c=[0.9864,0.9778,1.1590]
+  [ 180]  RMSE=0.0059 m  sf_w=[1.2966,1.3252,0.9878]  sf_c=[0.9881,0.9776,1.1576]
+  [ 182] FEM exception: Command '['/home/chaoyu/phd_simulation/FDM/../build-linux/fem_batch_nregion', '/home/chaoyu/phd_simulation/FDM/data/D5/D5_remeshed_fem.off', '/home/chaoyu/phd_simulation/FDM/optimisation/D5_3region_map.json', '/home/chaoyu/phd_simulation/FDM/optimisation/tmph1tnshhs.json', '/home/chaoyu/phd_simulation/FDM/optimisation/d5_3r_run2_00182']' timed out after 120 seconds
+  [ 185]  RMSE=0.0059 m  sf_w=[1.2981,1.3247,0.9864]  sf_c=[0.9884,0.9779,1.1574]
+  [ 189] FEM exception: Command '['/home/chaoyu/phd_simulation/FDM/../build-linux/fem_batch_nregion', '/home/chaoyu/phd_simulation/FDM/data/D5/D5_remeshed_fem.off', '/home/chaoyu/phd_simulation/FDM/optimisation/D5_3region_map.json', '/home/chaoyu/phd_simulation/FDM/optimisation/tmp4g92figm.json', '/home/chaoyu/phd_simulation/FDM/optimisation/d5_3r_run2_00189']' timed out after 120 seconds
+  [ 190]  RMSE=0.0059 m  sf_w=[1.2961,1.3247,0.9864]  sf_c=[0.9884,0.9779,1.1594]
+  [ 195]  RMSE=0.0059 m  sf_w=[1.2962,1.3248,0.9863]  sf_c=[0.9903,0.9778,1.1574]
+  [ 196] FEM exception: Command '['/home/chaoyu/phd_simulation/FDM/../build-linux/fem_batch_nregion', '/home/chaoyu/phd_simulation/FDM/data/D5/D5_remeshed_fem.off', '/home/chaoyu/phd_simulation/FDM/optimisation/D5_3region_map.json', '/home/chaoyu/phd_simulation/FDM/optimisation/tmposy2ha0o.json', '/home/chaoyu/phd_simulation/FDM/optimisation/d5_3r_run2_00196']' timed out after 120 seconds
+  [ 200]  RMSE=0.0059 m  sf_w=[1.2961,1.3267,0.9864]  sf_c=[0.9884,0.9779,1.1574]
+  [ 203] FEM exception: Command '['/home/chaoyu/phd_simulation/FDM/../build-linux/fem_batch_nregion', '/home/chaoyu/phd_simulation/FDM/data/D5/D5_remeshed_fem.off', '/home/chaoyu/phd_simulation/FDM/optimisation/D5_3region_map.json', '/home/chaoyu/phd_simulation/FDM/optimisation/tmpmpl7i_fq.json', '/home/chaoyu/phd_simulation/FDM/optimisation/d5_3r_run2_00203']' timed out after 120 seconds
+  [ 205]  RMSE=0.0059 m  sf_w=[1.2961,1.3247,0.9864]  sf_c=[0.9884,0.9779,1.1574]
+  [ 210] FEM exception: Command '['/home/chaoyu/phd_simulation/FDM/../build-linux/fem_batch_nregion', '/home/chaoyu/phd_simulation/FDM/data/D5/D5_remeshed_fem.off', '/home/chaoyu/phd_simulation/FDM/optimisation/D5_3region_map.json', '/home/chaoyu/phd_simulation/FDM/optimisation/tmpscagze9n.json', '/home/chaoyu/phd_simulation/FDM/optimisation/d5_3r_run2_00210']' timed out after 120 seconds
+  [ 215]  RMSE=0.0059 m  sf_w=[1.2961,1.3247,0.9884]  sf_c=[0.9884,0.9779,1.1574]
+  [ 220]  RMSE=0.0059 m  sf_w=[1.2981,1.3247,0.9864]  sf_c=[0.9884,0.9779,1.1574]
+  [ 225]  RMSE=0.0059 m  sf_w=[1.2961,1.3247,0.9864]  sf_c=[0.9884,0.9779,1.1594]
+  [ 230]  RMSE=0.0059 m  sf_w=[1.2961,1.3247,0.9864]  sf_c=[0.9904,0.9779,1.1574]
+  [ 235]  RMSE=0.0059 m  sf_w=[1.2961,1.3267,0.9864]  sf_c=[0.9884,0.9779,1.1574]
+  [ 240]  RMSE=0.0059 m  sf_w=[1.2961,1.3247,0.9864]  sf_c=[0.9884,0.9779,1.1574]
+  [ 245] FEM exception: Command '['/home/chaoyu/phd_simulation/FDM/../build-linux/fem_batch_nregion', '/home/chaoyu/phd_simulation/FDM/data/D5/D5_remeshed_fem.off', '/home/chaoyu/phd_simulation/FDM/optimisation/D5_3region_map.json', '/home/chaoyu/phd_simulation/FDM/optimisation/tmp6ou4f6ox.json', '/home/chaoyu/phd_simulation/FDM/optimisation/d5_3r_run2_00245']' timed out after 120 seconds
+  [ 250]  RMSE=0.0059 m  sf_w=[1.2961,1.3247,0.9884]  sf_c=[0.9884,0.9779,1.1574]
+  [ 255]  RMSE=0.0059 m  sf_w=[1.2981,1.3247,0.9864]  sf_c=[0.9884,0.9779,1.1574]
+  [ 260]  RMSE=0.0059 m  sf_w=[1.2961,1.3247,0.9864]  sf_c=[0.9884,0.9779,1.1594]
+  [ 265]  RMSE=0.0059 m  sf_w=[1.2961,1.3247,0.9864]  sf_c=[0.9904,0.9779,1.1574]
+  [ 266] FEM exception: Command '['/home/chaoyu/phd_simulation/FDM/../build-linux/fem_batch_nregion', '/home/chaoyu/phd_simulation/FDM/data/D5/D5_remeshed_fem.off', '/home/chaoyu/phd_simulation/FDM/optimisation/D5_3region_map.json', '/home/chaoyu/phd_simulation/FDM/optimisation/tmp33xag70f.json', '/home/chaoyu/phd_simulation/FDM/optimisation/d5_3r_run2_00266']' timed out after 120 seconds
+  [ 270]  RMSE=0.0059 m  sf_w=[1.2961,1.3267,0.9864]  sf_c=[0.9884,0.9779,1.1574]
+  [ 275]  RMSE=0.0059 m  sf_w=[1.2961,1.3247,0.9864]  sf_c=[0.9884,0.9779,1.1574]
+  [ 280]  RMSE=0.0059 m  sf_w=[1.2961,1.3247,0.9864]  sf_c=[0.9884,0.9799,1.1574]
+  [ 285]  RMSE=0.0059 m  sf_w=[1.2961,1.3247,0.9884]  sf_c=[0.9884,0.9779,1.1574]
+  [ 290]  RMSE=0.0059 m  sf_w=[1.2981,1.3247,0.9864]  sf_c=[0.9884,0.9779,1.1574]
+  [ 295]  RMSE=0.0059 m  sf_w=[1.2961,1.3247,0.9864]  sf_c=[0.9884,0.9779,1.1594]
+  [ 300]  RMSE=0.0059 m  sf_w=[1.2968,1.3239,0.9864]  sf_c=[0.9898,0.9772,1.1573]
+  [ 305]  RMSE=0.0059 m  sf_w=[1.2962,1.3266,0.9864]  sf_c=[0.9883,0.9778,1.1574]
+  [ 310]  RMSE=0.0059 m  sf_w=[1.2961,1.3247,0.9864]  sf_c=[0.9884,0.9779,1.1574]
+  [ 315]  RMSE=0.0059 m  sf_w=[1.2961,1.3247,0.9864]  sf_c=[0.9884,0.9799,1.1574]
+  [ 320]  RMSE=0.0059 m  sf_w=[1.2961,1.3247,0.9884]  sf_c=[0.9884,0.9779,1.1574]
+  [ 325]  RMSE=0.0059 m  sf_w=[1.2981,1.3247,0.9864]  sf_c=[0.9884,0.9779,1.1574]
+  [ 330]  RMSE=0.0059 m  sf_w=[1.2961,1.3247,0.9864]  sf_c=[0.9884,0.9779,1.1594]
+  [ 335]  RMSE=0.0059 m  sf_w=[1.2961,1.3247,0.9864]  sf_c=[0.9904,0.9779,1.1574]
+  [ 336] FEM exception: Command '['/home/chaoyu/phd_simulation/FDM/../build-linux/fem_batch_nregion', '/home/chaoyu/phd_simulation/FDM/data/D5/D5_remeshed_fem.off', '/home/chaoyu/phd_simulation/FDM/optimisation/D5_3region_map.json', '/home/chaoyu/phd_simulation/FDM/optimisation/tmpnr591bd2.json', '/home/chaoyu/phd_simulation/FDM/optimisation/d5_3r_run2_00336']' timed out after 120 seconds
+  [ 340]  RMSE=0.0059 m  sf_w=[1.2961,1.3267,0.9864]  sf_c=[0.9884,0.9779,1.1574]
+  [ 345]  RMSE=0.0059 m  sf_w=[1.2961,1.3247,0.9864]  sf_c=[0.9884,0.9779,1.1574]
+  [ 350] FEM exception: Command '['/home/chaoyu/phd_simulation/FDM/../build-linux/fem_batch_nregion', '/home/chaoyu/phd_simulation/FDM/data/D5/D5_remeshed_fem.off', '/home/chaoyu/phd_simulation/FDM/optimisation/D5_3region_map.json', '/home/chaoyu/phd_simulation/FDM/optimisation/tmp7umyd62n.json', '/home/chaoyu/phd_simulation/FDM/optimisation/d5_3r_run2_00350']' timed out after 120 seconds
+  [ 355]  RMSE=0.0059 m  sf_w=[1.2961,1.3247,0.9884]  sf_c=[0.9884,0.9779,1.1574]
+  [ 360]  RMSE=0.0059 m  sf_w=[1.2981,1.3247,0.9864]  sf_c=[0.9884,0.9779,1.1574]
+  [ 365]  RMSE=0.0059 m  sf_w=[1.2961,1.3247,0.9864]  sf_c=[0.9884,0.9779,1.1594]
+  [ 370]  RMSE=0.0059 m  sf_w=[1.2961,1.3247,0.9864]  sf_c=[0.9904,0.9779,1.1574]
+  [ 371] FEM exception: Command '['/home/chaoyu/phd_simulation/FDM/../build-linux/fem_batch_nregion', '/home/chaoyu/phd_simulation/FDM/data/D5/D5_remeshed_fem.off', '/home/chaoyu/phd_simulation/FDM/optimisation/D5_3region_map.json', '/home/chaoyu/phd_simulation/FDM/optimisation/tmpg9nidmyr.json', '/home/chaoyu/phd_simulation/FDM/optimisation/d5_3r_run2_00371']' timed out after 120 seconds
+  [ 375]  RMSE=0.0059 m  sf_w=[1.2961,1.3267,0.9864]  sf_c=[0.9884,0.9779,1.1574]
+  [ 380]  RMSE=0.0059 m  sf_w=[1.2961,1.3247,0.9864]  sf_c=[0.9884,0.9779,1.1574]
+  [ 385] FEM exception: Command '['/home/chaoyu/phd_simulation/FDM/../build-linux/fem_batch_nregion', '/home/chaoyu/phd_simulation/FDM/data/D5/D5_remeshed_fem.off', '/home/chaoyu/phd_simulation/FDM/optimisation/D5_3region_map.json', '/home/chaoyu/phd_simulation/FDM/optimisation/tmpxaprn25d.json', '/home/chaoyu/phd_simulation/FDM/optimisation/d5_3r_run2_00385']' timed out after 120 seconds
+  [ 390]  RMSE=0.0059 m  sf_w=[1.2961,1.3247,0.9884]  sf_c=[0.9884,0.9779,1.1574]
+  [ 395]  RMSE=0.0059 m  sf_w=[1.2981,1.3247,0.9864]  sf_c=[0.9884,0.9779,1.1574]
+  [ 399] FEM exception: Command '['/home/chaoyu/phd_simulation/FDM/../build-linux/fem_batch_nregion', '/home/chaoyu/phd_simulation/FDM/data/D5/D5_remeshed_fem.off', '/home/chaoyu/phd_simulation/FDM/optimisation/D5_3region_map.json', '/home/chaoyu/phd_simulation/FDM/optimisation/tmpz_702hhj.json', '/home/chaoyu/phd_simulation/FDM/optimisation/d5_3r_run2_00399']' timed out after 120 seconds
+  [ 400]  RMSE=0.0059 m  sf_w=[1.2961,1.3247,0.9864]  sf_c=[0.9884,0.9779,1.1594]
+  [ 405]  RMSE=0.0059 m  sf_w=[1.2961,1.3247,0.9864]  sf_c=[0.9904,0.9779,1.1574]
+
+Converged: False  |  ABNORMAL: 
+Final RMSE: 0.0059 m   FEM calls: 407
+
+=== Optimal 3-region parameters ===
+Region   seed_v   seed_f   faces   knit°   sf_wale  sf_course
+     0      781      184     537    96.8    1.2961     0.9884
+     1      140       69     548    81.6    1.3247     0.9779
+     2       95      150     478   176.8    0.9864     1.1574
+
+Running final FEM …
+  crown=0.1945 m  (target 0.1978 m)
+  RMSE =0.0059 m
+
+Saved: /home/chaoyu/phd_simulation/FDM/optimisation/D5_3region_optimised.json

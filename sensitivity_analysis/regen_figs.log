@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "<string>", line 21, in <module>
+    group = f'motif{motif}_{cable if has_cable else nocable}'
+                                                    ^^^^^^^
+NameError: name 'nocable' is not defined
+Saved: /home/chaoyu/phd_simulation/sensitivity_analysis/figures/fig1_response_surface_crown_height.png / .pdf
+Saved: /home/chaoyu/phd_simulation/sensitivity_analysis/figures/fig2_pressure_curve_crown_height.png / .pdf

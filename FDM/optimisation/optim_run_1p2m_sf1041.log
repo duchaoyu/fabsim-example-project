@@ -1,0 +1,82 @@
+FEM mesh:   497 verts, 929 faces, span=1.20 m
+Target:     497 verts, 434 interior, crown=0.2317 m
+Cables:     12 sections, EA=157000 N
+Regions:    [69, 147, 73, 120, 117, 148, 64, 126, 65]
+Knit dirs:  [0, 0, 0, 0, 0, 0, 0, 0, 0]
+Pressure:   1000.0 Pa  |  motif: 1
+
+Sanity check (sf=1.041 uniform)...
+  crown=0.2307 m  (target 0.2317)
+  RMSE = 0.0082 m
+
+Optimising 18 params (9×sf_wale + 9×sf_course), maxiter=200...
+  L-BFGS-B, bounds (0.9, 2.0), FD eps=0.05
+
+  [  10]  rmse=0.0079 m  crown=0.2297 m  (target 0.2317)
+  [  20]  rmse=0.0080 m  crown=0.2290 m  (target 0.2317)
+  [  30]  rmse=0.0069 m  crown=0.2281 m  (target 0.2317)
+  [  40]  rmse=0.0065 m  crown=0.2265 m  (target 0.2317)
+  [  50]  rmse=0.0067 m  crown=0.2249 m  (target 0.2317)
+  [  60]  rmse=0.0063 m  crown=0.2254 m  (target 0.2317)
+  [  70]  rmse=0.0064 m  crown=0.2262 m  (target 0.2317)
+  [  80]  rmse=0.0071 m  crown=0.2230 m  (target 0.2317)
+  [  90]  rmse=0.0067 m  crown=0.2229 m  (target 0.2317)
+  [ 100]  rmse=0.0063 m  crown=0.2253 m  (target 0.2317)
+  [ 110]  rmse=0.0064 m  crown=0.2247 m  (target 0.2317)
+  [ 120]  rmse=0.0068 m  crown=0.2222 m  (target 0.2317)
+  [ 130]  rmse=0.0070 m  crown=0.2181 m  (target 0.2317)
+  [ 140]  rmse=0.0063 m  crown=0.2224 m  (target 0.2317)
+  [ 150]  rmse=0.0063 m  crown=0.2237 m  (target 0.2317)
+  [ 160]  rmse=0.0104 m  crown=0.2147 m  (target 0.2317)
+  [ 170]  rmse=0.0111 m  crown=0.2169 m  (target 0.2317)
+  [ 180]  rmse=0.0064 m  crown=0.2227 m  (target 0.2317)
+  [ 190]  rmse=0.0066 m  crown=0.2219 m  (target 0.2317)
+  [ 200]  rmse=0.0062 m  crown=0.2240 m  (target 0.2317)
+  [ 210]  rmse=0.0064 m  crown=0.2231 m  (target 0.2317)
+  [ 220]  rmse=0.0063 m  crown=0.2242 m  (target 0.2317)
+  [ 230]  rmse=0.0063 m  crown=0.2251 m  (target 0.2317)
+  [ 240]  rmse=0.0063 m  crown=0.2237 m  (target 0.2317)
+  [ 250]  rmse=0.0062 m  crown=0.2243 m  (target 0.2317)
+  [ 260]  rmse=0.0065 m  crown=0.2252 m  (target 0.2317)
+  [ 270]  rmse=0.0063 m  crown=0.2240 m  (target 0.2317)
+  [ 280]  rmse=0.0063 m  crown=0.2239 m  (target 0.2317)
+  [ 290]  rmse=0.0062 m  crown=0.2245 m  (target 0.2317)
+  [ 300]  rmse=0.0063 m  crown=0.2240 m  (target 0.2317)
+  [ 310]  rmse=0.0063 m  crown=0.2247 m  (target 0.2317)
+  [ 320]  rmse=0.0065 m  crown=0.2206 m  (target 0.2317)
+  [ 330]  rmse=0.0063 m  crown=0.2224 m  (target 0.2317)
+  [ 340]  rmse=0.0063 m  crown=0.2237 m  (target 0.2317)
+  [ 350]  rmse=0.0062 m  crown=0.2254 m  (target 0.2317)
+  [ 360]  rmse=0.0064 m  crown=0.2236 m  (target 0.2317)
+  [ 370]  rmse=0.0062 m  crown=0.2243 m  (target 0.2317)
+  [ 380]  rmse=0.0065 m  crown=0.2233 m  (target 0.2317)
+  [ 390]  rmse=0.0062 m  crown=0.2242 m  (target 0.2317)
+  [ 400]  rmse=0.0064 m  crown=0.2234 m  (target 0.2317)
+  [ 410]  rmse=0.0063 m  crown=0.2243 m  (target 0.2317)
+  [ 420]  rmse=0.0063 m  crown=0.2251 m  (target 0.2317)
+  [ 430]  rmse=0.0063 m  crown=0.2237 m  (target 0.2317)
+  [ 440]  rmse=0.0062 m  crown=0.2243 m  (target 0.2317)
+  [ 450]  rmse=0.0065 m  crown=0.2252 m  (target 0.2317)
+  [ 460]  rmse=0.0063 m  crown=0.2240 m  (target 0.2317)
+  [ 470]  rmse=0.0063 m  crown=0.2239 m  (target 0.2317)
+
+Converged: True  |  CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH
+Final RMSE: 0.0063 m   calls: 476
+
+=== Optimal parameters per region ===
+Region   row   col  knit_dir   sf_wale  sf_course
+     0     0     0         0°    1.0992     1.0479
+     1     0     1         0°    1.1379     0.9775
+     2     0     2         0°    1.0612     1.0196
+     3     1     0         0°    1.0803     1.0920
+     4     1     1         0°    1.0866     0.9886
+     5     1     2         0°    1.0591     1.0316
+     6     2     0         0°    1.1033     1.0598
+     7     2     1         0°    1.1366     1.0275
+     8     2     2         0°    1.0798     1.0419
+
+Running final FEM simulation...
+  crown = 0.2251 m  (target 0.2317)
+  RMSE  = 0.0063 m
+
+Saved: /home/chaoyu/phd_simulation/FDM/optimisation/B5_optimised_params.json
