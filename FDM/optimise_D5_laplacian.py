@@ -179,6 +179,8 @@ def main():
     parser.add_argument("--lambda-smooth", type=float, default=0.01)
     parser.add_argument("--maxiter",       type=int,   default=500)
     parser.add_argument("--out-prefix",    type=str,   default="d5_lap")
+    parser.add_argument("--init-from-json", type=str,  default=None,
+                        help="Previous result JSON; mean sf_wale/sf_course used as p0")
     args = parser.parse_args()
 
     _out_prefix[0] = args.out_prefix
@@ -216,9 +218,22 @@ def main():
     print(f"λ_smooth   : {lam}")
     print(f"Cables     : inner loop (sc={CABLE_SCALE}) + v{CABLE2_VERTS[0]}→v{CABLE2_VERTS[1]} (sc={CABLE2_SCALE})")
 
+    # ── Initial parameters ────────────────────────────────────────────────────
+    if args.init_from_json and os.path.exists(args.init_from_json):
+        with open(args.init_from_json) as f:
+            prev = json.load(f)
+        prev_regions = prev.get("regions", [])
+        sf_w_init = float(np.mean([r["sf_wale"]  for r in prev_regions])) if prev_regions else SF_W0
+        sf_c_init = float(np.mean([r["sf_course"] for r in prev_regions])) if prev_regions else SF_C0
+        print(f"Init from : {args.init_from_json}")
+        print(f"  mean sf_wale={sf_w_init:.4f}  sf_course={sf_c_init:.4f}  "
+              f"(from {len(prev_regions)} regions, RMSE={prev.get('rmse_m', prev.get('rmse_mm','?'))})")
+    else:
+        sf_w_init, sf_c_init = SF_W0, SF_C0
+
     # ── Sanity check ──────────────────────────────────────────────────────────
-    sf_w0 = np.full(n_regions, SF_W0)
-    sf_c0 = np.full(n_regions, SF_C0)
+    sf_w0 = np.full(n_regions, sf_w_init)
+    sf_c0 = np.full(n_regions, sf_c_init)
     print(f"\nSanity check …")
     out0 = run_fem(sf_w0, sf_c0, knit_dirs, face_region, n_regions, V_rest)
     if out0 is None:
