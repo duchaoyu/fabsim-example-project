@@ -344,14 +344,14 @@ def reassign_boundary_faces(sf_wale, sf_course, knit_dirs,
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--max-outer",    type=int,   default=8)
+    parser.add_argument("--max-outer",    type=int,   default=12)
     parser.add_argument("--inner-iter",   type=int,   default=80)
     parser.add_argument("--out-prefix",   type=str,   default="d5_4ra")
     parser.add_argument("--sf0-wale",     type=float, default=SF_W0)
     parser.add_argument("--sf0-course",   type=float, default=SF_C0)
     parser.add_argument("--smooth-passes",type=int,   default=2,
-                        help="Majority-vote smoothing passes after each boundary reassignment (0=off)")
-    parser.add_argument("--smooth-every", type=int,   default=1,
+                        help="Majority-vote smoothing passes after boundary reassignment (0=off)")
+    parser.add_argument("--smooth-every", type=int,   default=10,
                         help="Apply smoothing every N outer iterations")
     args = parser.parse_args()
     _out_prefix[0] = args.out_prefix
