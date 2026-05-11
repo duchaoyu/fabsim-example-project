@@ -101,7 +101,6 @@ def build_region_map(V, F, field, cable_idx, n_regions):
     for i, fi in enumerate(order):
         face_region[fi] = min(int(i / chunk), n_regions - 1)
 
-    # Per-region mean knit direction from d1 (doubling trick for headless vectors)
     angles = np.arctan2(d1[:, 1], d1[:, 0])
     knit_dirs = []
     for r in range(n_regions):
