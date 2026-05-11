@@ -199,7 +199,7 @@ def run_fem(sf_wale, sf_course, knit_dirs, face_region, V_rest):
     prefix = os.path.join(OUT_DIR, f"{_out_prefix[0]}_{_call_count[0]:05d}")
     cmd    = [BINARY, MESH, _rmap_path[0], params_path, prefix]
     try:
-        subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+        subprocess.run(cmd, capture_output=True, text=True, timeout=60)
         scalars_path = prefix + "_scalars.csv"
         verts_path   = prefix + "_verts.csv"
         if not os.path.exists(scalars_path):
