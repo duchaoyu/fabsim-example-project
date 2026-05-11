@@ -38,9 +38,11 @@ OUT_DIR = os.path.join(HERE, "optimisation")
 N_REGIONS   = 4
 SEED_VERTS  = [781, 140, 95]
 DEV_PCT     = 60
-CABLE_EA    = 157000.0
-PRESSURE    = 1000.0
-CABLE_SCALE = 0.95
+CABLE_EA     = 157000.0
+PRESSURE     = 1000.0
+CABLE_SCALE  = 0.95
+CABLE2_VERTS = [89, 88]   # cross-cable spanning inner opening to fix crown height
+CABLE2_SCALE = 1.0        # no pre-tension; just constrains distance
 SF_W0       = 1.1526
 SF_C0       = 1.0725
 
@@ -175,17 +177,16 @@ def run_fem(sf_wale, sf_course, knit_dirs, face_region, V_rest):
     os.makedirs(OUT_DIR, exist_ok=True)
     _call_count[0] += 1
 
-    scales = [float(CABLE_SCALE)] * (len(_cable_path[0]) - 1)
     params = {
         "pressure":          PRESSURE,
         "motif":             1,
         "cable_ea":          CABLE_EA,
-        "cable_paths":       [_cable_path[0]],
+        "cable_paths":       [_cable_path[0], CABLE2_VERTS],
         "regions":           [{"sf_wale":      float(sf_wale[r]),
                                "sf_course":    float(sf_course[r]),
                                "knit_dir_deg": float(knit_dirs[r])}
                               for r in range(N_REGIONS)],
-        "cable_rest_scales": scales,
+        "cable_rest_scales": [float(CABLE_SCALE), float(CABLE2_SCALE)],
     }
 
     with tempfile.NamedTemporaryFile(mode="w", suffix=".json",
