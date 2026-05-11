@@ -41,8 +41,8 @@ DEV_PCT     = 60
 CABLE_EA     = 157000.0
 PRESSURE     = 1000.0
 CABLE_SCALE  = 0.95
-CABLE2_VERTS = [89, 88]   # cross-cable spanning inner opening to fix crown height
-CABLE2_SCALE = 1.0        # no pre-tension; just constrains distance
+CABLE2_VERTS  = [89, 88]   # cross-cable spanning inner opening to fix crown height
+CABLE2_SCALE0 = 1.0        # initial value; optimised during inner L-BFGS
 SF_W0       = 1.1526
 SF_C0       = 1.0725
 
@@ -173,7 +173,7 @@ _call_count  = [0]
 _out_prefix  = ["d5_4ra"]
 _rmap_path   = [None]
 
-def run_fem(sf_wale, sf_course, knit_dirs, face_region, V_rest):
+def run_fem(sf_wale, sf_course, knit_dirs, face_region, V_rest, scale_cable2=CABLE2_SCALE0):
     os.makedirs(OUT_DIR, exist_ok=True)
     _call_count[0] += 1
 
@@ -186,7 +186,7 @@ def run_fem(sf_wale, sf_course, knit_dirs, face_region, V_rest):
                                "sf_course":    float(sf_course[r]),
                                "knit_dir_deg": float(knit_dirs[r])}
                               for r in range(N_REGIONS)],
-        "cable_rest_scales": [float(CABLE_SCALE), float(CABLE2_SCALE)],
+        "cable_rest_scales": [float(CABLE_SCALE), float(scale_cable2)],
     }
 
     with tempfile.NamedTemporaryFile(mode="w", suffix=".json",
@@ -200,7 +200,7 @@ def run_fem(sf_wale, sf_course, knit_dirs, face_region, V_rest):
     prefix = os.path.join(OUT_DIR, f"{_out_prefix[0]}_{_call_count[0]:05d}")
     cmd    = [BINARY, MESH, _rmap_path[0], params_path, prefix]
     try:
-        subprocess.run(cmd, capture_output=True, text=True, timeout=20)
+        subprocess.run(cmd, capture_output=True, text=True, timeout=40)
         scalars_path = prefix + "_scalars.csv"
         verts_path   = prefix + "_verts.csv"
         if not os.path.exists(scalars_path):
@@ -229,23 +229,23 @@ _cable_path = [None]
 # ── Inner L-BFGS ─────────────────────────────────────────────────────────────
 def inner_optimise(p0, face_region, knit_dirs, interior_idx, V_target, V_rest,
                    maxiter, label=""):
+    # p0 = [sf_w x N, sf_c x N, scale_cable2]
     call_ref = [0]
     def objective(p):
-        sf_w = p[:N_REGIONS]; sf_c = p[N_REGIONS:]
-        out  = run_fem(sf_w, sf_c, knit_dirs, face_region, V_rest)
+        sf_w = p[:N_REGIONS]; sf_c = p[N_REGIONS:2*N_REGIONS]; sc2 = p[2*N_REGIONS]
+        out  = run_fem(sf_w, sf_c, knit_dirs, face_region, V_rest, scale_cable2=sc2)
         if out is None or "verts" not in out:
             return 1e3
         diff = out["verts"][interior_idx] - V_target[interior_idx]
         loss = float(np.sqrt(np.mean(np.sum(diff**2, axis=1))))
         call_ref[0] += 1
         if call_ref[0] % 5 == 0:
-            sf_w_r = p[:N_REGIONS]; sf_c_r = p[N_REGIONS:]
-            print(f"    [{_call_count[0]:4d}] RMSE={loss:.4f} m  "
-                  f"sf_w=[{','.join(f'{v:.4f}' for v in sf_w_r)}]  "
-                  f"sf_c=[{','.join(f'{v:.4f}' for v in sf_c_r)}]")
+            print(f"    [{_call_count[0]:4d}] RMSE={loss:.4f} m  sc2={sc2:.4f}  "
+                  f"sf_w=[{','.join(f'{v:.4f}' for v in sf_w)}]  "
+                  f"sf_c=[{','.join(f'{v:.4f}' for v in sf_c)}]")
         return loss
 
-    bounds = [(0.80, 1.50)] * N_REGIONS + [(0.80, 1.50)] * N_REGIONS
+    bounds = [(0.80, 1.50)] * N_REGIONS + [(0.80, 1.50)] * N_REGIONS + [(0.70, 1.05)]
     res = minimize(objective, p0, method="L-BFGS-B", bounds=bounds,
                    options={"maxiter": maxiter, "ftol": 1e-9,
                             "gtol": 1e-5, "eps": 0.002})
@@ -288,7 +288,7 @@ def smooth_boundaries(face_region, adj, n_passes=2):
 
 
 # ── Outer boundary reassignment ───────────────────────────────────────────────
-def reassign_boundary_faces(sf_wale, sf_course, knit_dirs,
+def reassign_boundary_faces(sf_wale, sf_course, scale_cable2, knit_dirs,
                             face_region, adj, interior_idx, V_target, V_rest):
     """
     Greedy Jacobi-style: try moving each boundary face to each neighbour region.
@@ -296,7 +296,7 @@ def reassign_boundary_faces(sf_wale, sf_course, knit_dirs,
     Returns (new_face_region, n_swapped).
     """
     nF        = len(face_region)
-    base_out  = run_fem(sf_wale, sf_course, knit_dirs, face_region, V_rest)
+    base_out  = run_fem(sf_wale, sf_course, knit_dirs, face_region, V_rest, scale_cable2=scale_cable2)
     if base_out is None or "verts" not in base_out:
         print("  [reassign] base FEM failed — skipping")
         return face_region, 0
@@ -323,7 +323,7 @@ def reassign_boundary_faces(sf_wale, sf_course, knit_dirs,
         for r2 in nbr_regions:
             face_region[fi] = r2        # trial
             # recompute knit dir for affected regions only (fast approx: reuse)
-            trial_out = run_fem(sf_wale, sf_course, knit_dirs, face_region, V_rest)
+            trial_out = run_fem(sf_wale, sf_course, knit_dirs, face_region, V_rest, scale_cable2=scale_cable2)
             face_region[fi] = r_orig    # restore
             if trial_out is None or "verts" not in trial_out:
                 continue
@@ -393,12 +393,14 @@ def main():
             init_j = json.load(f)
         sf_w0 = np.array([init_j["regions"][r]["sf_wale"]  for r in range(N_REGIONS)])
         sf_c0 = np.array([init_j["regions"][r]["sf_course"] for r in range(N_REGIONS)])
+        sc2_0 = float(init_j.get("scale_cable2", CABLE2_SCALE0))
         print(f"  Init from {args.init_from_json}")
     else:
         sf_w0 = np.full(N_REGIONS, args.sf0_wale)
         sf_c0 = np.full(N_REGIONS, args.sf0_course)
+        sc2_0 = CABLE2_SCALE0
     print(f"\nWarm-start check …")
-    out0 = run_fem(sf_w0, sf_c0, knit_dirs, face_region, V_rest)
+    out0 = run_fem(sf_w0, sf_c0, knit_dirs, face_region, V_rest, scale_cable2=sc2_0)
     if out0 is None:
         print("ERROR: FEM failed at warm-start"); sys.exit(1)
     d0    = out0["verts"][interior_idx] - V_target[interior_idx]
@@ -406,7 +408,7 @@ def main():
     print(f"  RMSE = {rmse0*1000:.2f} mm")
 
     # ── Alternating optimisation ──────────────────────────────────────────────
-    p_cur     = np.concatenate([sf_w0, sf_c0])
+    p_cur     = np.concatenate([sf_w0, sf_c0, [sc2_0]])
     best_rmse = rmse0
 
     for outer in range(args.max_outer):
@@ -422,8 +424,9 @@ def main():
         best_rmse = min(best_rmse, rmse_inner)
 
         sf_w_cur = p_cur[:N_REGIONS]
-        sf_c_cur = p_cur[N_REGIONS:]
-        print(f"  After inner: RMSE={rmse_inner*1000:.2f} mm")
+        sf_c_cur = p_cur[N_REGIONS:2*N_REGIONS]
+        sc2_cur  = float(p_cur[2*N_REGIONS])
+        print(f"  After inner: RMSE={rmse_inner*1000:.2f} mm  sc2={sc2_cur:.4f}")
         for r in range(N_REGIONS):
             lbl = f"R{r}" if r < 3 else "R3(rest)"
             print(f"    {lbl}: sf_w={sf_w_cur[r]:.4f}  sf_c={sf_c_cur[r]:.4f}")
@@ -431,7 +434,7 @@ def main():
         # (B) Outer boundary reassignment
         print("  (B) Boundary reassignment …")
         face_region, n_swapped = reassign_boundary_faces(
-            sf_w_cur, sf_c_cur, knit_dirs,
+            sf_w_cur, sf_c_cur, sc2_cur, knit_dirs,
             face_region, adj, interior_idx, V_target, V_rest)
 
         # (C) Boundary smoothing (every --smooth-every iterations)
@@ -449,10 +452,11 @@ def main():
 
     # ── Final result ──────────────────────────────────────────────────────────
     sf_w_opt = p_cur[:N_REGIONS]
-    sf_c_opt = p_cur[N_REGIONS:]
+    sf_c_opt = p_cur[N_REGIONS:2*N_REGIONS]
+    sc2_opt  = float(p_cur[2*N_REGIONS])
 
     print(f"\nRunning final FEM …")
-    out_f = run_fem(sf_w_opt, sf_c_opt, knit_dirs, face_region, V_rest)
+    out_f = run_fem(sf_w_opt, sf_c_opt, knit_dirs, face_region, V_rest, scale_cable2=sc2_opt)
     counts = np.bincount(np.array(face_region), minlength=N_REGIONS)
     if out_f and "verts" in out_f:
         d      = out_f["verts"][interior_idx] - V_target[interior_idx]
@@ -472,6 +476,7 @@ def main():
         "method": "adaptive_boundary_reassignment",
         "pressure": PRESSURE, "cable_ea": CABLE_EA,
         "cable_scale_fixed": CABLE_SCALE,
+        "scale_cable2": sc2_opt,
         "seed_vertices": SEED_VERTS,
         "dev_percentile": DEV_PCT,
         "converged": True,
