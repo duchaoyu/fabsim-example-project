@@ -186,25 +186,41 @@ static std::vector<double> jsonDoubleArray(const std::string& s, const std::stri
     return result;
 }
 
-static std::vector<int> parseRegionMap(const std::string& path)
+static std::vector<int> jsonIntArray(const std::string& s, const std::string& key)
 {
-    std::ifstream f(path);
-    if (!f.is_open()) throw std::runtime_error("Cannot open region_map: " + path);
-    std::string s((std::istreambuf_iterator<char>(f)),
-                   std::istreambuf_iterator<char>());
-    auto open  = s.find('[');
-    auto close = s.rfind(']');
-    if (open == std::string::npos || close == std::string::npos)
-        throw std::runtime_error("No array in region_map JSON");
+    std::vector<int> result;
+    auto pos = s.find("\"" + key + "\"");
+    if (pos == std::string::npos) return result;
+    auto open  = s.find('[', pos);
+    auto close = s.find(']', open);
+    if (open == std::string::npos || close == std::string::npos) return result;
     std::string arr = s.substr(open + 1, close - open - 1);
     std::istringstream ss(arr);
     std::string tok;
-    std::vector<int> result;
     while (std::getline(ss, tok, ',')) {
         tok.erase(0, tok.find_first_not_of(" \t\n\r"));
         if (!tok.empty()) result.push_back(std::stoi(tok));
     }
     return result;
+}
+
+struct RegionMapData {
+    std::vector<int>    face_regions;
+    std::vector<double> face_knit_dirs_deg; // empty = use region-level knit_dir_deg
+};
+
+static RegionMapData parseRegionMap(const std::string& path)
+{
+    std::ifstream f(path);
+    if (!f.is_open()) throw std::runtime_error("Cannot open region_map: " + path);
+    std::string s((std::istreambuf_iterator<char>(f)),
+                   std::istreambuf_iterator<char>());
+    RegionMapData data;
+    data.face_regions      = jsonIntArray(s,    "face_regions");
+    data.face_knit_dirs_deg = jsonDoubleArray(s, "face_knit_dirs_deg");
+    if (data.face_regions.empty())
+        throw std::runtime_error("No 'face_regions' array in region_map JSON");
+    return data;
 }
 
 static std::vector<RegionParams> parseRegions(const std::string& s)
@@ -394,7 +410,8 @@ int main(int argc, char* argv[])
     bdrs = findBoundaryVertices(F);
 
     // Parse region map
-    std::vector<int> face_reg = parseRegionMap(map_path);
+    RegionMapData rmd = parseRegionMap(map_path);
+    std::vector<int>& face_reg = rmd.face_regions;
     if ((int)face_reg.size() != F.rows()) {
         std::cerr << "region_map has " << face_reg.size()
                   << " entries but mesh has " << F.rows() << " faces\n";
@@ -432,10 +449,17 @@ int main(int argc, char* argv[])
 
     MotifParams mp = motifParams(motif);
 
-    // Per-face knit directions from region assignment
+    // Per-face knit directions: use field-derived per-face angles if provided,
+    // otherwise fall back to the region-level knit_dir_deg.
+    const std::vector<double>& face_knit_deg = rmd.face_knit_dirs_deg;
+    const bool has_per_face_knit = ((int)face_knit_deg.size() == F.rows());
+    if (!face_knit_deg.empty() && !has_per_face_knit)
+        std::cerr << "Warning: face_knit_dirs_deg size " << face_knit_deg.size()
+                  << " != nF " << F.rows() << "; falling back to region dirs\n";
     face_dirs.resize(F.rows());
     for (int fi = 0; fi < F.rows(); ++fi) {
-        double deg = regions[face_reg[fi]].knit_dir_deg;
+        double deg = has_per_face_knit ? face_knit_deg[fi]
+                                       : regions[face_reg[fi]].knit_dir_deg;
         double rad = deg * M_PI / 180.0;
         face_dirs[fi] = Eigen::Vector3d(std::cos(rad), std::sin(rad), 0.0);
     }

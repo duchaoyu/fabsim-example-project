@@ -133,8 +133,13 @@ def load_or_build_region_map(V, F):
     return list(face_region)
 
 
-# ── Knit directions per region (circular mean from directional field) ─────────
+# ── Knit directions: per-face from directional field ─────────────────────────
+# Per-face angles are written to the region_map JSON so the C++ binary uses
+# the actual field direction for every face instead of a single regional mean.
+_face_knit_dirs_deg = [None]   # set once in main()
+
 def compute_knit_dirs(face_region, F):
+    """Per-region circular mean — kept for params JSON (backward compat)."""
     with open(FIELD_J) as f:
         field = json.load(f)
     nF     = len(F)
@@ -148,6 +153,15 @@ def compute_knit_dirs(face_region, F):
         mean = np.arctan2(np.sin(a2).mean(), np.cos(a2).mean()) / 2
         knit_dirs.append(float(np.degrees(mean) % 180))
     return knit_dirs
+
+def load_face_knit_dirs(F):
+    """Load per-face d1 angles (degrees, [0,180)) from the directional field."""
+    with open(FIELD_J) as f:
+        field = json.load(f)
+    nF = len(F)
+    d1_all = np.array([field[str(fi)]["d1"] for fi in range(nF)])
+    return [float(np.degrees(np.arctan2(d1_all[fi, 1], d1_all[fi, 0])) % 180)
+            for fi in range(nF)]
 
 
 # ── Validity gate ─────────────────────────────────────────────────────────────
@@ -193,9 +207,12 @@ def run_fem(sf_wale, sf_course, knit_dirs, face_region, V_rest, scale_cable2=CAB
                                      delete=False, dir=OUT_DIR) as pf:
         json.dump(params, pf); params_path = pf.name
 
-    # write current region map
+    # write current region map (include per-face knit dirs if available)
+    rmap = {"face_regions": face_region}
+    if _face_knit_dirs_deg[0] is not None:
+        rmap["face_knit_dirs_deg"] = _face_knit_dirs_deg[0]
     with open(_rmap_path[0], "w") as f:
-        json.dump({"face_regions": face_region}, f)
+        json.dump(rmap, f)
 
     prefix = os.path.join(OUT_DIR, f"{_out_prefix[0]}_{_call_count[0]:05d}")
     cmd    = [BINARY, MESH, _rmap_path[0], params_path, prefix]
@@ -383,9 +400,11 @@ def main():
     face_region = load_or_build_region_map(V, F)
     adj         = build_face_adj(F)
 
-    # Fixed once from the initial region map; never recomputed as boundaries shift.
+    # Per-face knit directions from directional field (written to region_map JSON)
+    _face_knit_dirs_deg[0] = load_face_knit_dirs(F)
+    # Per-region circular mean — still used in params JSON
     knit_dirs = compute_knit_dirs(face_region, F)
-    print(f"Knit dirs (fixed): {[round(d,1) for d in knit_dirs]}°")
+    print(f"Knit dirs (region mean, for params): {[round(d,1) for d in knit_dirs]}°")
 
     # ── Warm-start check ──────────────────────────────────────────────────────
     if args.init_from_json and os.path.exists(args.init_from_json):

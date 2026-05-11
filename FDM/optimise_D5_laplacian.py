@@ -120,11 +120,13 @@ def _check_valid(verts, V_rest):
 _call_count = [0]
 _out_prefix = ["d5_lap"]
 _rmap_path  = [None]
+_face_knit_dirs_deg = [None]   # per-face knit directions from directional field
 
 def run_fem(sf_wale, sf_course, knit_dirs, face_region, n_regions, V_rest):
     os.makedirs(OUT_DIR, exist_ok=True)
     _call_count[0] += 1
 
+    # knit_dir_deg in params is a placeholder; actual per-face dirs are in region_map
     params = {
         "pressure":          PRESSURE,
         "motif":             1,
@@ -137,8 +139,11 @@ def run_fem(sf_wale, sf_course, knit_dirs, face_region, n_regions, V_rest):
                               for r in range(n_regions)],
     }
 
+    rmap = {"face_regions": face_region.tolist()}
+    if _face_knit_dirs_deg[0] is not None:
+        rmap["face_knit_dirs_deg"] = _face_knit_dirs_deg[0]
     with open(_rmap_path[0], "w") as f:
-        json.dump({"face_regions": face_region.tolist()}, f)
+        json.dump(rmap, f)
 
     with tempfile.NamedTemporaryFile(mode="w", suffix=".json",
                                      delete=False, dir=OUT_DIR) as pf:
@@ -205,6 +210,12 @@ def main():
     with open(FIELD_J) as f: field = json.load(f)
     with open(CABLE_J) as f: cable = json.load(f)
     _cable_path[0] = cable["vertex_indices"] + [cable["vertex_indices"][0]]
+
+    # Per-face knit directions from the directional field (d1 vector → degrees)
+    d1_all = np.array([field[str(fi)]["d1"] for fi in range(len(F))])
+    face_knit_degs = [float(np.degrees(np.arctan2(d1_all[fi, 1], d1_all[fi, 0])) % 180)
+                      for fi in range(len(F))]
+    _face_knit_dirs_deg[0] = face_knit_degs
 
     face_region, knit_dirs = build_region_map(V, F, field, cable["vertex_indices"], n_regions)
     region_adj = build_region_adj(F, face_region)
