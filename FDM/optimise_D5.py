@@ -91,7 +91,7 @@ _call_count = [0]
 _out_prefix  = ["d5_opt"]
 
 
-def run_fem(sf_wale, sf_course, scale_cable,
+def run_fem(sf_wale, sf_course, scale_cable, scale_cable2,
             knit_dirs, face_region, cable_path, V_rest):
     os.makedirs(OUT_DIR, exist_ok=True)
     _call_count[0] += 1
@@ -105,7 +105,7 @@ def run_fem(sf_wale, sf_course, scale_cable,
                                "sf_course":    float(sf_course),
                                "knit_dir_deg": float(knit_dirs[r])}
                               for r in range(N_REGIONS)],
-        "cable_rest_scales": [float(scale_cable), float(CABLE2_SCALE)],
+        "cable_rest_scales": [float(scale_cable), float(scale_cable2)],
     }
 
     with tempfile.NamedTemporaryFile(mode="w", suffix=".json",
@@ -151,6 +151,7 @@ def main():
     parser.add_argument("--sf0-wale",   type=float, default=1.032)
     parser.add_argument("--sf0-course", type=float, default=1.042)
     parser.add_argument("--sc0-cable",  type=float, default=0.95)
+    parser.add_argument("--sc0-cable2", type=float, default=1.0)
     args = parser.parse_args()
     _out_prefix[0] = args.out_prefix
 
@@ -174,12 +175,12 @@ def main():
     counts = np.bincount(face_region, minlength=N_REGIONS)
     print(f"Regions  : {counts.tolist()}")
     print(f"KnitDirs : {[round(d,1) for d in knit_dirs]}°")
-    print(f"Cable    : {len(cable_path)-1} segments (inner loop) + cross-cable v{CABLE2_VERTS[0]}→v{CABLE2_VERTS[1]} (scale={CABLE2_SCALE})")
+    print(f"Cable    : {len(cable_path)-1} segments (inner loop) + cross-cable v{CABLE2_VERTS[0]}→v{CABLE2_VERTS[1]} (scale optimised)")
     print(f"Pressure : {PRESSURE} Pa  |  motif: 1")
 
     # ── Sanity check ──────────────────────────────────────────────────────────
-    print(f"\nSanity check (sf_w={args.sf0_wale}, sf_c={args.sf0_course}, sc={args.sc0_cable}) …")
-    out0 = run_fem(args.sf0_wale, args.sf0_course, args.sc0_cable,
+    print(f"\nSanity check (sf_w={args.sf0_wale}, sf_c={args.sf0_course}, sc={args.sc0_cable}, sc2={args.sc0_cable2}) …")
+    out0 = run_fem(args.sf0_wale, args.sf0_course, args.sc0_cable, args.sc0_cable2,
                    knit_dirs, face_region, cable_path, V_rest)
     if out0 is None:
         print("ERROR: FEM failed at warm-start"); sys.exit(1)
@@ -191,21 +192,21 @@ def main():
 
     # ── Objective ─────────────────────────────────────────────────────────────
     def objective(p):
-        sf_w, sf_c, sc = p
-        out = run_fem(sf_w, sf_c, sc, knit_dirs, face_region, cable_path, V_rest)
+        sf_w, sf_c, sc, sc2 = p
+        out = run_fem(sf_w, sf_c, sc, sc2, knit_dirs, face_region, cable_path, V_rest)
         if out is None or "verts" not in out:
             return 1e3
         diff = out["verts"][interior_idx] - V_target[interior_idx]
         loss = float(np.sqrt(np.mean(np.sum(diff**2, axis=1))))
         if _call_count[0] % 5 == 0:
             print(f"  [{_call_count[0]:4d}]  RMSE={loss:.4f} m  "
-                  f"p=[sf_w={sf_w:.4f}, sf_c={sf_c:.4f}, sc={sc:.4f}]")
+                  f"p=[sf_w={sf_w:.4f}, sf_c={sf_c:.4f}, sc={sc:.4f}, sc2={sc2:.4f}]")
         return loss
 
-    p0     = np.array([args.sf0_wale, args.sf0_course, args.sc0_cable])
-    bounds = [(0.80, 1.20), (0.80, 1.20), (0.70, 1.05)]
+    p0     = np.array([args.sf0_wale, args.sf0_course, args.sc0_cable, args.sc0_cable2])
+    bounds = [(0.80, 1.20), (0.80, 1.20), (0.70, 1.05), (0.70, 1.05)]
 
-    print(f"\nOptimising 3 params, maxiter={args.maxiter} …")
+    print(f"\nOptimising 4 params, maxiter={args.maxiter} …")
     res = minimize(objective, p0, method="L-BFGS-B", bounds=bounds,
                    options={"maxiter": args.maxiter, "ftol": 1e-9,
                             "gtol": 1e-5, "eps": 0.002})
@@ -213,11 +214,11 @@ def main():
     print(f"\nConverged: {res.success}  |  {res.message}")
     print(f"Final RMSE: {res.fun:.4f} m   FEM calls: {_call_count[0]}")
     p_opt = res.x
-    print(f"  sf_wale={p_opt[0]:.4f}  sf_course={p_opt[1]:.4f}  scale_cable={p_opt[2]:.4f}")
+    print(f"  sf_wale={p_opt[0]:.4f}  sf_course={p_opt[1]:.4f}  scale_cable={p_opt[2]:.4f}  scale_cable2={p_opt[3]:.4f}")
 
     # ── Final FEM ─────────────────────────────────────────────────────────────
     print("\nRunning final FEM …")
-    out_f = run_fem(p_opt[0], p_opt[1], p_opt[2],
+    out_f = run_fem(p_opt[0], p_opt[1], p_opt[2], p_opt[3],
                     knit_dirs, face_region, cable_path, V_rest)
     if out_f and "verts" in out_f:
         d = out_f["verts"][interior_idx] - V_target[interior_idx]
@@ -233,7 +234,8 @@ def main():
         "rmse_m": float(res.fun), "n_calls": _call_count[0],
         "params": {"sf_wale": float(p_opt[0]),
                    "sf_course": float(p_opt[1]),
-                   "scale_cable": float(p_opt[2])},
+                   "scale_cable": float(p_opt[2]),
+                   "scale_cable2": float(p_opt[3])},
         "regions": [{"region_id": r, "knit_dir_deg": knit_dirs[r],
                      "sf_wale": float(p_opt[0]),
                      "sf_course": float(p_opt[1])} for r in range(N_REGIONS)],
