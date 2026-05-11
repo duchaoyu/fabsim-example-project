@@ -44,63 +44,34 @@ def load_off(path):
     return V, F
 
 
-# ── Region assignment: bands following the directional field ──────────────────
+# ── Region assignment: radial sectors following the directional field ─────────
 def build_region_map(V, F, field, cable_idx, n_regions):
-    """Divide faces into n_regions concentric bands that follow the field.
+    """Divide faces into n_regions radial sectors around the cable centroid.
 
-    Uses Dijkstra from inner-cable faces, advancing along d2 (course direction).
-    Region 0 is nearest the cable; region n-1 is at the outer boundary.
-    Region boundaries are iso-lines of d1 (wale direction).
+    Region boundaries are iso-lines of d2 (course/radial direction).
+    Sectors are divided by angle around the cable centre projected onto
+    the mean face-normal plane, so bands follow the d1 (wale) direction.
+    Knit direction per region = mean d1 angle in that sector.
     """
-    import heapq
-
     n_f = len(F)
     d1  = np.array([field[str(fi)]["d1"] for fi in range(n_f)])
-    d2  = np.array([field[str(fi)]["d2"] for fi in range(n_f)])
     centroids = V[F].mean(axis=1)
 
-    # Build face adjacency
-    edge_to_faces = defaultdict(list)
-    for fi, (a, b, c) in enumerate(F):
-        for e in [tuple(sorted((a, b))), tuple(sorted((b, c))), tuple(sorted((a, c)))]:
-            edge_to_faces[e].append(fi)
-    adj = defaultdict(list)
-    for faces in edge_to_faces.values():
-        if len(faces) == 2:
-            fi, fj = faces
-            adj[fi].append(fj)
-            adj[fj].append(fi)
+    # Cable centroid (projected to xy plane)
+    cable_centre = V[cable_idx].mean(axis=0)[:2]
 
-    # Seed: faces that contain at least one inner-cable vertex
-    cable_set = set(cable_idx)
-    seed_faces = {fi for fi, face in enumerate(F) if any(v in cable_set for v in face)}
+    # Angle of each face centroid relative to cable centre (in xy plane)
+    rel = centroids[:, :2] - cable_centre
+    theta = np.arctan2(rel[:, 1], rel[:, 0])   # -π … +π
 
-    # Dijkstra: accumulate d2-projected advance from the cable outward
-    dist = np.full(n_f, np.inf)
-    for fi in seed_faces:
-        dist[fi] = 0.0
-    heap = [(0.0, fi) for fi in seed_faces]
-    heapq.heapify(heap)
-
-    while heap:
-        d, fi = heapq.heappop(heap)
-        if d > dist[fi]:
-            continue
-        for fj in adj[fi]:
-            diff = centroids[fj] - centroids[fi]
-            advance = max(abs(float(np.dot(d2[fi], diff))), 1e-8)
-            nd = d + advance
-            if nd < dist[fj]:
-                dist[fj] = nd
-                heapq.heappush(heap, (nd, fj))
-
-    # Divide into n_regions equal-count bands by Dijkstra distance
-    order = np.argsort(dist)
+    # Divide into n_regions equal-count sectors (sorted by angle)
+    order = np.argsort(theta)
     face_region = np.zeros(n_f, dtype=int)
     chunk = n_f / n_regions
     for i, fi in enumerate(order):
         face_region[fi] = min(int(i / chunk), n_regions - 1)
 
+    # Per-region mean knit direction from d1 (doubling trick for headless vectors)
     angles = np.arctan2(d1[:, 1], d1[:, 0])
     knit_dirs = []
     for r in range(n_regions):
