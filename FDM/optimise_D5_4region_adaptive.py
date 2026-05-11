@@ -252,6 +252,40 @@ def inner_optimise(p0, face_region, knit_dirs, interior_idx, V_target, V_rest,
     return res.x, res.fun
 
 
+# ── Boundary smoothing ────────────────────────────────────────────────────────
+def smooth_boundaries(face_region, adj, n_passes=2):
+    """
+    Majority-vote smoothing: reassign each face to the region held by the
+    majority of its edge-adjacent neighbours, provided connectivity is preserved.
+    Purely geometric — no FEM calls. Run for n_passes sweeps.
+    """
+    nF = len(face_region)
+    total_swapped = 0
+    for _ in range(n_passes):
+        new_region = list(face_region)
+        n_swapped  = 0
+        for fi in range(nF):
+            nbrs = adj[fi]
+            if not nbrs:
+                continue
+            counts = defaultdict(int)
+            for nb in nbrs:
+                counts[face_region[nb]] += 1
+            majority = max(counts, key=counts.get)
+            if majority != face_region[fi]:
+                if is_connected_without(fi, face_region[fi], face_region, adj):
+                    new_region[fi] = majority
+                    n_swapped += 1
+        face_region[:] = new_region
+        total_swapped += n_swapped
+        if n_swapped == 0:
+            break
+    arr = np.bincount(np.array(face_region), minlength=N_REGIONS)
+    print(f"  [smooth] {total_swapped} face(s) reassigned  "
+          f"→ R0={arr[0]} R1={arr[1]} R2={arr[2]} R3={arr[3]}")
+    return face_region
+
+
 # ── Outer boundary reassignment ───────────────────────────────────────────────
 def reassign_boundary_faces(sf_wale, sf_course, knit_dirs,
                             face_region, adj, interior_idx, V_target, V_rest):
@@ -310,11 +344,15 @@ def reassign_boundary_faces(sf_wale, sf_course, knit_dirs,
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--max-outer",  type=int,   default=8)
-    parser.add_argument("--inner-iter", type=int,   default=80)
-    parser.add_argument("--out-prefix", type=str,   default="d5_4ra")
-    parser.add_argument("--sf0-wale",   type=float, default=SF_W0)
-    parser.add_argument("--sf0-course", type=float, default=SF_C0)
+    parser.add_argument("--max-outer",    type=int,   default=8)
+    parser.add_argument("--inner-iter",   type=int,   default=80)
+    parser.add_argument("--out-prefix",   type=str,   default="d5_4ra")
+    parser.add_argument("--sf0-wale",     type=float, default=SF_W0)
+    parser.add_argument("--sf0-course",   type=float, default=SF_C0)
+    parser.add_argument("--smooth-passes",type=int,   default=2,
+                        help="Majority-vote smoothing passes after each boundary reassignment (0=off)")
+    parser.add_argument("--smooth-every", type=int,   default=1,
+                        help="Apply smoothing every N outer iterations")
     args = parser.parse_args()
     _out_prefix[0] = args.out_prefix
     _rmap_path[0]  = os.path.join(OUT_DIR, "D5_4region_adaptive_map.json")
@@ -385,6 +423,11 @@ def main():
         face_region, n_swapped = reassign_boundary_faces(
             sf_w_cur, sf_c_cur, knit_dirs,
             face_region, adj, interior_idx, V_target, V_rest)
+
+        # (C) Boundary smoothing (every --smooth-every iterations)
+        if args.smooth_passes > 0 and (outer + 1) % args.smooth_every == 0:
+            print(f"  (C) Boundary smoothing ({args.smooth_passes} passes) …")
+            face_region = smooth_boundaries(face_region, adj, n_passes=args.smooth_passes)
 
         # save updated region map
         with open(_rmap_path[0], "w") as f:
