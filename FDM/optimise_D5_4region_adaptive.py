@@ -349,6 +349,8 @@ def main():
     parser.add_argument("--out-prefix",   type=str,   default="d5_4ra")
     parser.add_argument("--sf0-wale",     type=float, default=SF_W0)
     parser.add_argument("--sf0-course",   type=float, default=SF_C0)
+    parser.add_argument("--init-from-json", type=str, default=None,
+                        help="JSON with per-region sf_wale/sf_course to use as initial guess")
     parser.add_argument("--smooth-passes",type=int,   default=2,
                         help="Majority-vote smoothing passes after boundary reassignment (0=off)")
     parser.add_argument("--smooth-every", type=int,   default=10,
@@ -385,8 +387,15 @@ def main():
     print(f"Knit dirs (fixed): {[round(d,1) for d in knit_dirs]}°")
 
     # ── Warm-start check ──────────────────────────────────────────────────────
-    sf_w0 = np.full(N_REGIONS, args.sf0_wale)
-    sf_c0 = np.full(N_REGIONS, args.sf0_course)
+    if args.init_from_json and os.path.exists(args.init_from_json):
+        with open(args.init_from_json) as f:
+            init_j = json.load(f)
+        sf_w0 = np.array([init_j["regions"][r]["sf_wale"]  for r in range(N_REGIONS)])
+        sf_c0 = np.array([init_j["regions"][r]["sf_course"] for r in range(N_REGIONS)])
+        print(f"  Init from {args.init_from_json}")
+    else:
+        sf_w0 = np.full(N_REGIONS, args.sf0_wale)
+        sf_c0 = np.full(N_REGIONS, args.sf0_course)
     print(f"\nWarm-start check …")
     out0 = run_fem(sf_w0, sf_c0, knit_dirs, face_region, V_rest)
     if out0 is None:
