@@ -358,7 +358,7 @@ def main():
                         help="Apply smoothing every N outer iterations")
     args = parser.parse_args()
     _out_prefix[0] = args.out_prefix
-    _rmap_path[0]  = os.path.join(OUT_DIR, "D5_4region_adaptive_map.json")
+    _rmap_path[0]  = os.path.join(OUT_DIR, f"{_out_prefix[0]}_map.json")
 
     os.makedirs(OUT_DIR, exist_ok=True)
     for path, lbl in [(BINARY,"binary"),(MESH,"mesh"),(CABLE_J,"cable"),(FIELD_J,"field")]:
@@ -484,7 +484,7 @@ def main():
                      "sf_course": float(sf_c_opt[r])}
                     for r in range(N_REGIONS)],
     }
-    out_json = os.path.join(OUT_DIR, "D5_4region_adaptive_optimised.json")
+    out_json = os.path.join(OUT_DIR, f"{_out_prefix[0]}_optimised.json")
     with open(out_json, "w") as f:
         json.dump(result, f, indent=2)
     print(f"\nSaved: {out_json}")
