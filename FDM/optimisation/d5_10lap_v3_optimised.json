@@ -1,0 +1,127 @@
+{
+  "geometry": "D5",
+  "n_regions": 10,
+  "lambda_smooth": 0.01,
+  "pressure": 1000.0,
+  "cable_ea": 157000.0,
+  "cable_scale_fixed": 0.95,
+  "scale_cable2": 0.9,
+  "converged": true,
+  "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+  "rmse_mm": 6.646436923502746,
+  "n_calls": 596,
+  "region_adj": [
+    [
+      0,
+      1
+    ],
+    [
+      1,
+      2
+    ],
+    [
+      3,
+      4
+    ],
+    [
+      0,
+      9
+    ],
+    [
+      2,
+      3
+    ],
+    [
+      6,
+      7
+    ],
+    [
+      4,
+      5
+    ],
+    [
+      8,
+      9
+    ],
+    [
+      5,
+      6
+    ],
+    [
+      7,
+      8
+    ]
+  ],
+  "regions": [
+    {
+      "region_id": 0,
+      "n_faces": 157,
+      "knit_dir_deg": 103.56375808816907,
+      "sf_wale": 1.2161475199010956,
+      "sf_course": 1.0364866284258387
+    },
+    {
+      "region_id": 1,
+      "n_faces": 156,
+      "knit_dir_deg": 80.60996949095947,
+      "sf_wale": 1.2289242054131035,
+      "sf_course": 1.0188163261812935
+    },
+    {
+      "region_id": 2,
+      "n_faces": 157,
+      "knit_dir_deg": 86.25139956762334,
+      "sf_wale": 1.208280299128347,
+      "sf_course": 1.0322833477059172
+    },
+    {
+      "region_id": 3,
+      "n_faces": 156,
+      "knit_dir_deg": 106.83946291101735,
+      "sf_wale": 1.2100994606713726,
+      "sf_course": 1.0428503145699544
+    },
+    {
+      "region_id": 4,
+      "n_faces": 157,
+      "knit_dir_deg": 129.16140598379863,
+      "sf_wale": 1.2131171555643137,
+      "sf_course": 1.0625538233515854
+    },
+    {
+      "region_id": 5,
+      "n_faces": 156,
+      "knit_dir_deg": 156.4632566383829,
+      "sf_wale": 1.2125727453453792,
+      "sf_course": 1.0879870343389992
+    },
+    {
+      "region_id": 6,
+      "n_faces": 157,
+      "knit_dir_deg": 5.352270687614108,
+      "sf_wale": 1.2122036675723227,
+      "sf_course": 1.0954056152535685
+    },
+    {
+      "region_id": 7,
+      "n_faces": 156,
+      "knit_dir_deg": 36.19230930376532,
+      "sf_wale": 1.2142742952874348,
+      "sf_course": 1.0734830024108706
+    },
+    {
+      "region_id": 8,
+      "n_faces": 157,
+      "knit_dir_deg": 61.58121965928776,
+      "sf_wale": 1.2125454504952946,
+      "sf_course": 1.049845553051255
+    },
+    {
+      "region_id": 9,
+      "n_faces": 156,
+      "knit_dir_deg": 82.36142639980959,
+      "sf_wale": 1.2103417816567699,
+      "sf_course": 1.036136303821219
+    }
+  ]
+}
