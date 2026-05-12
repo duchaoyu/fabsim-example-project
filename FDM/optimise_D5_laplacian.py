@@ -17,7 +17,7 @@ import numpy as np
 from scipy.optimize import minimize
 
 HERE    = os.path.dirname(os.path.abspath(__file__))
-MESH    = os.path.join(HERE, "data", "D5", "D5_remeshed_fem.off")
+MESH    = os.path.join(HERE, "data", "D5", "D5_remeshed_fem_cable2faces.off")
 TARGET  = os.path.join(HERE, "data", "D5", "D5_remeshed_fem.off")
 CABLE_J = os.path.join(HERE, "data", "D5", "D5_cable_inner.json")
 FIELD_J = os.path.join(HERE, "data", "D5", "directional_field_D5.json")
@@ -28,7 +28,7 @@ CABLE_EA     = 157000.0
 PRESSURE     = 1000.0
 CABLE_SCALE  = 0.95
 CABLE2_VERTS = [89, 88]
-CABLE2_SCALE = 1.0
+CABLE2_SCALE = 0.90   # initial; optimised jointly with sf_wale/sf_course
 
 SF_W0 = 1.1526
 SF_C0 = 1.0725
@@ -54,7 +54,8 @@ def build_region_map(V, F, field, cable_idx, n_regions):
     Knit direction per region = mean d1 angle in that sector.
     """
     n_f = len(F)
-    d1  = np.array([field[str(fi)]["d1"] for fi in range(n_f)])
+    d1  = np.array([field[str(fi)]["d1"] if str(fi) in field else [1.0, 0.0, 0.0]
+                    for fi in range(n_f)])
     centroids = V[F].mean(axis=1)
 
     # Cable centroid (projected to xy plane)
@@ -122,7 +123,8 @@ _out_prefix = ["d5_lap"]
 _rmap_path  = [None]
 _face_knit_dirs_deg = [None]   # per-face knit directions from directional field
 
-def run_fem(sf_wale, sf_course, knit_dirs, face_region, n_regions, V_rest):
+def run_fem(sf_wale, sf_course, knit_dirs, face_region, n_regions, V_rest,
+            scale_cable2=CABLE2_SCALE):
     os.makedirs(OUT_DIR, exist_ok=True)
     _call_count[0] += 1
 
@@ -132,7 +134,7 @@ def run_fem(sf_wale, sf_course, knit_dirs, face_region, n_regions, V_rest):
         "motif":             1,
         "cable_ea":          CABLE_EA,
         "cable_paths":       [_cable_path[0], CABLE2_VERTS],
-        "cable_rest_scales": [float(CABLE_SCALE), float(CABLE2_SCALE)],
+        "cable_rest_scales": [float(CABLE_SCALE), float(scale_cable2)],
         "regions":           [{"sf_wale":      float(sf_wale[r]),
                                "sf_course":    float(sf_course[r]),
                                "knit_dir_deg": float(knit_dirs[r])}
@@ -211,10 +213,16 @@ def main():
     with open(CABLE_J) as f: cable = json.load(f)
     _cable_path[0] = cable["vertex_indices"] + [cable["vertex_indices"][0]]
 
-    # Per-face knit directions from the directional field (d1 vector → degrees)
-    d1_all = np.array([field[str(fi)]["d1"] for fi in range(len(F))])
-    face_knit_degs = [float(np.degrees(np.arctan2(d1_all[fi, 1], d1_all[fi, 0])) % 180)
-                      for fi in range(len(F))]
+    # Per-face knit directions from the directional field (d1 vector → degrees).
+    # Faces not in the field (e.g. the two cable pressure faces) fall back to 0°.
+    face_knit_degs = []
+    for fi in range(len(F)):
+        entry = field.get(str(fi))
+        if entry is not None:
+            d1 = entry["d1"]
+            face_knit_degs.append(float(np.degrees(np.arctan2(d1[1], d1[0])) % 180))
+        else:
+            face_knit_degs.append(0.0)
     _face_knit_dirs_deg[0] = face_knit_degs
 
     face_region, knit_dirs = build_region_map(V, F, field, cable["vertex_indices"], n_regions)
@@ -243,21 +251,25 @@ def main():
         sf_w_init, sf_c_init = SF_W0, SF_C0
 
     # ── Sanity check ──────────────────────────────────────────────────────────
-    sf_w0 = np.full(n_regions, sf_w_init)
-    sf_c0 = np.full(n_regions, sf_c_init)
+    sf_w0  = np.full(n_regions, sf_w_init)
+    sf_c0  = np.full(n_regions, sf_c_init)
+    sc2_0  = CABLE2_SCALE
     print(f"\nSanity check …")
-    out0 = run_fem(sf_w0, sf_c0, knit_dirs, face_region, n_regions, V_rest)
+    out0 = run_fem(sf_w0, sf_c0, knit_dirs, face_region, n_regions, V_rest,
+                   scale_cable2=sc2_0)
     if out0 is None:
         print("ERROR: FEM failed at sanity check"); sys.exit(1)
     d0   = out0["verts"][interior_idx] - V_target[interior_idx]
     rmse0 = float(np.sqrt(np.mean(np.sum(d0**2, axis=1))))
-    print(f"  crown={out0['crown_height']:.4f} m  RMSE={rmse0*1000:.2f} mm")
+    print(f"  crown={out0['crown_height']:.4f} m  RMSE={rmse0*1000:.2f} mm  sc2={sc2_0:.3f}")
 
-    # ── Objective ─────────────────────────────────────────────────────────────
+    # ── Objective (optimise sf_wale, sf_course, scale_cable2) ─────────────────
     def objective(p):
         sf_w = p[:n_regions]
-        sf_c = p[n_regions:]
-        out  = run_fem(sf_w, sf_c, knit_dirs, face_region, n_regions, V_rest)
+        sf_c = p[n_regions:2*n_regions]
+        sc2  = p[2*n_regions]
+        out  = run_fem(sf_w, sf_c, knit_dirs, face_region, n_regions, V_rest,
+                       scale_cable2=sc2)
         if out is None or "verts" not in out:
             return 1e3
         diff = out["verts"][interior_idx] - V_target[interior_idx]
@@ -266,27 +278,32 @@ def main():
                    for i, j in region_adj)
         loss = rmse + lam * lap
         if _call_count[0] % 10 == 0:
-            print(f"  [{_call_count[0]:4d}]  RMSE={rmse*1000:.2f} mm  lap={lap:.4f}  "
-                  f"loss={loss:.6f}  "
+            print(f"  [{_call_count[0]:4d}]  RMSE={rmse*1000:.2f} mm  sc2={sc2:.3f}  "
+                  f"lap={lap:.4f}  loss={loss:.6f}  "
                   f"sf_w=[{','.join(f'{v:.3f}' for v in sf_w)}]")
         return loss
 
-    p0     = np.concatenate([sf_w0, sf_c0])
-    bounds = [(0.80, 1.30)] * n_regions + [(0.80, 1.30)] * n_regions
+    p0     = np.concatenate([sf_w0, sf_c0, [sc2_0]])
+    bounds = ([(0.80, 1.30)] * n_regions +
+              [(0.80, 1.30)] * n_regions +
+              [(0.70, 1.00)])
 
-    print(f"\nOptimising {2*n_regions} params (λ={lam}), maxiter={args.maxiter} …")
+    print(f"\nOptimising {2*n_regions+1} params (λ={lam}), maxiter={args.maxiter} …")
     res = minimize(objective, p0, method="L-BFGS-B", bounds=bounds,
                    options={"maxiter": args.maxiter, "ftol": 1e-10,
                             "gtol": 1e-5, "eps": 0.002})
 
     print(f"\nConverged: {res.success}  |  {res.message}")
-    p_opt = res.x
+    p_opt    = res.x
     sf_w_opt = p_opt[:n_regions]
-    sf_c_opt = p_opt[n_regions:]
+    sf_c_opt = p_opt[n_regions:2*n_regions]
+    sc2_opt  = float(p_opt[2*n_regions])
+    print(f"  scale_cable2 = {sc2_opt:.4f}")
 
     # ── Final FEM (RMSE only, no penalty) ─────────────────────────────────────
     print("\nRunning final FEM …")
-    out_f = run_fem(sf_w_opt, sf_c_opt, knit_dirs, face_region, n_regions, V_rest)
+    out_f = run_fem(sf_w_opt, sf_c_opt, knit_dirs, face_region, n_regions, V_rest,
+                    scale_cable2=sc2_opt)
     rmse_f = None
     if out_f and "verts" in out_f:
         d = out_f["verts"][interior_idx] - V_target[interior_idx]
@@ -308,6 +325,8 @@ def main():
         "geometry": "D5", "n_regions": n_regions,
         "lambda_smooth": lam,
         "pressure": PRESSURE, "cable_ea": CABLE_EA,
+        "cable_scale_fixed": CABLE_SCALE,
+        "scale_cable2": sc2_opt,
         "converged": bool(res.success), "message": res.message,
         "rmse_mm": rmse_f, "n_calls": _call_count[0],
         "region_adj": [[int(i), int(j)] for i, j in region_adj],

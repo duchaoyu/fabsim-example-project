@@ -26,7 +26,7 @@ import numpy as np
 from scipy.optimize import minimize
 
 HERE    = os.path.dirname(os.path.abspath(__file__))
-MESH    = os.path.join(HERE, "data", "D5", "D5_remeshed_fem.off")
+MESH    = os.path.join(HERE, "data", "D5", "D5_remeshed_fem_cable2faces.off")
 TARGET  = os.path.join(HERE, "data", "D5", "D5_remeshed_fem.off")
 CABLE_J = os.path.join(HERE, "data", "D5", "D5_cable_inner.json")
 FIELD_J = os.path.join(HERE, "data", "D5", "directional_field_D5.json")
@@ -42,7 +42,7 @@ CABLE_EA     = 157000.0
 PRESSURE     = 1000.0
 CABLE_SCALE  = 0.95
 CABLE2_VERTS  = [89, 88]   # cross-cable spanning inner opening to fix crown height
-CABLE2_SCALE0 = 1.0        # initial value; optimised during inner L-BFGS
+CABLE2_SCALE0 = 0.90       # initial value; optimised during inner L-BFGS
 SF_W0       = 1.1526
 SF_C0       = 1.0725
 
@@ -143,7 +143,9 @@ def compute_knit_dirs(face_region, F):
     with open(FIELD_J) as f:
         field = json.load(f)
     nF     = len(F)
-    d1     = np.array([field[str(fi)]["d1"] for fi in range(nF)])
+    d1_list = [field[str(fi)]["d1"] if str(fi) in field else [1.0, 0.0, 0.0]
+               for fi in range(nF)]
+    d1     = np.array(d1_list)
     angles = np.arctan2(d1[:, 1], d1[:, 0])
     region_arr = np.array(face_region)
     knit_dirs  = []
@@ -155,13 +157,19 @@ def compute_knit_dirs(face_region, F):
     return knit_dirs
 
 def load_face_knit_dirs(F):
-    """Load per-face d1 angles (degrees, [0,180)) from the directional field."""
+    """Load per-face d1 angles (degrees, [0,180)) from the directional field.
+    Faces not in the field (cable pressure faces) default to 0°."""
     with open(FIELD_J) as f:
         field = json.load(f)
-    nF = len(F)
-    d1_all = np.array([field[str(fi)]["d1"] for fi in range(nF)])
-    return [float(np.degrees(np.arctan2(d1_all[fi, 1], d1_all[fi, 0])) % 180)
-            for fi in range(nF)]
+    result = []
+    for fi in range(len(F)):
+        entry = field.get(str(fi))
+        if entry is not None:
+            d1 = entry["d1"]
+            result.append(float(np.degrees(np.arctan2(d1[1], d1[0])) % 180))
+        else:
+            result.append(0.0)
+    return result
 
 
 # ── Validity gate ─────────────────────────────────────────────────────────────
