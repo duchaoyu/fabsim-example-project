@@ -1,0 +1,52 @@
+{
+  "geometry": "D5",
+  "n_regions": 4,
+  "method": "adaptive_boundary_reassignment",
+  "pressure": 1000.0,
+  "cable_ea": 157000.0,
+  "cable_scale_fixed": 0.95,
+  "scale_cable2": 1.0,
+  "seed_vertices": [
+    781,
+    140,
+    95
+  ],
+  "dev_percentile": 60,
+  "converged": true,
+  "rmse_m": 0.006301081547566087,
+  "n_calls": 3244,
+  "regions": [
+    {
+      "region_id": 0,
+      "label": "R0 (seed sv781)",
+      "n_faces": 104,
+      "knit_dir_deg": 94.5352667454643,
+      "sf_wale": 1.1913408847553242,
+      "sf_course": 0.9494329380903961
+    },
+    {
+      "region_id": 1,
+      "label": "R1 (seed sv140)",
+      "n_faces": 98,
+      "knit_dir_deg": 83.50550481058411,
+      "sf_wale": 1.1959523106347691,
+      "sf_course": 0.9506309612179856
+    },
+    {
+      "region_id": 2,
+      "label": "R2 (seed sv95)",
+      "n_faces": 177,
+      "knit_dir_deg": 177.83412380949565,
+      "sf_wale": 1.1788801730986092,
+      "sf_course": 1.171987188662224
+    },
+    {
+      "region_id": 3,
+      "label": "R3 (rest)",
+      "n_faces": 1184,
+      "knit_dir_deg": 90.40714116481456,
+      "sf_wale": 1.2217792264642877,
+      "sf_course": 1.0446025780959758
+    }
+  ]
+}
