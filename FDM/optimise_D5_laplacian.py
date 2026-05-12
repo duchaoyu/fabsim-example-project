@@ -232,7 +232,7 @@ def main():
     print(f"FEM mesh   : {len(V)} verts, {len(F)} faces")
     print(f"Target     : {len(interior_idx)} interior verts, crown={t_crown:.4f} m")
     print(f"Regions    : {n_regions} bands along d1  {counts.tolist()}")
-    print(f"KnitDirs   : {[round(d,1) for d in knit_dirs]}°")
+    print(f"KnitDirs   : per-face from directional field (region mean shown in params JSON)")
     print(f"Adj pairs  : {len(region_adj)}")
     print(f"λ_smooth   : {lam}")
     print(f"Cables     : inner loop (sc={CABLE_SCALE}) + v{CABLE2_VERTS[0]}→v{CABLE2_VERTS[1]} (sc={CABLE2_SCALE})")

@@ -127,6 +127,11 @@ def load_or_build_region_map(V, F):
             if face_region[fi] == -1: face_region[fi] = 3
         print(f"  Recomputed region map (p{DEV_PCT} threshold)")
 
+    # Extend region map if mesh has extra faces (e.g. cable pressure faces).
+    # Assign any extra faces to the 'rest' region (last region index).
+    while len(face_region) < len(F):
+        face_region.append(N_REGIONS - 1)
+
     region_arr = np.array(face_region)
     counts     = np.bincount(region_arr, minlength=N_REGIONS)
     print(f"  Region sizes: R0={counts[0]} R1={counts[1]} R2={counts[2]} R3={counts[3]}")
@@ -412,7 +417,7 @@ def main():
     _face_knit_dirs_deg[0] = load_face_knit_dirs(F)
     # Per-region circular mean — still used in params JSON
     knit_dirs = compute_knit_dirs(face_region, F)
-    print(f"Knit dirs (region mean, for params): {[round(d,1) for d in knit_dirs]}°")
+    print(f"Knit dirs  : per-face from directional field (region mean only in params JSON)")
 
     # ── Warm-start check ──────────────────────────────────────────────────────
     if args.init_from_json and os.path.exists(args.init_from_json):
