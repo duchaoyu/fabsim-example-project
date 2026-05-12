@@ -232,7 +232,7 @@ def main():
     print(f"KnitDirs   : per-face from directional field (region mean shown in params JSON)")
     print(f"Adj pairs  : {len(region_adj)}")
     print(f"λ_smooth   : {lam}")
-    print(f"Cables     : inner loop (sc={CABLE_SCALE}) + v{CABLE2_VERTS[0]}→v{CABLE2_VERTS[1]} (sc={CABLE2_SCALE})")
+    print(f"Cables     : inner loop (sc={CABLE_SCALE})")
 
     # ── Initial parameters ────────────────────────────────────────────────────
     if args.init_from_json and os.path.exists(args.init_from_json):
