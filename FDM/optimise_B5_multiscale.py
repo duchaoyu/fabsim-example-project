@@ -355,70 +355,61 @@ def optimise_one(diameter, motif, pressure, maxiter, cable_paths_dict):
     print(f"  Saved: {out_json}")
     return result_dict
 
-# ── Post-process 1.2m result: add tension from its stress CSV ─────────────────
-def postprocess_1p2m():
-    """Patch B5_1p2m_optimised_params.json with tension data from its final stress CSV."""
-    tag      = "1p2m"
+# ── Post-process any scale: add tension from its stress CSV ───────────────────
+def postprocess_scale(diameter):
+    """Patch B5_<tag>_optimised_params.json with tension data.
+
+    Reads or regenerates the final stress CSV by running one FEM call with the
+    saved optimal parameters, then patches the result JSON in-place.
+    """
+    tag         = diameter_tag(diameter)
     json_path   = os.path.join(OUT_DIR, f"B5_{tag}_optimised_params.json")
     stress_path = os.path.join(OUT_DIR, f"B5_{tag}_final_stress.csv")
 
     if not os.path.exists(json_path):
-        print(f"Not found: {json_path}")
+        print(f"  Not found: {json_path} — skipping {diameter}m")
         return None
 
     with open(json_path) as f:
         d = json.load(f)
 
     if "tension_global" in d:
-        print(f"  {json_path} already has tension data — skipping patch")
+        print(f"  {os.path.basename(json_path)} already has tension — skipping")
         return d
 
-    # Re-run one FEM call with the saved optimal params to regenerate stress CSV
+    mesh_path        = ensure_scaled_mesh(diameter)
+    cable_paths_dict = load_cable_paths(CABLE_PATHS_FILE)
+    cable_paths_list = list(cable_paths_dict.values())
+    V, F = load_off(mesh_path)
+    fem_span = V[:,0].max() - V[:,0].min()
+    R        = fem_span / 2
+    region_ids      = make_region_map(V, F, -R/3, R/3, -R/3, R/3)
+    region_map_path = os.path.join(OUT_DIR, f"region_map_{tag}.json")
+    with open(region_map_path, "w") as f2:
+        json.dump({"face_regions": region_ids}, f2)
+
     if not os.path.exists(stress_path):
-        print(f"  Stress CSV not found at {stress_path} — re-running final FEM...")
-        mesh_path       = BASE_MESH
-        cable_paths_dict = load_cable_paths(CABLE_PATHS_FILE)
-        cable_paths_list = list(cable_paths_dict.values())
-
-        V, F = load_off(mesh_path)
-        fem_span = V[:,0].max() - V[:,0].min()
-        R = fem_span / 2
-        region_ids = make_region_map(V, F, -R/3, R/3, -R/3, R/3)
-        region_map_path = os.path.join(OUT_DIR, f"region_map_{tag}.json")
-        with open(region_map_path, "w") as f2:
-            json.dump({"face_regions": region_ids}, f2)
-
-        sf_w    = [reg["sf_wale"]   for reg in d["regions"]]
-        sf_c    = [reg["sf_course"] for reg in d["regions"]]
+        print(f"  Re-running final FEM for {diameter}m to get stress CSV...")
+        sf_w      = [reg["sf_wale"]      for reg in d["regions"]]
+        sf_c      = [reg["sf_course"]    for reg in d["regions"]]
         knit_dirs = [reg["knit_dir_deg"] for reg in d["regions"]]
-        scales  = [c["rest_scale"]  for c in d["cables"]]
+        scales    = [c["rest_scale"]     for c in d["cables"]]
 
         out = run_fem(mesh_path, sf_w, sf_c, knit_dirs, d["pressure_pa"], d["motif"],
                       region_map_path, cable_paths_list, 157000.0,
                       cable_rest_scales=scales, keep_stress=True)
-
-        if out and "_stress_path" in out:
+        if out and "_stress_path" in out and os.path.exists(out["_stress_path"]):
             shutil.copy(out["_stress_path"], stress_path)
         else:
-            print("  ERROR: could not regenerate stress data")
+            print(f"  ERROR: could not regenerate stress for {diameter}m")
             return None
 
-        # Recompute region_ids for tension
-        sdata = np.loadtxt(stress_path, delimiter=",", skiprows=1)
-        T_w = sdata[:, 7]
-        T_c = sdata[:, 8]
-    else:
-        sdata = np.loadtxt(stress_path, delimiter=",", skiprows=1)
-        T_w = sdata[:, 7]
-        T_c = sdata[:, 8]
-        mesh_path = BASE_MESH
-        V, F = load_off(mesh_path)
-        fem_span = V[:,0].max() - V[:,0].min()
-        R = fem_span / 2
-        region_ids = make_region_map(V, F, -R/3, R/3, -R/3, R/3)
-
-    diameter = d["diameter_m"]
+    sdata = np.loadtxt(stress_path, delimiter=",", skiprows=1)
+    T_w   = sdata[:, 7]
+    T_c   = sdata[:, 8]
+    ids   = np.array(region_ids)
     pressure = d["pressure_pa"]
+
     d["tension_global"] = {
         "T_wale_mean_Npm":   float(np.mean(T_w)),
         "T_course_mean_Npm": float(np.mean(T_c)),
@@ -428,7 +419,6 @@ def postprocess_1p2m():
         "T_course_norm": float(np.mean(T_c)) / (pressure * diameter),
     }
     d["tension_regions"] = []
-    ids = np.array(region_ids)
     for r in range(9):
         mask = ids == r
         d["tension_regions"].append({
@@ -441,10 +431,9 @@ def postprocess_1p2m():
 
     with open(json_path, "w") as f:
         json.dump(d, f, indent=2)
-    print(f"  Patched {json_path} with tension data")
     tw = d["tension_global"]
-    print(f"  T_wale mean={tw['T_wale_mean_Npm']:.1f}  max={tw['T_wale_max_Npm']:.1f}  N/m")
-    print(f"  T_course mean={tw['T_course_mean_Npm']:.1f}  max={tw['T_course_max_Npm']:.1f}  N/m")
+    print(f"  {diameter}m patched  "
+          f"T_wale={tw['T_wale_mean_Npm']:.1f}  T_course={tw['T_course_mean_Npm']:.1f}  N/m")
     return d
 
 # ── Comparison tables ──────────────────────────────────────────────────────────
@@ -571,7 +560,9 @@ def main():
     os.makedirs(OUT_DIR, exist_ok=True)
 
     if args.postprocess:
-        d = postprocess_1p2m()
+        print("Post-processing: adding tension data to all available scale results...")
+        for diam in sorted(ALL_DIAMETERS):
+            postprocess_scale(diam)
         # Reload all results and reprint
         all_results = []
         for diam in sorted(ALL_DIAMETERS):
