@@ -277,7 +277,7 @@ int main(int argc, char* argv[])
         std::cerr << "Usage: fem_batch_sensitivity <mesh_path> <sf_wale> <sf_course>"
                      " <knit_dir_deg> <pressure> <motif>"
                      " <cable_wale_json_or_none> <cable_course_json_or_none>"
-                     " <output_prefix> [fixed_vertices]\n";
+                     " <output_prefix> [fixed_vertices] [material_json_or_none]\n";
         return 1;
     }
 
