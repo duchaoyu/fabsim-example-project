@@ -399,6 +399,26 @@ def step_train_material(df: pd.DataFrame = None) -> dict:
     return surrogates
 
 
+def step_visualize_material(sobol_results: dict = None):
+    print(f"\n[Material Step 4] Generating figures → {viz.FIG_DIR}")
+    if sobol_results is None:
+        sobol_results = {}
+        for has_cable in HAS_CABLE:
+            group = f"material_{'cable' if has_cable else 'nocable'}"
+            group_results = {}
+            for col in SCALAR_OUTPUTS:
+                path = os.path.join(DATA_DIR, f"sobol_{group}_{col}.csv")
+                if os.path.exists(path):
+                    group_results[col] = pd.read_csv(path, index_col=0)
+            if group_results:
+                sobol_results[group] = group_results
+    if sobol_results:
+        viz.plot_sobol(sobol_results)
+        print("  Sobol bar charts saved.")
+    else:
+        print("  No Sobol results found.")
+
+
 def step_sobol_material(surrogates: dict = None) -> dict:
     if surrogates is None:
         surrogates = {}
@@ -423,7 +443,7 @@ def main():
     parser = argparse.ArgumentParser(description="Sensitivity analysis pipeline")
     parser.add_argument("--steps", nargs="+",
                         default=["generate", "train", "sobol", "visualize"],
-                        choices=["generate", "train", "sobol", "visualize"])
+                        choices=["generate", "train", "sobol", "visualize", "figures"])
     parser.add_argument("--material", action="store_true",
                         help="Run material sensitivity study instead of motif study")
     parser.add_argument("--jobs", type=int, default=4,
@@ -442,6 +462,8 @@ def main():
             surrogates = step_train_material(df)
         if "sobol" in args.steps:
             sobol_res = step_sobol_material(surrogates)
+        if "visualize" in args.steps or "figures" in args.steps:
+            step_visualize_material(sobol_res)
     else:
         if "generate" in args.steps:
             df = step_generate(jobs=args.jobs)

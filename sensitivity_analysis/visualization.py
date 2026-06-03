@@ -44,26 +44,35 @@ plt.rcParams.update({
 })
 
 PARAM_LABELS = {
-    "sf_wale":     r"$s_\mathrm{wale}$",
-    "sf_course":   r"$s_\mathrm{course}$",
-    "knit_dir":    r"$\theta_\mathrm{knit}$ (°)",
-    "pressure":    r"$p$ (Pa)",
-    "cable_angle": r"$\phi_\mathrm{cable}$ (°)",
+    "sf_wale":            r"$s_\mathrm{wale}$",
+    "sf_course":          r"$s_\mathrm{course}$",
+    "knit_dir":           r"$\theta_\mathrm{knit}$ (°)",
+    "pressure":           r"$p$ (Pa)",
+    "cable_angle":        r"$\phi_\mathrm{cable}$ (°)",
+    "cable_wale_lrest":   r"$L^\mathrm{wale}_\mathrm{rest}$",
+    "cable_course_lrest": r"$L^\mathrm{course}_\mathrm{rest}$",
+    "E1":                 r"$E_1$ (N/m)",
+    "r":                  r"$r = E_1/E_2$",
+    "nu":                 r"$\nu_{12}$",
 }
 OUTPUT_LABELS = {
     "crown_height":           r"$h_\mathrm{crown}$ (m)",
     "H_mean_x0":              r"$\bar{H}_{x=0}$ (m$^{-1}$)",
     "H_mean_y0":              r"$\bar{H}_{y=0}$ (m$^{-1}$)",
-    "max_stress":             r"$\sigma_\mathrm{max}$ (Pa)",
-    "mean_stress":            r"$\bar{\sigma}$ (Pa)",
+    "max_stress":             r"$\sigma_\mathrm{max}$ (N/m)",
+    "mean_stress":            r"$\bar{\sigma}$ (N/m)",
     "cable_tension":          r"$T_\mathrm{cable}$ (N)",
+    "cable_wale_tension":     r"$T_\mathrm{wale}$ (N)",
+    "cable_course_tension":   r"$T_\mathrm{course}$ (N)",
     "boundary_reaction_mean": r"$\bar{R}_\mathrm{bdry}$ (N)",
 }
 GROUP_TITLES = {
-    "motif1_nocable": "Motif 1 — no cable",
-    "motif1_cable":   "Motif 1 — cable",
-    "motif2_nocable": "Motif 2 — no cable",
-    "motif2_cable":   "Motif 2 — cable",
+    "motif1_nocable":    "Motif 1 — no cable",
+    "motif1_cable":      "Motif 1 — cable",
+    "motif2_nocable":    "Motif 2 — no cable",
+    "motif2_cable":      "Motif 2 — cable",
+    "material_nocable":  "Material study — no cable",
+    "material_cable":    "Material study — cable",
 }
 
 # Colorblind-friendly pair (blue / vermillion)
