@@ -6,13 +6,12 @@ _REPO_DIR = os.path.dirname(_SA_DIR)
 
 MESH_PATH = os.environ.get(
     "CIRCULAR_FLAT_MESH",
-    "/Users/duch/Documents/PhD/knit/2024_prototypes/callibration/"
-    "flat_no_shortrows/sensitivity_analysis/circular_flat.off",
+    os.path.join(_REPO_DIR, "data", "circular_flat.off"),
 )
 
 FEM_BINARY = os.environ.get(
     "FEM_BINARY",
-    os.path.join(_REPO_DIR, "build-mac", "fem_batch_sensitivity"),
+    os.path.join(_REPO_DIR, "build", "fem_batch_sensitivity"),
 )
 
 # ── Parameter bounds ──────────────────────────────────────────────────────────
@@ -37,11 +36,25 @@ PARAMS_CABLE = {
 }
 
 # ── Discrete parameters ───────────────────────────────────────────────────────
-MOTIFS    = [1, 2]
-HAS_CABLE = [False, True]
+MOTIFS     = [1, 2]
+HAS_CABLE  = [False, True]
+CABLE_AXES = ["wale", "course"]
 
 # Samples per group (4 groups × N_SAMPLES = total FEA runs)
 N_SAMPLES = 150
+
+# Samples per group for cable orientation study
+N_SAMPLES_ORIENT = 150
+
+# Parameter bounds for the cable orientation study
+# L_rest is a dimensionless ratio; actual rest length = ratio × L_flat
+PARAMS_CABLE_ORIENT = {
+    "sf_wale":   (0.8, 1.4),
+    "sf_course": (0.8, 1.4),
+    "knit_dir":  (0.0, 90.0),
+    "pressure":  (200.0, 1200.0),
+    "L_rest":    (0.90, 1.0),
+}
 
 # Samples per group for the material sensitivity study (7D/9D parameter space)
 N_SAMPLES_MATERIAL = 500
