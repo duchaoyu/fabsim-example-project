@@ -50,7 +50,7 @@ def run_fea(
     E1: float = None,
     r: float = None,
     nu: float = None,
-    timeout: int = 120,
+    timeout: int = 300,
 ) -> dict:
     """
     Run fem_batch_sensitivity for one parameter set.
