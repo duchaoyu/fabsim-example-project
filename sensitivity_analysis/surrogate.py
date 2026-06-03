@@ -24,7 +24,7 @@ from config import (
 )
 
 # Outputs that span a large dynamic range — fit log(y) instead of y
-_LOG_OUTPUTS = {"H_mean_x0", "H_mean_y0"}
+_LOG_OUTPUTS = {"H_mean_x0", "H_mean_y0", "cable_wale_tension", "cable_course_tension"}
 
 
 def _make_kernel():

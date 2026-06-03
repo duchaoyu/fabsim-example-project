@@ -375,6 +375,15 @@ def step_train_material(df: pd.DataFrame = None) -> dict:
         available = [c for c in SCALAR_OUTPUTS
                      if c in subset.columns and subset[c].notna().any()]
         subset = subset.dropna(subset=available)
+        # Remove snap-through outliers in cable tension (discontinuous → GP can't fit)
+        for tcol in ("cable_wale_tension", "cable_course_tension"):
+            if tcol in subset.columns:
+                p99 = subset[tcol].quantile(0.99)
+                n_snap = (subset[tcol] > p99 * 2).sum()
+                if n_snap:
+                    subset = subset[subset[tcol] <= p99 * 2]
+                    print(f"  {group}: removed {n_snap} snap-through outliers in {tcol} "
+                          f"(threshold={p99*2:.1f} N)")
         if len(subset) < 20:
             print(f"  {group}: only {len(subset)} samples — skipping")
             continue
