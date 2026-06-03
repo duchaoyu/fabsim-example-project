@@ -8,10 +8,16 @@
 //                           <cable_wale_json_or_none> <cable_course_json_or_none>
 //                           <output_prefix>
 //                           [fixed_vertices]
+//                           [material_json_or_none]
 //
 //   Each cable JSON: {"indices":[...], "EA":150000.0, "L_rest":1.196}
 //     L_rest is required — set it to fraction * geometric_length for pre-tension.
 //   Pass "none" for either cable to omit it.
+//
+//   material_json: {"E1":5000.0, "r":4.0, "nu":0.7}
+//     E2 is computed as E1/r. Overrides the motif material params.
+//     Pass "none" (or omit) to use motif params.
+//     Requires fixed_vertices to also be specified (use "auto" for default).
 //
 //   motif 1: E1=5000,  E2=12507  (course-stiff, E2/E1=2.50)
 //   motif 2: E1=5000,  E2=8000   (mild aniso,   E2/E1=1.60)
@@ -298,6 +304,30 @@ int main(int argc, char* argv[])
             std::ifstream fv(fv_path);
             int v;
             while (fv >> v) bdrs.push_back(v);
+        }
+    }
+
+    // Optional: override material params via JSON at argv[11]
+    // Format: {"E1":5000.0,"r":4.0,"nu":0.7}  — E2 = E1/r
+    if (argc >= 12 && std::string(argv[11]) != "none" && std::string(argv[11]) != "None") {
+        std::ifstream mf(argv[11]);
+        if (mf.is_open()) {
+            std::string ms((std::istreambuf_iterator<char>(mf)),
+                            std::istreambuf_iterator<char>());
+            auto find_val = [&](const std::string& key) -> double {
+                auto pos = ms.find("\"" + key + "\"");
+                if (pos == std::string::npos) return -1.0;
+                auto colon = ms.find(':', pos);
+                return std::stod(ms.substr(colon + 1));
+            };
+            double E1v = find_val("E1");
+            double rv  = find_val("r");
+            double nuv = find_val("nu");
+            if (E1v > 0 && rv > 0 && nuv > 0) {
+                mp.E1 = E1v;
+                mp.E2 = E1v / rv;
+                mp.nu = nuv;
+            }
         }
     }
 

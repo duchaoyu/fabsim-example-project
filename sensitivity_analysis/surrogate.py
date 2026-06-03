@@ -31,17 +31,18 @@ def _make_kernel():
     return ConstantKernel(1.0) * Matern(nu=2.5) + WhiteKernel(1e-4)
 
 
-def _input_keys(has_cable):
-    bounds = PARAMS_CABLE if has_cable else PARAMS_NO_CABLE
-    return list(bounds.keys())
+def _input_keys(has_cable: bool, bounds: dict = None) -> list:
+    if bounds is not None:
+        return list(bounds.keys())
+    return list((PARAMS_CABLE if has_cable else PARAMS_NO_CABLE).keys())
 
 
 class ScalarSurrogate:
     """One GP per scalar output for a single (motif, cable) group."""
 
-    def __init__(self, has_cable: bool):
+    def __init__(self, has_cable: bool, bounds: dict = None):
         self.has_cable   = has_cable
-        self.input_keys  = _input_keys(has_cable)
+        self.input_keys  = _input_keys(has_cable, bounds)
         self.scaler_X    = StandardScaler()
         self.scalers_y   = {}
         self.gps         = {}

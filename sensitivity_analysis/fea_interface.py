@@ -31,6 +31,13 @@ def _write_cable_json(indices, EA, L_rest):
     return tmp.name
 
 
+def _write_material_json(E1: float, r: float, nu: float) -> str:
+    tmp = tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False)
+    json.dump({"E1": E1, "r": r, "nu": nu}, tmp)
+    tmp.close()
+    return tmp.name
+
+
 def run_fea(
     sf_wale: float,
     sf_course: float,
@@ -40,6 +47,9 @@ def run_fea(
     output_prefix: str,
     cable_wale_lrest: float = -1.0,
     cable_course_lrest: float = -1.0,
+    E1: float = None,
+    r: float = None,
+    nu: float = None,
     timeout: int = 120,
 ) -> dict:
     """
@@ -48,6 +58,9 @@ def run_fea(
     cable_wale_lrest / cable_course_lrest: rest-length as a fraction of the
     cable's geometric arc length on the reference mesh. Values < 1 pre-tension
     the cable; -1 means no cable in that direction.
+
+    E1, r, nu: if all three are provided, override the motif material params.
+      E2 is computed as E1/r inside the binary. E1 is in N/m (membrane modulus).
 
     Returns dict with keys: crown_height, max_stress, mean_stress,
       cable_wale_tension, cable_course_tension, boundary_reaction_mean.
@@ -80,6 +93,12 @@ def run_fea(
         cable_course_arg,
         output_prefix,
     ]
+
+    # Append material override if all three params are provided
+    if E1 is not None and r is not None and nu is not None:
+        mat_path = _write_material_json(E1, r, nu)
+        tmpfiles.append(mat_path)
+        cmd += ["auto", mat_path]  # fixed_vertices=auto, then material JSON
 
     try:
         result = subprocess.run(
