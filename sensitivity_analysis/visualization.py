@@ -170,65 +170,112 @@ def plot_pressure_curve(surrogate_m1: ScalarSurrogate,
     return fig
 
 
-# ── Figure 3: Sobol S1 + ST bar charts ────────────────────────────────────────
+# ── Figure 3: Sobol heatmap (ST) ──────────────────────────────────────────────
 def plot_sobol(sobol_results: dict, save: bool = True):
-    """sobol_results: {group: {output: DataFrame(index=params, cols=S1,ST,...)}}"""
+    """sobol_results: {group: {output: DataFrame(index=params, cols=S1,ST,...)}}
+    One heatmap per group: rows=parameters, cols=outputs, colour=ST.
+    """
+    from matplotlib.patches import Rectangle as _Rect
+    import matplotlib.ticker as ticker
+
+    _CABLE_OUTPUTS = {"cable_wale_tension", "cable_course_tension"}
+
+    def _is_masked(p, o):
+        return ((p == "cable_wale_lrest"  and o == "cable_course_tension") or
+                (p == "cable_course_lrest" and o == "cable_wale_tension"))
+
     for group, group_results in sobol_results.items():
         has_cable = "cable" in group and "nocable" not in group
 
-        # Drop outputs that are trivially zero (e.g. cable_tension without cable)
-        active = {
-            col: df for col, df in group_results.items()
+        # Collect active outputs (non-trivial ST, and drop cable outputs in no-cable groups)
+        active_outputs = [
+            col for col, df in group_results.items()
             if df["ST"].clip(0).max() > 0.02
-        }
-        if not active:
+            and not (col in _CABLE_OUTPUTS and not has_cable)
+        ]
+        if not active_outputs:
             continue
 
-        n_out = len(active)
-        ncols = min(n_out, 3)
-        nrows = (n_out + ncols - 1) // ncols
-        fig, axes = plt.subplots(
-            nrows, ncols,
-            figsize=(3.6 * ncols, 3.0 * nrows),
-            squeeze=False,
-        )
+        # Use first active output to get param names
+        param_names = list(group_results[active_outputs[0]].index)
+        n_p, n_o = len(param_names), len(active_outputs)
 
-        legend_added = False
-        for idx, (col, df) in enumerate(active.items()):
-            ax = axes[idx // ncols][idx % ncols]
-            x  = np.arange(len(df))
-            w  = 0.35
+        # Build ST matrix and conf matrix
+        mat      = np.zeros((n_p, n_o))
+        conf_mat = np.zeros((n_p, n_o))
+        mask     = np.zeros((n_p, n_o), dtype=bool)
+        for j, col in enumerate(active_outputs):
+            df = group_results[col]
+            for i, p in enumerate(param_names):
+                if _is_masked(p, col):
+                    mask[i, j] = True
+                    continue
+                mat[i, j]      = max(0, df.loc[p, "ST"])
+                conf_mat[i, j] = df.loc[p, "ST_conf"]
+        mat = np.where(mask, np.nan, mat)
 
-            kw = dict(capsize=3, error_kw={"linewidth": 0.8, "capthick": 0.8})
-            b1 = ax.bar(x - w/2, df["S1"].clip(0), w,
-                        color=_C1, alpha=0.85, label=r"$S_1$",
-                        yerr=df["S1_conf"], **kw)
-            b2 = ax.bar(x + w/2, df["ST"].clip(0), w,
-                        color=_C2, alpha=0.85, label=r"$S_T$",
-                        yerr=df["ST_conf"], **kw)
+        # Figure sizing
+        cell_w, cell_h = 0.90, 0.82
+        pad_top, pad_bot, pad_left, pad_right = 1.0, 0.9, 1.6, 0.5
+        panel_w = n_o * cell_w + 0.4
+        panel_h = n_p * cell_h + 0.6
+        fig_w = panel_w + pad_left + pad_right
+        fig_h = panel_h + pad_top  + pad_bot
 
-            ax.set_xticks(x)
-            ax.set_xticklabels(
-                [PARAM_LABELS.get(p, p) for p in df.index],
-                rotation=30, ha="right",
-            )
-            ax.set_title(OUTPUT_LABELS.get(col, col), pad=5)
-            ax.set_ylim(0, 1.15)
-            ax.set_ylabel("Sobol index")
-            ax.yaxis.set_major_locator(plt.MultipleLocator(0.25))
-            ax.grid(axis="y", linewidth=0.4, alpha=0.4)
-            ax.spines["left"].set_visible(True)
+        fig, ax = plt.subplots(figsize=(fig_w, fig_h), constrained_layout=False)
+        fig.subplots_adjust(left=pad_left/fig_w, right=1 - pad_right/fig_w,
+                            bottom=pad_bot/fig_h, top=1 - pad_top/fig_h)
 
-            if not legend_added:
-                ax.legend(frameon=False, loc="upper right")
-                legend_added = True
+        cmap = plt.cm.YlOrRd
+        im = ax.imshow(mat, cmap=cmap, vmin=0.0, vmax=1.0,
+                       aspect="auto", interpolation="nearest")
 
-        # Hide any unused axes
-        for idx in range(len(active), nrows * ncols):
-            axes[idx // ncols][idx % ncols].set_visible(False)
+        # Hatched overlay for physically masked cells
+        for i in range(n_p):
+            for j in range(n_o):
+                if mask[i, j]:
+                    ax.add_patch(_Rect(
+                        (j - 0.5, i - 0.5), 1, 1,
+                        facecolor="lightgrey", hatch="////",
+                        edgecolor="grey", linewidth=0.0, zorder=2,
+                    ))
 
-        fig.suptitle(GROUP_TITLES.get(group, group), fontsize=11, y=1.01)
-        fig.tight_layout()
+        # Annotate: ST value + ±conf
+        for i in range(n_p):
+            for j in range(n_o):
+                if mask[i, j]:
+                    continue
+                v, c = mat[i, j], conf_mat[i, j]
+                color = "white" if v > 0.6 else "black"
+                ax.text(j, i - 0.20, f"{v:.2f}",
+                        ha="center", va="center",
+                        fontsize=9, color=color, fontweight="bold")
+                ax.text(j, i + 0.18, f"±{c:.2f}",
+                        ha="center", va="center",
+                        fontsize=8, color=color)
+
+        ax.set_xticks(range(n_o))
+        ax.set_xticklabels([OUTPUT_LABELS.get(o, o) for o in active_outputs],
+                           rotation=30, ha="right", fontsize=11)
+        ax.set_yticks(range(n_p))
+        ax.set_yticklabels([PARAM_LABELS.get(p, p) for p in param_names],
+                           fontsize=11)
+        ax.tick_params(length=0)
+        ax.set_xticks(np.arange(-0.5, n_o), minor=True)
+        ax.set_yticks(np.arange(-0.5, n_p), minor=True)
+        ax.grid(which="minor", color="white", linewidth=1.2)
+        ax.tick_params(which="minor", bottom=False, left=False)
+
+        # Colorbar
+        cbar_ax = fig.add_axes([pad_left/fig_w + 0.05,
+                                0.12/fig_h, 0.5, 0.12/fig_h])
+        cbar = fig.colorbar(im, cax=cbar_ax, orientation="horizontal")
+        cbar.set_ticks([0, 0.25, 0.5, 0.75, 1.0])
+        cbar.ax.tick_params(labelsize=10)
+        cbar.ax.xaxis.set_major_formatter(ticker.FormatStrFormatter("%.2f"))
+        cbar.set_label(r"Total-order Sobol index $S_T$", fontsize=11)
+
+        fig.suptitle(GROUP_TITLES.get(group, group), fontsize=12, y=1.01)
 
         if save:
             _save(fig, os.path.join(FIG_DIR, f"fig3_sobol_{group}"))
