@@ -35,18 +35,18 @@ FIXED = {
     "sf_course": 1.0,
     "knit_dir":  0.0,
     "pressure":  1000.0,
-    "E1":        4500.0,   # midpoint of (1000, 8000)
-    "r":         4.0,      # midpoint of (3, 5)
-    "nu":        0.675,    # midpoint of (0.45, 0.9)
+    "E1":        10500.0,  # midpoint of (1000, 20000)
+    "r":         3.0,      # midpoint of (1, 5)
+    "nu":        0.195,    # midpoint of (0.09, 0.3)
 }
 
 PARAM_KEYS = list(PARAMS_MATERIAL_NO_CABLE.keys())
 N_GRID = 120
 
 SWEEP_PARAMS = [
-    ("E1",  r"$E_1$  (N/m)",   PARAMS_MATERIAL_NO_CABLE["E1"]),
-    ("r",   r"$r = E_1/E_2$",  PARAMS_MATERIAL_NO_CABLE["r"]),
-    ("nu",  r"$\nu_{12}$",     PARAMS_MATERIAL_NO_CABLE["nu"]),
+    ("E1",  r"$E_1$  (N/m)",   (1000.0, 20000.0)),
+    ("r",   r"$r = E_1/E_2$",  (1.0,    5.0)),
+    ("nu",  r"$\nu_{12}$",     (0.09,   0.3)),
 ]
 
 COLOR_X0 = "#2E8B57"
@@ -113,8 +113,20 @@ def plot_sweep(save=True):
             ax_c.set_ylabel(r"$\bar{H}$  (m$^{-1}$)")
             ax_s.set_ylabel(r"Mean von Mises stress  (N/m)")
 
+        # Training-data bounds for each swept param
+        train_bounds = {"E1": (1000.0, 8000.0), "r": (3.0, 5.0), "nu": (0.45, 0.9)}
+        tlo, thi = train_bounds[pname]
         for ax in (ax_h, ax_c, ax_s):
             ax.set_xlim(plo, phi)
+            # shade extrapolation regions
+            if plo < tlo:
+                ax.axvspan(plo, tlo, color="0.88", zorder=0)
+            if phi > thi:
+                ax.axvspan(thi, phi, color="0.88", zorder=0)
+            # training boundary lines
+            for xb in [tlo, thi]:
+                if plo < xb < phi:
+                    ax.axvline(xb, color="0.55", lw=0.8, ls=":", zorder=1)
 
     # ── row titles (centre column) ────────────────────────────────────────────
     axes[0, 1].set_title("Crown height  $h_{crown}$",   pad=6)
@@ -132,8 +144,9 @@ def plot_sweep(save=True):
     fixed_str = (r"$s_{wale}{=}s_{course}{=}1.0$,  "
                  r"$p{=}1000\,\mathrm{Pa}$,  $\theta_{knit}{=}0°$"
                  "\n"
-                 r"non-swept: $E_1{=}4500\,\mathrm{N/m}$,  "
-                 r"$r{=}4.0$,  $\nu_{12}{=}0.675$")
+                 r"non-swept: $E_1{=}10500\,\mathrm{N/m}$,  "
+                 r"$r{=}3.0$,  $\nu_{12}{=}0.195$"
+                 r"  (dashed region = GP extrapolation)")
     fig.suptitle(
         r"Effect of material parameters on section outputs  (no cable)"
         "\n" + fixed_str,
