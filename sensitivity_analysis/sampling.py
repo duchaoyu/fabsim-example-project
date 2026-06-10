@@ -15,6 +15,7 @@ import pandas as pd
 from config import (
     PARAMS_NO_CABLE, PARAMS_CABLE, PARAMS_CABLE_ORIENT,
     PARAMS_MATERIAL_NO_CABLE, PARAMS_MATERIAL_CABLE,
+    PARAMS_MATERIAL_EXT_NO_CABLE, N_SAMPLES_MATERIAL_EXT,
     MOTIFS, HAS_CABLE, CABLE_AXES, N_SAMPLES, N_SAMPLES_ORIENT,
     N_SAMPLES_MATERIAL, RANDOM_SEED,
 )
@@ -145,6 +146,37 @@ def generate_material_samples(start_id: int = 1000, seed: int = RANDOM_SEED) -> 
             all_samples.append(s)
             sid += 1
     return all_samples
+
+
+def generate_material_ext_samples(start_id: int = 2000, seed: int = RANDOM_SEED) -> list:
+    """
+    LHS samples for the extended material study (no-cable only).
+    Parameterised with E1, E2 directly (covers wale-stiffer, course-stiffer,
+    and isotropic regimes).  r = E1/E2 is derived at run time for the FEM call.
+    IDs start at 2000 to avoid collision with original (0–999) and
+    material (1000–1999) sample sets.
+    """
+    df = lhs(N_SAMPLES_MATERIAL_EXT, PARAMS_MATERIAL_EXT_NO_CABLE,
+             seed=seed + 80 * 1000)
+    samples = []
+    for sid, (_, row) in enumerate(df.iterrows(), start=start_id):
+        E1 = float(row["E1"])
+        E2 = float(row["E2"])
+        samples.append({
+            "sample_id":  sid,
+            "group":      "material_ext_nocable",
+            "motif":      3,
+            "has_cable":  False,
+            "sf_wale":    float(row["sf_wale"]),
+            "sf_course":  float(row["sf_course"]),
+            "knit_dir":   float(row["knit_dir"]),
+            "pressure":   float(row["pressure"]),
+            "E1":         E1,
+            "E2":         E2,
+            "r":          E1 / E2,   # derived; stored for FEM call
+            "nu":         float(row["nu"]),
+        })
+    return samples
 
 
 if __name__ == "__main__":

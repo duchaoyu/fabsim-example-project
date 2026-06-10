@@ -95,6 +95,20 @@ PARAMS_MATERIAL_CABLE = {
     "nu":                 (0.45, 0.9),
 }
 
+# ── Extended material parameter bounds (E1/E2 surface study) ──────────────────
+# Uses E2 directly (not ratio r) to allow symmetric coverage of wale-stiffer
+# (E1>E2) and course-stiffer (E2>E1) regimes, and the isotropic line E1=E2.
+PARAMS_MATERIAL_EXT_NO_CABLE = {
+    "sf_wale":   (0.8, 1.4),
+    "sf_course": (0.8, 1.4),
+    "knit_dir":  (0.0, 90.0),
+    "pressure":  (200.0, 1200.0),
+    "E1":        (1000.0, 20000.0),
+    "E2":        (1000.0, 20000.0),
+    "nu":        (0.09, 0.3),
+}
+N_SAMPLES_MATERIAL_EXT = 500
+
 # ── Quality filter thresholds ─────────────────────────────────────────────────
 # Applied during FEA data generation to reject bad simulations.
 QUALITY_CROWN_MAX        = 2.0   # m  — above this → exploded
