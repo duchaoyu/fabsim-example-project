@@ -48,11 +48,14 @@ class ScalarSurrogate:
         self.gps         = {}
         self.metrics     = {}
 
-    def fit(self, df: pd.DataFrame) -> dict:
+    def fit(self, df: pd.DataFrame, output_cols=None) -> dict:
         """
-        Fit GPs. df must have columns = input_keys + SCALAR_OUTPUTS.
+        Fit GPs. df must have columns = input_keys + output_cols.
+        output_cols defaults to SCALAR_OUTPUTS from config.
         Returns dict of {output: {r2, rmse}}.
         """
+        if output_cols is None:
+            output_cols = SCALAR_OUTPUTS
         X = df[self.input_keys].values
         X_s = self.scaler_X.fit_transform(X)
 
@@ -62,7 +65,7 @@ class ScalarSurrogate:
             random_state=RANDOM_SEED,
         )
 
-        for col in SCALAR_OUTPUTS:
+        for col in output_cols:
             if col not in df.columns:
                 continue
             y = df[col].values
