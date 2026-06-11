@@ -97,9 +97,8 @@ def plot_figS(save=True):
     n_rows = len(PANELS)
     n_cols = len(E2_OVER_E1_SLICES)
     fig, axes = plt.subplots(n_rows, n_cols,
-                             figsize=(4.2 * n_cols, 4.0 * n_rows),
-                             constrained_layout=True)
-    fig.get_layout_engine().set(rect=(0, 0, 1, 0.88))
+                             figsize=(4.2 * n_cols, 4.0 * n_rows))
+    fig.subplots_adjust(top=0.92, hspace=0.35, wspace=0.15)
 
     # Pre-load merged dataframe for vlims
     _dfA_r = pd.read_csv(RESULTS_A_CSV)
@@ -181,7 +180,7 @@ def plot_figS(save=True):
         r"Fig S — $E_1$ × $\nu_{12}$ response surfaces  (3 anisotropy slices)"
         "\n"
         r"$s_f{=}1.1$,  $p{=}1000\,\mathrm{Pa}$,  $\theta_\mathrm{knit}{=}0°$",
-        fontsize=10, y=0.97,
+        fontsize=10, y=0.995,
     )
     if save:
         path = os.path.join(FIG_DIR, "figS_nu_E1_surface.pdf")
