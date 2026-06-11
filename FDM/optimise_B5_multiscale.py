@@ -504,8 +504,9 @@ def print_comparison(all_results):
                 if r is None: continue
                 treg = next((t for t in r.get("tension_regions",[])
                              if t["region_id"]==reg_id), {})
-                row_s += f"  {'Tw='+f\"{treg.get('T_wale_mean',float('nan')):.0f}\"}" \
-                         f"/Tc={treg.get('T_course_mean',float('nan')):.0f} N/m  "
+                tw_str = f"{treg.get('T_wale_mean', float('nan')):.0f}"
+                tc_str = f"{treg.get('T_course_mean', float('nan')):.0f}"
+                row_s += f"  Tw={tw_str}/Tc={tc_str} N/m  "
             print(row_s)
 
     # ── Conclusion ──
