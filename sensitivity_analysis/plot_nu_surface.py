@@ -99,7 +99,7 @@ def plot_figS(save=True):
     fig, axes = plt.subplots(n_rows, n_cols,
                              figsize=(4.2 * n_cols, 4.0 * n_rows),
                              constrained_layout=True)
-    fig.get_layout_engine().set(rect=(0, 0, 1, 0.93))
+    fig.get_layout_engine().set(rect=(0, 0, 1, 0.88))
 
     # Pre-load merged dataframe for vlims
     _dfA_r = pd.read_csv(RESULTS_A_CSV)
