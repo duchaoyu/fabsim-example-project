@@ -126,11 +126,13 @@ def _section_metrics(sample_id: int) -> dict:
 
     metrics = {}
     for h_key, r_key, ax in [("H_mean_x0", "r_x0", 0), ("H_mean_y0", "r_y0", 1)]:
-        pos, z_mm, _ = _slice_plane(verts, _FACES, H, fixed_axis=ax)
+        pos, z_mm, H_sec = _slice_plane(verts, _FACES, H, fixed_axis=ax)
         if len(pos) < 5:
             metrics[h_key] = metrics[r_key] = np.nan
             continue
-        metrics[h_key] = _profile_curvature(pos, z_mm)
+        # Use mean curvature already computed per-vertex (cotangent weights) and
+        # interpolated at edge-section crossings — avoids noisy profile d²z/ds²
+        metrics[h_key] = float(np.nanmean(H_sec))
         metrics[r_key] = _profile_roughness(z_mm)
 
     sdf      = pd.read_csv(spath).sort_values("face")
