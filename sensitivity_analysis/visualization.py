@@ -170,77 +170,105 @@ def plot_pressure_curve(surrogate_m1: ScalarSurrogate,
     return fig
 
 
-# ── Figure 3: Sobol heatmap (ST) ──────────────────────────────────────────────
-def plot_sobol(sobol_results: dict, save: bool = True):
-    """sobol_results: {group: {output: DataFrame(index=params, cols=S1,ST,...)}}
-    One heatmap per group: rows=parameters, cols=outputs, colour=ST.
-    """
+# ── Shared helpers for Sobol heatmap / regime ─────────────────────────────────
+_CABLE_OUTPUTS_SET = {"cable_wale_tension", "cable_course_tension"}
+
+def _sobol_is_masked(p, o):
+    return ((p == "cable_wale_lrest"  and o == "cable_course_tension") or
+            (p == "cable_course_lrest" and o == "cable_wale_tension"))
+
+def _sobol_active_outputs(group_results, has_cable):
+    return [
+        col for col, df in group_results.items()
+        if df["ST"].clip(0).max() > 0.02
+        and not (col in _CABLE_OUTPUTS_SET and not has_cable)
+    ]
+
+def _sobol_fig_axes(n_p, n_o):
+    """Return (fig, ax) sized to fit an n_p × n_o heatmap cell grid."""
+    cell_w, cell_h = 0.90, 0.82
+    pad_top, pad_bot, pad_left, pad_right = 1.0, 0.9, 1.6, 0.5
+    fig_w = n_o * cell_w + 0.4 + pad_left + pad_right
+    fig_h = n_p * cell_h + 0.6 + pad_top  + pad_bot
+    fig, ax = plt.subplots(figsize=(fig_w, fig_h), constrained_layout=False)
+    fig.subplots_adjust(left=pad_left/fig_w, right=1 - pad_right/fig_w,
+                        bottom=pad_bot/fig_h, top=1 - pad_top/fig_h)
+    return fig, ax, fig_w, fig_h, pad_left, pad_bot
+
+def _sobol_decorate_ax(ax, param_names, active_outputs):
+    n_p, n_o = len(param_names), len(active_outputs)
+    ax.set_xticks(range(n_o))
+    ax.set_xticklabels([OUTPUT_LABELS.get(o, o) for o in active_outputs],
+                       rotation=30, ha="right", fontsize=11)
+    ax.set_yticks(range(n_p))
+    ax.set_yticklabels([PARAM_LABELS.get(p, p) for p in param_names],
+                       fontsize=11)
+    ax.tick_params(length=0)
+    ax.set_xticks(np.arange(-0.5, n_o), minor=True)
+    ax.set_yticks(np.arange(-0.5, n_p), minor=True)
+    ax.grid(which="minor", color="white", linewidth=1.2)
+    ax.tick_params(which="minor", bottom=False, left=False)
+
+def _sobol_hatch_mask(ax, mask):
     from matplotlib.patches import Rectangle as _Rect
+    n_p, n_o = mask.shape
+    for i in range(n_p):
+        for j in range(n_o):
+            if mask[i, j]:
+                ax.add_patch(_Rect(
+                    (j - 0.5, i - 0.5), 1, 1,
+                    facecolor="lightgrey", hatch="////",
+                    edgecolor="grey", linewidth=0.0, zorder=2,
+                ))
+
+def _sobol_colorbar(fig, im, fig_w, fig_h, pad_left, label):
     import matplotlib.ticker as ticker
+    cbar_ax = fig.add_axes([pad_left/fig_w + 0.05, 0.12/fig_h, 0.5, 0.12/fig_h])
+    cbar = fig.colorbar(im, cax=cbar_ax, orientation="horizontal")
+    cbar.set_ticks([0, 0.25, 0.5, 0.75, 1.0])
+    cbar.ax.tick_params(labelsize=10)
+    cbar.ax.xaxis.set_major_formatter(ticker.FormatStrFormatter("%.2f"))
+    cbar.set_label(label, fontsize=11)
 
-    _CABLE_OUTPUTS = {"cable_wale_tension", "cable_course_tension"}
 
-    def _is_masked(p, o):
-        return ((p == "cable_wale_lrest"  and o == "cable_course_tension") or
-                (p == "cable_course_lrest" and o == "cable_wale_tension"))
+# ── Figure 3: Sobol heatmap (ST or S1) ────────────────────────────────────────
+def plot_sobol(sobol_results: dict, index: str = "ST", save: bool = True):
+    """One heatmap per group: rows=parameters, cols=outputs, colour=ST or S1.
+
+    sobol_results: {group: {output: DataFrame(index=params, cols=S1,ST,S1_conf,ST_conf)}}
+    """
+    assert index in ("ST", "S1")
+    conf_col = "ST_conf" if index == "ST" else "S1_conf"
+    cbar_label = (r"Total-order Sobol index $S_T$" if index == "ST"
+                  else r"First-order Sobol index $S_1$")
 
     for group, group_results in sobol_results.items():
         has_cable = "cable" in group and "nocable" not in group
-
-        # Collect active outputs (non-trivial ST, and drop cable outputs in no-cable groups)
-        active_outputs = [
-            col for col, df in group_results.items()
-            if df["ST"].clip(0).max() > 0.02
-            and not (col in _CABLE_OUTPUTS and not has_cable)
-        ]
+        active_outputs = _sobol_active_outputs(group_results, has_cable)
         if not active_outputs:
             continue
 
-        # Use first active output to get param names
         param_names = list(group_results[active_outputs[0]].index)
         n_p, n_o = len(param_names), len(active_outputs)
 
-        # Build ST matrix and conf matrix
         mat      = np.zeros((n_p, n_o))
         conf_mat = np.zeros((n_p, n_o))
         mask     = np.zeros((n_p, n_o), dtype=bool)
         for j, col in enumerate(active_outputs):
             df = group_results[col]
             for i, p in enumerate(param_names):
-                if _is_masked(p, col):
+                if _sobol_is_masked(p, col):
                     mask[i, j] = True
                     continue
-                mat[i, j]      = max(0, df.loc[p, "ST"])
-                conf_mat[i, j] = df.loc[p, "ST_conf"]
+                mat[i, j]      = max(0, df.loc[p, index])
+                conf_mat[i, j] = df.loc[p, conf_col]
         mat = np.where(mask, np.nan, mat)
 
-        # Figure sizing
-        cell_w, cell_h = 0.90, 0.82
-        pad_top, pad_bot, pad_left, pad_right = 1.0, 0.9, 1.6, 0.5
-        panel_w = n_o * cell_w + 0.4
-        panel_h = n_p * cell_h + 0.6
-        fig_w = panel_w + pad_left + pad_right
-        fig_h = panel_h + pad_top  + pad_bot
-
-        fig, ax = plt.subplots(figsize=(fig_w, fig_h), constrained_layout=False)
-        fig.subplots_adjust(left=pad_left/fig_w, right=1 - pad_right/fig_w,
-                            bottom=pad_bot/fig_h, top=1 - pad_top/fig_h)
-
-        cmap = plt.cm.YlOrRd
-        im = ax.imshow(mat, cmap=cmap, vmin=0.0, vmax=1.0,
+        fig, ax, fig_w, fig_h, pad_left, pad_bot = _sobol_fig_axes(n_p, n_o)
+        im = ax.imshow(mat, cmap=plt.cm.YlOrRd, vmin=0.0, vmax=1.0,
                        aspect="auto", interpolation="nearest")
+        _sobol_hatch_mask(ax, mask)
 
-        # Hatched overlay for physically masked cells
-        for i in range(n_p):
-            for j in range(n_o):
-                if mask[i, j]:
-                    ax.add_patch(_Rect(
-                        (j - 0.5, i - 0.5), 1, 1,
-                        facecolor="lightgrey", hatch="////",
-                        edgecolor="grey", linewidth=0.0, zorder=2,
-                    ))
-
-        # Annotate: ST value + ±conf
         for i in range(n_p):
             for j in range(n_o):
                 if mask[i, j]:
@@ -254,31 +282,113 @@ def plot_sobol(sobol_results: dict, save: bool = True):
                         ha="center", va="center",
                         fontsize=8, color=color)
 
-        ax.set_xticks(range(n_o))
-        ax.set_xticklabels([OUTPUT_LABELS.get(o, o) for o in active_outputs],
-                           rotation=30, ha="right", fontsize=11)
-        ax.set_yticks(range(n_p))
-        ax.set_yticklabels([PARAM_LABELS.get(p, p) for p in param_names],
-                           fontsize=11)
-        ax.tick_params(length=0)
-        ax.set_xticks(np.arange(-0.5, n_o), minor=True)
-        ax.set_yticks(np.arange(-0.5, n_p), minor=True)
-        ax.grid(which="minor", color="white", linewidth=1.2)
-        ax.tick_params(which="minor", bottom=False, left=False)
+        _sobol_decorate_ax(ax, param_names, active_outputs)
+        _sobol_colorbar(fig, im, fig_w, fig_h, pad_left, cbar_label)
+        fig.suptitle(GROUP_TITLES.get(group, group), fontsize=12, y=1.01)
 
-        # Colorbar
-        cbar_ax = fig.add_axes([pad_left/fig_w + 0.05,
-                                0.12/fig_h, 0.5, 0.12/fig_h])
-        cbar = fig.colorbar(im, cax=cbar_ax, orientation="horizontal")
-        cbar.set_ticks([0, 0.25, 0.5, 0.75, 1.0])
-        cbar.ax.tick_params(labelsize=10)
-        cbar.ax.xaxis.set_major_formatter(ticker.FormatStrFormatter("%.2f"))
-        cbar.set_label(r"Total-order Sobol index $S_T$", fontsize=11)
+        if save:
+            suffix = f"_{index}" if index != "ST" else ""
+            _save(fig, os.path.join(FIG_DIR, f"fig3_sobol_{group}{suffix}"))
+
+
+# ── Figure 3 regime: Sobol regime map per group ───────────────────────────────
+def plot_sobol_regime(sobol_results: dict, save: bool = True):
+    """Regime map per group: colour blend = S1 (blue) + (ST-S1) (orange) + (1-ST) (grey).
+
+    sobol_results: {group: {output: {"df": DataFrame, "S2": np.ndarray or None}}}
+    where df has index=param_names, cols=[S1, ST, S1_conf, ST_conf].
+    """
+    from matplotlib.patches import Patch
+
+    BLUE   = np.array([0.18, 0.45, 0.73])
+    ORANGE = np.array([0.96, 0.50, 0.06])
+    GREY   = np.array([0.88, 0.88, 0.88])
+
+    for group, group_results in sobol_results.items():
+        has_cable = "cable" in group and "nocable" not in group
+
+        # active_outputs filtered on ST in the "df" sub-key
+        active_outputs = [
+            col for col, entry in group_results.items()
+            if entry["df"]["ST"].clip(0).max() > 0.02
+            and not (col in _CABLE_OUTPUTS_SET and not has_cable)
+        ]
+        if not active_outputs:
+            continue
+
+        param_names = list(group_results[active_outputs[0]]["df"].index)
+        n_p, n_o = len(param_names), len(active_outputs)
+
+        rgb_arr = np.zeros((n_p, n_o, 3))
+        st_mat  = np.zeros((n_p, n_o))
+        s1_mat  = np.zeros((n_p, n_o))
+        s2_data = {}  # (i,j) -> dominant partner label
+        mask    = np.zeros((n_p, n_o), dtype=bool)
+
+        for j, col in enumerate(active_outputs):
+            df  = group_results[col]["df"]
+            S2  = group_results[col]["S2"]   # shape (n_p, n_p) or None
+            for i, p in enumerate(param_names):
+                if _sobol_is_masked(p, col):
+                    mask[i, j] = True
+                    rgb_arr[i, j] = GREY * 0.7
+                    continue
+                s1  = float(np.clip(df.loc[p, "S1"], 0, 1))
+                st  = float(np.clip(df.loc[p, "ST"], 0, 1))
+                st  = max(st, s1)
+                st_mat[i, j] = st
+                s1_mat[i, j] = s1
+                rgb_arr[i, j] = np.clip(
+                    s1 * BLUE + (st - s1) * ORANGE + (1 - st) * GREY, 0, 1
+                )
+                # Dominant S2 partner
+                if S2 is not None and st - s1 > 0.05:
+                    s2_vec = S2[i].copy()
+                    s2_vec[i] = -1
+                    best = int(np.argmax(s2_vec))
+                    if s2_vec[best] > 0.02:
+                        s2_data[(i, j)] = "w. " + PARAM_LABELS.get(
+                            param_names[best], param_names[best])
+
+        fig, ax, fig_w, fig_h, pad_left, pad_bot = _sobol_fig_axes(n_p, n_o)
+        ax.imshow(rgb_arr, aspect="auto", interpolation="nearest",
+                  extent=(-0.5, n_o - 0.5, n_p - 0.5, -0.5))
+        _sobol_hatch_mask(ax, mask)
+
+        for i in range(n_p):
+            for j in range(n_o):
+                if mask[i, j]:
+                    continue
+                st, s1 = st_mat[i, j], s1_mat[i, j]
+                lum = (0.299 * rgb_arr[i, j, 0] + 0.587 * rgb_arr[i, j, 1]
+                       + 0.114 * rgb_arr[i, j, 2])
+                fc = "white" if lum < 0.55 else "black"
+                ax.text(j, i - 0.20, r"$S_T$={:.2f}".format(st),
+                        ha="center", va="center", fontsize=9,
+                        color=fc, fontweight="bold")
+                ax.text(j, i + 0.15, r"$S_1$={:.2f}".format(s1),
+                        ha="center", va="center", fontsize=8, color=fc)
+                partner = s2_data.get((i, j), "")
+                if partner:
+                    ax.text(j, i + 0.38, partner,
+                            ha="center", va="center", fontsize=7.5,
+                            color=fc, style="italic")
+
+        _sobol_decorate_ax(ax, param_names, active_outputs)
+
+        legend_elements = [
+            Patch(facecolor=BLUE,   label=r"Direct ($S_1/S_T$ large)"),
+            Patch(facecolor=ORANGE, label=r"Interaction ($S_1/S_T$ small)"),
+            Patch(facecolor=GREY,   label=r"Negligible ($S_T \to 0$)"),
+        ]
+        fig.legend(handles=legend_elements, loc="lower center", ncol=3,
+                   fontsize=10, frameon=False,
+                   bbox_to_anchor=(0.5, -0.04))
 
         fig.suptitle(GROUP_TITLES.get(group, group), fontsize=12, y=1.01)
 
         if save:
-            _save(fig, os.path.join(FIG_DIR, f"fig3_sobol_{group}"))
+            _save(fig, os.path.join(FIG_DIR, f"fig3_sobol_{group}_regime"))
 
 
 # ── Figure 4: cable vs no-cable curvature field ────────────────────────────────

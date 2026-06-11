@@ -56,16 +56,16 @@ n_circ = len(circs)
 circ_cmap = plt.get_cmap("plasma")
 for i, (name, vids) in enumerate(circs.items()):
     pts = V[vids]
-    color = circ_cmap(i / (n_circ - 1))
+    color = circ_cmap(i / max(n_circ - 1, 1))
     ax.plot(pts[:, 0], pts[:, 1], pts[:, 2],
             color=color, linewidth=1.4, alpha=0.85, zorder=4)
 
 # Dummy entries for legend
 ax.plot([], [], [], color="grey",   linewidth=1.8, label="spokes (×8)")
-ax.plot([], [], [], color="purple", linewidth=1.4, label="circular (×14)")
+ax.plot([], [], [], color="purple", linewidth=1.4, label="circular K<0 (×6)")
 
 ax.set_xlabel("x (m)"); ax.set_ylabel("y (m)"); ax.set_zlabel("z (m)")
-ax.set_title("C5 remeshed smooth (Ø1.2 m) — spokes + circular cables")
+ax.set_title("C5 remeshed smooth (Ø1.2 m) — spokes + circular cables (K<0)")
 ax.legend(fontsize=7, loc="upper left", ncol=2)
 ax.set_box_aspect([1, 1, 0.55])
 ax.view_init(elev=30, azim=-60)
