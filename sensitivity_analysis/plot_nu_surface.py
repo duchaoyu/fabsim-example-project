@@ -178,8 +178,7 @@ def plot_figS(save=True):
 
     fig.suptitle(
         r"Fig S — $E_1$ × $\nu_{12}$ response surfaces  (3 anisotropy slices)"
-        "\n"
-        r"$s_f{=}1.1$,  $p{=}1000\,\mathrm{Pa}$,  $\theta_\mathrm{knit}{=}0°$",
+        r"     $s_f{=}1.1$,  $p{=}1000\,\mathrm{Pa}$,  $\theta_\mathrm{knit}{=}0°$",
         fontsize=10, y=0.995,
     )
     if save:
