@@ -180,7 +180,7 @@ def plot_figS(save=True):
         r"Fig S — $E_1$ × $\nu_{12}$ response surfaces  (3 anisotropy slices)"
         "\n"
         r"$s_f{=}1.1$,  $p{=}1000\,\mathrm{Pa}$,  $\theta_\mathrm{knit}{=}0°$",
-        fontsize=10, y=1.01,
+        fontsize=10, y=1.04,
     )
     if save:
         path = os.path.join(FIG_DIR, "figS_nu_E1_surface.pdf")
