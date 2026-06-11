@@ -218,9 +218,9 @@ def plot_figT(save=True):
         row, col = divmod(idx, ncols)
         ax = axes[row, col]
 
-        mat = np.full((len(nu_r), len(e2r_vals)), np.nan)
-        for i, nv in enumerate(nu_r):
-            for j, e2r in enumerate(e2r_vals):
+        mat = np.full((len(e2r_vals), len(nu_r)), np.nan)
+        for i, e2r in enumerate(e2r_vals):
+            for j, nv in enumerate(nu_r):
                 rows = df[(df["_e2r"] == e2r) & (df["_nu"] == nv)]
                 if len(rows) == 1 and not pd.isna(rows[key].values[0]):
                     mat[i, j] = rows[key].values[0] * scale
@@ -230,7 +230,7 @@ def plot_figT(save=True):
             ax.set_visible(False)
             continue
 
-        x_fine, y_fine, Z_fine = _smooth(mat, e2r_vals, nu_r)
+        x_fine, y_fine, Z_fine = _smooth(mat, nu_r, e2r_vals)
         vmin = np.nanpercentile(valid, 2)
         vmax = np.nanpercentile(valid, 98)
 
@@ -240,15 +240,15 @@ def plot_figT(save=True):
         ax.contour(x_fine, y_fine, Z_fine, levels=6,
                    colors="white", linewidths=0.5, alpha=0.45)
 
-        ax.set_xlabel(r"$E_2/E_1$", labelpad=3)
-        ax.set_ylabel(r"$\nu_{12}$", labelpad=3)
+        ax.set_xlabel(r"$\nu_{12}$", labelpad=3)
+        ax.set_ylabel(r"$E_2/E_1$", labelpad=3)
         ax.set_title(f"{title}  ({unit})", pad=5)
-        ax.set_xlim(e2r_vals[0], e2r_vals[-1])
-        ax.set_ylim(nu_r[0], nu_r[-1])
-        ax.set_xticks(e2r_vals)
-        ax.set_xticklabels([f"{v:.2f}" for v in e2r_vals], fontsize=7, rotation=45)
-        ax.set_yticks(nu_r)
-        ax.set_yticklabels([f"{v:.2f}" for v in nu_r], fontsize=7)
+        ax.set_xlim(nu_r[0], nu_r[-1])
+        ax.set_ylim(e2r_vals[0], e2r_vals[-1])
+        ax.set_xticks(nu_r)
+        ax.set_xticklabels([f"{v:.2f}" for v in nu_r], fontsize=7, rotation=45)
+        ax.set_yticks(e2r_vals)
+        ax.set_yticklabels([f"{v:.2f}" for v in e2r_vals], fontsize=7)
 
         cb = fig.colorbar(pcm, ax=ax, pad=0.02, aspect=20)
         cb.set_label(unit, fontsize=7)
