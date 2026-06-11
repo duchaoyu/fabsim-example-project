@@ -14,7 +14,10 @@ import numpy as np
 import pandas as pd
 from config import (
     PARAMS_NO_CABLE, PARAMS_CABLE, PARAMS_CABLE_ORIENT,
-    MOTIFS, HAS_CABLE, CABLE_AXES, N_SAMPLES, N_SAMPLES_ORIENT, RANDOM_SEED,
+    PARAMS_MATERIAL_NO_CABLE, PARAMS_MATERIAL_CABLE,
+    PARAMS_MATERIAL_EXT_NO_CABLE, N_SAMPLES_MATERIAL_EXT,
+    MOTIFS, HAS_CABLE, CABLE_AXES, N_SAMPLES, N_SAMPLES_ORIENT,
+    N_SAMPLES_MATERIAL, RANDOM_SEED,
 )
 
 
@@ -109,6 +112,73 @@ def generate_orient_samples(start_id: int = 600, seed: int = RANDOM_SEED) -> lis
     return all_samples
 
 
+def generate_material_samples(start_id: int = 1000, seed: int = RANDOM_SEED) -> list:
+    """
+    Generate LHS samples for the material sensitivity study.
+
+    Two groups: material_nocable (7D), material_cable (9D).
+    E1 and r = E1/E2 are sampled continuously; E2 is derived at run time.
+    Sample IDs start at start_id (default 1000) to avoid collision with
+    the original motif-based samples (0–999).
+    """
+    all_samples = []
+    sid = start_id
+    for gi, has_cable in enumerate([False, True]):
+        bounds = PARAMS_MATERIAL_CABLE if has_cable else PARAMS_MATERIAL_NO_CABLE
+        df = lhs(N_SAMPLES_MATERIAL, bounds, seed=seed + (gi + 40) * 1000)
+        for _, row in df.iterrows():
+            s = {
+                "sample_id":  sid,
+                "group":      f"material_{'cable' if has_cable else 'nocable'}",
+                "motif":      3,       # fallback only; overridden by E1/r/nu
+                "has_cable":  has_cable,
+                "sf_wale":    float(row["sf_wale"]),
+                "sf_course":  float(row["sf_course"]),
+                "knit_dir":   float(row["knit_dir"]),
+                "pressure":   float(row["pressure"]),
+                "E1":         float(row["E1"]),
+                "r":          float(row["r"]),
+                "nu":         float(row["nu"]),
+            }
+            if has_cable:
+                s["cable_wale_lrest"]   = float(row["cable_wale_lrest"])
+                s["cable_course_lrest"] = float(row["cable_course_lrest"])
+            all_samples.append(s)
+            sid += 1
+    return all_samples
+
+
+def generate_material_ext_samples(start_id: int = 2000, seed: int = RANDOM_SEED) -> list:
+    """
+    LHS samples for the extended material study (no-cable only).
+    Parameterised with E1, E2 directly (covers wale-stiffer, course-stiffer,
+    and isotropic regimes).  r = E1/E2 is derived at run time for the FEM call.
+    IDs start at 2000 to avoid collision with original (0–999) and
+    material (1000–1999) sample sets.
+    """
+    df = lhs(N_SAMPLES_MATERIAL_EXT, PARAMS_MATERIAL_EXT_NO_CABLE,
+             seed=seed + 80 * 1000)
+    samples = []
+    for sid, (_, row) in enumerate(df.iterrows(), start=start_id):
+        E1 = float(row["E1"])
+        E2 = float(row["E2"])
+        samples.append({
+            "sample_id":  sid,
+            "group":      "material_ext_nocable",
+            "motif":      3,
+            "has_cable":  False,
+            "sf_wale":    float(row["sf_wale"]),
+            "sf_course":  float(row["sf_course"]),
+            "knit_dir":   float(row["knit_dir"]),
+            "pressure":   float(row["pressure"]),
+            "E1":         E1,
+            "E2":         E2,
+            "r":          E1 / E2,   # derived; stored for FEM call
+            "nu":         float(row["nu"]),
+        })
+    return samples
+
+
 if __name__ == "__main__":
     samples = generate_all_samples()
     print(f"Total samples: {len(samples)}")
@@ -121,4 +191,11 @@ if __name__ == "__main__":
     print(f"Orient samples: {len(orient)}")
     for group in set(s["group"] for s in orient):
         n = sum(1 for s in orient if s["group"] == group)
+        print(f"  {group}: {n}")
+
+    print()
+    material = generate_material_samples()
+    print(f"Material samples: {len(material)}")
+    for group in set(s["group"] for s in material):
+        n = sum(1 for s in material if s["group"] == group)
         print(f"  {group}: {n}")

@@ -1,2 +1,2 @@
-crown_height,max_stress,mean_stress,cable_tension,boundary_reaction_mean
-0.12893589,1541.01578326,1452.26478192,0.00000000,85.08125346
+crown_height,max_stress,mean_stress,cable_wale_tension,cable_course_tension,boundary_reaction_mean
+0.10785463,1510.06410487,1070.14179518,14.94844967,17.89865613,62.18734829

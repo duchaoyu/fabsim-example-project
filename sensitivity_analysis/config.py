@@ -6,13 +6,12 @@ _REPO_DIR = os.path.dirname(_SA_DIR)
 
 MESH_PATH = os.environ.get(
     "CIRCULAR_FLAT_MESH",
-    "/Users/duch/Documents/PhD/knit/2024_prototypes/callibration/"
-    "flat_no_shortrows/sensitivity_analysis/circular_flat.off",
+    os.path.join(_REPO_DIR, "data", "circular_flat.off"),
 )
 
 FEM_BINARY = os.environ.get(
     "FEM_BINARY",
-    os.path.join(_REPO_DIR, "build-mac", "fem_batch_sensitivity"),
+    os.path.join(_REPO_DIR, "build", "fem_batch_sensitivity"),
 )
 
 # ── Parameter bounds ──────────────────────────────────────────────────────────
@@ -37,11 +36,28 @@ PARAMS_CABLE = {
 }
 
 # ── Discrete parameters ───────────────────────────────────────────────────────
-MOTIFS    = [1, 2]
-HAS_CABLE = [False, True]
+MOTIFS     = [1, 2]
+HAS_CABLE  = [False, True]
+CABLE_AXES = ["wale", "course"]
 
 # Samples per group (4 groups × N_SAMPLES = total FEA runs)
 N_SAMPLES = 150
+
+# Samples per group for cable orientation study
+N_SAMPLES_ORIENT = 150
+
+# Parameter bounds for the cable orientation study
+# L_rest is a dimensionless ratio; actual rest length = ratio × L_flat
+PARAMS_CABLE_ORIENT = {
+    "sf_wale":   (0.8, 1.4),
+    "sf_course": (0.8, 1.4),
+    "knit_dir":  (0.0, 90.0),
+    "pressure":  (200.0, 1200.0),
+    "L_rest":    (0.90, 1.0),
+}
+
+# Samples per group for the material sensitivity study (7D/9D parameter space)
+N_SAMPLES_MATERIAL = 500
 
 # ── Material parameters per motif ─────────────────────────────────────────────
 # motif 1: course-stiff (E2/E1=2.50), motif 2: less course-stiff (E2/E1=1.60)
@@ -52,6 +68,51 @@ MOTIF_PARAMS = {
 
 # ── Cable ─────────────────────────────────────────────────────────────────────
 CABLE_EA = 150000.0  # N — steel cable (~1 mm diameter, E=200 GPa)
+
+# ── Material sensitivity study parameter bounds ───────────────────────────────
+# Wale-stiffer regime only: E1 > E2, r = E1/E2 ∈ (3, 5).
+# E1 in N/m (2D membrane modulus = E_vol × thickness).
+# E1=1000–8000 N/m ≈ 1–8 MPa for t=1 mm.
+PARAMS_MATERIAL_NO_CABLE = {
+    "sf_wale":   (0.8, 1.4),
+    "sf_course": (0.8, 1.4),
+    "knit_dir":  (0.0, 90.0),
+    "pressure":  (200.0, 1200.0),
+    "E1":        (1000.0, 8000.0),
+    "r":         (3.0, 5.0),
+    "nu":        (0.45, 0.9),
+}
+
+PARAMS_MATERIAL_CABLE = {
+    "sf_wale":            (0.8, 1.4),
+    "sf_course":          (0.8, 1.4),
+    "knit_dir":           (0.0, 90.0),
+    "pressure":           (200.0, 1200.0),
+    "cable_wale_lrest":   (0.90, 1.0),
+    "cable_course_lrest": (0.90, 1.0),
+    "E1":                 (1000.0, 8000.0),
+    "r":                  (3.0, 5.0),
+    "nu":                 (0.45, 0.9),
+}
+
+# ── Extended material parameter bounds (E1/E2 surface study) ──────────────────
+# Uses E2 directly (not ratio r) to allow symmetric coverage of wale-stiffer
+# (E1>E2) and course-stiffer (E2>E1) regimes, and the isotropic line E1=E2.
+PARAMS_MATERIAL_EXT_NO_CABLE = {
+    "sf_wale":   (0.8, 1.4),
+    "sf_course": (0.8, 1.4),
+    "knit_dir":  (0.0, 90.0),
+    "pressure":  (200.0, 1200.0),
+    "E1":        (1000.0, 20000.0),
+    "E2":        (1000.0, 20000.0),
+    "nu":        (0.09, 0.3),
+}
+N_SAMPLES_MATERIAL_EXT = 500
+
+# ── Quality filter thresholds ─────────────────────────────────────────────────
+# Applied during FEA data generation to reject bad simulations.
+QUALITY_CROWN_MAX        = 2.0   # m  — above this → exploded
+QUALITY_STRESS_RATIO_MAX = 10.0  # max_stress/mean_stress — above this → unsmooth/localised
 
 # ── Data output ───────────────────────────────────────────────────────────────
 DATA_DIR = os.path.join(_SA_DIR, "data")

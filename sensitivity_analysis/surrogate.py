@@ -24,34 +24,38 @@ from config import (
 )
 
 # Outputs that span a large dynamic range — fit log(y) instead of y
-_LOG_OUTPUTS = {"H_mean_x0", "H_mean_y0"}
+_LOG_OUTPUTS = {"H_mean_x0", "H_mean_y0", "cable_wale_tension", "cable_course_tension"}
 
 
 def _make_kernel():
     return ConstantKernel(1.0) * Matern(nu=2.5) + WhiteKernel(1e-4)
 
 
-def _input_keys(has_cable):
-    bounds = PARAMS_CABLE if has_cable else PARAMS_NO_CABLE
-    return list(bounds.keys())
+def _input_keys(has_cable: bool, bounds: dict = None) -> list:
+    if bounds is not None:
+        return list(bounds.keys())
+    return list((PARAMS_CABLE if has_cable else PARAMS_NO_CABLE).keys())
 
 
 class ScalarSurrogate:
     """One GP per scalar output for a single (motif, cable) group."""
 
-    def __init__(self, has_cable: bool):
+    def __init__(self, has_cable: bool, bounds: dict = None):
         self.has_cable   = has_cable
-        self.input_keys  = _input_keys(has_cable)
+        self.input_keys  = _input_keys(has_cable, bounds)
         self.scaler_X    = StandardScaler()
         self.scalers_y   = {}
         self.gps         = {}
         self.metrics     = {}
 
-    def fit(self, df: pd.DataFrame) -> dict:
+    def fit(self, df: pd.DataFrame, output_cols=None) -> dict:
         """
-        Fit GPs. df must have columns = input_keys + SCALAR_OUTPUTS.
+        Fit GPs. df must have columns = input_keys + output_cols.
+        output_cols defaults to SCALAR_OUTPUTS from config.
         Returns dict of {output: {r2, rmse}}.
         """
+        if output_cols is None:
+            output_cols = SCALAR_OUTPUTS
         X = df[self.input_keys].values
         X_s = self.scaler_X.fit_transform(X)
 
@@ -61,7 +65,7 @@ class ScalarSurrogate:
             random_state=RANDOM_SEED,
         )
 
-        for col in SCALAR_OUTPUTS:
+        for col in output_cols:
             if col not in df.columns:
                 continue
             y = df[col].values
