@@ -242,7 +242,7 @@ def optimise_one(diameter, motif, pressure, maxiter, cable_paths_dict):
     cable_names      = list(cable_paths_dict.keys())
     cable_paths_list = list(cable_paths_dict.values())
     n_cables         = len(cable_paths_list)
-    cable_ea         = 157000.0
+    cable_ea         = 157000.0 * (diameter / 1.2)   # scale ∝ D for geometric similarity
     print(f"  Cables: {n_cables} sections  EA={cable_ea:.0f} N  pressure={pressure} Pa")
 
     R = fem_span / 2
@@ -342,6 +342,7 @@ def optimise_one(diameter, motif, pressure, maxiter, cable_paths_dict):
              "sf_wale": float(sf_w[r]), "sf_course": float(sf_c[r])}
             for r in range(9)
         ],
+        "cable_ea":        cable_ea,
         "cables": [
             {"name": cable_names[i], "rest_scale": float(scales[i])}
             for i in range(n_cables)
@@ -395,8 +396,9 @@ def postprocess_scale(diameter):
         knit_dirs = [reg["knit_dir_deg"] for reg in d["regions"]]
         scales    = [c["rest_scale"]     for c in d["cables"]]
 
+        ea = d.get("cable_ea", 157000.0 * (diameter / 1.2))
         out = run_fem(mesh_path, sf_w, sf_c, knit_dirs, d["pressure_pa"], d["motif"],
-                      region_map_path, cable_paths_list, 157000.0,
+                      region_map_path, cable_paths_list, ea,
                       cable_rest_scales=scales, keep_stress=True)
         if out and "_stress_path" in out and os.path.exists(out["_stress_path"]):
             shutil.copy(out["_stress_path"], stress_path)
@@ -439,7 +441,7 @@ def postprocess_scale(diameter):
 # ── Comparison tables ──────────────────────────────────────────────────────────
 def print_comparison(all_results):
     print(f"\n{'='*80}")
-    print(f"  B5 SCALE COMPARISON  (pressure=1000 Pa, motif=1, cable EA=157000 N)")
+    print(f"  B5 SCALE COMPARISON  (pressure=1000 Pa, motif=1, cable EA scaled ∝ D)")
     print(f"{'='*80}")
 
     # ── Shape / convergence ──
@@ -551,7 +553,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--motif",       type=int,   default=1)
     parser.add_argument("--pressure",    type=float, default=1000.0)
-    parser.add_argument("--maxiter",     type=int,   default=200)
+    parser.add_argument("--maxiter",     type=int,   default=500)
     parser.add_argument("--diameters",   type=float, nargs="+", default=ALL_DIAMETERS)
     parser.add_argument("--postprocess", action="store_true",
                         help="Patch 1.2m result with tension data and regenerate summary")
