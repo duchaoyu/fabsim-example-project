@@ -177,8 +177,7 @@ def plot_figS(save=True):
                 cb.ax.tick_params(labelsize=7)
 
     fig.suptitle(
-        r"Fig S — $E_1$ × $\nu_{12}$ response surfaces  (3 anisotropy slices)"
-        r"     $s_f{=}1.1$,  $p{=}1000\,\mathrm{Pa}$,  $\theta_\mathrm{knit}{=}0°$",
+        r"Fig S — $E_1$ × $\nu_{12}$ response surfaces,  $s_f{=}1.1$,  $p{=}1000\,\mathrm{Pa}$,  $\theta_\mathrm{knit}{=}0°$",
         fontsize=10, y=0.995,
     )
     if save:
