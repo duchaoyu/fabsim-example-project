@@ -35,13 +35,13 @@ E1_VALUES = np.array([1000, 2000, 3500, 5000, 7000, 10000, 13000, 16000, 18000, 
 R_VALUES  = np.array([1.0, 1.25, 1.67, 2.0, 2.5, 3.0, 4.0, 5.0],
                      dtype=float)   # r = E1/E2
 
-SF    = 1.0
+SF    = 1.1    # pre-tension; sf=1.0 is an unstable flat-membrane bifurcation point
 KNIT  = 0.0
 PRES  = 1000.0
 NU    = 0.195
 MOTIF = 1
 
-START_ID = 5000   # offset to avoid conflicts with LHS sample IDs
+START_ID = 6000   # LHS study uses IDs up to ~5598; start well above that
 
 
 def _build_samples():
