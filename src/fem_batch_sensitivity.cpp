@@ -80,6 +80,11 @@ fsim::Mat3<int>    F;
 std::vector<int>             bdrs;
 std::vector<Eigen::Vector3d> face_dirs;
 
+// Per-face stretch factors, for spatially varying (fabrication) imperfections.
+// Empty → fall back to the uniform sf_wale / sf_course command-line values.
+std::vector<double> perface_sf_wale;
+std::vector<double> perface_sf_course;
+
 // ── Mesh utilities ─────────────────────────────────────────────────────────────
 static std::vector<int> findBoundaryVertices(const fsim::Mat3<int>& F)
 {
@@ -228,26 +233,101 @@ static double boundaryReactionMean(const VectorXd& grad)
     return bdrs.empty() ? 0.0 : sum / bdrs.size();
 }
 
-// ── Simulate ──────────────────────────────────────────────────────────────────
-static VectorXd simulate(double sf_wale, double sf_course, double pressure,
-                          const MotifParams& mp,
-                          const CableSpec& wale_cable,
-                          const CableSpec& course_cable)
+// ── Per-face stretch-factor field ─────────────────────────────────────────────
+// The rest-shape solver takes s1/s2 per face, so a spatially varying knit
+// tension needs no change there — only a way to feed the field in.  Falls back
+// to the uniform values when no per-face CSV was supplied.
+//
+// s_i = 1/sf_i, matching the uniform path exactly.
+static void buildStretchVectors(double sf_wale, double sf_course,
+                                 std::vector<double>& s1v,
+                                 std::vector<double>& s2v)
 {
     const int nF = F.rows();
-    std::vector<double> s1v(nF, 1.0/sf_wale), s2v(nF, 1.0/sf_course);
+    s1v.assign(nF, 1.0/sf_wale);
+    s2v.assign(nF, 1.0/sf_course);
+    for (int f = 0; f < nF; ++f) {
+        if (!perface_sf_wale.empty())   s1v[f] = 1.0/perface_sf_wale[f];
+        if (!perface_sf_course.empty()) s2v[f] = 1.0/perface_sf_course[f];
+    }
+}
+
+// Parse a per-face stretch-factor CSV: "fid,sf_wale,sf_course", header optional.
+// Faces absent from the file keep the uniform command-line value.
+static bool parsePerFaceSf(const std::string& path, double sf_wale, double sf_course)
+{
+    std::ifstream f(path);
+    if (!f.is_open()) return false;
+
+    const int nF = F.rows();
+    perface_sf_wale.assign(nF, sf_wale);
+    perface_sf_course.assign(nF, sf_course);
+
+    std::string line;
+    int n_set = 0;
+    while (std::getline(f, line)) {
+        if (line.empty()) continue;
+        if (line.find_first_of("0123456789-+.") != 0) continue;   // header / comment
+        std::istringstream ls(line);
+        std::string a, b, c;
+        if (!std::getline(ls, a, ',')) continue;
+        if (!std::getline(ls, b, ',')) continue;
+        if (!std::getline(ls, c, ',')) continue;
+        int fid = std::stoi(a);
+        if (fid < 0 || fid >= nF) {
+            std::cerr << "per-face sf: face id " << fid << " out of range [0,"
+                      << nF - 1 << "]\n";
+            return false;
+        }
+        double w = std::stod(b), cv = std::stod(c);
+        if (w <= 0.0 || cv <= 0.0) {
+            std::cerr << "per-face sf: non-positive stretch factor on face "
+                      << fid << "\n";
+            return false;
+        }
+        perface_sf_wale[fid]   = w;
+        perface_sf_course[fid] = cv;
+        ++n_set;
+    }
+    if (n_set == 0) {
+        std::cerr << "per-face sf: no valid rows in " << path << "\n";
+        return false;
+    }
+    std::cerr << "per-face sf: " << n_set << "/" << nF << " faces set from "
+              << path << "\n";
+    return true;
+}
+
+// ── Simulate ──────────────────────────────────────────────────────────────────
+// One pressure ramp at a fixed stretch-factor pair, warm-started from x.
+static VectorXd solveAtSf(double sf_wale, double sf_course, double pressure,
+                          const MotifParams& mp,
+                          const CableSpec& wale_cable,
+                          const CableSpec& course_cable,
+                          const VectorXd& x_init,
+                          bool pressure_ramp)
+{
+    const int nF = F.rows();
+    std::vector<double> s1v, s2v;
+    buildStretchVectors(sf_wale, sf_course, s1v, s2v);
     std::vector<double> E1s(nF, mp.E1), E2s(nF, mp.E2);
     std::vector<double> nus(nF, mp.nu),  ths(nF, mp.thickness);
 
     fsim::Mat3<double> V0_mod =
         computeAnisotropicRestShape(V0, F, bdrs, face_dirs, s1v, s2v);
 
-    VectorXd x = Map<const VectorXd>(V0.data(), V0.size());
+    VectorXd x = x_init;
 
     const bool has_wale   = wale_cable.active();
     const bool has_course = course_cable.active();
 
-    for (double p : {pressure*0.01, pressure*0.1, pressure*0.5, pressure}) {
+    std::vector<double> ps;
+    if (pressure_ramp)
+        ps = {pressure*0.01, pressure*0.1, pressure*0.5, pressure};
+    else
+        ps = {pressure};
+
+    for (double p : ps) {
         fsim::OrthotropicStVKMembrane m(V0_mod, F, ths, E1s, E2s, nus,
                                          face_dirs, mp.mass, p);
         if (has_wale && has_course) {
@@ -270,6 +350,38 @@ static VectorXd simulate(double sf_wale, double sf_course, double pressure,
     return x;
 }
 
+// sf_ramp_steps <= 1 reproduces the original behaviour exactly: a single
+// pressure ramp at the target stretch factors, started from the rest shape.
+//
+// With sf_ramp_steps = N > 1 the stretch factors are ramped from 1 (unstretched
+// rest shape) to their targets in N steps, each warm-started from the previous
+// equilibrium.  Strong pre-stretch (sf well below 1) otherwise leaves the
+// Newton Hessian indefinite from the flat start and the solve fails outright
+// ("Regularization failed"), returning the undeformed state.
+static VectorXd simulate(double sf_wale, double sf_course, double pressure,
+                          const MotifParams& mp,
+                          const CableSpec& wale_cable,
+                          const CableSpec& course_cable,
+                          int sf_ramp_steps = 0)
+{
+    VectorXd x = Map<const VectorXd>(V0.data(), V0.size());
+
+    if (sf_ramp_steps <= 1)
+        return solveAtSf(sf_wale, sf_course, pressure, mp,
+                         wale_cable, course_cable, x, /*pressure_ramp=*/true);
+
+    for (int k = 1; k <= sf_ramp_steps; ++k) {
+        const double t  = double(k) / double(sf_ramp_steps);
+        const double sw = 1.0 + t * (sf_wale   - 1.0);
+        const double sc = 1.0 + t * (sf_course - 1.0);
+        // Only the first step needs the pressure ramp; later steps start from a
+        // fully pressurised equilibrium.
+        x = solveAtSf(sw, sc, pressure, mp, wale_cable, course_cable, x,
+                      /*pressure_ramp=*/(k == 1));
+    }
+    return x;
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 int main(int argc, char* argv[])
 {
@@ -277,7 +389,14 @@ int main(int argc, char* argv[])
         std::cerr << "Usage: fem_batch_sensitivity <mesh_path> <sf_wale> <sf_course>"
                      " <knit_dir_deg> <pressure> <motif>"
                      " <cable_wale_json_or_none> <cable_course_json_or_none>"
-                     " <output_prefix> [fixed_vertices] [material_json_or_none]\n";
+                     " <output_prefix> [fixed_vertices] [material_json_or_none]"
+                     " [perface_sf_csv_or_none] [sf_ramp_steps]\n"
+                     "  sf_ramp_steps: 0/1 (default) solves at the target stretch"
+                     " factors directly;\n"
+                     "                 N>1 ramps sf from 1 to the target in N"
+                     " warm-started steps,\n"
+                     "                 which converges under strong pre-stretch"
+                     " (sf well below 1).\n";
         return 1;
     }
 
@@ -331,6 +450,29 @@ int main(int argc, char* argv[])
         }
     }
 
+    // Optional: per-face stretch-factor field via CSV at argv[12]
+    // Format: fid,sf_wale,sf_course  (header optional; unlisted faces keep the
+    // uniform values).  Used for spatially varying fabrication imperfections.
+    bool perface_sf = false;
+    if (argc >= 13 && std::string(argv[12]) != "none" && std::string(argv[12]) != "None") {
+        if (!parsePerFaceSf(argv[12], sf_wale, sf_course)) {
+            std::cerr << "Failed to parse per-face sf CSV: " << argv[12] << "\n";
+            return 1;
+        }
+        perface_sf = true;
+    }
+
+    // Optional: number of stretch-factor continuation steps at argv[13]
+    int sf_ramp_steps = 0;
+    if (argc >= 14) sf_ramp_steps = std::atoi(argv[13]);
+    if (perface_sf && sf_ramp_steps > 1) {
+        // buildStretchVectors reads the per-face field and ignores the uniform
+        // scalars, so ramping them would do nothing but repeat the same solve.
+        std::cerr << "sf_ramp_steps ignored: per-face sf field overrides the "
+                     "uniform stretch factors\n";
+        sf_ramp_steps = 0;
+    }
+
     double rad = knit_dir_deg * M_PI / 180.0;
     Eigen::Vector3d knit_dir(std::sin(rad), std::cos(rad), 0.0);
     face_dirs.assign(F.rows(), knit_dir);
@@ -351,7 +493,8 @@ int main(int argc, char* argv[])
         }
     }
 
-    VectorXd x = simulate(sf_wale, sf_course, pressure, mp, wale_cable, course_cable);
+    VectorXd x = simulate(sf_wale, sf_course, pressure, mp, wale_cable,
+                          course_cable, sf_ramp_steps);
 
     fsim::Mat3<double> Vdef = Map<const fsim::Mat3<double>>(x.data(), V0.rows(), 3);
 
@@ -360,7 +503,8 @@ int main(int argc, char* argv[])
 
     // Stresses (reuse the same rest-shape)
     const int nF = F.rows();
-    std::vector<double> s1v(nF, 1.0/sf_wale), s2v(nF, 1.0/sf_course);
+    std::vector<double> s1v, s2v;
+    buildStretchVectors(sf_wale, sf_course, s1v, s2v);   // same field as simulate()
     std::vector<double> E1s(nF, mp.E1), E2s(nF, mp.E2);
     std::vector<double> nus(nF, mp.nu),  ths(nF, mp.thickness);
     fsim::Mat3<double> V0_mod =
