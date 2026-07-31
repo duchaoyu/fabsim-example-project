@@ -4,15 +4,22 @@ Effect of uniform stretch factor (sf_wale = sf_course = sf) on:
   - mean stress
   - mean curvature along x=0 and y=0 sections
 
-Surrogate is used for crown height and mean stress (smooth curves).
-Raw data filtered to quasi-isotropic samples (|sf_wale - sf_course| < 0.10)
-is used for curvature, binned and shown with mean ± std bands.
+Crown height and mean stress come from the scalar surrogate.
+Section curvature uses a dedicated GP trained on log(H) — H spans more than a
+decade, so a raw-space fit is dominated by the few high-curvature samples
+(see surrogate.py::_LOG_OUTPUTS for the same convention).  The GP mean is drawn
+with a +/-2 sigma band, and the quasi-isotropic raw samples
+(|sf_wale - sf_course| < 0.10) are overlaid so the reader can judge support.
+The sf region with no samples near the sf_wale = sf_course diagonal is shaded:
+the sampling box is a square in (sf_wale, sf_course), so its corners — and hence
+the ends of the diagonal — are only sparsely covered.
 
 No-cable groups only; motif 1 vs motif 2 overlaid.
 """
 
 import os
 import sys
+import hashlib
 import pickle
 import numpy as np
 import pandas as pd
@@ -58,22 +65,42 @@ N_BINS = 9
 N_GRID = 80
 
 
-def _build_curvature_gp(group: str, curv_col: str, df_all: pd.DataFrame) -> dict:
-    """Train (or load cached) GP surrogate for a section curvature output."""
-    cache = os.path.join(DATA_DIR, f"{group}_{curv_col}_gp.pkl")
-    if os.path.exists(cache):
-        with open(cache, "rb") as f:
-            return pickle.load(f)
+def _fingerprint(X: np.ndarray, y: np.ndarray) -> str:
+    """Short hash of the training set, so a changed CSV invalidates the cache."""
+    h = hashlib.sha1()
+    h.update(np.ascontiguousarray(X, dtype=np.float64).tobytes())
+    h.update(np.ascontiguousarray(y, dtype=np.float64).tobytes())
+    return h.hexdigest()[:10]
 
+
+def _build_curvature_gp(group: str, curv_col: str, df_all: pd.DataFrame) -> dict:
+    """
+    Train (or load cached) GP for a section curvature output, fitted in log space.
+
+    The cache is keyed on a hash of the training data, so re-running after the
+    results CSV changes (extra samples, outlier cleaning) retrains instead of
+    silently reusing a model fitted to different data.  Note the private cache
+    name: `{group}_{col}_gp.pkl` is also written by plot_sf_surface.py with
+    different preprocessing, so it must not be shared.
+    """
     input_keys = list(PARAMS_NO_CABLE.keys())
     sub = df_all[df_all["group"] == group].dropna(subset=input_keys + [curv_col])
     X = sub[input_keys].values
     y = sub[curv_col].values
+    if (y <= 0).any():                      # log fit needs strictly positive H
+        keep = y > 0
+        X, y = X[keep], y[keep]
+
+    fp = _fingerprint(X, y)
+    cache = os.path.join(DATA_DIR, f"{group}_{curv_col}_loggp_{fp}.pkl")
+    if os.path.exists(cache):
+        with open(cache, "rb") as f:
+            return pickle.load(f)
 
     scaler_X = StandardScaler()
     scaler_y = StandardScaler()
     X_s = scaler_X.fit_transform(X)
-    y_s = scaler_y.fit_transform(y.reshape(-1, 1)).ravel()
+    y_s = scaler_y.fit_transform(np.log(y).reshape(-1, 1)).ravel()
 
     kernel = ConstantKernel(1.0) * Matern(nu=2.5) + WhiteKernel(1e-4)
     gp = GaussianProcessRegressor(
@@ -83,17 +110,38 @@ def _build_curvature_gp(group: str, curv_col: str, df_all: pd.DataFrame) -> dict
     gp.fit(X_s, y_s)
 
     model = {"gp": gp, "scaler_X": scaler_X, "scaler_y": scaler_y,
-             "input_keys": input_keys}
+             "input_keys": input_keys, "log": True, "n_train": len(y)}
     with open(cache, "wb") as f:
         pickle.dump(model, f)
-    print(f"  Trained curvature GP: {group} / {curv_col}  (n={len(sub)})")
+    print(f"  Trained curvature GP (log space): {group} / {curv_col}  (n={len(y)})")
     return model
 
 
-def _predict_curv_gp(model: dict, X: np.ndarray) -> np.ndarray:
+def _predict_curv_gp(model: dict, X: np.ndarray, n_sigma: float = 0.0):
+    """
+    Predict H.  With n_sigma > 0 also return the (lower, upper) credible band,
+    back-transformed from log space.
+    """
     X_s = model["scaler_X"].transform(X)
-    y_s = model["gp"].predict(X_s)
-    return model["scaler_y"].inverse_transform(y_s.reshape(-1, 1)).ravel()
+    mu_s, sd_s = model["gp"].predict(X_s, return_std=True)
+    inv = lambda v: model["scaler_y"].inverse_transform(v.reshape(-1, 1)).ravel()
+    mu = inv(mu_s)
+    lo, hi = inv(mu_s - n_sigma * sd_s), inv(mu_s + n_sigma * sd_s)
+    if model.get("log"):
+        mu, lo, hi = np.exp(mu), np.exp(lo), np.exp(hi)
+    return (mu, lo, hi) if n_sigma > 0 else mu
+
+
+def _diagonal_support(sub: pd.DataFrame, sf_grid: np.ndarray, radius=0.06):
+    """
+    Lowest sf on the grid that has at least one sample within `radius` of the
+    sf_wale = sf_course diagonal.  Below this the sweep is extrapolation.
+    """
+    a = sub["sf_wale"].values
+    b = sub["sf_course"].values
+    cnt = np.array([np.sum((np.abs(a - v) < radius) & (np.abs(b - v) < radius))
+                    for v in sf_grid])
+    return sf_grid[cnt > 0].min() if (cnt > 0).any() else sf_grid[-1]
 
 
 def _midpoint_params():
@@ -153,10 +201,13 @@ def plot_uniform_sf(save=True):
                              sharex=True)
     ax_h, ax_s, ax_c = axes
 
+    sf_support = 0.0   # left edge of the region backed by samples (all groups)
+
     for group in groups:
         color = COLORS[group]
         label = LABELS[group]
         sub   = df_all[df_all["group"] == group]
+        sf_support = max(sf_support, _diagonal_support(sub, sf))
 
         # ── load surrogate ────────────────────────────────────────────────────
         path = os.path.join(DATA_DIR, f"{group}_scalar_surrogate.pkl")
@@ -173,22 +224,29 @@ def plot_uniform_sf(save=True):
         _, y_s = _surrogate_sweep(surrogate, "mean_stress")
         ax_s.plot(sf, y_s, color=color, lw=2, label=label)
 
-        # row 3: curvature via GP surrogate sweep
-        for h_col, ls, curve_label in [
-            ("H_mean_x0", "-",  "x=0 section"),
-            ("H_mean_y0", "--", "y=0 section"),
+        # row 3: curvature via log-space GP sweep, with ±2σ band and raw samples
+        keys = list(PARAMS_NO_CABLE.keys())
+        defaults = _midpoint_params()
+        X_sweep = np.column_stack([
+            sf if k in ("sf_wale", "sf_course") else
+            np.full(N_GRID, defaults[k])
+            for k in keys
+        ])
+        iso = sub[(sub["sf_wale"] - sub["sf_course"]).abs() < SF_ISO_TOL]
+        sf_iso = (iso["sf_wale"] + iso["sf_course"]).values / 2.0
+
+        for h_col, ls, marker, curve_label in [
+            ("H_mean_x0", "-",  "o", "x=0 section"),
+            ("H_mean_y0", "--", "s", "y=0 section"),
         ]:
             gp_model = _build_curvature_gp(group, h_col, df_all)
-            keys = list(PARAMS_NO_CABLE.keys())
-            defaults = _midpoint_params()
-            X_sweep = np.column_stack([
-                sf if k in ("sf_wale", "sf_course") else
-                np.full(N_GRID, defaults[k])
-                for k in keys
-            ])
-            y_c = _predict_curv_gp(gp_model, X_sweep)
+            y_c, lo, hi = _predict_curv_gp(gp_model, X_sweep, n_sigma=2.0)
             ax_c.plot(sf, y_c, color=color, ls=ls, lw=2,
                       label=f"{label} ({curve_label})")
+            ax_c.fill_between(sf, lo, hi, color=color, alpha=0.08, lw=0, zorder=0)
+            ax_c.scatter(sf_iso, iso[h_col].values, s=9, marker=marker,
+                         facecolors="none", edgecolors=color, lw=0.6,
+                         alpha=0.55, zorder=1)
 
     # ── formatting ────────────────────────────────────────────────────────────
     ax_h.set_ylabel("Crown height  (mm)")
@@ -201,13 +259,23 @@ def plot_uniform_sf(save=True):
     ax_s.legend(fontsize=8, loc="upper left")
 
     ax_c.set_ylabel(r"Mean curvature  $\bar{H}$  (m$^{-1}$)")
-    ax_c.set_title(r"Section curvature  vs uniform $s_f$  (GP surrogate)")
-    ax_c.legend(fontsize=7.5, loc="upper left", ncol=2)
+    ax_c.set_title(r"Section curvature  vs uniform $s_f$"
+                   "\n(log-space GP,  band = $\\pm2\\sigma$,  markers = quasi-isotropic samples)")
+    ax_c.legend(fontsize=7.5, loc="upper right", ncol=2)
     ax_c.set_xlabel(r"Uniform stretch factor  $s_f$  ($s_{wale} = s_{course}$)")
+    ax_c.set_ylim(0, 2.4)     # ±2σ tails run far higher; clipped for readability
 
     for ax in axes:
         ax.axvline(1.0, color="0.7", lw=0.8, ls=":")
         ax.set_xlim(*SF_RANGE)
+        # sampling box corners are sparse → the diagonal sweep extrapolates here
+        if sf_support > SF_RANGE[0]:
+            ax.axvspan(SF_RANGE[0], sf_support, color="0.85", alpha=0.55, lw=0,
+                       zorder=0)
+    if sf_support > SF_RANGE[0]:
+        ax_c.text((SF_RANGE[0] + sf_support) / 2, 0.03, "no samples\non diagonal",
+                  transform=ax_c.get_xaxis_transform(), ha="center", va="bottom",
+                  fontsize=6.5, color="0.35")
 
     fig.suptitle(
         r"Effect of uniform stretch factor on dome geometry and stress"
