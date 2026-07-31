@@ -284,12 +284,53 @@ def validate_samples(max_runs=None):
     return res
 
 
+def validate_csv(path, max_runs=None):
+    """Validate any results CSV that carries verts_path / stress_path columns
+    (e.g. data/results_nocable_v2.csv from run_nocable_regen.py)."""
+    df = pd.read_csv(path)
+    need = {"verts_path", "stress_path", "knit_dir", "pressure"}
+    missing = need - set(df.columns)
+    if missing:
+        print(f"\n{path}: missing columns {sorted(missing)} — skipping")
+        return pd.DataFrame()
+    rows = []
+    for _, r in df.iterrows():
+        vp, sp = r["verts_path"], r["stress_path"]
+        if not (isinstance(vp, str) and os.path.exists(vp)
+                and isinstance(sp, str) and os.path.exists(sp)):
+            continue
+        out, _ = check_run(vp, sp, r["knit_dir"], r["pressure"])
+        out.update({"group": r.get("group", "?"),
+                    "flagged": bool(r.get("sim_failed", False))})
+        rows.append(out)
+        if max_runs and len(rows) >= max_runs:
+            break
+    res = pd.DataFrame(rows)
+    if not len(res):
+        print(f"\n{path}: no per-run output files found — skipping")
+        return res
+    _report(res, os.path.basename(path))
+    for g, sub in res.groupby("group"):
+        _report(sub, f"{os.path.basename(path)} / {g}")
+    return res
+
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("dataset", nargs="?", default="both",
-                    choices=["sweep", "samples", "both"])
+                    choices=["sweep", "samples", "both", "csv"])
+    ap.add_argument("--csv", default=None,
+                    help="results CSV with verts_path/stress_path columns")
     ap.add_argument("--max-runs", type=int, default=None)
     args = ap.parse_args()
+
+    if args.dataset == "csv" or args.csv:
+        r = validate_csv(args.csv, args.max_runs)
+        if len(r):
+            base = os.path.splitext(os.path.basename(args.csv))[0]
+            r.to_csv(os.path.join(DATA_DIR, f"validation_{base}.csv"), index=False)
+        print()
+        sys.exit(0)
 
     if args.dataset in ("sweep", "both"):
         r = validate_sweep()
