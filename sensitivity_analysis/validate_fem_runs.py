@@ -30,6 +30,23 @@ than p * V_enclosed.  So the equilibria are exact for an inflation pressure
 three times the value passed in.  A run is judged consistent here if
 p_eff / p_nominal is within LAPLACE_TOL of 3.
 
+PROVENANCE of the stored Sobol dataset, established by re-running samples with
+the current binary and comparing crown_height to <0.5 mm:
+
+  group           mesh                        material      status
+  motif1_cable    data/circular_flat.off      motif 1       ok (3/3)
+  motif2_cable    data/circular_flat.off      motif 2       ok (3/3)
+  motif1_nocable  circular_flat.off x 0.951149  motif 1     wrong mesh (8/8)
+  motif2_nocable  circular_flat.off x 0.951149  motif 5 !   wrong mesh + wrong
+                                                            material (8/8)
+
+So motif2_nocable was run with motif 5 (E1=12507, E2=5000, wale-stiff) rather
+than motif 2 (E1=5000, E2=8000) — the opposite anisotropy from its label — and
+both nocable groups ran on a mesh 4.9% smaller in radius than the current one.
+The cable-vs-nocable comparison is therefore confounded by geometry for motif 1
+and by geometry *and* material for motif 2.  The cable groups also store L_rest
+as an absolute length in metres, not as a fraction of the cable's arc length.
+
 Usage:
   python3 validate_fem_runs.py            # both datasets
   python3 validate_fem_runs.py sweep
