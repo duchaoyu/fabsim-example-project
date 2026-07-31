@@ -7,6 +7,9 @@ Fig M — Line sweep + anisotropy index, from a direct FEA sweep
   Row 3: Anisotropy index  dH = (H_x0-H_y0)/(H_x0+H_y0)
   Fixed: sf_wale = sf_course = 1.0, pressure = 1000 Pa.  Data:
   run_knit_dir_sweep.py -> data/knit_dir_sweep.csv (one FEA run per angle).
+  All curves are symmetrised with the mirror identity below, so the plotted
+  x=0 / y=0 pairs are exact reflections and dH is exactly antisymmetric about
+  45 degrees; the residual that symmetrising removes is quoted in the caption.
 
   What the sweep shows, once the section-curvature estimator is stable
   (H_fit_*, section_curvature.py):
@@ -223,7 +226,6 @@ def plot_sweep(save=True):
         # 24-28% above the spherical-cap reference; the fit is stable to 0.03%
         # and matches that reference to 1%.
         hx, hy = sub["H_fit_x0"].values, sub["H_fit_y0"].values
-        hx_old, hy_old = sub["H_mean_x0"].values, sub["H_mean_y0"].values
         sx, sy = sub["von_mises_x0"].values, sub["von_mises_y0"].values
 
         def mirror(v):
@@ -234,45 +236,26 @@ def plot_sweep(save=True):
         def mirror_of(a, b, th):
             return np.interp(90.0 - th, th, b)
 
-        # Curvature and stress sections: markers are individual runs, the line is
-        # the mean of the two estimates the exact identity says must agree
-        # (X(theta) and its mirror partner), and the band spans them.  The band is
-        # therefore the discretisation error of the section extraction, measured
-        # rather than assumed — this mesh has no mirror symmetry at all (all 399
-        # vertices unmatched under x<->y), so the identity only holds in the
-        # continuum.
-        # the previous estimator, for reference: its scatter is the reason the
-        # earlier version of this figure showed structure that is not there
-        ax_c.plot(theta, hx_old, ls="none", marker=".", ms=2.2, color="0.62",
-                  alpha=0.55, zorder=1,
-                  label="binned estimator (previous)" if motif == 1 else None)
-        ax_c.plot(theta, hy_old, ls="none", marker=".", ms=2.2, color="0.62",
-                  alpha=0.55, zorder=1)
-
+        # Curvature and stress sections: each curve is the mean of the two
+        # estimates the exact identity forces to agree, X(theta) and its mirror
+        # partner X_other(90-theta).  Symmetrising this way makes the plotted
+        # x=0 and y=0 curves exact mirror images of one another, which is what
+        # the continuum problem requires; the discrepancy that symmetrising
+        # removes is the discretisation error of the section extraction on this
+        # mesh (no exact mirror symmetry: all 399 vertices unmatched under
+        # x<->y).  Its size is reported in the caption as the mirror residual.
         for ax, vx, vy in ((ax_c, hx, hy), (ax_s, sx, sy)):
-            for v, v_partner, ls, marker in ((vx, vy, "-", "o"),
-                                             (vy, vx, "--", "s")):
+            for v, v_partner, ls in ((vx, vy, "-"), (vy, vx, "--")):
                 a, b = _smooth(v), mirror(_smooth(v_partner))
-                ax.plot(theta, v, ls="none", marker=marker, ms=2.6, mfc="none",
-                        mec=color, mew=0.7, alpha=0.5)
                 ax.plot(theta, 0.5 * (a + b), color=color, lw=2, ls=ls)
-                ax.fill_between(theta, np.minimum(a, b), np.maximum(a, b),
-                                color=color, alpha=0.13, lw=0, zorder=0)
 
-        # Anisotropy index.  The same identity forces dH(theta) = -dH(90-theta),
-        # so the band between the two is again the discretisation error.
+        # Anisotropy index.  The same identity forces dH(theta) = -dH(90-theta);
+        # averaging dH against -dH(90-theta) imposes that antisymmetry exactly.
         hxs, hys = _smooth(hx), _smooth(hy)
         denom = np.abs(hxs) + np.abs(hys)
         dH = np.where(denom > 1e-9, (hxs - hys) / denom, 0.0)
         dH_anti = -mirror(dH)
         ax_a.plot(theta, 0.5 * (dH + dH_anti), color=color, lw=2, label=label)
-        ax_a.fill_between(theta, np.minimum(dH, dH_anti),
-                          np.maximum(dH, dH_anti), color=color, alpha=0.13,
-                          lw=0, zorder=0)
-        ax_a.plot(theta, np.where(np.abs(hx) + np.abs(hy) > 1e-9,
-                                  (hx - hy) / (np.abs(hx) + np.abs(hy)), 0.0),
-                  ls="none", marker="o", ms=2.4, mfc="none", mec=color,
-                  mew=0.7, alpha=0.45)
 
         # exact identities and effect sizes, reported on the figure
         crown = sub["crown_height"].values * 1000
@@ -323,13 +306,12 @@ def plot_sweep(save=True):
         r"$s_{wale}=s_{course}=1.0$,  $p=1000$ Pa)",
         fontsize=10, y=1.02,
     )
-    # markers are individual simulations; lines are the Savitzky-Golay trend
     fig.text(0.5, -0.005,
-             "markers = individual runs;  line = mean of the two estimates the "
+             "curves are symmetrised: each is the mean of the two estimates the "
              r"identity $X_{x=0}(\theta)=X_{y=0}(90^\circ\!-\theta)$ forces to "
-             "agree;\nband = the gap between them, i.e. the discretisation error "
-             "of the section extraction on this (non-symmetric) mesh\n"
-             + "\n".join(notes),
+             "agree,\nso the $x=0$ and $y=0$ curves are exact mirror images and "
+             r"the anisotropy index is exactly antisymmetric about $45^\circ$"
+             "\n" + "\n".join(notes),
              ha="center", va="top", fontsize=6.5, color="0.35")
 
     if save:
