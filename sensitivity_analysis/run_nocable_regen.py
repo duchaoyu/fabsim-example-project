@@ -78,15 +78,24 @@ def _one(job):
     return row
 
 
-def build_design(design, n, n_base, seed):
+def build_design(design, n, n_base, seed, sf_min=None):
+    """sf_min raises the lower bound on both stretch factors.  A Saltelli design
+    cannot be subsetted after the fact (the estimator needs the full A/B matrix
+    structure), so restricting to the region where the solver converges has to be
+    done here, when the design is generated."""
+    bounds = dict(PARAMS_NO_CABLE)
+    if sf_min is not None:
+        for k in ("sf_wale", "sf_course"):
+            bounds[k] = (sf_min, bounds[k][1])
+    tag = "" if sf_min is None else f", sf_min={sf_min}"
     if design == "lhs":
-        df = lhs(n, PARAMS_NO_CABLE, seed)
-        return df[KEYS].values, f"LHS n={n}"
+        df = lhs(n, bounds, seed)
+        return df[KEYS].values, f"LHS n={n}{tag}", bounds
     from SALib.sample import saltelli
     problem = {"num_vars": len(KEYS), "names": KEYS,
-               "bounds": [list(PARAMS_NO_CABLE[k]) for k in KEYS]}
+               "bounds": [list(bounds[k]) for k in KEYS]}
     X = saltelli.sample(problem, n_base, calc_second_order=False)
-    return X, f"Saltelli n_base={n_base} -> {len(X)} points"
+    return X, f"Saltelli n_base={n_base} -> {len(X)} points{tag}", bounds
 
 
 def main():

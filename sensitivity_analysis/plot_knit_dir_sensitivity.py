@@ -1,13 +1,28 @@
 """
 Sensitivity analysis of knitting direction (theta_knit).
 
-Fig M — Line sweep + anisotropy index
-  Row 1: Crown height vs theta
-  Row 2: Mean curvature H_x0 and H_y0 vs theta
-  Row 3: Section stress sigma_x0 and sigma_y0 vs theta
-  Row 4: Anisotropy indices  dH = (H_x0-H_y0)/(H_x0+H_y0)
-                             ds = (s_x0-s_y0)/(s_x0+s_y0)
-  Fixed: sf_wale = sf_course = 1.0, pressure = 1000 Pa.
+Fig M — Line sweep + anisotropy index, from a direct FEA sweep
+  Row 1: Section curvature H_x0 and H_y0 vs theta
+  Row 2: Section stress sigma_x0 and sigma_y0 vs theta
+  Row 3: Anisotropy index  dH = (H_x0-H_y0)/(H_x0+H_y0)
+  Fixed: sf_wale = sf_course = 1.0, pressure = 1000 Pa.  Data:
+  run_knit_dir_sweep.py -> data/knit_dir_sweep.csv (one FEA run per angle).
+
+  What the sweep shows, once the section-curvature estimator is stable
+  (H_fit_*, section_curvature.py):
+    - crown height is independent of theta to 0.01-0.02%, as rotational
+      invariance requires (theta rotates the material and stretch frames
+      together, so on a circular domain the problem is merely rotated);
+    - the section curvature is likewise nearly independent of theta, varying
+      under 1%: the inflated shape is close to axisymmetric;
+    - the section stress is not — it varies 13-22% sinusoidally, with the two
+      cut planes exchanging roles at 45 degrees, because a fixed cut plane
+      samples a rotating orthotropic tension field.
+  The earlier version of this figure was built from GP surrogates fitted to the
+  Sobol samples (wrong mesh; motif 5 material for motif 2) and read with the
+  binned curvature estimator, which steps by up to 26% along this sweep.  It
+  therefore showed curvature structure that is not there and a flat section
+  stress that should vary.
 
 Fig N — Section profile gallery at theta ≈ 0, 30, 45, 60, 90 degrees
   Shows z(s) and H(s) along x=0 and y=0 for representative samples.
@@ -15,20 +30,16 @@ Fig N — Section profile gallery at theta ≈ 0, 30, 45, 60, 90 degrees
 
 import os
 import sys
-import pickle
 import numpy as np
 import pandas as pd
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
-from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import Matern, ConstantKernel, WhiteKernel
-from sklearn.preprocessing import StandardScaler
+from scipy.signal import savgol_filter
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from config import DATA_DIR, MESH_PATH, PARAMS_NO_CABLE
-from surrogate import ScalarSurrogate
 from curvature import read_off, compute_curvatures
 from plot_section_profiles import _slice_plane
 
@@ -52,110 +63,50 @@ GROUPS = ["motif1_nocable", "motif2_nocable"]
 COLORS = {"motif1_nocable": "#2E8B57", "motif2_nocable": "#20B2AA"}
 LABELS = {"motif1_nocable": "Motif 1", "motif2_nocable": "Motif 2"}
 
-FIXED_SF   = 1.0
+FIXED_SF   = 1.0     # figN only: how close a stored sample must be to the slice
 FIXED_P    = 1000.0
-N_GRID     = 120
 THETA_RANGE = (0.0, 90.0)
 
 GALLERY_TARGETS = [0, 30, 45, 60, 90]
 GALLERY_TOL     = 15.0   # deg
 
 
-# ── symmetry-augmented GP training ───────────────────────────────────────────
+# ── direct FEA sweep ─────────────────────────────────────────────────────────
 #
-# For a circular geometry the physical symmetry is:
-#   (sf_w, sf_c, theta, p) ↔ (sf_c, sf_w, 90-theta, p)
-# with H_mean_x0 ↔ H_mean_y0  and  von_mises_x0 ↔ von_mises_y0.
-# Augmenting training data with the mirrored samples forces the GP to
-# respect this symmetry, fixing the θ=0 / θ=90 inconsistency.
+# figM used to read this slice off symmetry-augmented GPs fitted to the Sobol
+# samples.  Those samples were run on the wrong mesh and, for motif 2, with
+# motif 5 material (see validate_fem_runs.py), and the GP added its own
+# artifacts on top.  The slice is now simulated directly by
+# run_knit_dir_sweep.py — one FEA run per plotted angle.
+#
+# The augmentation the GPs used to need is now exact by construction: reflecting
+# about y = x maps wale(theta) -> wale(90-theta) and swaps the cut planes, so
+#   H_x0(theta) = H_y0(90 - theta),
+# up to the mesh itself not being exactly mirror-symmetric.  run_knit_dir_sweep
+# --check-only reports the residual.
 
-# Maps each output to its mirror partner under the 90° rotation
-_MIRROR = {
-    "H_mean_x0":    "H_mean_y0",
-    "H_mean_y0":    "H_mean_x0",
-    "von_mises_x0": "von_mises_y0",
-    "von_mises_y0": "von_mises_x0",
-    "crown_height": "crown_height",   # invariant under rotation
-}
-
-
-def _augment(df, col):
-    """Return a symmetry-augmented DataFrame for training output `col`."""
-    input_keys = list(PARAMS_NO_CABLE.keys())   # sf_wale, sf_course, knit_dir, pressure
-    mirror_col  = _MIRROR[col]
-
-    orig = df[input_keys + [col]].dropna().copy()
-    orig = orig.rename(columns={col: "_y"})
-
-    # mirror: swap sf_wale↔sf_course, flip knit_dir → 90-theta, use mirror output
-    mirror = df[input_keys + [mirror_col]].dropna().copy()
-    mirror = mirror.rename(columns={mirror_col: "_y"})
-    mirror["sf_wale"]   = df["sf_course"]
-    mirror["sf_course"] = df["sf_wale"]
-    mirror["knit_dir"]  = 90.0 - df["knit_dir"]
-
-    combined = pd.concat([orig, mirror], ignore_index=True).dropna()
-    X = combined[input_keys].values
-    y = combined["_y"].values
-    return X, y
+SWEEP_CSV  = os.path.join(DATA_DIR, "knit_dir_sweep.csv")
+SMOOTH_WIN = 9      # Savitzky-Golay window for the section-metric trend lines
+SMOOTH_ORD = 2
 
 
-def _build_sym_gp(group, col, force=False):
-    """Train (or load) a symmetry-augmented GP for `col`."""
-    cache = os.path.join(DATA_DIR, f"{group}_{col}_sym_gp.pkl")
-    if os.path.exists(cache) and not force:
-        with open(cache, "rb") as f:
-            return pickle.load(f)
-
-    df = pd.read_csv(os.path.join(DATA_DIR, "results_with_sections.csv"))
-    if "sim_failed" in df.columns:
-        df = df[~df["sim_failed"]]
-    df = df[df["group"] == group].copy()
-
-    X, y = _augment(df, col)
-    scaler_X = StandardScaler()
-    scaler_y = StandardScaler()
-    X_s = scaler_X.fit_transform(X)
-    y_s = scaler_y.fit_transform(y.reshape(-1, 1)).ravel()
-
-    kernel = ConstantKernel(1.0) * Matern(nu=2.5) + WhiteKernel(1e-4)
-    gp = GaussianProcessRegressor(kernel=kernel, n_restarts_optimizer=5,
-                                   normalize_y=False, random_state=42)
-    gp.fit(X_s, y_s)
-    model = {"gp": gp, "scaler_X": scaler_X, "scaler_y": scaler_y}
-    with open(cache, "wb") as f:
-        pickle.dump(model, f)
-    print(f"  Trained sym GP: {group} / {col}  (n={len(y)} incl. augmented)")
-    return model
+def _load_sweep():
+    if not os.path.exists(SWEEP_CSV):
+        raise FileNotFoundError(
+            f"{SWEEP_CSV} not found — run:  python3 run_knit_dir_sweep.py")
+    df = pd.read_csv(SWEEP_CSV)
+    return df[~df["sim_failed"].astype(bool)].sort_values(["motif", "knit_dir"])
 
 
-# ── helpers ───────────────────────────────────────────────────────────────────
-
-def _load_gp(group, col):
-    """Load symmetry-augmented GP; fall back to plain GP if absent."""
-    for suffix in ("_sym_gp", "_gp"):
-        path = os.path.join(DATA_DIR, f"{group}_{col}{suffix}.pkl")
-        if os.path.exists(path):
-            with open(path, "rb") as f:
-                return pickle.load(f)
-    return None
-
-
-def _predict_gp(model, X):
-    X_s = model["scaler_X"].transform(X)
-    y_s = model["gp"].predict(X_s)
-    return model["scaler_y"].inverse_transform(y_s.reshape(-1, 1)).ravel()
-
-
-def _sweep_X(theta_grid):
-    keys = list(PARAMS_NO_CABLE.keys())
-    return np.column_stack([
-        np.full(len(theta_grid), FIXED_SF)  if k == "sf_wale"   else
-        np.full(len(theta_grid), FIXED_SF)  if k == "sf_course" else
-        theta_grid                           if k == "knit_dir"  else
-        np.full(len(theta_grid), FIXED_P)
-        for k in keys
-    ])
+def _smooth(y):
+    """Trend line through the per-run values; the section-curvature and
+    section-stress estimators carry a few percent of discretisation noise."""
+    win = min(SMOOTH_WIN, len(y))
+    if win % 2 == 0:
+        win -= 1
+    if win <= SMOOTH_ORD + 1:
+        return np.asarray(y)
+    return savgol_filter(np.asarray(y), win, SMOOTH_ORD)
 
 
 def _load_verts(sid):
@@ -255,43 +206,85 @@ def _add_section_insets(ax_a, theta_targets=(0, 45, 90)):
 
 
 def plot_sweep(save=True):
-    theta = np.linspace(*THETA_RANGE, N_GRID)
-    X = _sweep_X(theta)
-
-    # build symmetry-augmented GPs (cached after first run)
-    sym_cols = ["H_mean_x0", "H_mean_y0", "von_mises_x0", "von_mises_y0"]
-    for group in GROUPS:
-        for col in sym_cols:
-            _build_sym_gp(group, col)
+    df = _load_sweep()
 
     fig, axes = plt.subplots(3, 1, figsize=(6, 9.5),
                              gridspec_kw={"hspace": 0.52}, sharex=True)
     ax_c, ax_s, ax_a = axes
 
-    for group in GROUPS:
+    notes = []
+    for motif, sub in df.groupby("motif"):
+        group = f"motif{motif}_nocable"
         color = COLORS[group]
         label = LABELS[group]
+        theta = sub["knit_dir"].values
+        # H_fit_*: polynomial-fit estimator (section_curvature.py).  The binned
+        # estimator behind H_mean_* steps by up to 26% along this sweep and sits
+        # 24-28% above the spherical-cap reference; the fit is stable to 0.03%
+        # and matches that reference to 1%.
+        hx, hy = sub["H_fit_x0"].values, sub["H_fit_y0"].values
+        hx_old, hy_old = sub["H_mean_x0"].values, sub["H_mean_y0"].values
+        sx, sy = sub["von_mises_x0"].values, sub["von_mises_y0"].values
 
-        # curvature sections — symmetry-augmented GP
-        gp_hx = _load_gp(group, "H_mean_x0")
-        gp_hy = _load_gp(group, "H_mean_y0")
-        if gp_hx and gp_hy:
-            hx = _predict_gp(gp_hx, X)
-            hy = _predict_gp(gp_hy, X)
-            ax_c.plot(theta, hx, color=color, lw=2, ls="-")
-            ax_c.plot(theta, hy, color=color, lw=2, ls="--")
-            denom = np.abs(hx) + np.abs(hy)
-            dH = np.where(denom > 1e-9, (hx - hy) / denom, 0.0)
-            ax_a.plot(theta, dH, color=color, lw=2, label=label)
+        def mirror(v):
+            """v evaluated at 90-theta — the partner an exactly mirror-symmetric
+            mesh would return for the other cut plane."""
+            return np.interp(90.0 - theta, theta, v)
 
-        # section stress — symmetry-augmented GP
-        gp_sx = _load_gp(group, "von_mises_x0")
-        gp_sy = _load_gp(group, "von_mises_y0")
-        if gp_sx and gp_sy:
-            sx = _predict_gp(gp_sx, X)
-            sy = _predict_gp(gp_sy, X)
-            ax_s.plot(theta, sx, color=color, lw=2, ls="-")
-            ax_s.plot(theta, sy, color=color, lw=2, ls="--")
+        def mirror_of(a, b, th):
+            return np.interp(90.0 - th, th, b)
+
+        # Curvature and stress sections: markers are individual runs, the line is
+        # the mean of the two estimates the exact identity says must agree
+        # (X(theta) and its mirror partner), and the band spans them.  The band is
+        # therefore the discretisation error of the section extraction, measured
+        # rather than assumed — this mesh has no mirror symmetry at all (all 399
+        # vertices unmatched under x<->y), so the identity only holds in the
+        # continuum.
+        # the previous estimator, for reference: its scatter is the reason the
+        # earlier version of this figure showed structure that is not there
+        ax_c.plot(theta, hx_old, ls="none", marker=".", ms=2.2, color="0.62",
+                  alpha=0.55, zorder=1,
+                  label="binned estimator (previous)" if motif == 1 else None)
+        ax_c.plot(theta, hy_old, ls="none", marker=".", ms=2.2, color="0.62",
+                  alpha=0.55, zorder=1)
+
+        for ax, vx, vy in ((ax_c, hx, hy), (ax_s, sx, sy)):
+            for v, v_partner, ls, marker in ((vx, vy, "-", "o"),
+                                             (vy, vx, "--", "s")):
+                a, b = _smooth(v), mirror(_smooth(v_partner))
+                ax.plot(theta, v, ls="none", marker=marker, ms=2.6, mfc="none",
+                        mec=color, mew=0.7, alpha=0.5)
+                ax.plot(theta, 0.5 * (a + b), color=color, lw=2, ls=ls)
+                ax.fill_between(theta, np.minimum(a, b), np.maximum(a, b),
+                                color=color, alpha=0.13, lw=0, zorder=0)
+
+        # Anisotropy index.  The same identity forces dH(theta) = -dH(90-theta),
+        # so the band between the two is again the discretisation error.
+        hxs, hys = _smooth(hx), _smooth(hy)
+        denom = np.abs(hxs) + np.abs(hys)
+        dH = np.where(denom > 1e-9, (hxs - hys) / denom, 0.0)
+        dH_anti = -mirror(dH)
+        ax_a.plot(theta, 0.5 * (dH + dH_anti), color=color, lw=2, label=label)
+        ax_a.fill_between(theta, np.minimum(dH, dH_anti),
+                          np.maximum(dH, dH_anti), color=color, alpha=0.13,
+                          lw=0, zorder=0)
+        ax_a.plot(theta, np.where(np.abs(hx) + np.abs(hy) > 1e-9,
+                                  (hx - hy) / (np.abs(hx) + np.abs(hy)), 0.0),
+                  ls="none", marker="o", ms=2.4, mfc="none", mec=color,
+                  mew=0.7, alpha=0.45)
+
+        # exact identities and effect sizes, reported on the figure
+        crown = sub["crown_height"].values * 1000
+        inv = (crown.max() - crown.min()) / crown.mean() * 100
+        mirror = np.abs(hx - mirror_of(hx, hy, theta))
+        h_var = (hx.max() - hx.min()) / hx.mean() * 100
+        s_var = (sx.max() - sx.min()) / sx.mean() * 100
+        notes.append(
+            f"{label}: crown height varies {inv:.2f}% over $\\theta$ (exact 0%);  "
+            r"mirror residual $|H_{x=0}(\theta)-H_{y=0}(90^\circ\!-\theta)|$ "
+            f"{np.median(mirror)/hx.mean()*100:.2f}%;  "
+            rf"$\bar{{H}}$ varies {h_var:.1f}%,  section stress {s_var:.0f}%")
 
     # ── formatting ────────────────────────────────────────────────────────────
     ax_c.set_ylabel(r"$\bar{H}$  (m$^{-1}$)")
@@ -322,12 +315,22 @@ def plot_sweep(save=True):
     ax_c.legend(handles=motif_handles + plane_handles, fontsize=7.5, loc="best")
     ax_s.legend(handles=plane_handles, fontsize=7.5, loc="best")
 
+    n_runs = len(df)
     fig.suptitle(
         r"Effect of knitting direction $\theta_{knit}$"
         "\n"
-        r"($s_{wale}=s_{course}=1.0$,  $p=1000$ Pa)",
+        rf"(direct FEA sweep, {n_runs} runs;  "
+        r"$s_{wale}=s_{course}=1.0$,  $p=1000$ Pa)",
         fontsize=10, y=1.02,
     )
+    # markers are individual simulations; lines are the Savitzky-Golay trend
+    fig.text(0.5, -0.005,
+             "markers = individual runs;  line = mean of the two estimates the "
+             r"identity $X_{x=0}(\theta)=X_{y=0}(90^\circ\!-\theta)$ forces to "
+             "agree;\nband = the gap between them, i.e. the discretisation error "
+             "of the section extraction on this (non-symmetric) mesh\n"
+             + "\n".join(notes),
+             ha="center", va="top", fontsize=6.5, color="0.35")
 
     if save:
         path = os.path.join(FIG_DIR, "figM_knit_dir_sweep.pdf")

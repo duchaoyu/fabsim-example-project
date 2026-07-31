@@ -107,14 +107,27 @@ def plot_uniform_sf(save=True):
         ax_s.plot(sf, sub["mean_stress"].values, color=color, lw=1.6,
                   marker="o", ms=2.4, mew=0, label=f"{label}  ({len(sf)} runs)")
 
-        # row 3: section curvature — per-run markers + Savitzky-Golay trend
-        for col, ls, marker, sec in [("H_mean_x0", "-",  "o", "x=0 section"),
-                                     ("H_mean_y0", "--", "s", "y=0 section")]:
+        # row 3: section curvature — per-run markers + trend.
+        # H_fit_*: polynomial-fit estimator (section_curvature.py).  The binned
+        # estimator behind H_mean_* takes |z''| from finite differences on binned
+        # data, which rectifies noise into a positive bias: it sits 24-28% above
+        # the spherical-cap reference kappa = 2h/(a^2+h^2) and steps by up to 14%
+        # between adjacent runs.  The fit matches that reference to 1%.
+        for col, ls, marker, sec in [("H_fit_x0", "-",  "o", "x=0 section"),
+                                     ("H_fit_y0", "--", "s", "y=0 section")]:
             y = sub[col].values
             ax_c.plot(sf, y, ls="none", marker=marker, ms=2.6,
                       mfc="none", mec=color, mew=0.7, alpha=0.55)
             ax_c.plot(sf, _smooth(y), color=color, ls=ls, lw=1.8,
                       label=f"{label} ({sec})")
+
+        # independent reference: curvature of the spherical cap with the same
+        # base radius and crown height — no section extraction involved
+        a = 0.6
+        h = sub["crown_height"].values
+        ax_c.plot(sf, 2 * h / (a ** 2 + h ** 2), color=color, lw=0.9, ls=":",
+                  alpha=0.9,
+                  label=f"{label} (spherical-cap ref.)" if motif == 1 else None)
 
     # ── formatting ────────────────────────────────────────────────────────────
     ax_h.set_ylabel("Crown height  (mm)")
