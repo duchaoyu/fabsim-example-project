@@ -22,7 +22,7 @@ rather than being redone.
 Curvature outputs added:
   H_mean_x0     mean curvature along the x=0 (wale) section      (m⁻¹)
   H_mean_y0     mean curvature along the y=0 (course) section    (m⁻¹)
-  H_anisotropy  (H_x0 - H_y0) / 0.5(H_x0 + H_y0)   signed, dimensionless
+  H_anisotropy  ΔH = (H_x0 - H_y0) / (H_x0 + H_y0)  signed, dimensionless
 
 Curvature is recomputed from the per-sample verts/stress files already on disk
 (474 no-cable + 455 cable samples) — no new FEA is required.  The estimator and
@@ -113,8 +113,8 @@ def build_section_df(group, force=False):
     met = pd.DataFrame(rows)
 
     Hx, Hy = met["H_mean_x0"], met["H_mean_y0"]
-    Hm = 0.5 * (Hx + Hy)
-    met["H_anisotropy"] = np.where(Hm > 1e-6, (Hx - Hy) / Hm, np.nan)
+    Hs = Hx + Hy
+    met["H_anisotropy"] = np.where(Hs > 1e-6, (Hx - Hy) / Hs, np.nan)
 
     roughness = met[["r_x0", "r_y0"]].max(axis=1)
     failed = (sub["crown_height"] < _CROWN_MIN) | (roughness > _ROUGHNESS_MAX)
@@ -204,8 +204,7 @@ def main():
     args = ap.parse_args()
 
     # H_anisotropy is new to the shared label table used by fig3.
-    visualization.OUTPUT_LABELS.setdefault(
-        "H_anisotropy", r"$\Delta H / \bar{H}$")
+    visualization.OUTPUT_LABELS.setdefault("H_anisotropy", r"$\Delta H$")
 
     all_results = {}
     for group, bounds in GROUPS.items():

@@ -52,7 +52,7 @@ PARAM_LABELS = {
     "cable_wale_lrest":   r"$L^\mathrm{wale}_\mathrm{rest}$",
     "cable_course_lrest": r"$L^\mathrm{course}_\mathrm{rest}$",
     "E1":                 r"$E_1$ (N/m)",
-    "r":                  r"$r = E_1/E_2$",
+    "r":                  r"$r = E_2/E_1$",
     "nu":                 r"$\nu_{12}$",
 }
 OUTPUT_LABELS = {

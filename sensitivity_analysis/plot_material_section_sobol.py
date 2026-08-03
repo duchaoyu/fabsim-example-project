@@ -5,7 +5,7 @@ Sobol sensitivity analysis for section-based outputs in the material study
 New outputs derived from per-sample verts/stress files:
   H_mean_x0       – mean profile curvature along x=0 section  (m⁻¹)
   H_mean_y0       – mean profile curvature along y=0 section  (m⁻¹)
-  H_anisotropy    – (H_x0 - H_y0) / 0.5(H_x0 + H_y0)  (signed, dimensionless)
+  H_anisotropy    – (H_x0 - H_y0) / (H_x0 + H_y0)  (signed, dimensionless)
   vm_x0           – mean von Mises stress along x=0 section   (N/m)
   vm_y0           – mean von Mises stress along y=0 section   (N/m)
 
@@ -52,7 +52,7 @@ SECTION_OUTPUTS = [
 OUTPUT_LABELS = {
     "H_mean_x0":    r"$\bar{H}_{x=0}$",
     "H_mean_y0":    r"$\bar{H}_{y=0}$",
-    "H_anisotropy": r"$\Delta H / \bar{H}$",
+    "H_anisotropy": r"$\Delta H$",
     "vm_x0":        r"$\bar{\sigma}_{x=0}$",
     "vm_y0":        r"$\bar{\sigma}_{y=0}$",
 }
@@ -63,7 +63,7 @@ PARAM_LABELS = {
     "knit_dir":  r"$\theta_{knit}$",
     "pressure":  r"$p$",
     "E1":        r"$E_1$ (N/m)",
-    "r":         r"$r{=}E_1/E_2$",
+    "r":         r"$r{=}E_2/E_1$",
     "nu":        r"$\nu_{12}$",
 }
 
@@ -169,8 +169,8 @@ def build_section_df(force=False) -> pd.DataFrame:
     # Curvature anisotropy index: signed normalised difference
     Hx = metrics_df["H_mean_x0"]
     Hy = metrics_df["H_mean_y0"]
-    Hm = 0.5 * (Hx + Hy)
-    metrics_df["H_anisotropy"] = np.where(Hm > 1e-6, (Hx - Hy) / Hm, np.nan)
+    Hs = Hx + Hy
+    metrics_df["H_anisotropy"] = np.where(Hs > 1e-6, (Hx - Hy) / Hs, np.nan)
 
     # Quality filter: reject rough profiles and very low crown heights
     r_max   = metrics_df[["r_x0", "r_y0"]].max(axis=1)

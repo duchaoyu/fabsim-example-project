@@ -2,7 +2,7 @@
 Fig P — E1 / r / nu12 parameter sweeps for section outputs (no cable).
 
 3 columns × 3 rows:
-  cols: E1 sweep | r=E1/E2 sweep | nu12 sweep
+  cols: E1 sweep | r=E2/E1 sweep | nu12 sweep
   rows: crown height
         section curvature H_x0 & H_y0
         section stress vm_x0 & vm_y0
@@ -45,7 +45,7 @@ N_GRID = 120
 
 SWEEP_PARAMS = [
     ("E1",  r"$E_1$  (N/m)",   (1000.0, 20000.0)),
-    ("r",   r"$r = E_1/E_2$",  (1.0,    5.0)),
+    ("r",   r"$r = E_2/E_1$",  (1.0,    5.0)),
     ("nu",  r"$\nu_{12}$",     (0.09,   0.3)),
 ]
 
