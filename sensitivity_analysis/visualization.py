@@ -171,10 +171,18 @@ def plot_pressure_curve(surrogate_m1: ScalarSurrogate,
 
 
 # ── Figure 3: Sobol heatmap (ST) ──────────────────────────────────────────────
-def plot_sobol(sobol_results: dict, save: bool = True):
+def plot_sobol(sobol_results: dict, save: bool = True, index: str = "ST"):
     """sobol_results: {group: {output: DataFrame(index=params, cols=S1,ST,...)}}
-    One heatmap per group: rows=parameters, cols=outputs, colour=ST.
+    One heatmap per group: rows=parameters, cols=outputs, colour=`index`.
+
+    index: "ST" (total-order, default) or "S1" (first-order).  S1 panels are
+    saved with an _S1 suffix so both can coexist.
     """
+    if index not in ("ST", "S1"):
+        raise ValueError(f"index must be 'ST' or 'S1', got {index!r}")
+    conf_key = index + "_conf"
+    # Which outputs are worth a column is judged on ST even for the S1 panel,
+    # so the two figures keep the same columns and stay comparable.
     from matplotlib.patches import Rectangle as _Rect
     import matplotlib.ticker as ticker
 
@@ -210,8 +218,8 @@ def plot_sobol(sobol_results: dict, save: bool = True):
                 if _is_masked(p, col):
                     mask[i, j] = True
                     continue
-                mat[i, j]      = max(0, df.loc[p, "ST"])
-                conf_mat[i, j] = df.loc[p, "ST_conf"]
+                mat[i, j]      = max(0, df.loc[p, index])
+                conf_mat[i, j] = df.loc[p, conf_key]
         mat = np.where(mask, np.nan, mat)
 
         # Figure sizing.  The bottom pad has to clear the rotated output labels
@@ -278,12 +286,14 @@ def plot_sobol(sobol_results: dict, save: bool = True):
         cbar.set_ticks([0, 0.25, 0.5, 0.75, 1.0])
         cbar.ax.tick_params(labelsize=10)
         cbar.ax.xaxis.set_major_formatter(ticker.FormatStrFormatter("%.2f"))
-        cbar.set_label(r"Total-order Sobol index $S_T$", fontsize=11)
+        cbar.set_label(r"Total-order Sobol index $S_T$" if index == "ST"
+                       else r"First-order Sobol index $S_1$", fontsize=11)
 
         fig.suptitle(GROUP_TITLES.get(group, group), fontsize=12, y=1.01)
 
         if save:
-            _save(fig, os.path.join(FIG_DIR, f"fig3_sobol_{group}"))
+            suffix = "" if index == "ST" else "_S1"
+            _save(fig, os.path.join(FIG_DIR, f"fig3_sobol_{group}{suffix}"))
 
 
 # ── Figure 4: cable vs no-cable curvature field ────────────────────────────────

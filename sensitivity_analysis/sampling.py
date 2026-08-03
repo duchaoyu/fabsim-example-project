@@ -16,6 +16,7 @@ from config import (
     PARAMS_NO_CABLE, PARAMS_CABLE, PARAMS_CABLE_ORIENT,
     PARAMS_MATERIAL_NO_CABLE, PARAMS_MATERIAL_CABLE,
     PARAMS_MATERIAL_EXT_NO_CABLE, N_SAMPLES_MATERIAL_EXT,
+    PARAMS_MATERIAL_R_NO_CABLE, PARAMS_MATERIAL_R_CABLE, N_SAMPLES_MATERIAL_R,
     MOTIFS, HAS_CABLE, CABLE_AXES, N_SAMPLES, N_SAMPLES_ORIENT,
     N_SAMPLES_MATERIAL, RANDOM_SEED,
 )
@@ -177,6 +178,54 @@ def generate_material_ext_samples(start_id: int = 2000, seed: int = RANDOM_SEED)
             "nu":         float(row["nu"]),
         })
     return samples
+
+
+def generate_material_r_samples(start_id: int = 3000,
+                                seed: int = RANDOM_SEED,
+                                n: int = None) -> list:
+    """
+    LHS samples for the r-parameterised material study, where r = E2/E1 is an
+    explicit input (course-stiffer regime, r >= 1).
+
+    The FEM binary computes E2 = E1/r_bin, so the stored r (= E2/E1) must be
+    inverted before the call: r_bin = 1/r.  That inversion is done here and
+    carried in "r_binary" so the runner cannot forget it; "r" stays the paper's
+    E2/E1 and is what the Sobol analysis apportions.  E2 is stored for reference.
+
+    IDs start at 3000 (no-cable 3000-3799, cable 3800-4599); 2700-4798 is free
+    of existing runs.  Extension blocks pass a distinct start_id and seed --
+    a different seed gives an independent LHS, so the blocks pool into one
+    space-filling design rather than duplicating points.
+    """
+    all_samples = []
+    sid = start_id
+    for gi, has_cable in enumerate([False, True]):
+        bounds = PARAMS_MATERIAL_R_CABLE if has_cable else PARAMS_MATERIAL_R_NO_CABLE
+        df = lhs(n or N_SAMPLES_MATERIAL_R, bounds, seed=seed + (gi + 90) * 1000)
+        for _, row in df.iterrows():
+            E1 = float(row["E1"])
+            r  = float(row["r"])          # E2/E1
+            s = {
+                "sample_id": sid,
+                "group":     f"material_r_{'cable' if has_cable else 'nocable'}",
+                "motif":     3,           # fallback only; overridden by E1/r/nu
+                "has_cable": has_cable,
+                "sf_wale":   float(row["sf_wale"]),
+                "sf_course": float(row["sf_course"]),
+                "knit_dir":  float(row["knit_dir"]),
+                "pressure":  float(row["pressure"]),
+                "E1":        E1,
+                "r":         r,           # E2/E1 — the Sobol input
+                "r_binary":  1.0 / r,     # E1/E2 — what the binary consumes
+                "E2":        E1 * r,
+                "nu":        float(row["nu"]),
+            }
+            if has_cable:
+                s["cable_wale_lrest"]   = float(row["cable_wale_lrest"])
+                s["cable_course_lrest"] = float(row["cable_course_lrest"])
+            all_samples.append(s)
+            sid += 1
+    return all_samples
 
 
 if __name__ == "__main__":

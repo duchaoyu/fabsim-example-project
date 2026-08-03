@@ -109,10 +109,58 @@ PARAMS_MATERIAL_EXT_NO_CABLE = {
 }
 N_SAMPLES_MATERIAL_EXT = 500
 
+# ── r-parameterised material study (r = E2/E1 as an explicit Sobol input) ──────
+# IMPORTANT: here r is E2/E1 — the course/wale stiffness ratio, the paper's
+# convention — so r >= 1 is the course-stiffer regime, consistent with
+# MOTIF_PARAMS (motif 1: E1=5000, E2=12507).  The FEM binary consumes
+# E2 = E1/r_bin, so the run scripts pass r_bin = 1/r; see
+# sampling.generate_material_r_samples.  Getting that inversion wrong silently
+# produces the wale-stiffer regime instead.
+#
+# Why a fresh design rather than reusing material_/material_ext_: Sobol needs a
+# box design in the input variables it apportions.  material_ (r = E1/E2 ∈ 3–5)
+# has E2/E1 ∈ 0.20–0.33, entirely outside r ≥ 1; material_ext_ samples E1 and E2
+# independently, so r is not an input there, and its nu ≤ 0.3 / p ≤ 1200 leave
+# half the nu range and 40% of the p range below unsampled.
+#
+# p up to 2000 Pa: probed and safe.  The corner (E1=1000, p=2000, r=5, nu=0.5)
+# converges at h/R = 0.71 with max/mean stress 1.29.  Response is governed by
+# pR/E1; raising p_max 1200 → 2000 moves the fraction of the box with
+# pR/E1 > 0.3 from 2.6% to 6.6%, so ~93% stays in the already-sampled regime.
+PARAMS_MATERIAL_R_NO_CABLE = {
+    "sf_wale":   (0.8, 1.4),
+    "sf_course": (0.8, 1.4),
+    "knit_dir":  (0.0, 90.0),
+    "pressure":  (200.0, 2000.0),
+    "E1":        (1000.0, 20000.0),
+    "r":         (1.0, 5.0),
+    "nu":        (0.1, 0.5),
+}
+
+PARAMS_MATERIAL_R_CABLE = {
+    "sf_wale":            (0.8, 1.4),
+    "sf_course":          (0.8, 1.4),
+    "knit_dir":           (0.0, 90.0),
+    "pressure":           (200.0, 2000.0),
+    "cable_wale_lrest":   (0.90, 1.0),
+    "cable_course_lrest": (0.90, 1.0),
+    "E1":                 (1000.0, 20000.0),
+    "r":                  (1.0, 5.0),
+    "nu":                 (0.1, 0.5),
+}
+N_SAMPLES_MATERIAL_R = 800
+
 # ── Quality filter thresholds ─────────────────────────────────────────────────
 # Applied during FEA data generation to reject bad simulations.
 QUALITY_CROWN_MAX        = 2.0   # m  — above this → exploded
 QUALITY_STRESS_RATIO_MAX = 10.0  # max_stress/mean_stress — above this → unsmooth/localised
+# Below this → the membrane did not inflate (solver failed / collapsed).  This was
+# 0.01 m, which was safe while crown heights ran 50-450 mm but silently rejected
+# valid runs once the nu12 sweep reached 0.9: a stiff membrane (E1=20 kN/m,
+# E2/E1=2.5, nu=0.9) legitimately rises only 7.6 mm at p=1000 Pa, with a smooth
+# dome and max/mean stress of exactly 1.0.  Genuine failures return 0.0 exactly,
+# and unsmooth ones are caught by QUALITY_STRESS_RATIO_MAX.
+QUALITY_CROWN_MIN        = 0.001  # m
 
 # ── Data output ───────────────────────────────────────────────────────────────
 DATA_DIR = os.path.join(_SA_DIR, "data")
