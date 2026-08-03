@@ -214,9 +214,14 @@ def plot_sobol(sobol_results: dict, save: bool = True):
                 conf_mat[i, j] = df.loc[p, "ST_conf"]
         mat = np.where(mask, np.nan, mat)
 
-        # Figure sizing
+        # Figure sizing.  The bottom pad has to clear the rotated output labels
+        # *and* the colorbar below them; with 7+ outputs the longest label
+        # ("$\\bar{H}_{x=0}$ (m$^{-1}$)") overhangs far enough to collide, so
+        # scale the pad with the longest label rather than fixing it.
+        _lab_len = max(len(OUTPUT_LABELS.get(o, o)) for o in active_outputs)
         cell_w, cell_h = 0.90, 0.82
-        pad_top, pad_bot, pad_left, pad_right = 1.0, 0.9, 1.6, 0.5
+        pad_top, pad_left, pad_right = 1.0, 1.6, 0.5
+        pad_bot = 0.9 + 0.055 * max(0, _lab_len - 12)
         panel_w = n_o * cell_w + 0.4
         panel_h = n_p * cell_h + 0.6
         fig_w = panel_w + pad_left + pad_right
