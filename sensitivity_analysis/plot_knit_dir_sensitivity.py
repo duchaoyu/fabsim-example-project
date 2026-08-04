@@ -27,8 +27,14 @@ Fig M — Line sweep + anisotropy index, from a direct FEA sweep
   therefore showed curvature structure that is not there and a flat section
   stress that should vary.
 
-Fig N — Section profile gallery at theta ≈ 0, 30, 45, 60, 90 degrees
-  Shows z(s) and H(s) along x=0 and y=0 for representative samples.
+Fig N — Section profile gallery at theta = 0, 30, 45, 60, 90 degrees
+  Shows z(s) and H(s) along x=0 and y=0.  Reads the same direct FEA sweep as
+  figM, so the runs are exactly on the (sf=1.0, p=1000 Pa) slice and exactly at
+  the plotted angles.  It previously read results_with_sections.csv — the Sobol
+  samples, on the wrong mesh and with motif 5 material for motif 2 — and picked
+  the nearest sample within 15 degrees of each target, so the columns were
+  labelled with one angle and drawn from another.  Not symmetrised: this row
+  shows what the mesh actually produced.
 """
 
 import os
@@ -66,12 +72,10 @@ GROUPS = ["motif1_nocable", "motif2_nocable"]
 COLORS = {"motif1_nocable": "#2E8B57", "motif2_nocable": "#20B2AA"}
 LABELS = {"motif1_nocable": "Motif 1", "motif2_nocable": "Motif 2"}
 
-FIXED_SF   = 1.0     # figN only: how close a stored sample must be to the slice
-FIXED_P    = 1000.0
 THETA_RANGE = (0.0, 90.0)
 
 GALLERY_TARGETS = [0, 30, 45, 60, 90]
-GALLERY_TOL     = 15.0   # deg
+GALLERY_TOL     = 15.0   # deg; slack for a truncated sweep, the grid is 1 deg
 
 
 # ── direct FEA sweep ─────────────────────────────────────────────────────────
@@ -112,101 +116,25 @@ def _smooth(y):
     return savgol_filter(np.asarray(y), win, SMOOTH_ORD)
 
 
-def _load_verts(sid):
-    p = os.path.join(DATA_DIR, f"{sid:05d}_verts.csv")
-    if not os.path.exists(p):
+def _load_verts(path):
+    """Deformed vertices of one sweep run, from the verts_path stored in the CSV."""
+    if not isinstance(path, str) or not os.path.exists(path):
         return None
-    return pd.read_csv(p).sort_values("vid")[["x", "y", "z"]].values
+    return pd.read_csv(path).sort_values("vid")[["x", "y", "z"]].values
 
 
-def _best_sample(sub, target_deg):
-    sub = sub.copy()
-    sub["angle_dist"] = (sub["knit_dir"] - target_deg).abs()
-    cands = sub[sub["angle_dist"] < GALLERY_TOL].copy()
-    if cands.empty:
+def _nearest_angle(sub, target_deg):
+    """The sweep run closest to target_deg.  The grid is 1 deg, so this is exact
+    at every gallery target; the tolerance only guards a truncated sweep."""
+    if sub.empty:
         return None
-    cands["score"] = (
-        ((cands["sf_wale"]   - FIXED_SF) / 0.3) ** 2 +
-        ((cands["sf_course"] - FIXED_SF) / 0.3) ** 2 +
-        ((cands["pressure"]  - FIXED_P)  / 500)  ** 2
-    )
-    return cands.nsmallest(1, "score").iloc[0]
+    dist = (sub["knit_dir"] - target_deg).abs()
+    if dist.min() > GALLERY_TOL:
+        return None
+    return sub.loc[dist.idxmin()]
 
 
 # ── Fig M ─────────────────────────────────────────────────────────────────────
-
-def _add_section_insets(ax_a, theta_targets=(0, 45, 90)):
-    """
-    Add small cross-section profile insets on the anisotropy panel
-    at representative theta values using actual FEA samples.
-    """
-    df = pd.read_csv(os.path.join(DATA_DIR, "results_with_sections.csv"))
-    if "sim_failed" in df.columns:
-        df = df[~df["sim_failed"]]
-
-    # Use motif1 for illustration; pick samples closest to sf~1, p~1000
-    sub = df[df["group"] == "motif1_nocable"].copy()
-    sub["sf_dist"] = ((sub["sf_wale"] - 1.0)**2 + (sub["sf_course"] - 1.0)**2 +
-                      ((sub["pressure"] - 1000.0) / 500)**2)
-
-    ax_xlim = ax_a.get_xlim()
-    ax_ylim = ax_a.get_ylim()
-
-    inset_w = 0.12   # axes fraction
-    inset_h = 0.28
-    # positions: (theta_target, x_anchor_in_axes_frac, va)
-    positions = {
-        0:  (0.03,  0.68),   # left
-        45: (0.41,  0.12),   # centre-bottom
-        90: (0.78,  0.68),   # right
-    }
-
-    for target in theta_targets:
-        cands = sub[np.abs(sub["knit_dir"] - target) < 12].copy()
-        if cands.empty:
-            continue
-        row = cands.nsmallest(1, "sf_dist").iloc[0]
-        sid = int(row["sample_id"])
-        verts = _load_verts(sid)
-        if verts is None:
-            continue
-
-        curv  = compute_curvatures(verts, _FACES)
-        H     = curv["H"]
-
-        xf, yf = positions[target]
-        ax_in = ax_a.inset_axes([xf, yf, inset_w, inset_h])
-        ax_in.set_facecolor("white")
-
-        for fixed_axis, ls, color in [(0, "-", "#2E8B57"), (1, "--", "#888")]:
-            pos, z, _ = _slice_plane(verts, _FACES, H, fixed_axis=fixed_axis)
-            if len(pos) < 3:
-                continue
-            s = (pos - pos.min()) / (pos.max() - pos.min())
-            z_n = z / z.max() if z.max() > 1e-3 else z
-            ax_in.plot(s, z_n, color=color, ls=ls, lw=1.2)
-
-        ax_in.set_xlim(0, 1)
-        ax_in.set_ylim(-0.05, 1.15)
-        ax_in.set_xticks([])
-        ax_in.set_yticks([])
-        ax_in.set_title(f"θ={target}°", fontsize=6.5, pad=2)
-        for sp in ax_in.spines.values():
-            sp.set_linewidth(0.5)
-            sp.set_color("0.5")
-
-        # arrow from inset to the corresponding point on the dH=0 line at target theta
-        if ax_xlim[1] > ax_xlim[0]:
-            tx = (target - ax_xlim[0]) / (ax_xlim[1] - ax_xlim[0])
-            ty = (0.0    - ax_ylim[0]) / (ax_ylim[1] - ax_ylim[0])
-            # center-bottom of inset → data point
-            ix = xf + inset_w / 2
-            iy = yf if yf < 0.5 else yf
-            ax_a.annotate("", xy=(tx, ty), xytext=(ix, iy if yf < 0.5 else yf),
-                          xycoords="axes fraction", textcoords="axes fraction",
-                          arrowprops=dict(arrowstyle="-", color="0.5",
-                                          lw=0.7, connectionstyle="arc3,rad=0"))
-
 
 def plot_sweep(save=True):
     df = _load_sweep()
@@ -342,9 +270,13 @@ def _normalise_profile(pos, vals, trim=0.10):
 
 
 def plot_gallery(save=True):
-    df = pd.read_csv(os.path.join(DATA_DIR, "results_with_sections.csv"))
-    if "sim_failed" in df.columns:
-        df = df[~df["sim_failed"]]
+    # Same source as figM: the direct FEA sweep, one run per degree at
+    # s_wale = s_course = 1.0, p = 1000 Pa.  This used to read
+    # results_with_sections.csv, i.e. the Sobol samples, which were run on the
+    # wrong mesh and — for motif 2 — with motif 5 material (validate_fem_runs.py).
+    # Because every run in the sweep is already at the fixed (sf, p) slice, the
+    # nearest-sample search the old version needed is now an exact lookup.
+    df = _load_sweep()
 
     n_cols = len(GALLERY_TARGETS)
     n_rows = 2 * len(GROUPS)
@@ -357,7 +289,8 @@ def plot_gallery(save=True):
     plane_colors = {"x=0": "#2E8B57", "y=0": "#e07b39"}
 
     for g_idx, group in enumerate(GROUPS):
-        sub  = df[df["group"] == group]
+        motif = int(group.replace("motif", "").replace("_nocable", ""))
+        sub  = df[df["motif"] == motif]
         ax_z_row = 2 * g_idx
         ax_H_row = 2 * g_idx + 1
 
@@ -365,12 +298,11 @@ def plot_gallery(save=True):
             ax_z = axes[ax_z_row, c_idx]
             ax_H = axes[ax_H_row, c_idx]
 
-            row = _best_sample(sub, target)
+            row = _nearest_angle(sub, target)
             if row is None:
                 ax_z.set_visible(False); ax_H.set_visible(False); continue
 
-            sid   = int(row["sample_id"])
-            verts = _load_verts(sid)
+            verts = _load_verts(row["verts_path"])
             if verts is None:
                 ax_z.set_visible(False); ax_H.set_visible(False); continue
 
@@ -406,13 +338,11 @@ def plot_gallery(save=True):
             ax_z.tick_params(labelsize=7)
             ax_H.tick_params(labelsize=7)
 
-            # column title: target angle + actual sample parameters
-            col_title = (f"θ ≈ {target}°  (actual {row['knit_dir']:.0f}°)\n"
-                         f"$s_w$={row['sf_wale']:.2f}  "
-                         f"$s_c$={row['sf_course']:.2f}  "
-                         f"$p$={row['pressure']:.0f} Pa")
+            # column title: the sweep hits every target exactly, and (sf, p) are
+            # fixed across the whole sweep, so they go in the suptitle instead
             if g_idx == 0:
-                ax_z.set_title(col_title, fontsize=7, pad=4)
+                ax_z.set_title(rf"$\theta_{{knit}} = {row['knit_dir']:.0f}\degree$",
+                               fontsize=8, pad=4)
 
             if c_idx == 0:
                 ax_z.set_ylabel(f"{LABELS[group]}\n$z/z_{{max}}$", fontsize=8)
@@ -427,7 +357,8 @@ def plot_gallery(save=True):
 
     fig.suptitle(
         "Normalised cross-section profiles at key knitting directions\n"
-        r"(shape: $z/z_{max}$;  curvature: $H/\bar{H}$;  "
+        r"(direct FEA sweep, $s_{wale}=s_{course}=1.0$, $p=1000$ Pa;  "
+        r"shape: $z/z_{max}$;  curvature: $H/\bar{H}$;  "
         r"solid=$x{=}0$,  dashed=$y{=}0$)",
         fontsize=9, y=1.01,
     )
