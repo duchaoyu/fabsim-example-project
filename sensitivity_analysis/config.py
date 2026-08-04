@@ -150,6 +150,31 @@ PARAMS_MATERIAL_R_CABLE = {
 }
 N_SAMPLES_MATERIAL_R = 800
 
+# ── Model-validity box for the r study ────────────────────────────────────────
+# Same box, with the stretch factors cut at 0.95.  A membrane element carries no
+# compression, so a run whose principal stress goes negative is outside the
+# formulation, not merely noisy — and below s = 0.95 that is the norm rather than
+# the exception (sampling 250 retained runs: 39% of faces in compression for
+# s_course in 0.80-0.90 and 94% of runs affected, against 3% / 8% for s >= 1.0;
+# s_wale behaves the same).  Those runs also carry most of the solver failures:
+# convergence over the planned design is 83% on the full box and 96% with
+# s_course >= 0.95.
+#
+# Pressure is deliberately left at 200 Pa.  The model is valid there; what
+# degrades is the section-curvature estimator on a barely-inflated dome, and
+# truncating an operating variable to compensate for a post-processing weakness
+# would discard valid runs (a soft fabric at 200 Pa has pR/E1 = 0.12).
+PARAMS_MATERIAL_R_VALID_NO_CABLE = {
+    **PARAMS_MATERIAL_R_NO_CABLE,
+    "sf_wale":   (0.95, 1.4),
+    "sf_course": (0.95, 1.4),
+}
+PARAMS_MATERIAL_R_VALID_CABLE = {
+    **PARAMS_MATERIAL_R_CABLE,
+    "sf_wale":   (0.95, 1.4),
+    "sf_course": (0.95, 1.4),
+}
+
 # ── Quality filter thresholds ─────────────────────────────────────────────────
 # Applied during FEA data generation to reject bad simulations.
 QUALITY_CROWN_MAX        = 2.0   # m  — above this → exploded

@@ -35,11 +35,12 @@ from matplotlib.patches import Patch, Rectangle
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from config import DATA_DIR, PARAMS_MATERIAL_R_NO_CABLE, PARAMS_MATERIAL_R_CABLE
+from config import DATA_DIR
 from surrogate import ScalarSurrogate
 from visualization import OUTPUT_LABELS, FIG_DIR
 from plot_material_r_sobol_combined import (
     GROUPS, BASE_OUTPUTS, CABLE_OUTPUTS, PARAM_LABELS, load_group, _is_masked,
+    SUR_PREFIX, FIG_SUFFIX,
 )
 from SALib.sample import saltelli
 from SALib.analyze import sobol as sobol_analyze
@@ -78,7 +79,7 @@ PAD_TOP, PAD_BOT = 0.80, 2.45   # bottom holds x labels + legend + key + caption
 
 def s2_partners(group, bounds, outputs, n_base):
     """{output: {param: partner_param}} from a second-order Saltelli run."""
-    path = os.path.join(DATA_DIR, f"{group}_surrogate.pkl")
+    path = os.path.join(DATA_DIR, f"{group}_{SUR_PREFIX}surrogate.pkl")
     if not os.path.exists(path):
         print(f"  no surrogate at {path} — partners omitted")
         return {}
@@ -252,7 +253,8 @@ def plot_regime(n_s2=256, gamma=GAMMA, save=True):
                  y=1 - 0.18 / fig_h)
 
     if save:
-        base = os.path.join(FIG_DIR, "fig3_sobol_material_r_regime")
+        base = os.path.join(FIG_DIR,
+                            f"fig3_sobol_material_r_regime{FIG_SUFFIX}")
         fig.savefig(base + ".pdf", bbox_inches="tight")
         fig.savefig(base + ".png", bbox_inches="tight", dpi=200)
         print(f"Saved: {base}.png / .pdf")
@@ -263,6 +265,9 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--n-s2", type=int, default=256,
                     help="Saltelli base N for the second-order partner run")
+    ap.add_argument("--valid", action="store_true",
+                    help="use the model-validity box (handled at import; listed "
+                         "here so argparse accepts the flag)")
     ap.add_argument("--gamma", type=float, default=GAMMA,
                     help="saturation exponent; 1.0 is the old linear ramp, "
                          "smaller means more colour at mid/high ST")

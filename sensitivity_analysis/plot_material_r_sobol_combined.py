@@ -29,10 +29,21 @@ from matplotlib.patches import Rectangle
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from config import (
-    DATA_DIR, PARAMS_MATERIAL_R_NO_CABLE, PARAMS_MATERIAL_R_CABLE,
-)
+import config
+from config import DATA_DIR
 from visualization import PARAM_LABELS, OUTPUT_LABELS, FIG_DIR
+
+# --valid switches to the model-validity box (stretch factors from 0.95; see
+# config.PARAMS_MATERIAL_R_VALID_*) and to the tables run_material_r_valid.py
+# writes.  Read from argv at import so the regime-map script inherits it.
+VALID      = "--valid" in sys.argv
+CSV_PREFIX = "valid_" if VALID else ""
+SUR_PREFIX = "valid_" if VALID else ""
+FIG_SUFFIX = "_valid" if VALID else ""
+_BOUNDS = ((config.PARAMS_MATERIAL_R_VALID_NO_CABLE,
+            config.PARAMS_MATERIAL_R_VALID_CABLE) if VALID else
+           (config.PARAMS_MATERIAL_R_NO_CABLE, config.PARAMS_MATERIAL_R_CABLE))
+PARAMS_MATERIAL_R_NO_CABLE, PARAMS_MATERIAL_R_CABLE = _BOUNDS
 
 OUTPUT_LABELS = dict(OUTPUT_LABELS)
 OUTPUT_LABELS.setdefault("H_anisotropy", r"$\Delta H$")
@@ -71,7 +82,7 @@ def load_group(group):
     outputs = BASE_OUTPUTS + (CABLE_OUTPUTS if group.endswith("_cable") else [])
     tables = {}
     for col in outputs:
-        path = os.path.join(DATA_DIR, f"sobol_{group}_{col}.csv")
+        path = os.path.join(DATA_DIR, f"sobol_{group}_{CSV_PREFIX}{col}.csv")
         if not os.path.exists(path):
             print(f"  missing, skipped: {os.path.basename(path)}")
             continue
@@ -196,7 +207,8 @@ def plot_combined(save=True):
                  fontsize=13, y=1 - 0.18 / fig_h)
 
     if save:
-        base = os.path.join(FIG_DIR, "fig3_sobol_material_r_combined")
+        base = os.path.join(FIG_DIR,
+                            f"fig3_sobol_material_r_combined{FIG_SUFFIX}")
         fig.savefig(base + ".pdf", bbox_inches="tight")
         fig.savefig(base + ".png", bbox_inches="tight", dpi=200)
         print(f"Saved: {base}.png / .pdf")
