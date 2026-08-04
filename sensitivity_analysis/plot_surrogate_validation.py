@@ -14,7 +14,7 @@ Both reconstruct the same 80/20 split the surrogates were fitted with
 ones the GPs never saw.
 
 Usage:
-    python3 plot_surrogate_validation.py
+    python3 plot_surrogate_validation.py [--full-box]
 """
 
 import os

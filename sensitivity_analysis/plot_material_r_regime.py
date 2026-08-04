@@ -17,7 +17,7 @@ the partner is taken from a separate, smaller second-order Saltelli run on the
 same surrogates — it only has to rank partners, not report a value.
 
 Usage:
-    python3 plot_material_r_regime.py [--n-s2 256]
+    python3 plot_material_r_regime.py [--n-s2 256] [--full-box]
 Products:
     figures/fig3_sobol_material_r_regime.{pdf,png}
 """
@@ -265,9 +265,10 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--n-s2", type=int, default=256,
                     help="Saltelli base N for the second-order partner run")
-    ap.add_argument("--valid", action="store_true",
-                    help="use the model-validity box (handled at import; listed "
-                         "here so argparse accepts the flag)")
+    ap.add_argument("--full-box", action="store_true",
+                    help="plot the original full box instead of the default "
+                         "model-validity box (handled at import; listed here so "
+                         "argparse accepts the flag)")
     ap.add_argument("--gamma", type=float, default=GAMMA,
                     help="saturation exponent; 1.0 is the old linear ramp, "
                          "smaller means more colour at mid/high ST")

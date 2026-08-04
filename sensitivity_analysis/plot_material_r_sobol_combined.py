@@ -33,13 +33,15 @@ import config
 from config import DATA_DIR
 from visualization import PARAM_LABELS, OUTPUT_LABELS, FIG_DIR
 
-# --valid switches to the model-validity box (stretch factors from 0.95; see
-# config.PARAMS_MATERIAL_R_VALID_*) and to the tables run_material_r_valid.py
-# writes.  Read from argv at import so the regime-map script inherits it.
-VALID      = "--valid" in sys.argv
+# The model-validity box (stretch factors from 0.95; config.PARAMS_MATERIAL_R_
+# VALID_*) is the default, because the full box includes slack states where the
+# membrane carries compression it physically cannot — see run_material_r_valid.py.
+# --full-box reproduces the original figures under a _fullbox suffix.  Read from
+# argv at import so the regime-map and validation scripts inherit it.
+VALID      = "--full-box" not in sys.argv
 CSV_PREFIX = "valid_" if VALID else ""
 SUR_PREFIX = "valid_" if VALID else ""
-FIG_SUFFIX = "_valid" if VALID else ""
+FIG_SUFFIX = "" if VALID else "_fullbox"
 _BOUNDS = ((config.PARAMS_MATERIAL_R_VALID_NO_CABLE,
             config.PARAMS_MATERIAL_R_VALID_CABLE) if VALID else
            (config.PARAMS_MATERIAL_R_NO_CABLE, config.PARAMS_MATERIAL_R_CABLE))
