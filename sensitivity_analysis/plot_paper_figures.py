@@ -401,12 +401,15 @@ def plot_sobol_regime(save=True):
                fontsize=11, frameon=False,
                bbox_to_anchor=(0.5, -0.01))
 
-    fig.suptitle(
-        r"Sobol sensitivity regime map""\n"
-        r"{\small Color = $S_1$ (blue) + $(S_T-S_1)$ (orange) + $(1-S_T)$ (grey)"
-        r" $|$ italic = dominant $S_2$ partner}",
-        fontsize=15, y=1.01,
-    )
+    # Colour recipe, below the legend.  It used to sit in the suptitle wrapped in
+    # {\small ...}, which mathtext does not implement — it printed the braces and
+    # the command verbatim.
+    fig.text(0.5, -0.035,
+             r"Colour = $S_1$ (blue) + $(S_T - S_1)$ (orange) + $(1 - S_T)$ "
+             r"(grey);  italic = dominant $S_2$ partner",
+             ha="center", va="top", fontsize=11)
+
+    fig.suptitle("Sobol sensitivity regime map", fontsize=15, y=1.01)
 
     if save:
         path = os.path.join(FIG_DIR, "figA3_sobol_regime.pdf")
