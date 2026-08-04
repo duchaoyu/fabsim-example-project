@@ -2,10 +2,17 @@
 Run FEA grids for Poisson's ratio (nu12) analysis.
 
 Grid A (figS): E1 (10 values) × nu12 (8 values) at 3 fixed E2/E1 slices
-               E2/E1 = 0.25, 0.50, 1.00  →  240 runs  (IDs 7000-7239)
+               E2/E1 = 1.00, 1.60, 2.50  →  240 runs  (IDs 8200-8439)
 
 Grid B (figT): E2/E1 (8 values) × nu12 (8 values) at fixed E1 = 7000 N/m
-               64 runs  (IDs 7240-7303)
+               64 runs  (IDs 8440-8503)
+
+nu12 spans 0.10-0.50 (see NU12_VALUES).
+
+E1 is the wale (less stiff) modulus and E2 the course one, so E2/E1 >= 1 on both
+grids — the regime the motifs occupy (motif 1: 2.50, motif 2: 1.60).  Both grids
+used to run at E2/E1 <= 1.  The binary computes E2 = E1/r, so E2/E1 is passed
+through as r = 1/(E2/E1).
 
 Fixed: sf=1.1, knit_dir=0°, pressure=1000 Pa, motif=1.
 
@@ -23,9 +30,13 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from config import DATA_DIR
+from config import DATA_DIR, MESH_PATH, QUALITY_CROWN_MIN
+from curvature import read_off
 from fea_interface import run_fea, check_binary
 from plot_material_section_sobol import _section_metrics
+from apex_curvature import apex_curvature
+
+_V0, _FACES = read_off(MESH_PATH)
 
 RESULTS_A_CSV  = os.path.join(DATA_DIR, "nu_grid_A_results.csv")
 SECTIONS_A_CSV = os.path.join(DATA_DIR, "nu_grid_A_sections.csv")
@@ -33,22 +44,33 @@ RESULTS_B_CSV  = os.path.join(DATA_DIR, "nu_grid_B_results.csv")
 SECTIONS_B_CSV = os.path.join(DATA_DIR, "nu_grid_B_sections.csv")
 
 # Grid A
+# E1 is the wale (less stiff) modulus, E2 the course one, so E2/E1 >= 1.  The
+# slices are anchored on the real motifs: isotropic, motif 2, motif 1.  They used
+# to be 0.25 / 0.50 / 1.00, i.e. wale-stiff, which no motif occupies.
 E1_VALUES   = np.array([1000, 2000, 3500, 5000, 7000, 10000, 13000, 16000, 18000, 20000], dtype=float)
-E2_OVER_E1_SLICES = np.array([0.25, 0.50, 1.00])   # r = 4.0, 2.0, 1.0
+E2_OVER_E1_SLICES = np.array([1.00, 1.60, 2.50])   # isotropic | motif 2 | motif 1
 
 # Grid B
 E1_FIXED    = 7000.0
-R_VALUES_B  = np.array([1.0, 1.25, 1.67, 2.0, 2.5, 3.0, 4.0, 5.0], dtype=float)
+E2R_VALUES_B = np.array([1.0, 1.25, 1.67, 2.0, 2.5, 3.0, 4.0, 5.0], dtype=float)  # E2/E1
 
 # Shared
-NU12_VALUES = np.linspace(0.05, 0.40, 8)   # [0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40]
+# nu12 sweep range.  fabsim uses the symmetrised orthotropic form,
+# C_12 = nu*sqrt(E1*E2) and G12 = 0.5*sqrt(E1*E2)*(1-nu), so the admissibility
+# limit is |nu| < 1 regardless of E2/E1 — NOT the classical nu12 < sqrt(E1/E2).
+# This range covers the motif value (0.198) and PARAMS_MATERIAL_EXT (0.09-0.3) in
+# config.py; it meets PARAMS_MATERIAL (0.45-0.9) only over 0.45-0.5.
+NU12_VALUES = np.linspace(0.10, 0.50, 8)   # [0.100 0.157 0.214 0.271 0.329 0.386 0.443 0.500]
 SF    = 1.1
 KNIT  = 0.0
 PRES  = 1000.0
 MOTIF = 1
 
-START_ID_A = 7000   # 240 runs → 7000-7239
-START_ID_B = 7240   # 64 runs  → 7240-7303
+# _run_one caches by sample_id, so each re-parameterisation needs fresh IDs:
+# 7000-7303 = old E2/E1 <= 1 grids;  7400-7703 = E2/E1 >= 1 at nu 0.05-0.40;
+# 7800-8103 = same at nu 0.10-0.90.
+START_ID_A = 8200   # 240 runs → 8200-8439
+START_ID_B = 8440   # 64 runs  → 8440-8503
 
 
 def _build_samples_A():
@@ -70,14 +92,15 @@ def _build_samples_A():
 
 def _build_samples_B():
     samples, sid = [], START_ID_B
-    for r in R_VALUES_B:
+    for e2r in E2R_VALUES_B:
         for nu in NU12_VALUES:
             samples.append(dict(
-                sample_id=sid, E1=E1_FIXED, r=float(r),
-                E2=float(E1_FIXED / r), nu=float(nu),
+                # the binary computes E2 = E1/r, so r = 1/(E2/E1)
+                sample_id=sid, E1=E1_FIXED, r=float(1.0 / e2r),
+                E2=float(E1_FIXED * e2r), nu=float(nu),
                 sf_wale=SF, sf_course=SF, knit_dir=KNIT,
                 pressure=PRES, motif=MOTIF,
-                grid="B", e2_over_e1=round(1.0 / r, 6),
+                grid="B", e2_over_e1=float(e2r),
             ))
             sid += 1
     return samples
@@ -127,12 +150,23 @@ def _run_grid(samples, jobs, label):
     return pd.DataFrame(rows)
 
 
+def _apex_metrics(sid):
+    """Crown curvature tensor, for the dH_apex panel (see run_e1r_grid.py)."""
+    p = os.path.join(DATA_DIR, f"{sid:05d}_verts.csv")
+    if not os.path.exists(p):
+        return {}
+    V = pd.read_csv(p).sort_values("vid")[["x", "y", "z"]].values
+    ap = apex_curvature(V, KNIT, ref_verts=_V0)
+    return {f"apex_{k}": v for k, v in ap.items()} if ap else {}
+
+
 def _compute_sections(df, csv_path):
-    valid = df[df["crown_height"] > 0.01]
+    valid = df[df["crown_height"] > QUALITY_CROWN_MIN]
     rows = []
     for sid in valid["sample_id"]:
         m = _section_metrics(int(sid))
         m["sample_id"] = int(sid)
+        m.update(_apex_metrics(int(sid)))
         rows.append(m)
     sec = pd.DataFrame(rows)
     merged = df[["sample_id", "E1", "r", "E2", "nu", "e2_over_e1", "grid"]].merge(
@@ -168,7 +202,7 @@ if __name__ == "__main__":
 
     if "B" in grids:
         sB = _build_samples_B()
-        print(f"Grid B: {len(sB)} runs ({len(R_VALUES_B)} E2/E1 × {len(NU12_VALUES)} nu, E1={E1_FIXED:.0f})")
+        print(f"Grid B: {len(sB)} runs ({len(E2R_VALUES_B)} E2/E1 × {len(NU12_VALUES)} nu, E1={E1_FIXED:.0f})")
         if "run" in steps:
             dfB = _run_grid(sB, args.jobs, "B")
             dfB.sort_values(["e2_over_e1", "nu"]).to_csv(RESULTS_B_CSV, index=False)

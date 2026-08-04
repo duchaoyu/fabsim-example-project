@@ -6,8 +6,8 @@ Effect of uniform stretch factor (sf_wale = sf_course = sf) on:
 
 All three panels come from a direct FEA sweep along the diagonal
 (data/uniform_sf_sweep.csv, produced by run_uniform_sf_sweep.py) — one
-simulation per plotted sf, at knit_dir = 0 deg and p = 1000 Pa.  Every run is
-drawn as a marker; lines only interpolate between simulated points.
+simulation per plotted sf, at knit_dir = 0 deg and p = 1000 Pa.  Curves only
+interpolate between simulated points; the per-run markers are not drawn.
 
 This replaces the previous GP-surrogate slice.  The surrogate was fitted to the
 Sobol samples, which barely cover this line — knit_dir = 0 sits on the edge of
@@ -17,10 +17,14 @@ sign of the trend wrong below sf = 1.  A run costs ~0.25 s, so there is no
 reason to interpolate a surrogate here.
 
 Crown height and mean stress are numerically smooth along the sweep (rms second
-difference < 0.1% of range) and are drawn as-is.  The section curvature carries
-8-12% discretisation noise from _profile_curvature (5 mm binning of the slice
-crossings, then two numerical derivatives), so the curvature panel adds a
-Savitzky-Golay trend line on top of the per-run markers.
+difference < 0.1% of range) and are drawn as-is.  Section curvature uses the
+polynomial-fit estimator (section_curvature.py, columns H_fit_*), which is stable
+along a sweep and matches the spherical-cap reference to 1%; the binned estimator
+behind H_mean_* steps by up to 14% between adjacent runs and reads 24-28% high.
+That panel is drawn as a Savitzky-Golay trend through the per-run values.
+
+Plotted from sf = 0.9: below that the Newton solve stops converging (it returns
+the undeformed state, which the sweep flags as failed).
 
 No-cable groups only; motif 1 vs motif 2 overlaid.
 """
@@ -59,7 +63,7 @@ plt.rcParams.update({
 COLORS = {1: "#2E8B57", 2: "#20B2AA"}   # seagreen / lightseagreen
 LABELS = {1: "Motif 1", 2: "Motif 2"}
 
-SF_RANGE   = (0.8, 1.4)
+SF_RANGE   = (0.9, 1.4)   # below 0.9 the Newton solve stops converging
 SMOOTH_WIN = 9       # Savitzky-Golay window (points) for the curvature trend
 SMOOTH_ORD = 2
 
@@ -84,15 +88,13 @@ def plot_uniform_sf(save=True):
     df = df[~df["sim_failed"].astype(bool)].sort_values(["motif", "sf"])
     knit_dir = df["knit_dir"].iloc[0]
     pressure = df["pressure"].iloc[0]
+    # Plot only the range shown, so the trend lines are fitted to the same points
+    # the reader sees.
+    df = df[df["sf"].between(*SF_RANGE)]
 
     fig, axes = plt.subplots(3, 1, figsize=(5.5, 8.5), constrained_layout=True,
                              sharex=True)
     ax_h, ax_s, ax_c = axes
-
-    # Left edge of the region where at least one motif converged; below it no
-    # run produced a dome at all.  Each curve simply starts where its own
-    # solves began to converge (motif 1 at a higher sf than motif 2).
-    sf_converged = df["sf"].min()
 
     for motif, sub in df.groupby("motif"):
         color = COLORS[motif]
@@ -101,13 +103,14 @@ def plot_uniform_sf(save=True):
 
         # row 1: crown height — smooth enough to plot directly
         ax_h.plot(sf, sub["crown_height"].values * 1000, color=color, lw=1.6,
-                  marker="o", ms=2.4, mew=0, label=f"{label}  ({len(sf)} runs)")
+                  label=label)
 
         # row 2: mean stress
         ax_s.plot(sf, sub["mean_stress"].values, color=color, lw=1.6,
-                  marker="o", ms=2.4, mew=0, label=f"{label}  ({len(sf)} runs)")
+                  label=label)
 
-        # row 3: section curvature — per-run markers + trend.
+        # row 3: section curvature — Savitzky-Golay trend through the per-run
+        # values (one FEA run per sf; the markers are no longer drawn).
         # H_fit_*: polynomial-fit estimator (section_curvature.py).  The binned
         # estimator behind H_mean_* takes |z''| from finite differences on binned
         # data, which rectifies noise into a positive bias: it sits 24-28% above
@@ -116,18 +119,8 @@ def plot_uniform_sf(save=True):
         for col, ls, marker, sec in [("H_fit_x0", "-",  "o", "x=0 section"),
                                      ("H_fit_y0", "--", "s", "y=0 section")]:
             y = sub[col].values
-            ax_c.plot(sf, y, ls="none", marker=marker, ms=2.6,
-                      mfc="none", mec=color, mew=0.7, alpha=0.55)
             ax_c.plot(sf, _smooth(y), color=color, ls=ls, lw=1.8,
                       label=f"{label} ({sec})")
-
-        # independent reference: curvature of the spherical cap with the same
-        # base radius and crown height — no section extraction involved
-        a = 0.6
-        h = sub["crown_height"].values
-        ax_c.plot(sf, 2 * h / (a ** 2 + h ** 2), color=color, lw=0.9, ls=":",
-                  alpha=0.9,
-                  label=f"{label} (spherical-cap ref.)" if motif == 1 else None)
 
     # ── formatting ────────────────────────────────────────────────────────────
     ax_h.set_ylabel("Crown height  (mm)")
@@ -141,7 +134,7 @@ def plot_uniform_sf(save=True):
 
     ax_c.set_ylabel(r"Mean curvature  $\bar{H}$  (m$^{-1}$)")
     ax_c.set_title(r"Section curvature  vs uniform $s_f$"
-                   "\n(markers = individual runs,  lines = Savitzky-Golay trend)")
+                   "\n(Savitzky-Golay trend through one FEA run per $s_f$)")
     ax_c.legend(fontsize=7.5, loc="lower left", ncol=2)
     ax_c.set_xlabel(r"Uniform stretch factor  $s_f$  ($s_{wale} = s_{course}$)")
     ax_c.set_ylim(0, None)
@@ -149,14 +142,6 @@ def plot_uniform_sf(save=True):
     for ax in axes:
         ax.axvline(1.0, color="0.7", lw=0.8, ls=":")
         ax.set_xlim(*SF_RANGE)
-        if sf_converged > SF_RANGE[0]:
-            ax.axvspan(SF_RANGE[0], sf_converged, color="0.85", alpha=0.55,
-                       lw=0, zorder=0)
-    if sf_converged > SF_RANGE[0]:
-        ax_h.text((SF_RANGE[0] + sf_converged) / 2, 0.5,
-                  "Newton solve does not converge",
-                  transform=ax_h.get_xaxis_transform(), ha="center",
-                  va="center", fontsize=6.5, color="0.35", rotation=90)
 
     fig.suptitle(
         r"Effect of uniform stretch factor on dome geometry and stress"
@@ -165,8 +150,8 @@ def plot_uniform_sf(save=True):
         fontsize=9,
     )
 
-    print(f"  {len(df)}/{n_all} runs converged; "
-          f"plotted range sf >= {sf_converged:.2f}")
+    print(f"  {len(df)} runs plotted (of {n_all} in the sweep) over "
+          f"sf {SF_RANGE[0]}-{SF_RANGE[1]}")
 
     if save:
         path = os.path.join(FIG_DIR, "figK_uniform_sf.pdf")

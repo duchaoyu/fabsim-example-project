@@ -1,26 +1,57 @@
 """
-Response surfaces: sf_wale × sf_course for crown height, mean stress,
-and section curvatures (x=0 and y=0).
+Fig L — response surfaces over sf_wale x sf_course, from a direct FEA grid.
 
-Fixed: knit_dir=0°, pressure=1000 Pa.
-Layout: 4 rows (outputs) × 2 columns (motif 1 | motif 2).
+Rows:  crown height,  section stress x=0,  section stress y=0,
+       curvature anisotropy index dH
+Cols:  motif 1 | motif 2
+Fixed: knit_dir = 0 deg, pressure = 1000 Pa.  sf in [0.9, 1.4] on both axes.
+
+Colour scales are shared across BOTH motifs and, where the quantities are
+comparable, across rows: the two section-stress rows are drawn on one scale with
+one colourbar, so a colour means the same stress in the x=0 and y=0 panels as
+well as between the motifs.  The previous version gave every panel its own
+scale, which made equal colours mean different numbers everywhere.  Axis limits
+are identical on all panels.
+
+The H_{x=0} and H_{y=0} rows are gone; the directional information they carried is
+now in the two dH rows, which is what the figure is for.
+
+dH = (kappa_y - kappa_x) / (|kappa_y| + |kappa_x|), the same form as in figM, but
+taken from the POINTWISE curvature tensor at the crown (apex_curvature.py,
+apex_k_x / apex_k_y) rather than from the profile-averaged section estimator.
+
+The section estimator is not usable for this panel.  It averages |kappa| over a
+whole diameter, and because both cut planes share the apex and the clamped rim
+they must turn through nearly the same total angle, so the average cancels the
+directional signal: at (s_wale, s_course) = (0.92, 1.12) the crown curvatures are
+0.71 vs 0.92 m^-1 (dH = -0.13) while the 80%-span averages are 0.914 vs 0.912
+(dH = +0.0007), opposite in sign.  Over this grid the two agree on the sign of
+the anisotropy at only 17% / 21% of points; the section field is non-monotone in
+s_wale (19% vs 93%), 4-5x rougher, and changes sign along the s_wale = s_course
+diagonal where the material anisotropy is the only source and cannot change sign.
+dH_section is still computed in _derive() if it is wanted for a methods figure.
+
+Data: run_sf_grid.py -> data/sf_grid.csv (direct FEA, one run per grid point).
+
+This replaces GP surrogates fitted to the *_nocable groups of
+results_with_sections.csv.  Per validate_fem_runs.py those runs used the wrong
+mesh, and motif2_nocable additionally used motif 5's material (wale-stiff, the
+opposite anisotropy to motif 2), so the motif comparison this figure exists to
+make was confounded by both geometry and material.
 """
 
 import os
 import sys
-import pickle
+
 import numpy as np
 import pandas as pd
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import Matern, ConstantKernel, WhiteKernel
-from sklearn.preprocessing import StandardScaler
+from matplotlib.tri import Triangulation
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from config import DATA_DIR, PARAMS_NO_CABLE
-from surrogate import ScalarSurrogate
+from config import DATA_DIR
 
 FIG_DIR = os.path.join(os.path.dirname(__file__), "figures")
 os.makedirs(FIG_DIR, exist_ok=True)
@@ -36,155 +67,130 @@ plt.rcParams.update({
     "figure.dpi":      150,
 })
 
-SF_RANGE  = (0.8, 1.4)
-N_GRID    = 60
-KNIT_DIR  = 0.0
-PRESSURE  = 1000.0
+GRID_CSV   = os.path.join(DATA_DIR, "sf_grid.csv")
+SF_RANGE   = (0.9, 1.4)
+MOTIFS     = (1, 2)
+COL_TITLES = {1: "Motif 1  ($E_2/E_1=2.50$)", 2: "Motif 2  ($E_2/E_1=1.60$)"}
+N_LEVELS   = 20
 
-GROUPS  = ["motif1_nocable", "motif2_nocable"]
-COL_TITLES = ["Motif 1", "Motif 2"]
 
-# (output_key, row_label, colorbar_unit, cmap, scale)
-OUTPUTS = [
-    ("crown_height", "Crown height",        "mm",          "viridis", 1000.0),
-    ("von_mises_x0", r"Stress  $x{=}0$",   "Pa",          "plasma",  1.0),
-    ("von_mises_y0", r"Stress  $y{=}0$",   "Pa",          "plasma",  1.0),
-    ("H_mean_x0",    r"$\bar{H}$  $x{=}0$", r"m$^{-1}$", "cividis", 1.0),
-    ("H_mean_y0",    r"$\bar{H}$  $y{=}0$", r"m$^{-1}$", "cividis", 1.0),
+def _dH(a, b):
+    d = np.abs(a) + np.abs(b)
+    return np.where(d > 1e-12, (a - b) / d, np.nan)
+
+
+# (key, row label, colourbar unit, cmap, diverging?, scale group)
+# Rows sharing a scale group are drawn on ONE set of contour levels and share a
+# single colourbar, so a colour means the same number across those rows as well
+# as across the motif columns.  The two section-stress rows are only comparable
+# to each other if they are on the same scale.
+ROWS = [
+    ("crown_height", "Crown height",              "mm", "viridis", False, "crown"),
+    ("von_mises_x0", r"Section stress  $x{=}0$",  "Pa", "plasma",  False, "stress"),
+    ("von_mises_y0", r"Section stress  $y{=}0$",  "Pa", "plasma",  False, "stress"),
+    ("dH_apex",      r"$\Delta H$",               "",   "RdBu_r",  True,  "dH"),
 ]
 
 
-def _load_scalar_surrogate(group):
-    path = os.path.join(DATA_DIR, f"{group}_scalar_surrogate.pkl")
-    return ScalarSurrogate.load(path) if os.path.exists(path) else None
-
-
-GP_COLS = ("H_mean_x0", "H_mean_y0", "von_mises_x0", "von_mises_y0")
-
-
-def _load_or_train_gp(group, col):
-    path = os.path.join(DATA_DIR, f"{group}_{col}_gp.pkl")
-    if os.path.exists(path):
-        with open(path, "rb") as f:
-            return pickle.load(f)
-
-    # train from enriched data
-    df = pd.read_csv(os.path.join(DATA_DIR, "results_with_sections.csv"))
-    if "sim_failed" in df.columns:
-        df = df[~df["sim_failed"]]
-    input_keys = list(PARAMS_NO_CABLE.keys())
-    sub = df[df["group"] == group].dropna(subset=input_keys + [col]).copy()
-
-    # Remove IQR outliers in the target column to prevent kernel collapse
-    q1, q3 = sub[col].quantile([0.25, 0.75])
-    iqr = q3 - q1
-    sub = sub[sub[col] <= q3 + 3.0 * iqr]
-
-    X = sub[input_keys].values
-    y = sub[col].values
-
-    scaler_X = StandardScaler()
-    scaler_y = StandardScaler()
-    X_s = scaler_X.fit_transform(X)
-    y_s = scaler_y.fit_transform(y.reshape(-1, 1)).ravel()
-
-    kernel = (ConstantKernel(1.0) *
-              Matern(nu=2.5, length_scale_bounds=(0.1, 10.0)) +
-              WhiteKernel(1e-4))
-    gp = GaussianProcessRegressor(kernel=kernel, n_restarts_optimizer=5,
-                                   normalize_y=False, random_state=42)
-    gp.fit(X_s, y_s)
-    model = {"gp": gp, "scaler_X": scaler_X, "scaler_y": scaler_y}
-    with open(path, "wb") as f:
-        pickle.dump(model, f)
-    print(f"  Trained GP: {group} / {col}  (n={len(sub)})")
-    return model
-
-
-def _predict_curv_gp(model, X):
-    X_s = model["scaler_X"].transform(X)
-    y_s = model["gp"].predict(X_s)
-    return model["scaler_y"].inverse_transform(y_s.reshape(-1, 1)).ravel()
-
-
-def _make_grid():
-    sf_w = np.linspace(*SF_RANGE, N_GRID)
-    sf_c = np.linspace(*SF_RANGE, N_GRID)
-    W, C = np.meshgrid(sf_w, sf_c)
-    keys = list(PARAMS_NO_CABLE.keys())
-    X = np.column_stack([
-        W.ravel() if k == "sf_wale"   else
-        C.ravel() if k == "sf_course" else
-        np.full(N_GRID * N_GRID, KNIT_DIR)  if k == "knit_dir" else
-        np.full(N_GRID * N_GRID, PRESSURE)
-        for k in keys
-    ])
-    return sf_w, sf_c, W, C, X
-
-
-def _predict(group, output, X, scalar_surr, gp_models):
-    if output in GP_COLS:
-        model = gp_models.get(output)
-        if model is None:
-            return None
-        return _predict_curv_gp(model, X)
+def _derive(sub):
+    """Add the two dH columns and scale crown height to mm."""
+    sub = sub.copy()
+    sub["crown_height"] = sub["crown_height"] * 1000.0
+    sub["dH_section"] = _dH(sub["H_fit_x0"].values, sub["H_fit_y0"].values)
+    if "apex_k_x" in sub and "apex_k_y" in sub:
+        # x=0 section measures kappa_y, so pair apex_k_y with H_fit_x0
+        sub["dH_apex"] = _dH(sub["apex_k_y"].values, sub["apex_k_x"].values)
     else:
-        if scalar_surr is None:
-            return None
-        preds = scalar_surr.predict(X)
-        return preds.get(output)
+        sub["dH_apex"] = np.nan
+    return sub
+
+
+def _load():
+    if not os.path.exists(GRID_CSV):
+        raise FileNotFoundError(
+            f"{GRID_CSV} not found — run:  python3 run_sf_grid.py")
+    df = pd.read_csv(GRID_CSV)
+    df = df[~df["sim_failed"].astype(bool)]
+    df = df[df["sf_wale"].between(*SF_RANGE) &
+            df["sf_course"].between(*SF_RANGE)]
+    return {m: _derive(s) for m, s in df.groupby("motif")}
 
 
 def plot_sf_surface(save=True):
-    sf_w, sf_c, W, C, X_grid = _make_grid()
+    data = _load()
+    motifs = [m for m in MOTIFS if m in data]
 
-    n_rows = len(OUTPUTS)
-    n_cols = len(GROUPS)
-    fig, axes = plt.subplots(
-        n_rows, n_cols,
-        figsize=(4.5 * n_cols, 4.0 * n_rows),
-        constrained_layout=True,
-    )
+    fig, axes = plt.subplots(len(ROWS), len(motifs),
+                             figsize=(4.6 * len(motifs), 3.9 * len(ROWS)),
+                             constrained_layout=True, squeeze=False)
 
-    for col_idx, group in enumerate(GROUPS):
-        scalar_surr = _load_scalar_surrogate(group)
-        gp_models = {col: _load_or_train_gp(group, col) for col in GP_COLS}
+    # rows are grouped by scale: every row in a group gets the same levels and
+    # they all hang off one colourbar
+    groups = []
+    for r, row in enumerate(ROWS):
+        if groups and groups[-1][0] == row[5]:
+            groups[-1][1].append(r)
+        else:
+            groups.append((row[5], [r]))
 
-        for row_idx, (output, row_label, unit, cmap, scale) in enumerate(OUTPUTS):
-            ax = axes[row_idx, col_idx]
+    for _, row_idx in groups:
+        vals = np.concatenate([data[m][ROWS[r][0]].values
+                               for r in row_idx for m in motifs])
+        vals = vals[np.isfinite(vals)]
+        if len(vals) == 0:
+            for r in row_idx:
+                for c in range(len(motifs)):
+                    axes[r, c].set_visible(False)
+            continue
+        diverging = ROWS[row_idx[0]][4]
+        if diverging:
+            lim = np.abs(vals).max()
+            levels = np.linspace(-lim, lim, N_LEVELS + 1)
+        else:
+            levels = np.linspace(vals.min(), vals.max(), N_LEVELS + 1)
 
-            Z = _predict(group, output, X_grid, scalar_surr, gp_models)
-            if Z is None:
-                ax.set_visible(False)
-                continue
+        cs = None
+        for r in row_idx:
+            key, label, unit, cmap, diverging, _ = ROWS[r]
+            for c, m in enumerate(motifs):
+                ax = axes[r, c]
+                sub = data[m]
+                w, cc, z = (sub["sf_wale"].values, sub["sf_course"].values,
+                            sub[key].values)
+                ok = np.isfinite(z)
+                tri = Triangulation(w[ok], cc[ok])
+                cs = ax.tricontourf(tri, z[ok], levels=levels, cmap=cmap,
+                                    extend="both")
+                ax.tricontour(tri, z[ok], levels=levels[::2], colors="white",
+                              linewidths=0.4, alpha=0.5)
+                if diverging:
+                    ax.tricontour(tri, z[ok], levels=[0.0], colors="black",
+                                  linewidths=1.0, linestyles="-")
+                ax.plot(SF_RANGE, SF_RANGE, color="white", lw=1.0, ls="--",
+                        alpha=0.8)
+                ax.set_xlim(*SF_RANGE)
+                ax.set_ylim(*SF_RANGE)
+                ax.set_aspect("equal")
+                ax.set_xlabel(r"$s_{wale}$", labelpad=2)
+                ax.set_ylabel(r"$s_{course}$", labelpad=2)
+                ax.tick_params(labelsize=7)
+                ax.set_title(f"{COL_TITLES[m]}  —  {label}", pad=6,
+                             fontsize=8.5)
 
-            Z = Z.reshape(N_GRID, N_GRID) * scale
+        # one colourbar for the whole group
+        cb_axes = [axes[r, c] for r in row_idx for c in range(len(motifs))]
+        cb = fig.colorbar(cs, ax=cb_axes, fraction=0.030, pad=0.02)
+        cb.set_label(ROWS[row_idx[0]][2], fontsize=8)
+        cb.ax.tick_params(labelsize=7)
 
-            cs = ax.contourf(W, C, Z, levels=20, cmap=cmap)
-            ax.contour(W, C, Z, levels=10, colors="white",
-                       linewidths=0.4, alpha=0.5)
-
-            cb = fig.colorbar(cs, ax=ax, fraction=0.046, pad=0.04)
-            cb.set_label(unit, fontsize=8)
-            cb.ax.tick_params(labelsize=7)
-
-            # diagonal sf_wale = sf_course
-            ax.plot([SF_RANGE[0], SF_RANGE[1]],
-                    [SF_RANGE[0], SF_RANGE[1]],
-                    color="white", lw=1.0, ls="--", alpha=0.7)
-
-            ax.set_xlabel(r"$s_{wale}$", labelpad=2)
-            ax.set_ylabel(r"$s_{course}$", labelpad=2)
-            ax.set_xlim(*SF_RANGE)
-            ax.set_ylim(*SF_RANGE)
-            ax.set_aspect("equal")
-            ax.tick_params(labelsize=7)
-            ax.set_title(f"{COL_TITLES[col_idx]}  —  {row_label}", pad=6)
-
+    n_pts = sum(len(data[m]) for m in motifs)
     fig.suptitle(
-        r"Response surfaces: $s_{wale}$ × $s_{course}$   "
-        r"($\theta_{knit}=0°$,  $p=1000$ Pa;  dashed = uniform $s_f$)",
-        fontsize=10,
+        r"Response surfaces over $s_{wale}\times s_{course}$   "
+        r"($\theta_{knit}=0°$,  $p=1000$ Pa)"
+        "\n"
+        rf"direct FEA grid, {n_pts} runs;  each row shares one colour scale "
+        r"across motifs;  dashed = uniform $s_f$,  black = $\Delta H = 0$",
+        fontsize=9.5,
     )
 
     if save:
@@ -195,7 +201,18 @@ def plot_sf_surface(save=True):
     return fig
 
 
+def report():
+    data = _load()
+    for m, sub in data.items():
+        print(f"  motif{m}  n={len(sub)}")
+        for key, label, *_ in ROWS:
+            v = sub[key].values
+            v = v[np.isfinite(v)]
+            print(f"    {key:14s} {v.min():+9.3f} .. {v.max():+9.3f}")
+
+
 if __name__ == "__main__":
-    print("Plotting sf_wale × sf_course response surfaces...")
+    print("Plotting sf_wale x sf_course response surfaces (direct FEA grid)...")
     plot_sf_surface()
+    report()
     print("Done.")

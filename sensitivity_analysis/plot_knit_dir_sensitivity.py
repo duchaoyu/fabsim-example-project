@@ -4,7 +4,12 @@ Sensitivity analysis of knitting direction (theta_knit).
 Fig M — Line sweep + anisotropy index, from a direct FEA sweep
   Row 1: Section curvature H_x0 and H_y0 vs theta
   Row 2: Section stress sigma_x0 and sigma_y0 vs theta
-  Row 3: Anisotropy index  dH = (H_x0-H_y0)/(H_x0+H_y0)
+  Row 3: Anisotropy index  dH = (kappa_y-kappa_x)/(|kappa_y|+|kappa_x|), from the
+         pointwise curvature tensor at the crown (apex_curvature.py) — the same
+         estimator and sign convention as figL/figR/figS.  Rows 1-2 stay on the
+         section estimator because they are section quantities; row 3 does not,
+         because the section average cancels most of the directional signal
+         (0.8-0.9% peak-to-peak against 10-18% for the crown tensor).
   Fixed: sf_wale = sf_course = 1.0, pressure = 1000 Pa.  Data:
   run_knit_dir_sweep.py -> data/knit_dir_sweep.csv (one FEA run per angle).
   All curves are symmetrised with the mirror identity below, so the plotted
@@ -177,25 +182,49 @@ def plot_sweep(save=True):
                 a, b = _smooth(v), mirror(_smooth(v_partner))
                 ax.plot(theta, 0.5 * (a + b), color=color, lw=2, ls=ls)
 
-        # Anisotropy index.  The same identity forces dH(theta) = -dH(90-theta);
-        # averaging dH against -dH(90-theta) imposes that antisymmetry exactly.
-        hxs, hys = _smooth(hx), _smooth(hy)
-        denom = np.abs(hxs) + np.abs(hys)
-        dH = np.where(denom > 1e-9, (hxs - hys) / denom, 0.0)
+        # Anisotropy index, from the POINTWISE curvature tensor at the crown
+        # (apex_curvature.py: apex_k_x / apex_k_y), not from the section
+        # estimator that rows 1-2 use.  Same definition and sign convention as
+        # figL/figR/figS: the x=0 cut measures kappa_y, so apex_k_y takes the
+        # place H_fit_x0 held, and dH > 0 still means the x=0 direction is the
+        # more curved one.
+        #
+        # The section estimator cannot carry this panel.  It averages |kappa|
+        # over a whole diameter, and both cut planes share the apex and the
+        # clamped rim, so they must turn through nearly the same total angle and
+        # the average cancels most of the directional signal: over this sweep it
+        # spans only 0.8-0.9% against 10-18% for the crown tensor, i.e. it
+        # understates the anisotropy by 12-19x.
+        kx, ky = sub["apex_k_x"].values, sub["apex_k_y"].values
+        kxs, kys = _smooth(kx), _smooth(ky)
+        denom = np.abs(kys) + np.abs(kxs)
+        dH = np.where(denom > 1e-9, (kys - kxs) / denom, 0.0)
+        # Reflection about y = x maps theta -> 90-theta and swaps the axes, so
+        # kappa_x(theta) = kappa_y(90-theta) and hence dH(theta) = -dH(90-theta),
+        # exactly as for the section index.  Averaging against -dH(90-theta)
+        # imposes that antisymmetry.
         dH_anti = -mirror(dH)
-        ax_a.plot(theta, 0.5 * (dH + dH_anti), color=color, lw=2, label=label)
+        dH_sym = 0.5 * (dH + dH_anti)
+        ax_a.plot(theta, dH_sym, color=color, lw=2, label=label)
 
         # exact identities and effect sizes, reported on the figure
         crown = sub["crown_height"].values * 1000
         inv = (crown.max() - crown.min()) / crown.mean() * 100
-        mirror = np.abs(hx - mirror_of(hx, hy, theta))
+        mirror_resid = np.abs(hx - mirror_of(hx, hy, theta))
         h_var = (hx.max() - hx.min()) / hx.mean() * 100
         s_var = (sx.max() - sx.min()) / sx.mean() * 100
+        # section-estimator index, quoted in the caption only as the contrast
+        hxs, hys = _smooth(hx), _smooth(hy)
+        d_sec = np.abs(hxs) + np.abs(hys)
+        dH_sec = np.where(d_sec > 1e-9, (hxs - hys) / d_sec, 0.0)
         notes.append(
             f"{label}: crown height varies {inv:.2f}% over $\\theta$ (exact 0%);  "
             r"mirror residual $|H_{x=0}(\theta)-H_{y=0}(90^\circ\!-\theta)|$ "
-            f"{np.median(mirror)/hx.mean()*100:.2f}%;  "
-            rf"$\bar{{H}}$ varies {h_var:.1f}%,  section stress {s_var:.0f}%")
+            f"{np.median(mirror_resid)/hx.mean()*100:.2f}%;  "
+            rf"$\bar{{H}}$ varies {h_var:.1f}%,  section stress {s_var:.0f}%;  "
+            rf"$\Delta H$ spans {dH_sym.min():+.3f}..{dH_sym.max():+.3f} "
+            rf"({dH_sym.max()-dH_sym.min():.3f} p-p, vs "
+            rf"{dH_sec.max()-dH_sec.min():.3f} for the section estimator)")
 
     # ── formatting ────────────────────────────────────────────────────────────
     ax_c.set_ylabel(r"$\bar{H}$  (m$^{-1}$)")
@@ -204,8 +233,8 @@ def plot_sweep(save=True):
     ax_s.set_ylabel("Mean stress  (Pa)")
     ax_s.set_title("Section stress")
 
-    ax_a.set_ylabel(r"$(H_{x=0} - H_{y=0})\,/\,(H_{x=0} + H_{y=0})$")
-    ax_a.set_title("Curvature anisotropy index")
+    ax_a.set_ylabel(r"$(\kappa_y - \kappa_x)\,/\,(|\kappa_y| + |\kappa_x|)$")
+    ax_a.set_title(r"Curvature anisotropy index  $\Delta H$  (crown tensor)")
     ax_a.axhline(0, color="0.75", lw=0.8, ls=":")
     ax_a.legend(fontsize=8)
     ax_a.set_xlabel(r"Knitting direction  $\theta_{knit}$  (°)")

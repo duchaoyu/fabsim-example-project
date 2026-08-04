@@ -188,7 +188,7 @@ def plot_combined(save=True):
     cbar.set_label(r"Sobol index — total-order $S_T$ (top row) / "
                    r"first-order $S_1$ (bottom row)", fontsize=10)
 
-    fig.suptitle(r"Material study ($r = E_2/E_1$): Sobol sensitivity indices",
+    fig.suptitle("Sobol sensitivity indices",
                  fontsize=13, y=1 - 0.18 / fig_h)
 
     if save:

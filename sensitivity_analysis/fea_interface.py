@@ -51,6 +51,7 @@ def run_fea(
     r: float = None,
     nu: float = None,
     timeout: int = 300,
+    mesh_path: str = None,
 ) -> dict:
     """
     Run fem_batch_sensitivity for one parameter set.
@@ -62,16 +63,21 @@ def run_fea(
     E1, r, nu: if all three are provided, override the motif material params.
       E2 is computed as E1/r inside the binary. E1 is in N/m (membrane modulus).
 
+    mesh_path: run on a mesh other than config.MESH_PATH (used by the
+      non-axisymmetric-boundary study, run_knit_dir_sweep_ellipse.py).  Note the
+      cable paths are generated on this same mesh.
+
     Returns dict with keys: crown_height, max_stress, mean_stress,
       cable_wale_tension, cable_course_tension, boundary_reaction_mean.
     """
-    V, F = _get_mesh(MESH_PATH)
+    mesh = mesh_path or MESH_PATH
+    V, F = _get_mesh(mesh)
     tmpfiles = []
 
     def _make_cable_arg(lrest_frac, angle_deg):
         if lrest_frac < 0:
             return "none"
-        indices = generate_cable_path(angle_deg, MESH_PATH)
+        indices = generate_cable_path(angle_deg, mesh)
         geo_len = cable_path_length(indices, V)
         L_rest  = lrest_frac * geo_len
         path = _write_cable_json(indices, CABLE_EA, L_rest)
@@ -83,7 +89,7 @@ def run_fea(
 
     cmd = [
         FEM_BINARY,
-        MESH_PATH,
+        mesh,
         f"{sf_wale:.6f}",
         f"{sf_course:.6f}",
         f"{knit_dir_deg:.4f}",

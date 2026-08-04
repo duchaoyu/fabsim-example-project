@@ -12,7 +12,9 @@ fixed conditions (s_wale = s_course = 1.0, p = 1000 Pa), one FEA run per degree:
                                      geometric reasons; the theta-modulation on
                                      top of that offset is the material effect.
   Row 3  section von Mises stress
-  Row 4  curvature anisotropy index dH, defined exactly as in figM.
+  Row 4  curvature anisotropy index dH, defined exactly as in figM: from the
+         pointwise crown curvature tensor, (kappa_y-kappa_x)/(|kappa_y|+|kappa_x|),
+         not from the section estimator of row 2.
   Row 5  apex principal curvatures and the direction of maximum curvature
          (apex_curvature.py).  This row carries the mechanism.  On the circle
          the principal direction tracks the material frame 1:1 (180 deg -> 90 deg
@@ -122,12 +124,15 @@ def plot(save=True):
                 ax.plot(th, _smooth(v), color=color, lw=2, ls=ls)
 
         # ── row 4: anisotropy index, same definition as figM ─────────────────
-        hx, hy = _smooth(sub["H_fit_x0"].values), _smooth(sub["H_fit_y0"].values)
-        denom = np.abs(hx) + np.abs(hy)
-        dH = np.where(denom > 1e-9, (hx - hy) / denom, 0.0)
+        # From the pointwise crown curvature tensor (apex_k_x / apex_k_y), like
+        # figM and figL/figR/figS.  The x=0 cut measures kappa_y, so apex_k_y
+        # takes the place H_fit_x0 held and the sign convention is unchanged.
+        kx, ky = _smooth(sub["apex_k_x"].values), _smooth(sub["apex_k_y"].values)
+        denom = np.abs(ky) + np.abs(kx)
+        dH = np.where(denom > 1e-9, (ky - kx) / denom, 0.0)
         ax_a.plot(th, dH, color=color, lw=2, label=label)
-        hxr, hyr = sub["H_fit_x0"].values, sub["H_fit_y0"].values
-        ax_a.plot(th, (hxr - hyr) / (np.abs(hxr) + np.abs(hyr)), ls="none",
+        kxr, kyr = sub["apex_k_x"].values, sub["apex_k_y"].values
+        ax_a.plot(th, (kyr - kxr) / (np.abs(kyr) + np.abs(kxr)), ls="none",
                   marker="o", ms=2.4, mfc="none", mec=color, mew=0.7, alpha=0.45)
 
         # ── row 5: apex principal curvatures + principal direction ───────────
@@ -160,8 +165,9 @@ def plot(save=True):
     ax_s.set_ylabel("Mean stress  (Pa)")
     ax_s.set_title("Section stress", fontsize=8.5)
 
-    ax_a.set_ylabel(r"$(H_{x=0} - H_{y=0})\,/\,(H_{x=0} + H_{y=0})$")
-    ax_a.set_title("Curvature anisotropy index", fontsize=8.5)
+    ax_a.set_ylabel(r"$(\kappa_y - \kappa_x)\,/\,(|\kappa_y| + |\kappa_x|)$")
+    ax_a.set_title(r"Curvature anisotropy index  $\Delta H$  (crown tensor)",
+                   fontsize=8.5)
     ax_a.legend(fontsize=8, loc="best")
 
     # ── row 5 formatting, incl. the circle reference for the direction ────────

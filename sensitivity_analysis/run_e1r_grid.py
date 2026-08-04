@@ -1,8 +1,17 @@
 """
-Run FEA grid: E1 (1000–20000 N/m) × r = E1/E2 (1–5) at fixed conditions.
+Run FEA grid: E1 (1000–20000 N/m) × E2/E1 (1–5) at fixed conditions.
 
 Fixed: sf_wale=sf_course=1.0, knit_dir=0°, pressure=1000 Pa, nu=0.195, motif=1.
-Grid: 10 E1 × 8 r values = 80 FEA runs.
+Grid: 10 E1 × 8 E2/E1 values = 80 FEA runs.
+
+E1 is the WALE (less stiff) modulus and E2 the COURSE one, so E2/E1 >= 1 over
+the whole grid.  That is the regime the knitted motifs actually occupy — motif 1
+is E1=5000, E2=12507 (E2/E1=2.50) and motif 2 is E2/E1=1.60, both course-stiff.
+The grid used to be swept over r = E1/E2 in [1, 5], i.e. E2/E1 in [0.2, 1], which
+is the wale-stiff half of the space and contains none of the motifs.
+
+The binary takes r = E1/E2 (it computes E2 = E1/r, fem_batch_sensitivity.cpp),
+so the sweep variable E2/E1 is passed through as r = 1/(E2/E1).
 
 Outputs:
   data/e1r_grid_results.csv   — scalar outputs (crown_height, mean_stress, …)
@@ -22,9 +31,13 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from config import DATA_DIR
+from config import DATA_DIR, MESH_PATH, QUALITY_CROWN_MIN
+from curvature import read_off
 from fea_interface import run_fea, check_binary
 from plot_material_section_sobol import _section_metrics
+from apex_curvature import apex_curvature
+
+_V0, _FACES = read_off(MESH_PATH)
 
 RESULTS_CSV  = os.path.join(DATA_DIR, "e1r_grid_results.csv")
 SECTIONS_CSV = os.path.join(DATA_DIR, "e1r_grid_sections.csv")
@@ -32,8 +45,9 @@ SECTIONS_CSV = os.path.join(DATA_DIR, "e1r_grid_sections.csv")
 # Grid parameters
 E1_VALUES = np.array([1000, 2000, 3500, 5000, 7000, 10000, 13000, 16000, 18000, 20000],
                      dtype=float)
-R_VALUES  = np.array([1.0, 1.25, 1.67, 2.0, 2.5, 3.0, 4.0, 5.0],
-                     dtype=float)   # r = E1/E2
+# Sweep variable: E2/E1 >= 1 (course-stiff).  Same eight ratios the old grid
+# used, but applied the right way round.
+E2R_VALUES = np.array([1.0, 1.25, 1.67, 2.0, 2.5, 3.0, 4.0, 5.0], dtype=float)
 
 SF    = 1.1    # pre-tension; sf=1.0 is an unstable flat-membrane bifurcation point
 KNIT  = 0.0
@@ -41,19 +55,23 @@ PRES  = 1000.0
 NU    = 0.195
 MOTIF = 1
 
-START_ID = 6000   # LHS study uses IDs up to ~5598; start well above that
+# IDs 6000-6079 hold the old E2/E1 <= 1 grid.  _run_one caches by sample_id, so
+# reusing those IDs would silently return the wrong-regime results.
+START_ID = 6100
 
 
 def _build_samples():
     samples = []
     sid = START_ID
     for E1 in E1_VALUES:
-        for r in R_VALUES:
+        for e2r in E2R_VALUES:
             samples.append({
-                "sample_id": sid,
-                "E1":        float(E1),
-                "r":         float(r),
-                "E2":        float(E1 / r),
+                "sample_id":  sid,
+                "E1":         float(E1),
+                # r is what the binary consumes: E2 = E1/r, so r = 1/(E2/E1)
+                "r":          float(1.0 / e2r),
+                "E2":         float(E1 * e2r),
+                "e2_over_e1": float(e2r),
                 "nu":        NU,
                 "sf_wale":   SF,
                 "sf_course": SF,
@@ -101,7 +119,7 @@ def _run_one(sample):
 def run_grid(jobs: int = 4):
     check_binary()
     samples = _build_samples()
-    print(f"Grid: {len(samples)} runs  ({len(E1_VALUES)} E1 × {len(R_VALUES)} r)")
+    print(f"Grid: {len(samples)} runs  ({len(E1_VALUES)} E1 × {len(E2R_VALUES)} E2/E1)")
 
     rows = []
     done = failed = cached = 0
@@ -116,28 +134,48 @@ def run_grid(jobs: int = 4):
                 done += 1
             else:
                 failed += 1
-                print(f"  FAIL  id={row['sample_id']}  E1={row['E1']:.0f}  r={row['r']:.2f}: {msg}")
+                print(f"  FAIL  id={row['sample_id']}  E1={row['E1']:.0f}  "
+                      f"E2/E1={row['e2_over_e1']:.2f}: {msg}")
             total = done + failed + cached
             if total % 10 == 0:
                 print(f"  {total}/{len(samples)}  done={done}  cached={cached}  failed={failed}")
 
-    df = pd.DataFrame(rows).sort_values(["E1", "r"])
+    df = pd.DataFrame(rows).sort_values(["E1", "e2_over_e1"])
     df.to_csv(RESULTS_CSV, index=False)
     print(f"Saved scalar results → {RESULTS_CSV}  (n={len(df)}, failed={failed})")
     return df
 
 
+def _apex_metrics(sid):
+    """Pointwise curvature tensor at the crown, for the dH_apex panel.
+
+    The section estimator averages |kappa| over a whole diameter and both cut
+    planes share the apex and the clamped rim, so it cancels most of the
+    directional signal (see plot_sf_surface.py).  dH is therefore taken from the
+    crown tensor, as in figL/figM.  ref_verts is the undeformed mesh so the fit
+    neighbourhood is the same set of vertices in every run.
+    """
+    p = os.path.join(DATA_DIR, f"{sid:05d}_verts.csv")
+    if not os.path.exists(p):
+        return {}
+    V = pd.read_csv(p).sort_values("vid")[["x", "y", "z"]].values
+    ap = apex_curvature(V, KNIT, ref_verts=_V0)
+    return {f"apex_{k}": v for k, v in ap.items()} if ap else {}
+
+
 def compute_sections(df: pd.DataFrame = None):
     if df is None:
         df = pd.read_csv(RESULTS_CSV)
-    valid = df[df["crown_height"] > 0.01]
+    valid = df[df["crown_height"] > QUALITY_CROWN_MIN]
     rows = []
     for sid in valid["sample_id"]:
         m = _section_metrics(int(sid))
         m["sample_id"] = int(sid)
+        m.update(_apex_metrics(int(sid)))
         rows.append(m)
     sec = pd.DataFrame(rows)
-    merged = df[["sample_id", "E1", "r", "E2"]].merge(sec, on="sample_id", how="left")
+    merged = df[["sample_id", "E1", "r", "E2", "e2_over_e1"]].merge(
+        sec, on="sample_id", how="left")
     merged.to_csv(SECTIONS_CSV, index=False)
     print(f"Saved section metrics → {SECTIONS_CSV}")
     return merged
