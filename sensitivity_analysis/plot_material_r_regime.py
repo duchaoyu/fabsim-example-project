@@ -37,9 +37,9 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from config import DATA_DIR, PARAMS_MATERIAL_R_NO_CABLE, PARAMS_MATERIAL_R_CABLE
 from surrogate import ScalarSurrogate
-from visualization import PARAM_LABELS, OUTPUT_LABELS, FIG_DIR
+from visualization import OUTPUT_LABELS, FIG_DIR
 from plot_material_r_sobol_combined import (
-    GROUPS, BASE_OUTPUTS, CABLE_OUTPUTS, load_group, _is_masked,
+    GROUPS, BASE_OUTPUTS, CABLE_OUTPUTS, PARAM_LABELS, load_group, _is_masked,
 )
 from SALib.sample import saltelli
 from SALib.analyze import sobol as sobol_analyze

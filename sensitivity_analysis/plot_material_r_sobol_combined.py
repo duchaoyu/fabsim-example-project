@@ -37,6 +37,11 @@ from visualization import PARAM_LABELS, OUTPUT_LABELS, FIG_DIR
 OUTPUT_LABELS = dict(OUTPUT_LABELS)
 OUTPUT_LABELS.setdefault("H_anisotropy", r"$\Delta H$")
 
+# E1 is the modulus along face_dirs, which anisotropic_rest_shape.h and
+# fem_batch_sensitivity.cpp both take as the wale direction — name it on the row.
+PARAM_LABELS = dict(PARAM_LABELS)
+PARAM_LABELS["E1"] = PARAM_LABELS["E1"] + "\n(wale)"
+
 GROUPS = {
     "material_r_nocable": ("no cable", PARAMS_MATERIAL_R_NO_CABLE),
     "material_r_cable":   ("cable",    PARAMS_MATERIAL_R_CABLE),
