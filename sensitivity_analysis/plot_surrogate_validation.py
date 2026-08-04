@@ -119,56 +119,76 @@ def _predict_interval(sur, group_keys, valid, idx, col):
 
 def plot_parity(save=True):
     data = {g: load_split(g) for g in GROUPS}
-    n_col = max(len(d[2]) for d in data.values())
+
+    # Columns are set by the *smaller* group, so the grid carries no blank slots
+    # inside a row: the cable-only outputs (the two cable tensions) wrap onto a
+    # row of their own.  Fewer columns for the same page width means every panel
+    # is drawn larger.
+    n_col = min(len(d[2]) for d in data.values())
+
+    place, row_label, r = [], {}, 0
+    for group, (label, _) in GROUPS.items():
+        outs = data[group][2]
+        for k in range(0, len(outs), n_col):
+            for c, col in enumerate(outs[k:k + n_col]):
+                place.append((r, c, group, col))
+            row_label[r] = (f"{label}\nsurrogate" if k == 0 else
+                            f"{label}\nsurrogate (cont.)")
+            r += 1
+    n_row = r
 
     plt.rcParams.update({"font.family": "sans-serif", "font.size": 9,
                          "axes.linewidth": 0.8, "figure.dpi": 150,
                          "axes.spines.top": False, "axes.spines.right": False})
-    fig, axes = plt.subplots(len(GROUPS), n_col,
-                             figsize=(1.65 * n_col + 0.9, 4.4),
+
+    # Per-cell inches, plus fixed room for the row labels, suptitle and supxlabel
+    PW, PH = 2.05, 2.30
+    pad_l, pad_t, pad_b = 1.05, 0.62, 0.60
+    fig_w, fig_h = PW * n_col + pad_l, PH * n_row + pad_t + pad_b
+    fig, axes = plt.subplots(n_row, n_col, figsize=(fig_w, fig_h),
                              squeeze=False)
-    fig.subplots_adjust(left=0.055, right=0.995, top=0.845, bottom=0.135,
-                        wspace=0.42, hspace=0.62)
+    fig.subplots_adjust(left=pad_l / fig_w, right=0.995,
+                        top=1 - pad_t / fig_h, bottom=pad_b / fig_h,
+                        wspace=0.42, hspace=0.55)
 
-    for r, (group, (label, _)) in enumerate(GROUPS.items()):
+    for ax in axes.ravel():
+        ax.set_visible(False)
+
+    for r, c, group, col in place:
         valid, keys, outs, sur, tr, va = data[group]
-        for c in range(n_col):
-            ax = axes[r][c]
-            if c >= len(outs):
-                ax.set_visible(False)
-                continue
-            col = outs[c]
-            true = valid.loc[va, col].values
-            pred, lo, hi = _predict_interval(sur, keys, valid, va, col)
+        ax = axes[r][c]
+        ax.set_visible(True)
+        true = valid.loc[va, col].values
+        pred, lo, hi = _predict_interval(sur, keys, valid, va, col)
 
-            ax.errorbar(true, pred, yerr=[pred - lo, hi - pred], fmt="none",
-                        ecolor=_C_OK, elinewidth=0.4, alpha=0.28, zorder=1)
-            ax.scatter(true, pred, s=3.0, color=_C_OK, alpha=0.75,
-                       linewidths=0, zorder=2)
-            lim = [min(true.min(), pred.min()), max(true.max(), pred.max())]
-            pad = 0.04 * (lim[1] - lim[0])
-            lim = [lim[0] - pad, lim[1] + pad]
-            ax.plot(lim, lim, "--", color=_C_EDGE, linewidth=0.7, zorder=3)
-            ax.set_xlim(lim); ax.set_ylim(lim)
-            ax.set_aspect("equal", adjustable="box")
+        ax.errorbar(true, pred, yerr=[pred - lo, hi - pred], fmt="none",
+                    ecolor=_C_OK, elinewidth=0.4, alpha=0.28, zorder=1)
+        ax.scatter(true, pred, s=4.0, color=_C_OK, alpha=0.75,
+                   linewidths=0, zorder=2)
+        lim = [min(true.min(), pred.min()), max(true.max(), pred.max())]
+        pad = 0.04 * (lim[1] - lim[0])
+        lim = [lim[0] - pad, lim[1] + pad]
+        ax.plot(lim, lim, "--", color=_C_EDGE, linewidth=0.7, zorder=3)
+        ax.set_xlim(lim); ax.set_ylim(lim)
+        ax.set_aspect("equal", adjustable="box")
 
-            r2   = r2_score(true, pred)
-            rmse = np.sqrt(np.mean((true - pred) ** 2))
-            cov  = np.mean((true >= lo) & (true <= hi)) * 100
-            ax.set_title(OUTPUT_LABELS.get(col, col), fontsize=9, pad=3)
-            ax.text(0.05, 0.95,
-                    f"$R^2$={r2:.3f}\nnRMSE={100*rmse/(true.max()-true.min()):.1f}%"
-                    f"\ncov={cov:.0f}%",
-                    transform=ax.transAxes, ha="left", va="top", fontsize=6.5,
-                    linespacing=1.35)
-            ax.tick_params(labelsize=6.5)
-            if c == 0:
-                ax.set_ylabel(f"{label}\nsurrogate", fontsize=8.5)
+        r2   = r2_score(true, pred)
+        rmse = np.sqrt(np.mean((true - pred) ** 2))
+        cov  = np.mean((true >= lo) & (true <= hi)) * 100
+        ax.set_title(OUTPUT_LABELS.get(col, col), fontsize=10, pad=4)
+        ax.text(0.05, 0.95,
+                f"$R^2$={r2:.3f}\nnRMSE={100*rmse/(true.max()-true.min()):.1f}%"
+                f"\ncov={cov:.0f}%",
+                transform=ax.transAxes, ha="left", va="top", fontsize=7.5,
+                linespacing=1.35)
+        ax.tick_params(labelsize=7.5)
+        if c == 0:
+            ax.set_ylabel(row_label[r], fontsize=9.5)
 
-    fig.supxlabel("FEA (held-out 20%)", fontsize=9, y=0.035)
+    fig.supxlabel("FEA (held-out 20%)", fontsize=10, y=0.012)
     fig.suptitle("Surrogate accuracy on held-out runs: prediction vs FEA, "
                  f"with 95% predictive intervals ({_BOX_LABEL})",
-                 fontsize=11, y=0.965)
+                 fontsize=12, y=1 - 0.16 / fig_h)
 
     if save:
         base = os.path.join(FIG_DIR, f"figV_surrogate_parity{FIG_SUFFIX}")
