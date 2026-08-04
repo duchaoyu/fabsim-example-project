@@ -54,6 +54,16 @@ BLUE   = np.array([0.18, 0.45, 0.73])
 ORANGE = np.array([0.96, 0.50, 0.06])
 GREY   = np.array([0.88, 0.88, 0.88])
 
+# The blend  S1*blue + (ST-S1)*orange + (1-ST)*grey  is identical to mixing the
+# hue  (S1/ST)*blue + (1-S1/ST)*orange  onto grey with weight ST.  Keeping that
+# weight linear in ST left the whole figure grey: half the cells sit below
+# ST = 0.2, and a 0.4 cell only got 40% colour, so nothing stood out.  Raising
+# the weight to ST**GAMMA with GAMMA < 1 saturates the informative cells
+# (0.4 -> 0.58, 0.7 -> 0.81) while ST < 0.05 stays grey.  Hue still means
+# direct-vs-interaction and saturation still means "how sensitive"; only the
+# saturation ramp is non-linear.
+GAMMA = 0.6
+
 # An interaction share below this is not worth naming a partner for
 _INTERACTION_MIN = 0.05
 _S2_MIN          = 0.02
@@ -63,7 +73,7 @@ _S2_MIN          = 0.02
 CELL_W, CELL_H = 0.95, 0.80
 PAD_LEFT, PAD_RIGHT = 1.05, 0.25
 COL_GAP = 1.10
-PAD_TOP, PAD_BOT = 0.80, 2.05
+PAD_TOP, PAD_BOT = 0.80, 2.45   # bottom holds x labels + legend + key + caption
 
 
 def s2_partners(group, bounds, outputs, n_base):
@@ -101,7 +111,17 @@ def s2_partners(group, bounds, outputs, n_base):
     return out
 
 
-def _draw_panel(ax, tables, params, outs, partners, title):
+def _cell_rgb(s1, st, gamma=GAMMA):
+    """Hue from the direct share S1/ST, saturation from ST**gamma."""
+    if st <= 0:
+        return GREY.copy()
+    frac = np.clip(s1 / st, 0.0, 1.0)
+    hue  = frac * BLUE + (1.0 - frac) * ORANGE
+    w    = st ** gamma
+    return np.clip(w * hue + (1.0 - w) * GREY, 0, 1)
+
+
+def _draw_panel(ax, tables, params, outs, partners, title, gamma=GAMMA):
     n_p, n_o = len(params), len(outs)
     rgb = np.zeros((n_p, n_o, 3))
     s1m = np.zeros((n_p, n_o))
@@ -118,8 +138,7 @@ def _draw_panel(ax, tables, params, outs, partners, title):
             st = float(np.clip(tables[o].loc[p, "ST"], 0, 1))
             st = max(st, s1)
             s1m[i, j], stm[i, j] = s1, st
-            rgb[i, j] = np.clip(s1 * BLUE + (st - s1) * ORANGE
-                                + (1 - st) * GREY, 0, 1)
+            rgb[i, j] = _cell_rgb(s1, st, gamma)
 
     ax.imshow(rgb, aspect="auto", interpolation="nearest",
               extent=(-0.5, n_o - 0.5, n_p - 0.5, -0.5))
@@ -158,7 +177,7 @@ def _draw_panel(ax, tables, params, outs, partners, title):
     ax.set_title(title, fontsize=10.5, pad=5)
 
 
-def plot_regime(n_s2=256, save=True):
+def plot_regime(n_s2=256, gamma=GAMMA, save=True):
     groups   = list(GROUPS)
     tables   = {}
     partners = {}
@@ -193,7 +212,7 @@ def plot_regime(n_s2=256, save=True):
                            col_w[ci] / fig_w, col_h[ci] / fig_h])
         tag = "ab"[ci]
         _draw_panel(ax, tables[g], param_of[g], outs_of[g], partners[g],
-                    f"({tag}) {GROUPS[g][0]}")
+                    f"({tag}) {GROUPS[g][0]}", gamma)
 
     legend = [
         Patch(facecolor=BLUE,   label=r"Direct ($S_1/S_T$ large)"),
@@ -201,11 +220,33 @@ def plot_regime(n_s2=256, save=True):
         Patch(facecolor=GREY,   label=r"Negligible ($S_T \to 0$)"),
     ]
     fig.legend(handles=legend, loc="lower center", ncol=3, fontsize=10,
-               frameon=False, bbox_to_anchor=(0.5, 0.55 / fig_h))
-    fig.text(0.5, 0.42 / fig_h,
-             r"Colour = $S_1$ (blue) + $(S_T - S_1)$ (orange) + $(1 - S_T)$ "
-             r"(grey);  italic = dominant $S_2$ partner",
-             ha="center", va="top", fontsize=10)
+               frameon=False, bbox_to_anchor=(0.5, 1.45 / fig_h))
+
+    # Saturation key: the same ramp the cells use, so a reader can invert the
+    # non-linear mapping by eye instead of trusting a formula.
+    ticks = [0.0, 0.1, 0.2, 0.4, 0.6, 0.8, 1.0]
+    strip = np.array([[_cell_rgb(0.0, t, gamma) for t in ticks],
+                      [_cell_rgb(t,   t, gamma) for t in ticks]])
+    key_w = 0.30 * fig_w
+    key_ax = fig.add_axes([(fig_w - key_w) / 2 / fig_w, 0.90 / fig_h,
+                           key_w / fig_w, 0.28 / fig_h])
+    key_ax.imshow(strip, aspect="auto", interpolation="nearest",
+                  extent=(-0.5, len(ticks) - 0.5, 1.5, -0.5))
+    key_ax.set_xticks(range(len(ticks)))
+    key_ax.set_xticklabels([f"{t:.1f}" for t in ticks], fontsize=8)
+    key_ax.set_yticks([0, 1])
+    key_ax.set_yticklabels(["interaction", "direct"], fontsize=8)
+    key_ax.tick_params(length=0)
+    key_ax.set_xlabel(r"$S_T$  (saturation $\propto S_T^{%.1f}$)" % gamma,
+                      fontsize=9, labelpad=2)
+    for s in key_ax.spines.values():
+        s.set_linewidth(0.6)
+
+    fig.text(0.5, 0.14 / fig_h,
+             r"Hue = direct share $S_1/S_T$ (blue $\to$ orange), "
+             r"saturation = $S_T^{%.1f}$ over grey;  "
+             r"italic = dominant $S_2$ partner" % gamma,
+             ha="center", va="bottom", fontsize=10)
 
     fig.suptitle("Sobol sensitivity regime map", fontsize=13,
                  y=1 - 0.18 / fig_h)
@@ -222,5 +263,8 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--n-s2", type=int, default=256,
                     help="Saltelli base N for the second-order partner run")
+    ap.add_argument("--gamma", type=float, default=GAMMA,
+                    help="saturation exponent; 1.0 is the old linear ramp, "
+                         "smaller means more colour at mid/high ST")
     args = ap.parse_args()
-    plot_regime(n_s2=args.n_s2)
+    plot_regime(n_s2=args.n_s2, gamma=args.gamma)
