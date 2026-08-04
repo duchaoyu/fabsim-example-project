@@ -31,21 +31,54 @@ from sklearn.metrics import r2_score
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from config import (
-    DATA_DIR, TRAIN_VAL_SPLIT, RANDOM_SEED,
-    PARAMS_MATERIAL_R_NO_CABLE, PARAMS_MATERIAL_R_CABLE,
-)
+import config
+from config import DATA_DIR, TRAIN_VAL_SPLIT, RANDOM_SEED
 from run_material_r_sobol import _outputs_for
+from sampling import generate_material_r_samples
 from visualization import OUTPUT_LABELS, FIG_DIR
-from plot_material_r_sobol_combined import PARAM_LABELS
+from plot_material_r_sobol_combined import (
+    PARAM_LABELS, VALID, SUR_PREFIX, FIG_SUFFIX,
+)
+
+# The LHS blocks that were actually run, as (start_id, seed, n) — needed to count
+# how many planned runs fall inside a box, and so to report retention honestly
+# for whichever box is being plotted.
+_LHS_BLOCKS = [(3000, 42, 800), (9000, 777, 1600)]
+_BOX_LABEL  = ("validity box, $s \\geq 0.95$" if VALID else "full box")
 
 OUTPUT_LABELS = dict(OUTPUT_LABELS)
 OUTPUT_LABELS.setdefault("H_anisotropy", r"$\Delta H$")
 
+_B = ((config.PARAMS_MATERIAL_R_VALID_NO_CABLE,
+       config.PARAMS_MATERIAL_R_VALID_CABLE) if VALID else
+      (config.PARAMS_MATERIAL_R_NO_CABLE, config.PARAMS_MATERIAL_R_CABLE))
+
 GROUPS = {
-    "material_r_nocable": ("no cable", PARAMS_MATERIAL_R_NO_CABLE, 2400),
-    "material_r_cable":   ("cable",    PARAMS_MATERIAL_R_CABLE,    2400),
+    "material_r_nocable": ("no cable", _B[0]),
+    "material_r_cable":   ("cable",    _B[1]),
 }
+
+
+def in_box(df, bounds):
+    m = np.ones(len(df), dtype=bool)
+    for k, (lo, hi) in bounds.items():
+        m &= (df[k] >= lo) & (df[k] <= hi)
+    return m
+
+
+_PLANNED = None
+
+
+def n_planned(group, bounds):
+    """Planned runs of this group that fall inside `bounds`."""
+    global _PLANNED
+    if _PLANNED is None:
+        rows = []
+        for sid, seed, n in _LHS_BLOCKS:
+            rows += generate_material_r_samples(start_id=sid, seed=seed, n=n)
+        _PLANNED = pd.DataFrame(rows)
+    P = _PLANNED[_PLANNED.group == group]
+    return int(in_box(P, bounds).sum())
 
 _C_OK   = "#0077BB"
 _C_EDGE = "#333333"
@@ -53,10 +86,12 @@ _C_EDGE = "#333333"
 
 def load_split(group):
     """Return (valid_df, keys, outputs, surrogate, train_idx, val_idx)."""
-    sur   = pickle.load(open(os.path.join(DATA_DIR, f"{group}_surrogate.pkl"), "rb"))
+    sur   = pickle.load(open(os.path.join(
+        DATA_DIR, f"{group}_{SUR_PREFIX}surrogate.pkl"), "rb"))
     df    = pd.read_csv(os.path.join(DATA_DIR, f"{group}_section_metrics.csv"))
     keys  = list(GROUPS[group][1])
     outs  = [c for c in _outputs_for(group) if c in df.columns]
+    df    = df[in_box(df, GROUPS[group][1])]
     valid = df.dropna(subset=keys + outs).reset_index(drop=True)
     tr, va = train_test_split(np.arange(len(valid)), test_size=TRAIN_VAL_SPLIT,
                               random_state=RANDOM_SEED)
@@ -95,7 +130,7 @@ def plot_parity(save=True):
     fig.subplots_adjust(left=0.055, right=0.995, top=0.845, bottom=0.135,
                         wspace=0.42, hspace=0.62)
 
-    for r, (group, (label, _, _)) in enumerate(GROUPS.items()):
+    for r, (group, (label, _)) in enumerate(GROUPS.items()):
         valid, keys, outs, sur, tr, va = data[group]
         for c in range(n_col):
             ax = axes[r][c]
@@ -132,10 +167,11 @@ def plot_parity(save=True):
 
     fig.supxlabel("FEA (held-out 20%)", fontsize=9, y=0.035)
     fig.suptitle("Surrogate accuracy on held-out runs: prediction vs FEA, "
-                 "with 95% predictive intervals", fontsize=11, y=0.965)
+                 f"with 95% predictive intervals ({_BOX_LABEL})",
+                 fontsize=11, y=0.965)
 
     if save:
-        base = os.path.join(FIG_DIR, "figV_surrogate_parity")
+        base = os.path.join(FIG_DIR, f"figV_surrogate_parity{FIG_SUFFIX}")
         fig.savefig(base + ".pdf", bbox_inches="tight")
         fig.savefig(base + ".png", bbox_inches="tight", dpi=200)
         print(f"Saved: {base}.png / .pdf")
@@ -145,7 +181,8 @@ def plot_parity(save=True):
 # ── Figure D: design coverage ────────────────────────────────────────────────
 
 def plot_coverage(group, save=True):
-    label, bounds, n_planned = GROUPS[group]
+    label, bounds = GROUPS[group]
+    planned = n_planned(group, bounds)
     valid, keys, outs, sur, tr, va = load_split(group)
     X = valid[keys].values
     d = len(keys)
@@ -194,14 +231,16 @@ def plot_coverage(group, save=True):
                               fontsize=8)
 
     fig.suptitle(
-        f"Training design coverage — {label} ({d}-D, {len(valid)} runs "
-        f"of {n_planned} planned, {100*len(valid)/n_planned:.0f}% retained)\n"
+        f"Training design coverage — {label}, {_BOX_LABEL} ({d}-D, "
+        f"{len(valid)} runs of {planned} planned, "
+        f"{100*len(valid)/planned:.0f}% retained)\n"
         f"largest pairwise $|r|$ = {max_r:.3f} "
         f"({keys[i]}, {keys[j]}), outlined in red",
         fontsize=10, y=0.975)
 
     if save:
-        base = os.path.join(FIG_DIR, f"figD_design_coverage_{label.replace(' ', '')}")
+        base = os.path.join(FIG_DIR,
+                            f"figD_design_coverage_{label.replace(' ', '')}{FIG_SUFFIX}")
         fig.savefig(base + ".pdf", bbox_inches="tight")
         fig.savefig(base + ".png", bbox_inches="tight", dpi=200)
         print(f"Saved: {base}.png / .pdf   max|r|={max_r:.3f}")
