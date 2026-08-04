@@ -43,8 +43,12 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from visualization import FIG_DIR
 from plot_material_r_sobol_combined import (
     GROUPS, BASE_OUTPUTS, CABLE_OUTPUTS, PARAM_LABELS, OUTPUT_LABELS,
-    load_group, _is_masked, FIG_SUFFIX,
+    load_group, _is_masked, FIG_SUFFIX, VALID,
 )
+
+# State the box on the figure: the default is the model-validity box, and a
+# reader must not have to infer which one from a filename suffix.
+_BOX_LABEL = ("model-validity box, $s \\geq 0.95$" if VALID else "full box")
 
 # Same blue/orange language as the regime map: blue = direct, orange =
 # interaction.  Here the interaction segment is also hatched and lightened, so
@@ -78,11 +82,11 @@ def _short(p):
 # Geometry, inches.  Everything is laid out in absolute units (as in the other
 # figures in this chapter) so the bar pitch is identical in both blocks even
 # though the cable group has two more parameters.
-AX_W     = 1.62    # width of the bar area itself
-LAB_W    = 0.78    # room for the y tick labels to the left of each axes
-BAR_PITCH = 0.185  # per parameter
-GAP_X    = 0.34    # between panels
-TITLE_H  = 0.32    # panel title
+AX_W     = 2.60    # width of the bar area itself
+LAB_W    = 0.92    # room for the y tick labels to the left of each axes
+BAR_PITCH = 0.245  # per parameter
+GAP_X    = 0.40    # between panels
+TITLE_H  = 0.34    # panel title
 XLAB_H   = 0.40    # x ticks + axis label, bottom row of a block only
 ROW_GAP  = 0.18    # between stacked rows inside a block
 BLOCK_TITLE_H = 0.36
@@ -120,11 +124,11 @@ def _draw_panel(ax, rows, title, show_xlabels):
                 elinewidth=0.7, capsize=1.6, capthick=0.7, zorder=4)
 
     for yy, s, c in zip(y, st, conf):
-        ax.text(min(s + c + 0.04, XMAX - 0.01), yy, f"{s:.2f}",
-                ha="left", va="center", fontsize=6.5, color="#333333")
+        ax.text(min(s + c + 0.03, XMAX - 0.01), yy, f"{s:.2f}",
+                ha="left", va="center", fontsize=8.5, color="#333333")
 
     ax.set_yticks(y)
-    ax.set_yticklabels([_short(r[0]) for r in rows], fontsize=8)
+    ax.set_yticklabels([_short(r[0]) for r in rows], fontsize=10)
     ax.set_ylim(-0.62, len(rows) - 0.38)
     ax.set_xlim(0, XMAX)
     ax.set_xticks([0.0, 0.5, 1.0])
@@ -135,16 +139,20 @@ def _draw_panel(ax, rows, title, show_xlabels):
     ax.spines["left"].set_linewidth(0.8)
     ax.spines["bottom"].set_linewidth(0.8)
     ax.tick_params(axis="y", length=0)
-    ax.tick_params(axis="x", labelsize=7.5, length=2.5)
+    ax.tick_params(axis="x", labelsize=9, length=2.5)
     if show_xlabels:
-        ax.set_xlabel("Sobol index", fontsize=8.5, labelpad=1)
+        ax.set_xlabel("Sobol index", fontsize=10, labelpad=1)
     else:
         ax.set_xticklabels([])
-    ax.set_title(title, fontsize=9.5, pad=3)
+    ax.set_title(title, fontsize=11.5, pad=4)
 
 
-def plot_regime_bars(n_col=5, save=True):
-    groups = list(GROUPS)
+def plot_regime_bars(n_col=3, groups=None, tag="", save=True):
+    # At 3 panels per row the combined figure runs to ~18 in tall, so --split
+    # renders one page-sized figure per group; block letters stay (a)/(b) either
+    # way, so a split pair still reads as one pair of panels in the text.
+    letter_of = {g: "ab"[i] for i, g in enumerate(GROUPS)}
+    groups = list(groups or GROUPS)
     tables, params_of, outs_of = {}, {}, {}
     for g in groups:
         print(f"[{g}]")
@@ -179,8 +187,8 @@ def plot_regime_bars(n_col=5, save=True):
     for bi, g in enumerate(groups):
         label = GROUPS[g][0]
         fig.text(PAD_L / fig_w, (y_cursor - 0.22) / fig_h,
-                 f"({'ab'[bi]}) {label}", fontsize=11.5, fontweight="bold",
-                 ha="left", va="baseline")
+                 f"({letter_of[g]}) {label}", fontsize=12.5,
+                 fontweight="bold", ha="left", va="baseline")
         y_cursor -= BLOCK_TITLE_H
 
         nr = n_rows_of[g]
@@ -216,11 +224,12 @@ def plot_regime_bars(n_col=5, save=True):
              color="#333333")
 
     fig.suptitle("Sobol sensitivity regime: direct effect and interaction share, "
-                 "by parameter", fontsize=13, y=1 - 0.20 / fig_h)
+                 f"by parameter ({_BOX_LABEL})",
+                 fontsize=13, y=1 - 0.20 / fig_h)
 
     if save:
         base = os.path.join(FIG_DIR,
-                            f"fig3_sobol_material_r_regime_bars{FIG_SUFFIX}")
+                            f"fig3_sobol_material_r_regime_bars{tag}{FIG_SUFFIX}")
         fig.savefig(base + ".pdf", bbox_inches="tight")
         fig.savefig(base + ".png", bbox_inches="tight", dpi=200)
         print(f"Saved: {base}.png / .pdf")
@@ -229,8 +238,11 @@ def plot_regime_bars(n_col=5, save=True):
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-    ap.add_argument("--cols", type=int, default=5,
+    ap.add_argument("--cols", type=int, default=3,
                     help="panels per row within a block")
+    ap.add_argument("--split", action="store_true",
+                    help="one figure per group instead of one tall combined "
+                         "figure (recommended at --cols 3)")
     ap.add_argument("--full-box", action="store_true",
                     help="plot the original full box instead of the default "
                          "model-validity box (handled at import; listed so "
@@ -239,4 +251,9 @@ if __name__ == "__main__":
                     help="use raw rather than log cable-tension indices "
                          "(handled at import)")
     args = ap.parse_args()
-    plot_regime_bars(n_col=args.cols)
+    if args.split:
+        for g, (label, _) in GROUPS.items():
+            plot_regime_bars(n_col=args.cols, groups=[g],
+                             tag="_" + label.replace(" ", ""))
+    else:
+        plot_regime_bars(n_col=args.cols)
