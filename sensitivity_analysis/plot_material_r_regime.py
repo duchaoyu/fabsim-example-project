@@ -37,16 +37,13 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from config import DATA_DIR
 from surrogate import ScalarSurrogate
-from visualization import OUTPUT_LABELS, FIG_DIR
+from visualization import FIG_DIR
 from plot_material_r_sobol_combined import (
-    GROUPS, BASE_OUTPUTS, CABLE_OUTPUTS, PARAM_LABELS, load_group, _is_masked,
-    SUR_PREFIX, FIG_SUFFIX,
+    GROUPS, BASE_OUTPUTS, CABLE_OUTPUTS, PARAM_LABELS, OUTPUT_LABELS,
+    load_group, _is_masked, SUR_PREFIX, FIG_SUFFIX, LOG_TENSIONS,
 )
 from SALib.sample import saltelli
 from SALib.analyze import sobol as sobol_analyze
-
-OUTPUT_LABELS = dict(OUTPUT_LABELS)
-OUTPUT_LABELS.setdefault("H_anisotropy", r"$\Delta H$")
 
 # Row labels carry units ("$E_1$ (N/m)"); the in-cell partner tags should not.
 PARTNER_LABELS = {p: lab.split(" (")[0] for p, lab in PARAM_LABELS.items()}
@@ -95,7 +92,10 @@ def s2_partners(group, bounds, outputs, n_base):
     for col in outputs:
         if col not in preds or np.std(preds[col]) < 1e-10:
             continue
-        si = sobol_analyze.analyze(problem, preds[col], calc_second_order=True,
+        Y = preds[col]
+        if LOG_TENSIONS and col in CABLE_OUTPUTS:
+            Y = np.log(np.clip(Y, 1e-9, None))
+        si = sobol_analyze.analyze(problem, Y, calc_second_order=True,
                                    print_to_console=False)
         S2 = np.array(si["S2"], dtype=float)
         # S2 is upper-triangular with NaN elsewhere; symmetrise for lookup

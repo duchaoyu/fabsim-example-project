@@ -50,6 +50,16 @@ PARAMS_MATERIAL_R_NO_CABLE, PARAMS_MATERIAL_R_CABLE = _BOUNDS
 OUTPUT_LABELS = dict(OUTPUT_LABELS)
 OUTPUT_LABELS.setdefault("H_anisotropy", r"$\Delta H$")
 
+# The cable tensions are heavy-tailed (kurtosis 4.7 and 11.6, with 20-27% of the
+# variance in the top 1% of runs), and their raw indices were still drifting at
+# N = 2048 — max |ST(4096) - ST(1024)| of 0.054 and 0.136.  On log T the same
+# drift is 0.003 and 0.014, so the log tables written by run_sobol_robust.py are
+# preferred wherever they exist (see figX).  --raw-tensions opts out.
+LOG_TENSIONS = "--raw-tensions" not in sys.argv
+if LOG_TENSIONS:
+    OUTPUT_LABELS["cable_wale_tension"]   = r"$\log T_\mathrm{wale}$"
+    OUTPUT_LABELS["cable_course_tension"] = r"$\log T_\mathrm{course}$"
+
 # E1 is the modulus along face_dirs, which anisotropic_rest_shape.h and
 # fem_batch_sensitivity.cpp both take as the wale direction — name it on the row.
 PARAM_LABELS = dict(PARAM_LABELS)
@@ -85,6 +95,13 @@ def load_group(group):
     tables = {}
     for col in outputs:
         path = os.path.join(DATA_DIR, f"sobol_{group}_{CSV_PREFIX}{col}.csv")
+        if LOG_TENSIONS and col in CABLE_OUTPUTS:
+            log_path = os.path.join(DATA_DIR,
+                                    f"sobol_{group}_{CSV_PREFIX}log_{col}.csv")
+            if os.path.exists(log_path):
+                path = log_path
+            else:
+                print(f"  {col}: no log table, using raw indices")
         if not os.path.exists(path):
             print(f"  missing, skipped: {os.path.basename(path)}")
             continue
