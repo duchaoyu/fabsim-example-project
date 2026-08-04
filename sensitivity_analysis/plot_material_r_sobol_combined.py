@@ -185,8 +185,7 @@ def plot_combined(save=True):
     cbar.set_ticks([0, 0.25, 0.5, 0.75, 1.0])
     cbar.ax.tick_params(labelsize=9)
     cbar.ax.xaxis.set_major_formatter(ticker.FormatStrFormatter("%.2f"))
-    cbar.set_label(r"Sobol index — total-order $S_T$ (top row) / "
-                   r"first-order $S_1$ (bottom row)", fontsize=10)
+    cbar.set_label("Sobol sensitivity indices", fontsize=10)
 
     fig.suptitle("Sobol sensitivity indices",
                  fontsize=13, y=1 - 0.18 / fig_h)
