@@ -91,6 +91,13 @@ public:
     {
         auto segs = _geometry(X);
         double dL = _totalLength(segs) - L_rest;
+        // Tension-only, to match gradient() and hessian(), which both clamp at
+        // T = 0.  The unclamped quadratic gave a slack cable an energy with no
+        // corresponding force: the Newton step saw zero, but the line search
+        // still tried to drive L towards L_rest, so a nominally slack cable
+        // shifted the equilibrium (7% on crown height in probe_cable_influence).
+        if (dL <= 0.0)
+            return 0.0;
         return (EA / (2.0 * L_rest)) * dL * dL;
     }
 

@@ -78,8 +78,15 @@ def opposite_boundary_vertex(V, boundary_verts, source_idx: int) -> int:
 
     coords_c = V[bv, :2] - centroid
     angles = np.arctan2(coords_c[:, 1], coords_c[:, 0])
-    diffs = np.abs(angles - opposite_angle)
-    diffs = np.minimum(diffs, 2 * math.pi - diffs)
+    # Wrap the angular difference into [0, pi].  The previous
+    # np.minimum(d, 2*pi - d) went *negative* whenever d > 2*pi, which happens
+    # because opposite_angle reaches 3*pi/2 while arctan2 returns (-pi, pi];
+    # argmin then locked onto that negative entry and returned a vertex ~90 deg
+    # from the true antipode for every source except the one near 0 deg.  The
+    # wale cable (90 deg) was a 95 deg chord of 0.878 m rather than a 1.208 m
+    # diameter because of this.
+    delta = angles - opposite_angle
+    diffs = np.abs(np.arctan2(np.sin(delta), np.cos(delta)))
     return int(bv[np.argmin(diffs)])
 
 
@@ -140,9 +147,11 @@ def generate_cable_path(cable_angle_deg, mesh_path=MESH_PATH):
     Return an ordered list of vertex indices for a smooth cable path across
     the mesh at the given polar angle.
 
-    Uses straight-line axis projection: projects all vertices onto the
-    source→target axis and selects those within a band of ≈2 edge-lengths,
-    giving a smooth cross-section path rather than a zigzagging graph walk.
+    Projects vertices onto the source→target axis, keeps those within a band of
+    ≈2 edge lengths, then takes the one closest to the axis in each axial bin of
+    one edge length.  The result advances monotonically along the axis, so its
+    arc length is the span of the chord (plus mesh roughness) rather than a
+    zigzag across the band.
     """
     V, F = load_off(mesh_path)
     boundary = find_boundary_vertices(F)
@@ -167,22 +176,34 @@ def generate_cable_path(cable_angle_deg, mesh_path=MESH_PATH):
     # Band width ≈ 2 median edge lengths
     edge_lens = [np.linalg.norm(V[F[i, j]] - V[F[i, (j+1) % 3]])
                  for i in range(min(200, len(F))) for j in range(3)]
-    band = 2.0 * float(np.median(edge_lens))
+    edge = float(np.median(edge_lens))
+    band = 2.0 * edge
 
     in_band = (dist < band) & (t_vals >= -1e-6) & (t_vals <= axis_len + 1e-6)
-    in_band[source] = True
-    in_band[target] = True
+    cand = np.where(in_band)[0]
 
-    selected = np.where(in_band)[0]
-    order    = np.argsort(t_vals[selected])
-    path     = selected[order].tolist()
+    # One node per axial station, nearest the axis.  Keeping *every* vertex in
+    # the band and sorting by t made the path weave from one side of the band to
+    # the other: 88% of its length was transverse and the polyline ran 7-8x the
+    # true span (6.32 m across a 1.21 m disc).  As a single SlidingCable with one
+    # tension, that zigzag could absorb any rest-length change by wiggling
+    # sideways, so the cable barely constrained the dome at all.
+    nbins  = max(2, int(round(axis_len / edge)))
+    bin_of = np.clip((t_vals[cand] / axis_len * nbins).astype(int), 0, nbins - 1)
+    path = []
+    for b in range(nbins):
+        sel = cand[bin_of == b]
+        if len(sel):
+            path.append(int(sel[np.argmin(dist[sel])]))
 
-    # Guarantee source at front, target at back
-    if source in path:
-        path.remove(source)
-    if target in path:
-        path.remove(target)
-    path = [source] + path + [target]
+    # Guarantee the exact boundary endpoints, and drop duplicates in order
+    path = [p for p in path if p not in (source, target)]
+    seen, uniq = set(), []
+    for p in path:
+        if p not in seen:
+            seen.add(p)
+            uniq.append(p)
+    path = [source] + uniq + [target]
 
     if len(path) < 2:
         raise RuntimeError(

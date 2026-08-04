@@ -56,9 +56,10 @@ def run_fea(
     """
     Run fem_batch_sensitivity for one parameter set.
 
-    cable_wale_lrest / cable_course_lrest: rest-length as a fraction of the
-    cable's geometric arc length on the reference mesh. Values < 1 pre-tension
-    the cable; -1 means no cable in that direction.
+    cable_wale_lrest / cable_course_lrest: absolute cable rest length in METRES.
+    The reference chord spans ~1.20 m with an arc length of ~1.29 m on the flat
+    mesh, so values below ~1.29 pre-tension the cable and values above it are
+    slack until the dome rises. -1 means no cable in that direction.
 
     E1, r, nu: if all three are provided, override the motif material params.
       E2 is computed as E1/r inside the binary. E1 is in N/m (membrane modulus).
@@ -74,13 +75,22 @@ def run_fea(
     V, F = _get_mesh(mesh)
     tmpfiles = []
 
-    def _make_cable_arg(lrest_frac, angle_deg):
-        if lrest_frac < 0:
+    def _make_cable_arg(lrest_m, angle_deg):
+        if lrest_m < 0:
             return "none"
         indices = generate_cable_path(angle_deg, mesh)
         geo_len = cable_path_length(indices, V)
-        L_rest  = lrest_frac * geo_len
-        path = _write_cable_json(indices, CABLE_EA, L_rest)
+        # L_rest is an absolute rest length in METRES — the convention
+        # fem_batch_sensitivity.cpp and sampling.py already documented.  It used
+        # to be a fraction of geo_len, which was meaningless while
+        # generate_cable_path returned a zigzag 7-8x the chord span; both are
+        # fixed together, so any cached cable data predating this is invalid.
+        if not 0.4 * geo_len < lrest_m < 3.0 * geo_len:
+            raise ValueError(
+                f"cable L_rest = {lrest_m:.4f} m is implausible against a "
+                f"geometric arc length of {geo_len:.4f} m — a fraction "
+                f"(the old convention) rather than metres?")
+        path = _write_cable_json(indices, CABLE_EA, lrest_m)
         tmpfiles.append(path)
         return path
 

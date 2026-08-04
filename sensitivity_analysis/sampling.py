@@ -83,8 +83,9 @@ def generate_orient_samples(start_id: int = 600, seed: int = RANDOM_SEED) -> lis
     Generate LHS samples for the cable-orientation study.
 
     Groups:  motif{1,2}_cable_{wale,course}  — 4 groups × N_SAMPLES_ORIENT
-    L_rest is a dimensionless ratio; the actual cable rest length is computed
-    at run time as  L_rest_actual = L_rest_ratio × L_flat(knit_dir, axis).
+    L_rest is an absolute cable rest length in metres, passed straight through
+    to the binary (it was a ratio × L_flat until the cable geometry was fixed;
+    see the note in config.py).
 
     Sample IDs start at start_id (default 600) to avoid collision with the
     original 0–599 sample set.

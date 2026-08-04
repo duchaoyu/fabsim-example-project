@@ -22,17 +22,22 @@ PARAMS_NO_CABLE = {
     "pressure":  (200.0, 1200.0),
 }
 
-# cable_wale_lrest / cable_course_lrest: rest-length as a fraction of the
-# cable's geometric arc length on the reference mesh.
-# 1.0 = slack (no tension), <1.0 = pre-tensioned.
-# Range (0.90, 1.0) covers full regime: snap-through occurs near 0.92.
+# cable_wale_lrest / cable_course_lrest: absolute cable rest length in METRES.
+# The cable is a diameter chord of the reference disc: span 1.197 m, arc length
+# 1.29 m on the flat mesh.  So <1.29 pre-tensions the cable and >1.29 is slack
+# until the dome rises; (1.2, 1.4) brackets that transition.
+#
+# These were a *fraction* of the cable's arc length until the cable geometry was
+# corrected (see cable_path.py: the path was a zigzag 7-8x the chord span, and
+# the wale cable was a 95 deg chord rather than a diameter).  Any cached cable
+# data generated before that fix is invalid and must be re-run.
 PARAMS_CABLE = {
     "sf_wale":            (0.8, 1.4),
     "sf_course":          (0.8, 1.4),
     "knit_dir":           (0.0, 90.0),
     "pressure":           (200.0, 1200.0),
-    "cable_wale_lrest":   (0.90, 1.0),
-    "cable_course_lrest": (0.90, 1.0),
+    "cable_wale_lrest":   (1.2, 1.4),
+    "cable_course_lrest": (1.2, 1.4),
 }
 
 # ── Discrete parameters ───────────────────────────────────────────────────────
@@ -47,13 +52,13 @@ N_SAMPLES = 150
 N_SAMPLES_ORIENT = 150
 
 # Parameter bounds for the cable orientation study
-# L_rest is a dimensionless ratio; actual rest length = ratio × L_flat
+# L_rest is an absolute rest length in metres (see the note above)
 PARAMS_CABLE_ORIENT = {
     "sf_wale":   (0.8, 1.4),
     "sf_course": (0.8, 1.4),
     "knit_dir":  (0.0, 90.0),
     "pressure":  (200.0, 1200.0),
-    "L_rest":    (0.90, 1.0),
+    "L_rest":    (1.2, 1.4),
 }
 
 # Samples per group for the material sensitivity study (7D/9D parameter space)
@@ -88,8 +93,8 @@ PARAMS_MATERIAL_CABLE = {
     "sf_course":          (0.8, 1.4),
     "knit_dir":           (0.0, 90.0),
     "pressure":           (200.0, 1200.0),
-    "cable_wale_lrest":   (0.90, 1.0),
-    "cable_course_lrest": (0.90, 1.0),
+    "cable_wale_lrest":   (1.2, 1.4),
+    "cable_course_lrest": (1.2, 1.4),
     "E1":                 (1000.0, 8000.0),
     "r":                  (3.0, 5.0),
     "nu":                 (0.45, 0.9),
@@ -142,8 +147,8 @@ PARAMS_MATERIAL_R_CABLE = {
     "sf_course":          (0.8, 1.4),
     "knit_dir":           (0.0, 90.0),
     "pressure":           (200.0, 2000.0),
-    "cable_wale_lrest":   (0.90, 1.0),
-    "cable_course_lrest": (0.90, 1.0),
+    "cable_wale_lrest":   (1.2, 1.4),
+    "cable_course_lrest": (1.2, 1.4),
     "E1":                 (1000.0, 20000.0),
     "r":                  (1.0, 5.0),
     "nu":                 (0.1, 0.5),
