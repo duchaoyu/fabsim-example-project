@@ -17,10 +17,9 @@ slack and it carries no load at all.  In the 660-sample cable batch:
 
 Note the surrogate reproduces only ~24% slack against that sampled 40%: a GP is
 continuous, so it cannot represent a point mass and interpolates across the
-slack/taut switch.  Panel (c) therefore reads as which parameters move the switch,
-not as a calibrated probability of slack — a classifier would be needed for that.
-The forthcoming L_rest = f * L_nocable parameterisation removes the plateau by
-construction, at which point this whole correction becomes unnecessary.
+slack/taut switch.  The forthcoming L_rest = f * L_nocable parameterisation
+removes the plateau by construction, at which point this whole correction becomes
+unnecessary.
 
 That has three consequences, all handled here:
 
@@ -38,9 +37,16 @@ That has three consequences, all handled here:
      overshoots the point mass at zero and predicted tension down to -271 N
      across ~21% of the box; surrogate._NONNEG_OUTPUTS now clamps that at 0 on
      prediction.  The docstring numbers above are post-clamp.
-  3. Whether the cable is engaged at all is itself a first-order response, and
-     folding it into the tension indices hides it.  Panel (c) reports Sobol
-     indices for the engagement indicator 1[T > 0] separately.
+  3. Whether the cable is engaged at all is a separate response from how hard it
+     pulls, and the tension indices conflate the two.  Indices for the engagement
+     indicator 1[T > 0] are estimated and written to
+     sobol_*_valid_engaged_*.csv, but deliberately NOT plotted here: this figure
+     is about whether the indices can be trusted, and engagement is a substantive
+     result, not a robustness check.  It is also the one quantity the GP gets
+     materially wrong (see the 24%-vs-40% note above), because the indicator is
+     exactly the discontinuity a continuous surrogate interpolates across.  If
+     the result matters it belongs in the regime bars, on a classifier rather
+     than a GP.
 
 Delta-H changes sign and cannot be logged either.  For it, PAWN [Pianosi &
 Wagener 2015] provides a cross-check: it compares conditional CDFs instead of
@@ -197,8 +203,8 @@ def plot_robust(sweep, pawn, save=True):
     plt.rcParams.update({"font.family": "sans-serif", "font.size": 9,
                          "axes.linewidth": 0.8, "figure.dpi": 150,
                          "axes.spines.top": False, "axes.spines.right": False})
-    fig, axes = plt.subplots(1, 4, figsize=(15.0, 3.5))
-    fig.subplots_adjust(left=0.05, right=0.99, top=0.80, bottom=0.19, wspace=0.30)
+    fig, axes = plt.subplots(1, 3, figsize=(11.4, 3.5))
+    fig.subplots_adjust(left=0.065, right=0.99, top=0.80, bottom=0.19, wspace=0.33)
 
     keys = list(GROUPS["material_r_cable"][1])
 
@@ -226,30 +232,10 @@ def plot_robust(sweep, pawn, save=True):
                   handlelength=1.6, columnspacing=0.8, labelspacing=0.25)
         ax.tick_params(labelsize=7)
 
-    # (c): what decides whether the cable is engaged at all.  L_rest reaching
-    # past the taut/slack transition makes this a first-order response in its
-    # own right; reporting it separately keeps it out of the tension indices.
+    # (c): PAWN vs Sobol ranking for cable Delta-H.  The engagement indices are
+    # estimated in tension_indices() and written to CSV, but not plotted — see
+    # the module docstring for why they do not belong on a robustness figure.
     ax = axes[2]
-    eng = {col: sweep[col]["engaged"][SOBOL_N_BASE]["ST"].clip(0)
-           for col in LOG_OUTPUTS}
-    order = eng[LOG_OUTPUTS[0]].sort_values(ascending=False).index
-    x = np.arange(len(order))
-    for off, (col, colour) in enumerate(zip(LOG_OUTPUTS,
-                                            ["#0077BB", "#EE7733"])):
-        ax.bar(x + (off - 0.5) * 0.4, eng[col][order].values, 0.4,
-               color=colour, label=OUTPUT_LABELS.get(col, col))
-    ax.set_xticks(x)
-    ax.set_xticklabels([SHORT.get(p, p) for p in order], rotation=40,
-                       ha="right", fontsize=7)
-    ax.set_ylabel("$S_T$", fontsize=8.5)
-    ax.set_title("(c) cable engaged, $\\mathbb{1}[T>0]$:\n"
-                 "what trips the slack/taut switch (GP smooths it)",
-                 fontsize=9.5, pad=4)
-    ax.legend(fontsize=6.6, frameon=False)
-    ax.tick_params(labelsize=7)
-
-    # (d): PAWN vs Sobol ranking for cable Delta-H
-    ax = axes[3]
     g, col = "material_r_cable", "H_anisotropy"
     pw = pawn[(g, col)]["median"]
     so = pd.read_csv(os.path.join(DATA_DIR, f"sobol_{g}_valid_{col}.csv"),
@@ -265,7 +251,7 @@ def plot_robust(sweep, pawn, save=True):
     ax.set_ylabel("index", fontsize=8.5)
     rho = pd.Series(so[order].values).corr(pd.Series(pw[order].values),
                                            method="spearman")
-    ax.set_title(f"(d) cable $\\Delta H$: variance-based vs moment-independent\n"
+    ax.set_title(f"(c) cable $\\Delta H$: variance-based vs moment-independent\n"
                  f"Spearman rank correlation {rho:.2f}", fontsize=9.5, pad=4)
     ax.legend(fontsize=7, frameon=False)
     ax.tick_params(labelsize=7)

@@ -1,9 +1,14 @@
 """
 Surrogate validation figures for the material-r study.
 
+table_surrogate_accuracy   Table 6.4 — R2, RMSE, nRMSE and interval coverage on
+                           the held-out 20%, per group and output.
 figV_surrogate_parity      predicted vs FEA on the held-out 20%, one panel per
                            output, with 95% predictive intervals.  Shows *where*
-                           a surrogate fails, which Table 6.x cannot.
+                           a surrogate fails, which the table cannot.
+
+The table and the figure are computed from the same predictions, so they cannot
+disagree — see write_metrics_table for why that mattered.
 figD_design_coverage_{g}   pairwise projections of the training design, with the
                            per-parameter histogram on the diagonal.  Documents
                            that LHS filled the box and that the quality filter
@@ -35,6 +40,7 @@ import config
 from config import DATA_DIR, TRAIN_VAL_SPLIT, RANDOM_SEED
 from run_material_r_sobol import _outputs_for
 from sampling import generate_material_r_samples
+from surrogate import _NONNEG_OUTPUTS
 from visualization import OUTPUT_LABELS, FIG_DIR
 from plot_material_r_sobol_combined import (
     PARAM_LABELS, VALID, SUR_PREFIX, FIG_SUFFIX,
@@ -112,7 +118,57 @@ def _predict_interval(sur, group_keys, valid, idx, col):
     pred, lo, hi = inv(m), inv(m - 1.96 * s), inv(m + 1.96 * s)
     if col in getattr(sur, "_log_cols", set()):
         pred, lo, hi = np.exp(pred), np.exp(lo), np.exp(hi)
+    if col in _NONNEG_OUTPUTS:
+        # This path reaches into gp.predict rather than going through
+        # sur.predict(), so it has to apply the same physical floor: a slack
+        # cable carries no load, and the tension GP is fitted on raw tension
+        # over a sample that is ~40% zeros, so it overshoots below zero.  Without
+        # this, figV plots negative tension and its R2 disagrees with the
+        # surrogate's own metrics.  The interval is clamped too — a 95% interval
+        # on a non-negative quantity must not extend below 0.
+        pred, lo, hi = (np.maximum(v, 0.0) for v in (pred, lo, hi))
     return pred, lo, hi
+
+
+# ── Table: surrogate accuracy on the held-out 20% ────────────────────────────
+
+def write_metrics_table(save=True):
+    """Table 6.4 — held-out accuracy, from the same numbers figV plots.
+
+    The table used to be transcribed from ScalarSurrogate.metrics, which is
+    computed at fit time, while figV recomputed its own R2 from the reconstructed
+    split.  Two sources for one quantity is one too many: they agree only while
+    nothing downstream of the GP changes, and the non-negative clamp on the cable
+    tensions broke exactly that assumption.  Both now come from here.
+    """
+    rows = []
+    for group, (label, _) in GROUPS.items():
+        valid, keys, outs, sur, tr, va = load_split(group)
+        for col in outs:
+            true = valid.loc[va, col].values
+            pred, lo, hi = _predict_interval(sur, keys, valid, va, col)
+            rng  = true.max() - true.min()
+            rmse = float(np.sqrt(np.mean((true - pred) ** 2)))
+            rows.append({
+                "group":      label,
+                "output":     col,
+                "n_heldout":  len(va),
+                "R2":         round(r2_score(true, pred), 3),
+                "RMSE":       float(f"{rmse:.4g}"),
+                "nRMSE_pct":  round(100 * rmse / rng, 1) if rng > 0 else np.nan,
+                "coverage_pct": round(float(np.mean((true >= lo) &
+                                                    (true <= hi)) * 100), 0),
+            })
+    t = pd.DataFrame(rows)
+
+    print(f"\nTable 6.4 — surrogate accuracy on the held-out 20% ({_BOX_LABEL})")
+    print(t.to_string(index=False))
+    if save:
+        path = os.path.join(DATA_DIR,
+                            f"table_surrogate_accuracy{FIG_SUFFIX}.csv")
+        t.to_csv(path, index=False)
+        print(f"Saved: {path}")
+    return t
 
 
 # ── Figure V: parity ─────────────────────────────────────────────────────────
@@ -268,6 +324,7 @@ def plot_coverage(group, save=True):
 
 
 if __name__ == "__main__":
+    write_metrics_table()
     plot_parity()
     for g in GROUPS:
         plot_coverage(g)
