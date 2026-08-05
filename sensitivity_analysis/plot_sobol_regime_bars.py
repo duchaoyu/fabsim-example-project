@@ -18,8 +18,10 @@ to each other — an important difference from the heatmap, where every cell was
 normalised by the same colormap but the eye still had to compare hues.
 
 Indices come from the same cached tables as every other Sobol figure
-(data/sobol_material_r_{group}_{CSV_PREFIX}{output}.csv, log tables preferred for
-the cable tensions), so the numbers match fig3_sobol_material_r_combined.
+(data/sobol_material_r_{group}_{CSV_PREFIX}{output}.csv, log1p tables preferred
+for the cable tensions — the tensions are zero-inflated, so they are reported on
+log(1+T) rather than log T; see run_sobol_robust.py), so the numbers match
+fig3_sobol_material_r_combined.
 
 Usage:
     python3 plot_sobol_regime_bars.py [--full-box] [--raw-tensions] [--cols 5]
@@ -248,7 +250,7 @@ if __name__ == "__main__":
                          "model-validity box (handled at import; listed so "
                          "argparse accepts the flag)")
     ap.add_argument("--raw-tensions", action="store_true",
-                    help="use raw rather than log cable-tension indices "
+                    help="use raw rather than log(1+T) cable-tension indices "
                          "(handled at import)")
     args = ap.parse_args()
     if args.split:
