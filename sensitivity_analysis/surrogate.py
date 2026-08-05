@@ -23,8 +23,20 @@ from config import (
     PARAMS_NO_CABLE, PARAMS_CABLE,
 )
 
-# Outputs that span a large dynamic range — fit log(y) instead of y
+# Outputs that span a large dynamic range — fit log(y) instead of y.
+# NOTE the cable tensions are listed but the guard below (y > 0).all() disables
+# the transform for them whenever the sample contains slack runs, which it does
+# for any L_rest range reaching past the taut/slack transition — see
+# _NONNEG_OUTPUTS.  They are kept here so a taut-only subset still gets the
+# transform; do not assume a tension GP is in log space, check _log_cols.
 _LOG_OUTPUTS = {"H_mean_x0", "H_mean_y0", "cable_wale_tension", "cable_course_tension"}
+
+# Outputs with a hard physical floor at zero.  A slack cable carries no load, so
+# ~38% of the cable samples sit exactly at T = 0 over L_rest in (1.2, 1.4) m and
+# the GP is fitted on raw (not log) tension.  An unconstrained GP interpolates
+# that point mass with an overshoot and predicts tension down to -271 N across
+# ~21% of the box; clamping on prediction restores T >= 0 without refitting.
+_NONNEG_OUTPUTS = {"cable_wale_tension", "cable_course_tension"}
 
 
 def _make_kernel():
@@ -96,6 +108,8 @@ class ScalarSurrogate:
             if log_col:
                 pred_t = np.exp(pred_t)
                 true_t = np.exp(true_t)
+            if col in _NONNEG_OUTPUTS:
+                pred_t = np.maximum(pred_t, 0.0)
             r2   = r2_score(true_t, pred_t)
             rmse = np.sqrt(mean_squared_error(true_t, pred_t))
             self.metrics[col] = {"r2": r2, "rmse": rmse}
@@ -114,6 +128,8 @@ class ScalarSurrogate:
             ).ravel()
             if col in log_cols:
                 pred = np.exp(pred)
+            if col in _NONNEG_OUTPUTS:
+                pred = np.maximum(pred, 0.0)
             out[col] = pred
         return out
 

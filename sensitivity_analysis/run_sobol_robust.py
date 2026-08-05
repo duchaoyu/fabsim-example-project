@@ -1,33 +1,49 @@
 """
-Robust indices for the heavy-tailed outputs of the material-r study.
+Robust indices for the awkwardly-distributed outputs of the material-r study.
 
 Why: the convergence sweep (figW) shows the cable tension and cable Delta-H
-columns still drifting at N = 2048, while crown height and the stress outputs
+columns drifting for longer than crown height and the stress outputs, which
 settle by N ~ 256.  The cause is not the estimator but the output distribution —
-Sobol indices divide by Var(Y), and for those columns the variance is dominated
-by a handful of extreme states:
+Sobol indices divide by Var(Y).  On the corrected cable geometry the tensions
+are not so much heavy-tailed as ZERO-INFLATED: L_rest runs over (1.2, 1.4) m
+against a 1.29 m flat arc, so the upper part of the range leaves the cable
+slack and it carries no load at all.  In the 660-sample cable batch:
 
-    output                 kurtosis   variance share of top 1% of runs
-    H_anisotropy (cable)      12.9                 30%
-    cable_course_tension      11.6                 27%
-    cable_wale_tension         4.7                 20%
-    mean_stress / crown        2.8                 15-16%
+    L_rest bin (m)      1.20-1.225  ...  1.275-1.30  1.30-1.325  1.375-1.40
+    runs with T = 0          0%              15%          56%         81%
 
-Two remedies, both applied here:
+38% of cable runs have T identically 0 (wale; 37% course).  Over the box as a
+whole, 21% of surrogate evaluations are slack.
 
-  1. The tensions are strictly positive, so analysing log T removes the tail
-     (kurtosis 11.6 -> 0.3, top-1% share 27% -> 9%).  The GP already fits these
-     outputs in log space and only exponentiates on prediction, so the
-     well-behaved scale costs nothing.  Indices then describe the sensitivity of
-     the relative variation of tension.
-  2. Delta-H changes sign and cannot be logged.  For it, PAWN [Pianosi & Wagener
-     2015] provides a cross-check: it compares conditional CDFs instead of
-     variances, so a heavy tail does not slow it down.  If PAWN agrees with the
-     Sobol ranking, the Sobol values can be reported with a caveat rather than
-     dropped.
+That has three consequences, all handled here:
+
+  1. log T is NOT defined on this output.  The previous version of this script
+     analysed np.log(np.clip(y, 1e-9, None)), which mapped the whole slack
+     plateau onto a single spike at log(1e-9) = -20.72.  That spike carried 98%
+     of the variance (Var = 114.5, against 2.3 among the genuinely taut
+     samples), so the resulting "log tension" indices largely measured which
+     parameters trip the clip, not the sensitivity of tension.  Replaced by
+     log1p(T / T_REF), which is defined at T = 0, needs no clipping, and still
+     compresses the taut range: kurtosis 1.9 -> -0.9, top-1% variance share
+     13% -> 3%.
+  2. The tension GP is fitted on RAW tension, not log — surrogate.py disables
+     its log transform when the sample contains zeros.  An unconstrained GP
+     overshoots the point mass at zero and predicted tension down to -271 N
+     across ~21% of the box; surrogate._NONNEG_OUTPUTS now clamps that at 0 on
+     prediction.  The docstring numbers above are post-clamp.
+  3. Whether the cable is engaged at all is itself a first-order response, and
+     folding it into the tension indices hides it.  Panel (c) reports Sobol
+     indices for the engagement indicator 1[T > 0] separately.
+
+Delta-H changes sign and cannot be logged either.  For it, PAWN [Pianosi &
+Wagener 2015] provides a cross-check: it compares conditional CDFs instead of
+variances, so a skewed output does not slow it down.  If PAWN agrees with the
+Sobol ranking, the Sobol values can be reported with a caveat rather than
+dropped.
 
 Products:
-    data/sobol_material_r_cable_valid_log_{cable_wale,cable_course}_tension.csv
+    data/sobol_material_r_cable_valid_log1p_{cable_wale,cable_course}_tension.csv
+    data/sobol_material_r_cable_valid_engaged_{cable_wale,cable_course}_tension.csv
     data/pawn_material_r_{group}_valid_{output}.csv
     figures/figX_robust_indices.{pdf,png}
 
@@ -59,6 +75,15 @@ OUTPUT_LABELS.setdefault("H_anisotropy", r"$\Delta H$")
 SHORT = {p: lab.split(" (")[0].replace("\n", "") for p, lab in PARAM_LABELS.items()}
 
 LOG_OUTPUTS  = ["cable_wale_tension", "cable_course_tension"]   # cable group only
+# Reference tension for log1p(T / T_REF).  1 N: the transform is then plain
+# log1p in newtons, ~log in the taut range (T ~ 1e2-1e3 N) and smoothly zero at
+# the slack plateau, so no clipping is needed and the point mass at T = 0 stays
+# a point mass instead of becoming a -20.72 spike.
+T_REF        = 1.0
+# Tension below this counts as slack for the engagement indicator.  The FEM
+# returns exact zeros, so any small positive threshold picks out the same set;
+# it exists only to absorb surrogate round-off near the clamp.
+T_ENGAGED    = 1e-6
 PAWN_OUTPUTS = {"material_r_cable":   ["H_anisotropy", "cable_course_tension"],
                 "material_r_nocable": ["H_anisotropy"]}
 
@@ -78,38 +103,56 @@ def _surrogate(group):
         DATA_DIR, f"{group}_{SUR_PREFIX}surrogate.pkl"))
 
 
-# ── 1. Sobol on log-transformed tensions, with a convergence sweep ────────────
+# ── 1. Sobol on the tensions: raw, log1p, and slack/taut engagement ───────────
 
-def log_tension_indices(group="material_r_cable"):
+# Labels tracked in the convergence sweep.  "engaged" is a different response
+# (a 0/1 indicator), not another scale for the same one — it is swept alongside
+# so its convergence can be read off the same figure.
+SWEEP_LABELS = ["raw", "log1p", "engaged"]
+
+
+def tension_indices(group="material_r_cable"):
     bounds, prob = GROUPS[group][1], _problem(GROUPS[group][1])
     keys, sur = list(bounds), _surrogate(group)
-    sweep = {c: {"raw": {}, "log": {}} for c in LOG_OUTPUTS}
+    sweep = {c: {lab: {} for lab in SWEEP_LABELS} for c in LOG_OUTPUTS}
 
     for N in N_SWEEP:
         X = saltelli.sample(prob, N, calc_second_order=False)
         preds = sur.predict(X)
+        slack = {}
         for col in LOG_OUTPUTS:
             y = preds[col]
-            for lab, Y in [("raw", y), ("log", np.log(np.clip(y, 1e-9, None)))]:
+            if (y < 0).any():                     # clamp must already have run
+                raise RuntimeError(
+                    f"{col}: {(y < 0).sum()} negative predictions — expected "
+                    "surrogate._NONNEG_OUTPUTS to clamp tension at 0")
+            engaged = (y > T_ENGAGED).astype(float)
+            slack[col] = 1.0 - engaged.mean()
+            for lab, Y in [("raw", y),
+                           ("log1p", np.log1p(y / T_REF)),
+                           ("engaged", engaged)]:
                 si = sobol_analyze.analyze(prob, Y, calc_second_order=False,
                                            print_to_console=False)
                 sweep[col][lab][N] = pd.DataFrame(
                     {"S1": si["S1"], "ST": si["ST"],
                      "S1_conf": si["S1_conf"], "ST_conf": si["ST_conf"]},
                     index=keys)
-        print(f"  N={N:5d} ({len(X)} evaluations)")
+        print(f"  N={N:5d} ({len(X)} evaluations)  slack fraction: "
+              + ", ".join(f"{c.replace('cable_','').replace('_tension','')} "
+                          f"{slack[c]:.1%}" for c in LOG_OUTPUTS))
 
     for col in LOG_OUTPUTS:
-        t = sweep[col]["log"][SOBOL_N_BASE]
-        path = os.path.join(DATA_DIR,
-                            f"sobol_{group}_valid_log_{col}.csv")
-        t.to_csv(path)
-        drift_raw = max(abs(sweep[col]["raw"][4096].loc[p, "ST"]
-                            - sweep[col]["raw"][1024].loc[p, "ST"]) for p in keys)
-        drift_log = max(abs(sweep[col]["log"][4096].loc[p, "ST"]
-                            - sweep[col]["log"][1024].loc[p, "ST"]) for p in keys)
-        print(f"  {col}: max |ST(4096) - ST(1024)|  raw {drift_raw:.3f} "
-              f"-> log {drift_log:.3f}   (saved {os.path.basename(path)})")
+        drift = {}
+        for lab in SWEEP_LABELS:
+            sweep[col][lab][SOBOL_N_BASE].to_csv(os.path.join(
+                DATA_DIR, f"sobol_{group}_valid_{lab}_{col}.csv"))
+            drift[lab] = max(abs(sweep[col][lab][4096].loc[p, "ST"]
+                                 - sweep[col][lab][1024].loc[p, "ST"])
+                             for p in keys)
+        print(f"  {col}: max |ST(4096) - ST(1024)|  "
+              + "  ".join(f"{lab} {drift[lab]:.3f}" for lab in SWEEP_LABELS))
+        top = sweep[col]["engaged"][SOBOL_N_BASE]["ST"].clip(0).idxmax()
+        print(f"    engagement 1[T>0] is driven most by {top}")
     return sweep
 
 
@@ -146,21 +189,21 @@ def plot_robust(sweep, pawn, save=True):
     plt.rcParams.update({"font.family": "sans-serif", "font.size": 9,
                          "axes.linewidth": 0.8, "figure.dpi": 150,
                          "axes.spines.top": False, "axes.spines.right": False})
-    fig, axes = plt.subplots(1, 3, figsize=(11.4, 3.5))
-    fig.subplots_adjust(left=0.065, right=0.99, top=0.80, bottom=0.19, wspace=0.33)
+    fig, axes = plt.subplots(1, 4, figsize=(15.0, 3.5))
+    fig.subplots_adjust(left=0.05, right=0.99, top=0.80, bottom=0.19, wspace=0.30)
 
     keys = list(GROUPS["material_r_cable"][1])
 
-    # (a), (b): raw vs log convergence for the two tensions
+    # (a), (b): raw vs log1p convergence for the two tensions
     for ax, col, tag in zip(axes[:2], LOG_OUTPUTS, "ab"):
-        final = sweep[col]["log"][N_SWEEP[-1]]["ST"].clip(0)
+        final = sweep[col]["log1p"][N_SWEEP[-1]]["ST"].clip(0)
         top3  = list(final.sort_values(ascending=False).index[:3])
         for p in top3:
             ci = _COLORS[keys.index(p) % len(_COLORS)]
-            for lab, style, mk in [("raw", "--", "x"), ("log", "-", "o")]:
+            for lab, style, mk in [("raw", "--", "x"), ("log1p", "-", "o")]:
                 y = [max(0, sweep[col][lab][N].loc[p, "ST"]) for N in N_SWEEP]
                 ax.plot(N_SWEEP, y, style, marker=mk, color=ci, linewidth=1.3,
-                        markersize=3.2, alpha=0.95 if lab == "log" else 0.45,
+                        markersize=3.2, alpha=0.95 if lab == "log1p" else 0.45,
                         label=f"{SHORT.get(p, p)} ({lab})")
         ax.set_xscale("log", base=2)
         ax.set_xticks(N_SWEEP); ax.set_xticklabels([str(n) for n in N_SWEEP],
@@ -169,14 +212,35 @@ def plot_robust(sweep, pawn, save=True):
         ax.set_ylim(-0.03, 1.02)
         ax.set_xlabel("$N$", fontsize=8.5)
         ax.set_ylabel("$S_T$", fontsize=8.5)
-        ax.set_title(f"({tag}) {OUTPUT_LABELS.get(col, col)}: raw vs $\\log$",
-                     fontsize=9.5, pad=4)
+        ax.set_title(f"({tag}) {OUTPUT_LABELS.get(col, col)}: "
+                     f"raw vs $\\log(1+T)$", fontsize=9.5, pad=4)
         ax.legend(fontsize=6.2, frameon=False, ncol=2, loc="upper left",
                   handlelength=1.6, columnspacing=0.8, labelspacing=0.25)
         ax.tick_params(labelsize=7)
 
-    # (c): PAWN vs Sobol ranking for cable Delta-H
+    # (c): what decides whether the cable is engaged at all.  L_rest reaching
+    # past the taut/slack transition makes this a first-order response in its
+    # own right; reporting it separately keeps it out of the tension indices.
     ax = axes[2]
+    eng = {col: sweep[col]["engaged"][SOBOL_N_BASE]["ST"].clip(0)
+           for col in LOG_OUTPUTS}
+    order = eng[LOG_OUTPUTS[0]].sort_values(ascending=False).index
+    x = np.arange(len(order))
+    for off, (col, colour) in enumerate(zip(LOG_OUTPUTS,
+                                            ["#0077BB", "#EE7733"])):
+        ax.bar(x + (off - 0.5) * 0.4, eng[col][order].values, 0.4,
+               color=colour, label=OUTPUT_LABELS.get(col, col))
+    ax.set_xticks(x)
+    ax.set_xticklabels([SHORT.get(p, p) for p in order], rotation=40,
+                       ha="right", fontsize=7)
+    ax.set_ylabel("$S_T$", fontsize=8.5)
+    ax.set_title("(c) cable engaged, $\\mathbb{1}[T>0]$:\n"
+                 "what trips the slack/taut switch", fontsize=9.5, pad=4)
+    ax.legend(fontsize=6.6, frameon=False)
+    ax.tick_params(labelsize=7)
+
+    # (d): PAWN vs Sobol ranking for cable Delta-H
+    ax = axes[3]
     g, col = "material_r_cable", "H_anisotropy"
     pw = pawn[(g, col)]["median"]
     so = pd.read_csv(os.path.join(DATA_DIR, f"sobol_{g}_valid_{col}.csv"),
@@ -192,12 +256,13 @@ def plot_robust(sweep, pawn, save=True):
     ax.set_ylabel("index", fontsize=8.5)
     rho = pd.Series(so[order].values).corr(pd.Series(pw[order].values),
                                            method="spearman")
-    ax.set_title(f"(c) cable $\\Delta H$: variance-based vs moment-independent\n"
+    ax.set_title(f"(d) cable $\\Delta H$: variance-based vs moment-independent\n"
                  f"Spearman rank correlation {rho:.2f}", fontsize=9.5, pad=4)
     ax.legend(fontsize=7, frameon=False)
     ax.tick_params(labelsize=7)
 
-    fig.suptitle("Robustness of the indices for the heavy-tailed outputs",
+    fig.suptitle("Robustness of the indices for the zero-inflated cable "
+                 "outputs ($L_\\mathrm{rest}$ = 1.2–1.4 m, 38% of runs slack)",
                  fontsize=11, y=0.965)
 
     if save:
@@ -209,8 +274,9 @@ def plot_robust(sweep, pawn, save=True):
 
 
 if __name__ == "__main__":
-    print("[1] Sobol on log tensions, with convergence sweep")
-    sweep = log_tension_indices()
+    print("[1] Sobol on the tensions (raw / log1p / engagement), "
+          "with convergence sweep")
+    sweep = tension_indices()
     print("[2] PAWN cross-check")
     pawn = pawn_indices()
     print("[3] figure")
