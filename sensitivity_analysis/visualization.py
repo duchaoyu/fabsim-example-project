@@ -52,9 +52,14 @@ PARAM_LABELS = {
     # Legacy metre convention, kept for the pre-2026-08-04 studies
     "cable_wale_lrest":   r"$L^\mathrm{wale}_\mathrm{rest}$",
     "cable_course_lrest": r"$L^\mathrm{course}_\mathrm{rest}$",
-    # Current convention: rest length as a fraction of the cable-free section
-    "cable_wale_frac":    r"$f^\mathrm{wale}_\mathrm{rest}$",
-    "cable_course_frac":  r"$f^\mathrm{course}_\mathrm{rest}$",
+    # Current convention: rest length as a fraction of the cable-free section.
+    # Labelled with the plain symbol, not the L_rest/L_0 ratio it is sampled as:
+    # the ratio form crowds the axes it appears on, and the normalisation belongs
+    # in the caption.  Any figure with a numeric L_rest axis has to say there
+    # that the number is a fraction of the cable-free section length, since the
+    # bare symbol would otherwise read as metres.
+    "cable_wale_frac":    r"$L^\mathrm{wale}_\mathrm{rest}$",
+    "cable_course_frac":  r"$L^\mathrm{course}_\mathrm{rest}$",
     "E1":                 r"$E_1$ (N/m)",
     "r":                  r"$r = E_2/E_1$",
     "nu":                 r"$\nu_{12}$",

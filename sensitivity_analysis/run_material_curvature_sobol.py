@@ -54,7 +54,7 @@ from config import (
     DATA_DIR, SOBOL_N_BASE,
     PARAMS_MATERIAL_NO_CABLE, PARAMS_MATERIAL_CABLE,
 )
-from surrogate import ScalarSurrogate
+from surrogate import ScalarSurrogate, _DERIVED_OUTPUTS
 # _section_metrics carries the curvature estimator (per-vertex cotangent H,
 # interpolated at section crossings) and _profile_roughness for the quality
 # filter.  Importing rather than copying keeps this consistent with
@@ -211,8 +211,12 @@ def main():
         df = build_section_df(group, force=args.force)
         base_sur = load_base_surrogate(group, bounds)
         curv_sur = train_curvature_surrogate(group, df, bounds, force=args.force)
+        # Derived outputs (surrogate._DERIVED_OUTPUTS, e.g. H_anisotropy) are
+        # produced by predict() from other outputs and have no GP, so testing
+        # membership in .gps alone would drop them silently.
         outputs = [c for c in _outputs_for(group)
-                   if c in base_sur.gps or c in curv_sur.gps]
+                   if c in base_sur.gps or c in curv_sur.gps
+                   or c in _DERIVED_OUTPUTS]
         print(f"  Sobol ({len(bounds)}-D, N={SOBOL_N_BASE}):")
         all_results[group] = run_sobol(group, base_sur, curv_sur, outputs, bounds)
 

@@ -2,14 +2,14 @@ group,output,n_heldout,R2,RMSE,nRMSE_pct,coverage_pct
 no cable,crown_height,219,0.988,0.01004,2.1,97.0
 no cable,H_mean_x0,219,0.981,0.05005,3.5,96.0
 no cable,H_mean_y0,219,0.982,0.04954,3.5,94.0
-no cable,H_anisotropy,219,0.941,0.008757,4.8,93.0
+no cable,H_anisotropy,219,0.937,0.009017,4.9,100.0
 no cable,max_stress,219,0.999,137.0,0.5,96.0
 no cable,mean_stress,219,0.999,132.6,0.5,97.0
 no cable,boundary_reaction_mean,219,1.0,5.5,0.4,96.0
 cable,crown_height,198,0.967,0.01295,3.3,94.0
 cable,H_mean_x0,198,0.887,0.09604,5.6,97.0
 cable,H_mean_y0,198,0.791,0.1646,6.5,96.0
-cable,H_anisotropy,198,0.741,0.04726,7.6,92.0
+cable,H_anisotropy,198,0.75,0.04651,7.5,95.0
 cable,max_stress,198,0.993,580.9,1.7,96.0
 cable,mean_stress,198,0.998,234.7,0.9,95.0
 cable,boundary_reaction_mean,198,0.999,9.346,0.7,98.0

@@ -65,17 +65,22 @@ def sweep(group, bounds):
     problem = {"num_vars": len(keys), "names": keys,
                "bounds": [list(v) for v in bounds.values()]}
 
-    out = {c: {p: [] for p in keys} for c in sur.gps}
+    # Key off what predict() actually returns, not sur.gps: derived outputs such
+    # as H_anisotropy are produced from other outputs and have no GP of their own
+    # (surrogate._DERIVED_OUTPUTS), so keying off gps dropped them and then
+    # KeyError'd on the first prediction.
+    probe = sur.predict(saltelli.sample(problem, 8, calc_second_order=False))
+    out = {c: {p: [] for p in keys} for c in probe}
     for N in N_VALUES:
         X = saltelli.sample(problem, N, calc_second_order=False)
         preds = sur.predict(X)
         for col, Y in preds.items():
-            if np.std(Y) < 1e-10:
+            if not np.all(np.isfinite(Y)) or np.std(Y) < 1e-10:
                 continue
-            # Report the scale the study reports: the tensions are zero-inflated
-            # and analysed as log1p(T / T_REF) (see run_sobol_robust.py), so
-            # converge them on that scale rather than on log(clip(T, 1e-9)),
-            # whose spike at the slack plateau dominated the variance.
+            # Report the scale the study reports: the tensions are analysed on
+            # log1p(T / T_REF), which is also the scale the GP is fitted on
+            # (surrogate._LOG1P_OUTPUTS).  It replaced log(clip(T, 1e-9)), whose
+            # spike at the old slack plateau dominated the variance.
             if LOG_TENSIONS and col in CABLE_OUTPUTS:
                 Y = tension_scale(Y)
             si = sobol_analyze.analyze(problem, Y, calc_second_order=False,

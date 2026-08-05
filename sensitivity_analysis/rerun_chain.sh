@@ -53,4 +53,15 @@ run python3 plot_material_r_sobol_combined.py
 run python3 plot_sobol_regime_bars.py --cols 3
 run python3 plot_sobol_regime_bars.py --cols 3 --split
 run python3 plot_sobol_convergence.py
+run python3 plot_material_r_regime.py
 log "all done"
+
+# Deliberately NOT re-run here, and why:
+#   plot_lrest_sweep.py (figQ)  sweeps an ABSOLUTE L_rest in metres over
+#       data/lrest_sweep/, generated with the old cable geometry and EA = 150 kN.
+#       Superseded by probe_cable_influence.py / figP, which sweeps f instead.
+#   plot_cable_analysis, plot_curvature_sensitivity, plot_section_*, plot_sf_*
+#       read results.csv / material_results.csv — earlier studies whose cable data
+#       predates the 2026-08-04 cable-path fix and is void regardless.
+#   plot_knit_dir_*, plot_nu_surface, plot_sf_surface, plot_e1r_surface,
+#       plot_uniform_sf read their own no-cable grids and are unaffected.

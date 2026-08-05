@@ -82,7 +82,11 @@ def main():
         preds = sur.predict(X)
 
         for col in outs:
-            if col not in preds or np.std(preds[col]) < 1e-10:
+            # Same guard as step_sobol: a derived output can be NaN where its
+            # denominator vanishes, and NaN fails the std test silently.
+            if col not in preds or not np.all(np.isfinite(preds[col])):
+                continue
+            if np.std(preds[col]) < 1e-10:
                 continue
             si = sobol_analyze.analyze(problem, preds[col],
                                        calc_second_order=False,

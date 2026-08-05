@@ -1,0 +1,17 @@
+motif,L_rest_m,label,crown_height,max_stress,mean_stress,cable_tension,boundary_reaction_mean,prefix
+1,,no_cable,0.24972319,1636.19066087,1302.38568385,0.0,48.30386791,/Users/duch/Documents/Github/fabsim-example-project/sensitivity_analysis/data/lrest_sweep/m1_lrnone
+1,1.2,1.20m,0.15003148,4066.01114008,1164.86278625,2299.2797698,44.50430295,/Users/duch/Documents/Github/fabsim-example-project/sensitivity_analysis/data/lrest_sweep/m1_lr1.20
+1,1.25,1.25m,0.17945678,3351.85448873,1170.03325058,1085.28412198,43.10389326,/Users/duch/Documents/Github/fabsim-example-project/sensitivity_analysis/data/lrest_sweep/m1_lr1.25
+1,1.3,1.30m,0.20233822,2935.6712034,1188.16556972,621.47889828,43.73368768,/Users/duch/Documents/Github/fabsim-example-project/sensitivity_analysis/data/lrest_sweep/m1_lr1.30
+1,1.35,1.35m,0.22095897,2550.14904768,1209.38530974,362.0604982,44.94107218,/Users/duch/Documents/Github/fabsim-example-project/sensitivity_analysis/data/lrest_sweep/m1_lr1.35
+1,1.4,1.40m,0.23482852,2162.34300287,1234.1996306,192.29911491,46.17539063,/Users/duch/Documents/Github/fabsim-example-project/sensitivity_analysis/data/lrest_sweep/m1_lr1.40
+1,1.45,1.45m,0.24424168,1838.06687802,1269.58533907,69.87399967,47.38449105,/Users/duch/Documents/Github/fabsim-example-project/sensitivity_analysis/data/lrest_sweep/m1_lr1.45
+1,1.5,1.50m,0.25605062,2838.29679283,1354.54257963,0.0,48.21476801,/Users/duch/Documents/Github/fabsim-example-project/sensitivity_analysis/data/lrest_sweep/m1_lr1.50
+2,,no_cable,0.2768391,1421.73216688,1099.90627942,0.0,38.94880876,/Users/duch/Documents/Github/fabsim-example-project/sensitivity_analysis/data/lrest_sweep/m2_lrnone
+2,1.2,1.20m,0.1405853,3490.11052662,679.75922607,4139.40290307,31.35884618,/Users/duch/Documents/Github/fabsim-example-project/sensitivity_analysis/data/lrest_sweep/m2_lr1.20
+2,1.25,1.25m,0.19688742,2651.1934468,966.30247876,1082.37257671,34.05776041,/Users/duch/Documents/Github/fabsim-example-project/sensitivity_analysis/data/lrest_sweep/m2_lr1.25
+2,1.3,1.30m,0.22035972,2307.16323399,990.52629001,633.45028982,34.35650146,/Users/duch/Documents/Github/fabsim-example-project/sensitivity_analysis/data/lrest_sweep/m2_lr1.30
+2,1.35,1.35m,0.23882466,2064.62831757,1014.48802726,385.21285828,35.34591632,/Users/duch/Documents/Github/fabsim-example-project/sensitivity_analysis/data/lrest_sweep/m2_lr1.35
+2,1.4,1.40m,0.25467776,1832.78029831,1036.12898882,225.20152314,36.43350156,/Users/duch/Documents/Github/fabsim-example-project/sensitivity_analysis/data/lrest_sweep/m2_lr1.40
+2,1.45,1.45m,0.26582163,1635.74060162,1059.42938627,111.84144837,37.48660563,/Users/duch/Documents/Github/fabsim-example-project/sensitivity_analysis/data/lrest_sweep/m2_lr1.45
+2,1.5,1.50m,0.27442484,1468.05289083,1088.60309009,25.3031382,38.56284753,/Users/duch/Documents/Github/fabsim-example-project/sensitivity_analysis/data/lrest_sweep/m2_lr1.50

@@ -1,0 +1,8 @@
+stage,no cable,cable
+planned,2400,2400
+planned_in_box,1345,1356
+converged,1988,1924
+converged_in_box,1336,1314
+retained_all_filters,1095,989
+training,876,791
+held_out,219,198

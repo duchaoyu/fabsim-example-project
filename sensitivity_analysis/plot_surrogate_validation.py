@@ -1,6 +1,8 @@
 """
 Surrogate validation figures for the material-r study.
 
+table_design_reduction     Table 6.3 — planned design -> converged -> in the
+                           validity box -> retained -> training / held-out.
 table_surrogate_accuracy   Table 6.4 — R2, RMSE, nRMSE and interval coverage on
                            the held-out 20%, per group and output.
 figV_surrogate_parity      predicted vs FEA on the held-out 20%, one panel per
@@ -40,7 +42,7 @@ import config
 from config import DATA_DIR, TRAIN_VAL_SPLIT, RANDOM_SEED
 from run_material_r_sobol import _outputs_for
 from sampling import generate_material_r_samples
-from surrogate import _NONNEG_OUTPUTS, _LOG1P_OUTPUTS  # noqa: F401
+from surrogate import _NONNEG_OUTPUTS, _LOG1P_OUTPUTS, _DERIVED_OUTPUTS  # noqa: F401
 from visualization import OUTPUT_LABELS, FIG_DIR
 from plot_material_r_sobol_combined import (
     PARAM_LABELS, VALID, SUR_PREFIX, FIG_SUFFIX,
@@ -101,15 +103,61 @@ def load_split(group):
     valid = df.dropna(subset=keys + outs).reset_index(drop=True)
     tr, va = train_test_split(np.arange(len(valid)), test_size=TRAIN_VAL_SPLIT,
                               random_state=RANDOM_SEED)
-    n_fit = sur.gps[outs[0]].X_train_.shape[0]
+    # First output that actually has a GP — outs may lead with a derived output,
+    # which has none (surrogate._DERIVED_OUTPUTS).
+    n_fit = sur.gps[next(c for c in outs if c in sur.gps)].X_train_.shape[0]
     if n_fit != len(tr):
         raise SystemExit(f"{group}: split mismatch ({n_fit} fitted vs {len(tr)} "
                          f"reconstructed) — the cached surrogate is stale")
     return valid, keys, outs, sur, tr, va
 
 
+def _untransform(sur, col, z):
+    """Undo the fitting transform for one output, on any array shape."""
+    flat = sur.scalers_y[col].inverse_transform(
+        np.asarray(z).reshape(-1, 1)).ravel().reshape(np.shape(z))
+    if col in getattr(sur, "_log_cols", set()):
+        flat = np.exp(flat)
+    if col in getattr(sur, "_log1p_cols", set()):
+        flat = np.expm1(flat)
+    if col in _NONNEG_OUTPUTS:
+        flat = np.maximum(flat, 0.0)
+    return flat
+
+
+def _derived_interval(sur, group_keys, valid, idx, col, n_draw=512):
+    """Mean and 95% interval for an output derived from other outputs.
+
+    There is no GP for a derived output, so the interval is propagated by
+    sampling each component's predictive normal and pushing the draws through
+    the same function predict() uses.  The point estimate is the function of the
+    component MEANS, not the mean of the draws, so it matches predict() exactly
+    and Table 6.4 cannot disagree with this figure.
+
+    The components are drawn independently, which is conservative: Hx and Hy come
+    from the same inputs and are positively correlated, so the true interval on
+    their normalised difference is narrower than this.
+    """
+    deps, fn = _DERIVED_OUTPUTS[col]
+    Xs  = sur.scaler_X.transform(valid[group_keys].values)[idx]
+    rng = np.random.default_rng(RANDOM_SEED)
+    means, draws = [], []
+    for d in deps:
+        m, s = sur.gps[d].predict(Xs, return_std=True)
+        means.append(_untransform(sur, d, m))
+        draws.append(_untransform(sur, d,
+                                  m + s * rng.normal(size=(n_draw, len(m)))))
+    vals = fn(*draws)
+    with np.errstate(invalid="ignore"):
+        lo = np.nanpercentile(vals, 2.5, axis=0)
+        hi = np.nanpercentile(vals, 97.5, axis=0)
+    return fn(*means), lo, hi
+
+
 def _predict_interval(sur, group_keys, valid, idx, col):
     """Mean and 95% interval in physical units for one output."""
+    if col in _DERIVED_OUTPUTS:
+        return _derived_interval(sur, group_keys, valid, idx, col)
     Xs   = sur.scaler_X.transform(valid[group_keys].values)[idx]
     gp   = sur.gps[col]
     sc   = sur.scalers_y[col]
@@ -130,6 +178,48 @@ def _predict_interval(sur, group_keys, valid, idx, col):
         # on a non-negative quantity must not extend below 0.
         pred, lo, hi = (np.maximum(v, 0.0) for v in (pred, lo, hi))
     return pred, lo, hi
+
+
+# ── Table: reduction of the planned design to the training set ───────────────
+
+def write_reduction_table(save=True):
+    """Table 6.3 — how the planned design reduces to the surrogate training set.
+
+    Every row is an ACHIEVED count on the same population, so the chain reads as
+    a reduction.  The published version mixed one planned count into that chain:
+    its "within the validity range" row carried 1345 / 1356, which is how many of
+    the 2400 PLANNED samples fall inside the box, not how many converged runs do
+    (1336 / 451 at the time).  Those are different quantities and only one of them
+    belongs in a reduction.
+    """
+    rows = {}
+    for group, (label, bounds) in GROUPS.items():
+        df    = pd.read_csv(os.path.join(
+            DATA_DIR, f"{group}_section_metrics.csv"))
+        keys  = list(bounds)
+        outs  = [c for c in _outputs_for(group) if c in df.columns]
+        inbox = df[in_box(df, bounds)]
+        kept  = inbox.dropna(subset=keys + outs)
+        n_tr  = len(kept) - int(round(TRAIN_VAL_SPLIT * len(kept)))
+        rows[label] = {
+            "planned":              sum(n for _, _, n in _LHS_BLOCKS),
+            "planned_in_box":       n_planned(group, bounds),
+            "converged":            len(df),
+            "converged_in_box":     len(inbox),
+            "retained_all_filters": len(kept),
+            "training":             n_tr,
+            "held_out":             len(kept) - n_tr,
+        }
+    t = pd.DataFrame(rows)
+    t.index.name = "stage"
+
+    print(f"\nTable 6.3 — reduction of the planned design ({_BOX_LABEL})")
+    print(t.to_string())
+    if save:
+        path = os.path.join(DATA_DIR, f"table_design_reduction{FIG_SUFFIX}.csv")
+        t.to_csv(path)
+        print(f"Saved: {path}")
+    return t
 
 
 # ── Table: surrogate accuracy on the held-out 20% ────────────────────────────
@@ -313,12 +403,19 @@ def plot_coverage(group, save=True):
                 ax.set_ylabel(PARAM_LABELS.get(keys[a], keys[a]).replace("\n", " "),
                               fontsize=8)
 
+    # The L_rest axes are labelled with the bare symbol, but carry the sampled
+    # FRACTION of the cable-free section length (0.93-0.99), not metres — say so
+    # once here rather than crowding two pair-plot axis labels with the ratio.
+    frac_note = ("\n$L_\\mathrm{rest}$ axes are fractions of the cable-free "
+                 "section length" if any(k.endswith("_frac") for k in keys)
+                 else "")
     fig.suptitle(
         f"Training design coverage — {label}, {_BOX_LABEL} ({d}-D, "
         f"{len(valid)} runs of {planned} planned, "
         f"{100*len(valid)/planned:.0f}% retained)\n"
         f"largest pairwise $|r|$ = {max_r:.3f} "
-        f"({keys[i]}, {keys[j]}), outlined in red",
+        f"({keys[i]}, {keys[j]}), outlined in red"
+        f"{frac_note}",
         fontsize=10, y=0.975)
 
     if save:
@@ -331,6 +428,7 @@ def plot_coverage(group, save=True):
 
 
 if __name__ == "__main__":
+    write_reduction_table()
     write_metrics_table()
     plot_parity()
     for g in GROUPS:

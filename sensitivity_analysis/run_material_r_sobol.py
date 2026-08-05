@@ -258,7 +258,16 @@ def step_sobol(section_dfs):
 
         gr = {}
         for col in outputs:
-            if col not in preds or np.std(preds[col]) < 1e-10:
+            # A derived output can be NaN where its denominator vanishes, and
+            # NaN < 1e-10 is False, so the std guard alone would let it through
+            # and poison the indices silently.
+            if col not in preds or not np.all(np.isfinite(preds[col])):
+                if col in preds:
+                    print(f"      {col:24s} skipped: "
+                          f"{np.sum(~np.isfinite(preds[col]))} non-finite "
+                          f"predictions")
+                continue
+            if np.std(preds[col]) < 1e-10:
                 continue
             si = sobol_analyze.analyze(problem, preds[col],
                                        calc_second_order=False,

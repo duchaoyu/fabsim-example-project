@@ -41,6 +41,26 @@ _LOG_OUTPUTS = {"H_mean_x0", "H_mean_y0"}
 # (tension_scale), so the GP and the Sobol analysis finally agree.
 _LOG1P_OUTPUTS = {"cable_wale_tension", "cable_course_tension"}
 
+# Outputs computed FROM other outputs rather than fitted with their own GP.
+#
+# H_anisotropy = (Hx - Hy) / (Hx + Hy) is a deterministic function of two
+# outputs that are already modelled, so fitting a third GP to it meant carrying
+# two models for one quantity — and they could disagree, by up to 0.033 against
+# an H_anisotropy standard deviation of 0.093 (36%).  Deriving it makes the
+# reported anisotropy consistent with the reported curvatures by construction,
+# and costs nothing: held-out R2 is 0.750 derived against 0.741 fitted on the
+# cable group, 0.937 against 0.941 on no-cable.
+#
+# It is NOT dropped, because Sobol indices do not compose: S_T for the ratio
+# cannot be recovered from S_T for Hx and Hy, and the anisotropy indices are
+# where the cable's effect shows up (L_rest^wale reaches S_T 0.31 there against
+# 0.02 on crown height).
+_DERIVED_OUTPUTS = {
+    "H_anisotropy": (("H_mean_x0", "H_mean_y0"),
+                     lambda hx, hy: np.where(np.abs(hx + hy) > 1e-6,
+                                             (hx - hy) / (hx + hy), np.nan)),
+}
+
 # Outputs with a hard physical floor at zero.  A slack cable carries no load, so
 # ~38% of the cable samples sit exactly at T = 0 over L_rest in (1.2, 1.4) m and
 # the GP is fitted on raw (not log) tension.  An unconstrained GP interpolates
@@ -90,6 +110,8 @@ class ScalarSurrogate:
         for col in output_cols:
             if col not in df.columns:
                 continue
+            if col in _DERIVED_OUTPUTS:
+                continue          # computed in predict(); scored below
             y = df[col].values
             if not np.isfinite(y).any():
                 continue
@@ -134,6 +156,22 @@ class ScalarSurrogate:
             rmse = np.sqrt(mean_squared_error(true_t, pred_t))
             self.metrics[col] = {"r2": r2, "rmse": rmse}
 
+        # Score the derived outputs on the same held-out split, against the FEA
+        # value, so they appear in Table 6.4 alongside the fitted ones.
+        held = self.predict(X[idx_val])
+        for col, (deps, fn) in _DERIVED_OUTPUTS.items():
+            if col not in df.columns or col not in held:
+                continue
+            true_t = df[col].values[idx_val]
+            pred_t = held[col]
+            m = np.isfinite(true_t) & np.isfinite(pred_t)
+            if m.sum() < 2:
+                continue
+            self.metrics[col] = {
+                "r2":   r2_score(true_t[m], pred_t[m]),
+                "rmse": np.sqrt(mean_squared_error(true_t[m], pred_t[m])),
+            }
+
         return self.metrics
 
     def predict(self, X):
@@ -154,6 +192,12 @@ class ScalarSurrogate:
             if col in _NONNEG_OUTPUTS:
                 pred = np.maximum(pred, 0.0)
             out[col] = pred
+
+        # Derived outputs, from the predictions just made rather than their own
+        # GP, so they cannot contradict the components they are built from.
+        for col, (deps, fn) in _DERIVED_OUTPUTS.items():
+            if all(d in out for d in deps):
+                out[col] = fn(*(out[d] for d in deps))
         return out
 
     def save(self, path: str):

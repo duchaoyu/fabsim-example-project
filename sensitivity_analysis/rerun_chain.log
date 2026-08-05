@@ -1,0 +1,22 @@
+=== 09:01:14 block 1 finished
+[1] saved /home/chaoyu/phd_simulation/sensitivity_analysis/data/material_r_results.csv
+      material_r_cable: 649
+      material_r_nocable: 668
+=== 09:01:14 block 2: extend 1600 (3200 samples, 1600 cable to compute) + sections + sobol + plot
+[1] 3200 FEA runs on 20 workers (ids 9000-12199)
+    100/3200  ok=98 rejected=2 failed=0
+    200/3200  ok=176 rejected=24 failed=0
+    300/3200  ok=252 rejected=48 failed=0
+    400/3200  ok=335 rejected=65 failed=0
+    500/3200  ok=419 rejected=81 failed=0
+    600/3200  ok=499 rejected=101 failed=0
+    700/3200  ok=584 rejected=116 failed=0
+    800/3200  ok=672 rejected=128 failed=0
+    900/3200  ok=754 rejected=146 failed=0
+    1000/3200  ok=841 rejected=159 failed=0
+    1100/3200  ok=923 rejected=177 failed=0
+    1200/3200  ok=1006 rejected=194 failed=0
+    1300/3200  ok=1088 rejected=212 failed=0
+    1400/3200  ok=1174 rejected=226 failed=0
+    1500/3200  ok=1253 rejected=247 failed=0
+    1600/3200  ok=1320 rejected=280 failed=0

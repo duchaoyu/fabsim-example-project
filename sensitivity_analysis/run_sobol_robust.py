@@ -253,8 +253,8 @@ def plot_robust(sweep, pawn, save=True):
     ax.tick_params(labelsize=7)
 
     fig.suptitle("Robustness of the indices for the heavy-tailed cable outputs "
-                 "($L_\\mathrm{rest} = f\\,L_\\mathrm{nocable}$, "
-                 "$f$ = 0.93–0.99, taut in 99.9% of runs)",
+                 "($L_\\mathrm{rest}$ = 0.93–0.99 of the cable-free "
+                 "section length, taut in 99.9% of runs)",
                  fontsize=11, y=0.965)
 
     if save:

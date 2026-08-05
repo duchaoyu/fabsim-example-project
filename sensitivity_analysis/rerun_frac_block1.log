@@ -1,0 +1,22 @@
+[1] 1600 FEA runs on 16 workers (ids 3000-4599)
+    100/1600  ok=96 rejected=4 failed=0
+    200/1600  ok=177 rejected=23 failed=0
+    300/1600  ok=268 rejected=32 failed=0
+    400/1600  ok=346 rejected=54 failed=0
+    500/1600  ok=436 rejected=64 failed=0
+    600/1600  ok=519 rejected=81 failed=0
+    700/1600  ok=591 rejected=109 failed=0
+    800/1600  ok=668 rejected=132 failed=0
+    900/1600  ok=750 rejected=150 failed=0
+    1000/1600  ok=828 rejected=172 failed=0
+    1100/1600  ok=905 rejected=195 failed=0
+    1200/1600  ok=989 rejected=211 failed=0
+    1300/1600  ok=1073 rejected=227 failed=0
+    1400/1600  ok=1153 rejected=247 failed=0
+    1500/1600  ok=1228 rejected=272 failed=0
+    1600/1600  ok=1317 rejected=283 failed=0
+[1] converged 1317/1600  (quality-rejected 283, solver-failed 0)
+       283  quality rejected: crown_height
+[1] saved /home/chaoyu/phd_simulation/sensitivity_analysis/data/material_r_results.csv
+      material_r_cable: 649
+      material_r_nocable: 668

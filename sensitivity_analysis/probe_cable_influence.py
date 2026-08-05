@@ -132,6 +132,14 @@ def main(n, jobs):
     return df
 
 
+def replot():
+    """Redraw figP from data/probe_cable_frac.csv — no FEA.  The CSV drops the
+    EA column, so recover it from the case label it was written with."""
+    df = pd.read_csv(os.path.join(DATA_DIR, "probe_cable_frac.csv"))
+    df["EA"] = df["case"].map(dict(EA_CASES))
+    _plot(df[df["frac"].notna()], df[df["frac"].isna()])
+
+
 def _plot(swept, ref):
     plt.rcParams.update({"font.family": "sans-serif", "font.size": 9,
                          "axes.linewidth": 0.8, "figure.dpi": 150,
@@ -155,7 +163,10 @@ def _plot(swept, ref):
             ax.axhspan(800, ax.get_ylim()[1], color="#CC3311", alpha=0.07)
             ax.axhline(800, color="#CC3311", linestyle="--", linewidth=0.9,
                        label="800 MPa working limit")
-        ax.set_xlabel("$f = L_\\mathrm{rest} / L_\\mathrm{nocable}$",
+        # Plain symbol on the axis; the tick values are a fraction, so the
+        # normalisation has to be spelled out here or 0.93 reads as metres.
+        ax.set_xlabel("$L_\\mathrm{rest}$   "
+                      "(fraction of the cable-free section length)",
                       fontsize=8.5)
         ax.set_ylabel(ylab, fontsize=8.5)
         ax.set_title(f"({tag}) {ylab}", fontsize=9.5, pad=4)
@@ -175,5 +186,10 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--n", type=int, default=7, help="f grid points")
     ap.add_argument("--jobs", type=int, default=8)
+    ap.add_argument("--plot-only", action="store_true",
+                    help="redraw the figure from the cached CSV, no FEA")
     args = ap.parse_args()
-    main(args.n, args.jobs)
+    if args.plot_only:
+        replot()
+    else:
+        main(args.n, args.jobs)
