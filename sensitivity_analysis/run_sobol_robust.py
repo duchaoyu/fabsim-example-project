@@ -68,18 +68,19 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from config import DATA_DIR, SOBOL_N_BASE, RANDOM_SEED
 from surrogate import ScalarSurrogate
 from visualization import OUTPUT_LABELS, FIG_DIR
-from plot_material_r_sobol_combined import GROUPS, PARAM_LABELS, SUR_PREFIX
+from plot_material_r_sobol_combined import (
+    GROUPS, PARAM_LABELS, SUR_PREFIX, T_REF, tension_scale,
+)
 
 OUTPUT_LABELS = dict(OUTPUT_LABELS)
 OUTPUT_LABELS.setdefault("H_anisotropy", r"$\Delta H$")
 SHORT = {p: lab.split(" (")[0].replace("\n", "") for p, lab in PARAM_LABELS.items()}
 
 LOG_OUTPUTS  = ["cable_wale_tension", "cable_course_tension"]   # cable group only
-# Reference tension for log1p(T / T_REF).  1 N: the transform is then plain
-# log1p in newtons, ~log in the taut range (T ~ 1e2-1e3 N) and smoothly zero at
-# the slack plateau, so no clipping is needed and the point mass at T = 0 stays
-# a point mass instead of becoming a -20.72 spike.
-T_REF        = 1.0
+# T_REF and tension_scale are imported from plot_material_r_sobol_combined so the
+# reported scale is defined once: log1p(T / T_REF) with T_REF = 1 N, which is
+# ~log in the taut range (T ~ 1e2-1e3 N) and smoothly zero at the slack plateau,
+# so no clipping is needed and the point mass at T = 0 stays a point mass.
 # Tension below this counts as slack for the engagement indicator.  The FEM
 # returns exact zeros, so any small positive threshold picks out the same set;
 # it exists only to absorb surrogate round-off near the clamp.
@@ -129,7 +130,7 @@ def tension_indices(group="material_r_cable"):
             engaged = (y > T_ENGAGED).astype(float)
             slack[col] = 1.0 - engaged.mean()
             for lab, Y in [("raw", y),
-                           ("log1p", np.log1p(y / T_REF)),
+                           ("log1p", tension_scale(y)),
                            ("engaged", engaged)]:
                 si = sobol_analyze.analyze(prob, Y, calc_second_order=False,
                                            print_to_console=False)

@@ -34,7 +34,7 @@ from surrogate import ScalarSurrogate
 from visualization import FIG_DIR
 from plot_material_r_sobol_combined import (
     GROUPS, PARAM_LABELS, OUTPUT_LABELS, CABLE_OUTPUTS,
-    SUR_PREFIX, FIG_SUFFIX, LOG_TENSIONS,
+    SUR_PREFIX, FIG_SUFFIX, LOG_TENSIONS, tension_scale,
 )
 
 SHORT = {p: lab.split(" (")[0].replace("\n", "") for p, lab in PARAM_LABELS.items()}
@@ -72,10 +72,12 @@ def sweep(group, bounds):
         for col, Y in preds.items():
             if np.std(Y) < 1e-10:
                 continue
-            # Report the scale the study reports: the tensions are analysed as
-            # log T (see run_sobol_robust.py), so converge them on that scale.
+            # Report the scale the study reports: the tensions are zero-inflated
+            # and analysed as log1p(T / T_REF) (see run_sobol_robust.py), so
+            # converge them on that scale rather than on log(clip(T, 1e-9)),
+            # whose spike at the slack plateau dominated the variance.
             if LOG_TENSIONS and col in CABLE_OUTPUTS:
-                Y = np.log(np.clip(Y, 1e-9, None))
+                Y = tension_scale(Y)
             si = sobol_analyze.analyze(problem, Y, calc_second_order=False,
                                        print_to_console=False)
             for i, p in enumerate(keys):

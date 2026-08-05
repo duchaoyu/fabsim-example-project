@@ -50,15 +50,29 @@ PARAMS_MATERIAL_R_NO_CABLE, PARAMS_MATERIAL_R_CABLE = _BOUNDS
 OUTPUT_LABELS = dict(OUTPUT_LABELS)
 OUTPUT_LABELS.setdefault("H_anisotropy", r"$\Delta H$")
 
-# The cable tensions are heavy-tailed (kurtosis 4.7 and 11.6, with 20-27% of the
-# variance in the top 1% of runs), and their raw indices were still drifting at
-# N = 2048 — max |ST(4096) - ST(1024)| of 0.054 and 0.136.  On log T the same
-# drift is 0.003 and 0.014, so the log tables written by run_sobol_robust.py are
-# preferred wherever they exist (see figX).  --raw-tensions opts out.
+# The cable tensions are zero-inflated, not merely heavy-tailed: L_rest spans
+# (1.2, 1.4) m against a 1.29 m flat arc, so 38% of cable runs leave the cable
+# slack at T = 0 exactly (see run_sobol_robust.py).  log T is therefore not
+# defined on this output — analysing log(clip(T, 1e-9, inf)) collapses the whole
+# slack plateau onto a spike at -20.72 that carries 98% of the variance, so the
+# indices then measure what trips the clip.  Use log1p(T / T_REF), which is
+# defined at T = 0: kurtosis 1.9 -> -0.9, top-1% variance share 13% -> 3%, and
+# drift max|ST(4096) - ST(1024)| 0.027 -> 0.015.  --raw-tensions opts out.
 LOG_TENSIONS = "--raw-tensions" not in sys.argv
+T_REF        = 1.0     # newtons; keep in step with run_sobol_robust.T_REF
 if LOG_TENSIONS:
-    OUTPUT_LABELS["cable_wale_tension"]   = r"$\log T_\mathrm{wale}$"
-    OUTPUT_LABELS["cable_course_tension"] = r"$\log T_\mathrm{course}$"
+    OUTPUT_LABELS["cable_wale_tension"]   = r"$\log(1{+}T_\mathrm{wale})$"
+    OUTPUT_LABELS["cable_course_tension"] = r"$\log(1{+}T_\mathrm{course})$"
+
+
+def tension_scale(Y):
+    """The scale the study reports the cable tensions on.
+
+    Defined at T = 0, so the slack runs stay a point mass at 0 instead of
+    becoming an artificial spike at log(1e-9).  Tension is clamped at 0 by
+    surrogate._NONNEG_OUTPUTS; the maximum here only guards round-off.
+    """
+    return np.log1p(np.maximum(Y, 0.0) / T_REF)
 
 # E1 is the modulus along face_dirs, which anisotropic_rest_shape.h and
 # fem_batch_sensitivity.cpp both take as the wale direction — name it on the row.
@@ -97,11 +111,11 @@ def load_group(group):
         path = os.path.join(DATA_DIR, f"sobol_{group}_{CSV_PREFIX}{col}.csv")
         if LOG_TENSIONS and col in CABLE_OUTPUTS:
             log_path = os.path.join(DATA_DIR,
-                                    f"sobol_{group}_{CSV_PREFIX}log_{col}.csv")
+                                    f"sobol_{group}_{CSV_PREFIX}log1p_{col}.csv")
             if os.path.exists(log_path):
                 path = log_path
             else:
-                print(f"  {col}: no log table, using raw indices")
+                print(f"  {col}: no log1p table, using raw indices")
         if not os.path.exists(path):
             print(f"  missing, skipped: {os.path.basename(path)}")
             continue
