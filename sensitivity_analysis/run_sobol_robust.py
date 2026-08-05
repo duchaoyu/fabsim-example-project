@@ -4,49 +4,36 @@ Robust indices for the awkwardly-distributed outputs of the material-r study.
 Why: the convergence sweep (figW) shows the cable tension and cable Delta-H
 columns drifting for longer than crown height and the stress outputs, which
 settle by N ~ 256.  The cause is not the estimator but the output distribution —
-Sobol indices divide by Var(Y).  On the corrected cable geometry the tensions
-are not so much heavy-tailed as ZERO-INFLATED: L_rest runs over (1.2, 1.4) m
-against a 1.29 m flat arc, so the upper part of the range leaves the cable
-slack and it carries no load at all.  In the 660-sample cable batch:
+Sobol indices divide by Var(Y).
 
-    L_rest bin (m)      1.20-1.225  ...  1.275-1.30  1.30-1.325  1.375-1.40
-    runs with T = 0          0%              15%          56%         81%
+History, because the reason has changed twice and the old rationale is wrong now:
 
-38% of cable runs have T identically 0 (wale; 37% course) over the full box, and
-40% (wale; 41% course) inside the model-validity box these figures use.
+  1. Under an absolute rest length over (1.2, 1.4) m the tensions were
+     ZERO-INFLATED, not heavy-tailed — 40% of validity-box runs left the cable
+     slack at exactly T = 0.  log T is undefined there, and analysing
+     log(clip(T, 1e-9, inf)) put the whole slack plateau on one spike at -20.72
+     carrying 98% of the variance, so those indices largely measured what tripped
+     the clip.
+  2. L_rest = f * L_nocable with f in (0.93, 0.99) removed the plateau: 1 of 989
+     validity-box runs is slack (0.1%), and that one only because a hard-pulling
+     wale cable flattens the dome enough to slacken a nearly-slack course cable —
+     f < 1 guarantees tautness for a single cable, not for two interacting ones.
 
-Note the surrogate reproduces only ~24% slack against that sampled 40%: a GP is
-continuous, so it cannot represent a point mass and interpolates across the
-slack/taut switch.  The forthcoming L_rest = f * L_nocable parameterisation
-removes the plateau by construction, at which point this whole correction becomes
-unnecessary.
+So the zero-inflation argument no longer applies.  What remains:
 
-That has three consequences, all handled here:
-
-  1. log T is NOT defined on this output.  The previous version of this script
-     analysed np.log(np.clip(y, 1e-9, None)), which mapped the whole slack
-     plateau onto a single spike at log(1e-9) = -20.72.  That spike carried 98%
-     of the variance (Var = 114.5, against 2.3 among the genuinely taut
-     samples), so the resulting "log tension" indices largely measured which
-     parameters trip the clip, not the sensitivity of tension.  Replaced by
-     log1p(T / T_REF), which is defined at T = 0, needs no clipping, and still
-     compresses the taut range: kurtosis 1.9 -> -0.9, top-1% variance share
-     13% -> 3%.
-  2. The tension GP is fitted on RAW tension, not log — surrogate.py disables
-     its log transform when the sample contains zeros.  An unconstrained GP
-     overshoots the point mass at zero and predicted tension down to -271 N
-     across ~21% of the box; surrogate._NONNEG_OUTPUTS now clamps that at 0 on
-     prediction.  The docstring numbers above are post-clamp.
-  3. Whether the cable is engaged at all is a separate response from how hard it
-     pulls, and the tension indices conflate the two.  Indices for the engagement
-     indicator 1[T > 0] are estimated and written to
-     sobol_*_valid_engaged_*.csv, but deliberately NOT plotted here: this figure
-     is about whether the indices can be trusted, and engagement is a substantive
-     result, not a robustness check.  It is also the one quantity the GP gets
-     materially wrong (see the 24%-vs-40% note above), because the indicator is
-     exactly the discontinuity a continuous surrogate interpolates across.  If
-     the result matters it belongs in the regime bars, on a classifier rather
-     than a GP.
+  - log1p(T / T_REF) is now both the fit scale (surrogate._LOG1P_OUTPUTS) and the
+    reported scale (tension_scale), so the GP and the indices finally agree.  It
+    is used unconditionally rather than behind a (y > 0).all() guard, which had
+    made the scale of a whole column hostage to one sample: with a single zero in
+    cable_course_tension and none in cable_wale_tension, the guard log-fitted one
+    and raw-fitted the other, for R2 0.768 against 0.994.
+  - The tail is real and asymmetric.  cable_course_tension reaches 5820 N against
+    4498 N for the wale, and its held-out R2 is dominated by single points: the
+    worst one carries 94% of the squared error, and R2 excluding the top decile
+    of tensions is 0.969 rather than 0.768.  Report the percentile behaviour, not
+    R2 alone.
+  - The engagement indicator 1[T > 0] is now constant, so its Sobol indices are
+    0/0 and are skipped.  The code keeps the branch for any future range change.
 
 Delta-H changes sign and cannot be logged either.  For it, PAWN [Pianosi &
 Wagener 2015] provides a cross-check: it compares conditional CDFs instead of
@@ -142,9 +129,14 @@ def tension_indices(group="material_r_cable"):
                     "surrogate._NONNEG_OUTPUTS to clamp tension at 0")
             engaged = (y > T_ENGAGED).astype(float)
             slack[col] = 1.0 - engaged.mean()
-            for lab, Y in [("raw", y),
-                           ("log1p", tension_scale(y)),
-                           ("engaged", engaged)]:
+            scales = [("raw", y), ("log1p", tension_scale(y))]
+            # Under L_rest = f * L_nocable the cable is taut essentially
+            # everywhere, so the indicator is constant and its Sobol indices are
+            # 0/0.  That is the answer, not a failure — skip it rather than
+            # writing a table of NaN.
+            if engaged.std() > 0:
+                scales.append(("engaged", engaged))
+            for lab, Y in scales:
                 si = sobol_analyze.analyze(prob, Y, calc_second_order=False,
                                            print_to_console=False)
                 sweep[col][lab][N] = pd.DataFrame(
@@ -157,16 +149,20 @@ def tension_indices(group="material_r_cable"):
 
     for col in LOG_OUTPUTS:
         drift = {}
-        for lab in SWEEP_LABELS:
+        for lab in [l for l in SWEEP_LABELS if sweep[col][l]]:
             sweep[col][lab][SOBOL_N_BASE].to_csv(os.path.join(
                 DATA_DIR, f"sobol_{group}_valid_{lab}_{col}.csv"))
             drift[lab] = max(abs(sweep[col][lab][4096].loc[p, "ST"]
                                  - sweep[col][lab][1024].loc[p, "ST"])
                              for p in keys)
         print(f"  {col}: max |ST(4096) - ST(1024)|  "
-              + "  ".join(f"{lab} {drift[lab]:.3f}" for lab in SWEEP_LABELS))
-        top = sweep[col]["engaged"][SOBOL_N_BASE]["ST"].clip(0).idxmax()
-        print(f"    engagement 1[T>0] is driven most by {top}")
+              + "  ".join(f"{lab} {drift[lab]:.3f}" for lab in drift))
+        if sweep[col]["engaged"]:
+            top = sweep[col]["engaged"][SOBOL_N_BASE]["ST"].clip(0).idxmax()
+            print(f"    engagement 1[T>0] is driven most by {top}")
+        else:
+            print("    cable taut in every evaluation — the engagement "
+                  "indicator is constant, so its indices are undefined")
     return sweep
 
 
@@ -256,8 +252,9 @@ def plot_robust(sweep, pawn, save=True):
     ax.legend(fontsize=7, frameon=False)
     ax.tick_params(labelsize=7)
 
-    fig.suptitle("Robustness of the indices for the zero-inflated cable "
-                 "outputs ($L_\\mathrm{rest}$ = 1.2–1.4 m, 40% of runs slack)",
+    fig.suptitle("Robustness of the indices for the heavy-tailed cable outputs "
+                 "($L_\\mathrm{rest} = f\\,L_\\mathrm{nocable}$, "
+                 "$f$ = 0.93–0.99, taut in 99.9% of runs)",
                  fontsize=11, y=0.965)
 
     if save:

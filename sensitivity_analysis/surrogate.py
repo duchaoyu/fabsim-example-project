@@ -23,13 +23,23 @@ from config import (
     PARAMS_NO_CABLE, PARAMS_CABLE,
 )
 
-# Outputs that span a large dynamic range — fit log(y) instead of y.
-# NOTE the cable tensions are listed but the guard below (y > 0).all() disables
-# the transform for them whenever the sample contains slack runs, which it does
-# for any L_rest range reaching past the taut/slack transition — see
-# _NONNEG_OUTPUTS.  They are kept here so a taut-only subset still gets the
-# transform; do not assume a tension GP is in log space, check _log_cols.
-_LOG_OUTPUTS = {"H_mean_x0", "H_mean_y0", "cable_wale_tension", "cable_course_tension"}
+# Outputs that span a large dynamic range — fit log(y) instead of y.  Strictly
+# positive quantities only; the (y > 0).all() guard below skips any column that
+# is not, falling back to a raw fit.
+_LOG_OUTPUTS = {"H_mean_x0", "H_mean_y0"}
+
+# Outputs fitted on log1p(y): a wide dynamic range but a floor at exactly zero,
+# so plain log is undefined on them.
+#
+# The cable tensions used to sit in _LOG_OUTPUTS, where the (y > 0).all() guard
+# decided their scale — and that made the fit hostage to a single sample.  With
+# L_rest = f * L_nocable only 1 of 989 validity-box runs comes back slack, but
+# that one zero was enough to drop cable_course_tension to a raw fit while
+# cable_wale_tension (no zeros) got the log: R2 0.786 against 0.994, for a 0.1%
+# event.  log1p is defined at 0, so both columns are now fitted the same way
+# regardless.  It is also the scale run_sobol_robust reports the indices on
+# (tension_scale), so the GP and the Sobol analysis finally agree.
+_LOG1P_OUTPUTS = {"cable_wale_tension", "cable_course_tension"}
 
 # Outputs with a hard physical floor at zero.  A slack cable carries no load, so
 # ~38% of the cable samples sit exactly at T = 0 over L_rest in (1.2, 1.4) m and
@@ -89,6 +99,13 @@ class ScalarSurrogate:
             if log_col:
                 y = np.log(y)
                 self._log_cols.add(col)
+            # log1p for the zero-floored outputs: unconditional, so one slack
+            # run cannot change the scale the column is fitted on.
+            log1p_col = col in _LOG1P_OUTPUTS and (y >= 0).all()
+            self._log1p_cols = getattr(self, "_log1p_cols", set())
+            if log1p_col:
+                y = np.log1p(y)
+                self._log1p_cols.add(col)
             sc = StandardScaler()
             y_s = sc.fit_transform(y.reshape(-1, 1)).ravel()
             self.scalers_y[col] = sc
@@ -108,6 +125,9 @@ class ScalarSurrogate:
             if log_col:
                 pred_t = np.exp(pred_t)
                 true_t = np.exp(true_t)
+            if log1p_col:
+                pred_t = np.expm1(pred_t)
+                true_t = np.expm1(true_t)
             if col in _NONNEG_OUTPUTS:
                 pred_t = np.maximum(pred_t, 0.0)
             r2   = r2_score(true_t, pred_t)
@@ -119,7 +139,8 @@ class ScalarSurrogate:
     def predict(self, X):
         """X: (n, d) array of input parameters. Returns dict of output arrays."""
         X_s = self.scaler_X.transform(X)
-        log_cols = getattr(self, "_log_cols", set())
+        log_cols   = getattr(self, "_log_cols", set())
+        log1p_cols = getattr(self, "_log1p_cols", set())
         out = {}
         for col, gp in self.gps.items():
             pred_s = gp.predict(X_s)
@@ -128,6 +149,8 @@ class ScalarSurrogate:
             ).ravel()
             if col in log_cols:
                 pred = np.exp(pred)
+            if col in log1p_cols:
+                pred = np.expm1(pred)
             if col in _NONNEG_OUTPUTS:
                 pred = np.maximum(pred, 0.0)
             out[col] = pred

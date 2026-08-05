@@ -40,7 +40,7 @@ import config
 from config import DATA_DIR, TRAIN_VAL_SPLIT, RANDOM_SEED
 from run_material_r_sobol import _outputs_for
 from sampling import generate_material_r_samples
-from surrogate import _NONNEG_OUTPUTS
+from surrogate import _NONNEG_OUTPUTS, _LOG1P_OUTPUTS  # noqa: F401
 from visualization import OUTPUT_LABELS, FIG_DIR
 from plot_material_r_sobol_combined import (
     PARAM_LABELS, VALID, SUR_PREFIX, FIG_SUFFIX,
@@ -118,6 +118,8 @@ def _predict_interval(sur, group_keys, valid, idx, col):
     pred, lo, hi = inv(m), inv(m - 1.96 * s), inv(m + 1.96 * s)
     if col in getattr(sur, "_log_cols", set()):
         pred, lo, hi = np.exp(pred), np.exp(lo), np.exp(hi)
+    if col in getattr(sur, "_log1p_cols", set()):
+        pred, lo, hi = np.expm1(pred), np.expm1(lo), np.expm1(hi)
     if col in _NONNEG_OUTPUTS:
         # This path reaches into gp.predict rather than going through
         # sur.predict(), so it has to apply the same physical floor: a slack

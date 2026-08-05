@@ -72,7 +72,16 @@ MOTIF_PARAMS = {
 }
 
 # ── Cable ─────────────────────────────────────────────────────────────────────
-CABLE_EA = 150000.0  # N — steel cable (~1 mm diameter, E=200 GPa)
+# EA in N.  At E = 200 GPa this is A = EA / E, so 800 kN is A = 4.0 mm2 (~2.3 mm
+# diameter).  It was 150 kN (A = 0.75 mm2), at which the tensions the study
+# reports imply cable stresses of 1300-4000 MPa — past any steel.  The dome shape
+# is almost insensitive to the choice, because the cable is effectively
+# inextensible either way: over f = 0.93-0.99 at the validity-box centre, crown
+# height differs by 2% and tension by 8% between 0.75 and 4.0 mm2
+# (probe_cable_influence.py, figP).  What changes is whether the reported
+# tensions describe a cable that could exist: 4.0 mm2 keeps them under ~130 MPa
+# at the box centre, against 636 MPa for 0.75 mm2 with no margin for the corners.
+CABLE_EA = 800000.0  # N — steel cable, A = 4.0 mm2 at E = 200 GPa
 
 # ── Material sensitivity study parameter bounds ───────────────────────────────
 # Wale-stiffer regime only: E1 > E2, r = E1/E2 ∈ (3, 5).
@@ -142,16 +151,36 @@ PARAMS_MATERIAL_R_NO_CABLE = {
     "nu":        (0.1, 0.5),
 }
 
+# cable_wale_frac / cable_course_frac: cable rest length as a FRACTION of the
+# cable-free section length, L_rest = frac * L_nocable, resolved per sample by one
+# extra cable-free solve (fea_interface.nocable_section_lengths).
+#
+# This replaces the absolute rest length in metres, which could not be taut
+# everywhere: L_nocable IS the slack threshold, and it runs from 1.2902 m on a
+# barely-inflated dome to 1.3643 m on the tallest, so a fixed (1.2, 1.4) m range
+# left 40% of cable runs slack.  A slack run is not a response — it is the
+# no-cable model with an inert cable — and it cannot be filtered out afterwards
+# either, because filtering on T > 0 conditions on the output instead of
+# restricting the box, and Saltelli would then extrapolate into the deleted
+# region.  frac < 1 is taut by construction and frac is a proper box.
+#
+# Upper bound 0.99 rather than 1.0 leaves the cable just engaged; the lower bound
+# is set by the straight chord between the cable's pinned endpoints (1.1966 m),
+# which is the hard geometric floor.  0.93 * 1.29 = 1.20 m clears it.
+#
+# NOTE the older studies below still carry cable_*_lrest in metres.  The names
+# differ deliberately, so the two conventions cannot be confused — but all of that
+# cable data predates the 2026-08-04 cable-path fix and is void regardless.
 PARAMS_MATERIAL_R_CABLE = {
-    "sf_wale":            (0.8, 1.4),
-    "sf_course":          (0.8, 1.4),
-    "knit_dir":           (0.0, 90.0),
-    "pressure":           (200.0, 2000.0),
-    "cable_wale_lrest":   (1.2, 1.4),
-    "cable_course_lrest": (1.2, 1.4),
-    "E1":                 (1000.0, 20000.0),
-    "r":                  (1.0, 5.0),
-    "nu":                 (0.1, 0.5),
+    "sf_wale":           (0.8, 1.4),
+    "sf_course":         (0.8, 1.4),
+    "knit_dir":          (0.0, 90.0),
+    "pressure":          (200.0, 2000.0),
+    "cable_wale_frac":   (0.93, 0.99),
+    "cable_course_frac": (0.93, 0.99),
+    "E1":                (1000.0, 20000.0),
+    "r":                 (1.0, 5.0),
+    "nu":                (0.1, 0.5),
 }
 N_SAMPLES_MATERIAL_R = 800
 

@@ -222,8 +222,11 @@ def generate_material_r_samples(start_id: int = 3000,
                 "nu":        float(row["nu"]),
             }
             if has_cable:
-                s["cable_wale_lrest"]   = float(row["cable_wale_lrest"])
-                s["cable_course_lrest"] = float(row["cable_course_lrest"])
+                # Fractions of the cable-free section length, not metres — see
+                # config.PARAMS_MATERIAL_R_CABLE.  run_fea resolves each to an
+                # absolute L_rest per sample and reports both back.
+                s["cable_wale_frac"]   = float(row["cable_wale_frac"])
+                s["cable_course_frac"] = float(row["cable_course_frac"])
             all_samples.append(s)
             sid += 1
     return all_samples

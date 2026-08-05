@@ -100,12 +100,18 @@ PAD_BOT = 1.95          # rotated x labels of the bottom row + colorbar
 
 def _is_masked(p, o):
     """A cable's rest length cannot act on the other cable's tension."""
-    return ((p == "cable_wale_lrest"   and o == "cable_course_tension") or
-            (p == "cable_course_lrest" and o == "cable_wale_tension"))
+    # Both rest-length conventions: metres (legacy) and fraction of the
+    # cable-free section (current).  A name missing here silently stops masking
+    # rather than erroring, so match the pair by suffix.
+    return ((p in ("cable_wale_lrest", "cable_wale_frac")
+             and o == "cable_course_tension") or
+            (p in ("cable_course_lrest", "cable_course_frac")
+             and o == "cable_wale_tension"))
 
 
 def load_group(group):
     outputs = BASE_OUTPUTS + (CABLE_OUTPUTS if group.endswith("_cable") else [])
+    bounds_keys = list(GROUPS[group][1])
     tables = {}
     for col in outputs:
         path = os.path.join(DATA_DIR, f"sobol_{group}_{CSV_PREFIX}{col}.csv")
@@ -120,6 +126,17 @@ def load_group(group):
             print(f"  missing, skipped: {os.path.basename(path)}")
             continue
         df = pd.read_csv(path, index_col=0)
+        # A cached table written under a different parameter naming (the cable
+        # rest length was cable_*_lrest in metres before it became cable_*_frac)
+        # indexes rows the current box does not contain.  That used to surface as
+        # a KeyError deep in _matrices; refuse the stale table here instead, and
+        # say which one, so the fix is obvious.
+        missing = [p for p in bounds_keys if p not in df.index]
+        if missing:
+            print(f"  {col}: {os.path.basename(path)} is indexed by a different "
+                  f"parameter set (missing {missing}) — stale, skipping. "
+                  f"Re-run run_sobol_robust.py / run_material_r_valid.py.")
+            continue
         if df["ST"].clip(0).max() <= _ST_MIN:
             print(f"  {col}: ST_max <= {_ST_MIN}, column dropped")
             continue

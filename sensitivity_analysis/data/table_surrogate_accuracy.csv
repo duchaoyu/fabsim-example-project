@@ -6,12 +6,12 @@ no cable,H_anisotropy,219,0.941,0.008757,4.8,93.0
 no cable,max_stress,219,0.999,137.0,0.5,96.0
 no cable,mean_stress,219,0.999,132.6,0.5,97.0
 no cable,boundary_reaction_mean,219,1.0,5.5,0.4,96.0
-cable,crown_height,74,0.944,0.01287,5.8,89.0
-cable,H_mean_x0,74,0.935,0.2431,4.9,100.0
-cable,H_mean_y0,74,0.911,0.1999,5.1,96.0
-cable,H_anisotropy,74,0.467,0.08904,12.2,96.0
-cable,max_stress,74,0.963,1315.0,3.8,92.0
-cable,mean_stress,74,0.988,595.7,2.4,92.0
-cable,boundary_reaction_mean,74,0.994,23.18,1.8,99.0
-cable,cable_wale_tension,74,0.918,206.7,6.8,89.0
-cable,cable_course_tension,74,0.934,165.3,6.7,91.0
+cable,crown_height,198,0.967,0.01295,3.3,94.0
+cable,H_mean_x0,198,0.887,0.09604,5.6,97.0
+cable,H_mean_y0,198,0.791,0.1646,6.5,96.0
+cable,H_anisotropy,198,0.741,0.04726,7.6,92.0
+cable,max_stress,198,0.993,580.9,1.7,96.0
+cable,mean_stress,198,0.998,234.7,0.9,95.0
+cable,boundary_reaction_mean,198,0.999,9.346,0.7,98.0
+cable,cable_wale_tension,198,0.994,52.58,1.2,95.0
+cable,cable_course_tension,198,0.768,384.5,6.6,98.0

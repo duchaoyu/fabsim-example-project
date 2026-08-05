@@ -132,8 +132,8 @@ def _run_one(sample):
             knit_dir_deg       = sample["knit_dir"],
             pressure           = sample["pressure"],
             motif              = sample["motif"],
-            cable_wale_lrest   = sample.get("cable_wale_lrest",   -1.0),
-            cable_course_lrest = sample.get("cable_course_lrest", -1.0),
+            cable_wale_frac    = sample.get("cable_wale_frac"),
+            cable_course_frac  = sample.get("cable_course_frac"),
             E1                 = sample["E1"],
             r                  = sample["r_binary"],   # binary wants E1/E2
             nu                 = sample["nu"],

@@ -49,8 +49,12 @@ PARAM_LABELS = {
     "knit_dir":           r"$\theta_\mathrm{knit}$ (°)",
     "pressure":           r"$p$ (Pa)",
     "cable_angle":        r"$\phi_\mathrm{cable}$ (°)",
+    # Legacy metre convention, kept for the pre-2026-08-04 studies
     "cable_wale_lrest":   r"$L^\mathrm{wale}_\mathrm{rest}$",
     "cable_course_lrest": r"$L^\mathrm{course}_\mathrm{rest}$",
+    # Current convention: rest length as a fraction of the cable-free section
+    "cable_wale_frac":    r"$f^\mathrm{wale}_\mathrm{rest}$",
+    "cable_course_frac":  r"$f^\mathrm{course}_\mathrm{rest}$",
     "E1":                 r"$E_1$ (N/m)",
     "r":                  r"$r = E_2/E_1$",
     "nu":                 r"$\nu_{12}$",
@@ -189,8 +193,13 @@ def plot_sobol(sobol_results: dict, save: bool = True, index: str = "ST"):
     _CABLE_OUTPUTS = {"cable_wale_tension", "cable_course_tension"}
 
     def _is_masked(p, o):
-        return ((p == "cable_wale_lrest"  and o == "cable_course_tension") or
-                (p == "cable_course_lrest" and o == "cable_wale_tension"))
+        # Matches both rest-length conventions: metres (legacy) and fraction of
+        # the cable-free section (current).  Missing a name here does not error,
+        # it silently stops masking, so the pair is matched by suffix.
+        return ((p in ("cable_wale_lrest", "cable_wale_frac")
+                 and o == "cable_course_tension") or
+                (p in ("cable_course_lrest", "cable_course_frac")
+                 and o == "cable_wale_tension"))
 
     for group, group_results in sobol_results.items():
         has_cable = "cable" in group and "nocable" not in group
