@@ -185,11 +185,16 @@ def plot_parity(save=True):
     place, row_label, r = [], {}, 0
     for group, (label, _) in GROUPS.items():
         outs = data[group][2]
+        # Name the held-out count on the row.  The two groups are far from
+        # symmetric — the cable validity box retains 370 runs against 1095, so
+        # its panels rest on ~74 points against ~219 — and a reader comparing
+        # R2 down a column should not have to infer that from the scatter.
+        n_held = len(data[group][5])
         for k in range(0, len(outs), n_col):
             for c, col in enumerate(outs[k:k + n_col]):
                 place.append((r, c, group, col))
-            row_label[r] = (f"{label}\nsurrogate" if k == 0 else
-                            f"{label}\nsurrogate (cont.)")
+            row_label[r] = (f"{label}\nsurrogate\n($n$={n_held})" if k == 0 else
+                            f"{label}\nsurrogate (cont.)\n($n$={n_held})")
             r += 1
     n_row = r
 
