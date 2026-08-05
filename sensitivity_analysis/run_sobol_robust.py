@@ -12,8 +12,15 @@ slack and it carries no load at all.  In the 660-sample cable batch:
     L_rest bin (m)      1.20-1.225  ...  1.275-1.30  1.30-1.325  1.375-1.40
     runs with T = 0          0%              15%          56%         81%
 
-38% of cable runs have T identically 0 (wale; 37% course).  Over the box as a
-whole, 21% of surrogate evaluations are slack.
+38% of cable runs have T identically 0 (wale; 37% course) over the full box, and
+40% (wale; 41% course) inside the model-validity box these figures use.
+
+Note the surrogate reproduces only ~24% slack against that sampled 40%: a GP is
+continuous, so it cannot represent a point mass and interpolates across the
+slack/taut switch.  Panel (c) therefore reads as which parameters move the switch,
+not as a calibrated probability of slack — a classifier would be needed for that.
+The forthcoming L_rest = f * L_nocable parameterisation removes the plateau by
+construction, at which point this whole correction becomes unnecessary.
 
 That has three consequences, all handled here:
 
@@ -236,7 +243,8 @@ def plot_robust(sweep, pawn, save=True):
                        ha="right", fontsize=7)
     ax.set_ylabel("$S_T$", fontsize=8.5)
     ax.set_title("(c) cable engaged, $\\mathbb{1}[T>0]$:\n"
-                 "what trips the slack/taut switch", fontsize=9.5, pad=4)
+                 "what trips the slack/taut switch (GP smooths it)",
+                 fontsize=9.5, pad=4)
     ax.legend(fontsize=6.6, frameon=False)
     ax.tick_params(labelsize=7)
 
@@ -263,7 +271,7 @@ def plot_robust(sweep, pawn, save=True):
     ax.tick_params(labelsize=7)
 
     fig.suptitle("Robustness of the indices for the zero-inflated cable "
-                 "outputs ($L_\\mathrm{rest}$ = 1.2–1.4 m, 38% of runs slack)",
+                 "outputs ($L_\\mathrm{rest}$ = 1.2–1.4 m, 40% of runs slack)",
                  fontsize=11, y=0.965)
 
     if save:
