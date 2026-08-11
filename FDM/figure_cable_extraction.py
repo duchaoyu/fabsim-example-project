@@ -223,6 +223,83 @@ def extract(V, E, s2, boundary, lam, q_threshold, tie_to_cables=TIE_TO_CABLES,
                 routes=routes, hi_comps=hi_comps)
 
 
+def trace_cables(V, edges, q_of, turn_limit_deg=70.0):
+    """Resolve the retained edge set into ordered cable polylines.
+
+    An edge set says which edges are cable; it does not say what a cable IS. Walking
+    it edge by edge and, at every junction, continuing along whichever neighbour
+    turns least, merges the four spokes at the apex into two through-diagonals rather
+    than four stubs, and carries each arch through the junction where its tie meets
+    it. A turn sharper than turn_limit_deg ends the cable instead of rounding a
+    corner that no real cable would follow.
+
+    Returns polylines as ordered vertex lists, ranked by peak force density.
+    """
+    adj = collections.defaultdict(set)
+    for e in edges:
+        a, b = tuple(e)
+        adj[a].add(b)
+        adj[b].add(a)
+    cos_limit = np.cos(np.deg2rad(turn_limit_deg))
+
+    def direction(a, b):
+        d = V[b] - V[a]
+        return d / np.linalg.norm(d)
+
+    def step(prev, cur, unused):
+        """The straightest unused continuation through cur, or None."""
+        d_in = direction(prev, cur)
+        best, best_dot = None, cos_limit
+        for nxt in adj[cur]:
+            if frozenset((cur, nxt)) not in unused:
+                continue
+            dot = float(d_in @ direction(cur, nxt))
+            if dot > best_dot:
+                best, best_dot = nxt, dot
+        return best
+
+    unused = set(edges)
+    # degree-1 vertices first so cables start at a free end rather than mid-run
+    starts = sorted(adj, key=lambda v: (len(adj[v]) != 1, v))
+    polylines = []
+    while unused:
+        seed = None
+        for v in starts:
+            free = [n for n in adj[v] if frozenset((v, n)) in unused]
+            if free:
+                seed = (v, free[0])
+                break
+        if seed is None:
+            a, b = tuple(next(iter(unused)))
+            seed = (a, b)
+        v, nxt = seed
+        unused.discard(frozenset((v, nxt)))
+        path = [v, nxt]
+        while True:                              # forward
+            nx = step(path[-2], path[-1], unused)
+            if nx is None:
+                break
+            unused.discard(frozenset((path[-1], nx)))
+            path.append(nx)
+        while True:                              # and backward from the seed
+            nx = step(path[1], path[0], unused)
+            if nx is None:
+                break
+            unused.discard(frozenset((path[0], nx)))
+            path.insert(0, nx)
+        polylines.append(path)
+
+    out = []
+    for path in polylines:
+        qs = [q_of[frozenset((a, b))] for a, b in zip(path[:-1], path[1:])]
+        length = float(sum(np.linalg.norm(V[b] - V[a])
+                           for a, b in zip(path[:-1], path[1:])))
+        out.append(dict(path=[int(v) for v in path], edges=len(path) - 1,
+                        q_min=min(qs), q_max=max(qs), q_mean=float(np.mean(qs)),
+                        length=length, closed=path[0] == path[-1]))
+    return sorted(out, key=lambda c: -c["q_max"])
+
+
 # ------------------------------------------------------------------- the drawing
 def square(x, y, h):
     return [x, y, h * FIGH / FIGW, h]
@@ -438,6 +515,26 @@ def main():
     draw_cables(ax_d, V, on["edges"] - hi_e, color="#9ec5f4", lw=2.0, zorder=2)
     draw_cables(ax_d, V, on["edges"] & hi_e, color=SERIES_1, lw=2.8, zorder=3)
     anchors = sorted({x for e in on["edges"] for x in tuple(e)} & boundary)
+
+    # the retained edge set, resolved into ordered cables and ranked
+    q_of = {frozenset((u, w_)): qq for u, w_, qq in E}
+    cables = trace_cables(V, on["edges"], q_of)
+    print(f"\n{len(cables)} cables traced from {len(on['edges'])} retained edges")
+    print(f"{'#':>2}  {'edges':>5}  {'length':>7}  {'q range':>12}  {'ends':>17}  path")
+    for i, c in enumerate(cables, 1):
+        a, b = c["path"][0], c["path"][-1]
+        ends = f"{'anchor' if a in boundary else 'cable':>7} → " \
+               f"{'anchor' if b in boundary else 'cable'}"
+        path = " ".join(str(v) for v in c["path"])
+        print(f"{i:>2}  {c['edges']:>5}  {c['length']:>6.3f} m  "
+              f"{c['q_min']:>5.2f}–{c['q_max']:<5.2f}  {ends:>17}  "
+              f"{path if len(path) <= 60 else path[:57] + '…'}")
+    with open(os.path.join(HERE, "data", "crossvault", "cables_ordered.json"), "w") as f:
+        json.dump(dict(lam=LAMBDA, anchor_cost=ANCHOR_COST, q_threshold=q_thr,
+                       apex=[float(apex[0]), float(apex[1])],
+                       vertices={str(k): [float(x) for x in V[k]] for k in V},
+                       cables=cables), f, indent=1)
+    print("wrote data/crossvault/cables_ordered.json")
     ax_d.plot([V[a][0] for a in anchors], [V[a][1] for a in anchors], "o",
               color=SERIES_2, ms=4.6, zorder=6, ls="none")
     panel_title(fig, X1, T2, "d", "assembled, then filtered on anchorage",
@@ -446,7 +543,24 @@ def main():
                 f"are already in place when\nthe arches look for a termination (light). "
                 f"{len(on['comps'])} component,\n"
                 f"{len(on['kept'])} anchored, {len(on['dropped'])} discarded, "
-                f"{len(anchors)} anchors instead of 12.")
+                f"{len(anchors)} anchors instead of 12.\nNumbered by peak force "
+                f"density; the {sum(1 for c in cables if c['edges'] < 5)} short ties "
+                f"are left unnumbered.")
+    # number the cables that are cables rather than short ties, in dominance order
+    for i, c in enumerate(cables, 1):
+        if c["edges"] < 5:
+            continue
+        # a quarter along, not the midpoint: both diagonals share vertex 70 at their
+        # centre, so midpoint labels would sit on top of each other
+        k = len(c["path"]) // 4 if c["edges"] >= 10 else len(c["path"]) // 2
+        pos = V[c["path"][k]][:2]
+        radial = pos - apex
+        nr = np.linalg.norm(radial)
+        off = radial / nr * 0.075 if nr > 1e-3 else np.array([0.0, 0.075])
+        ax_d.text(*(pos + off), str(i), fontsize=8.6, color=INK, ha="center",
+                  va="center", fontweight="semibold", zorder=8,
+                  bbox=dict(fc=SURFACE, ec="none", alpha=0.9, pad=1.3))
+
     leg = fig.legend(handles=[
         plt.Line2D([], [], color=SERIES_1, lw=2.8, label="high-force chain"),
         plt.Line2D([], [], color="#9ec5f4", lw=2.0, label="route to a support"),
