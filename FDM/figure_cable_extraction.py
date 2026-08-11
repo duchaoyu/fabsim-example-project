@@ -87,6 +87,13 @@ ANCHOR_COST = 5.0      # what a NEW boundary anchor costs a route, against 0 for
                        # boundary (5 components, 12 anchors); from about 2 the arches
                        # tie into the diagonals instead, and from 5 upward the result
                        # is one connected network on 4 corner anchors.
+TIES_OUTWARD = True    # a tie may not terminate closer to the apex than the chain
+                       # end it leaves. Off, whether an arch ties outward (toward the
+                       # corners) or inward (toward the crown) goes to whichever is
+                       # marginally cheaper, and since the target surface is only
+                       # 2-fold symmetric that flips between x and y: two arches tie
+                       # outward, two inward, and the four come out 1.050-1.124 m.
+                       # On, all four tie outward and land in 1.043-1.056 m.
 TIE_TO_CABLES = True   # let a chain end on an already-retained cable, not only
                        # on the boundary — this is what ties the arches into the
                        # diagonals. Set False for one route per chain end straight
@@ -238,7 +245,8 @@ def turn_route(V, adj, q_of, s2, lam, tip, prices):
 
 
 def extract(V, E, s2, boundary, lam, q_threshold, tie_to_cables=TIE_TO_CABLES,
-            anchor_cost=ANCHOR_COST, theta_mode=None):
+            anchor_cost=ANCHOR_COST, theta_mode=None,
+            ties_outward=TIES_OUTWARD, apex=None):
     """The high-force chains, plus the least-cost route that carries each chain END
     out to a support, then filtered on boundary contact. Seeding at the chain ends
     rather than at every high-force vertex is what keeps one tie per chain end
@@ -252,6 +260,7 @@ def extract(V, E, s2, boundary, lam, q_threshold, tie_to_cables=TIE_TO_CABLES,
     is what ties the four arches into the two diagonals instead of sending each arch
     end out to the boundary on its own."""
     mode = theta_mode or THETA_MODE
+    apex = apex_point(V) if apex is None else apex
     n = max(V) + 1
     w = costs(E, s2, lam)
     rows = [e[0] for e in E] + [e[1] for e in E]
@@ -285,22 +294,35 @@ def extract(V, E, s2, boundary, lam, q_threshold, tie_to_cables=TIE_TO_CABLES,
         if tie_to_cables:
             for v in cable_v:
                 ends[v] = 0.0
-        pred = None
-        if mode != "hybrid":
-            r = rows + [n] * len(ends) + list(ends)
-            c_ = cols + list(ends) + [n] * len(ends)
-            vals = np.r_[w, w, list(ends.values()), list(ends.values())]
-            Gv = coo_matrix((vals, (r, c_)), shape=(n + 1, n + 1)).tocsr()
-            _d, pred, _s = dijkstra(Gv, indices=[n], min_only=True,
-                                    return_predecessors=True)
         grown = set()
         for t in tips:
+            # ties_outward: a route may not terminate closer to the apex than the
+            # chain end it leaves from. Without it, whether a tie reaches its
+            # diagonal outward or inward is decided by which is marginally cheaper,
+            # and on a target surface that is only 2-fold symmetric that flips
+            # between the x and y directions — two arches tie outward toward the
+            # corners, two tie inward toward the crown, and the four come out
+            # unequal. A tie running back toward the crown also carries force away
+            # from the supports, so outward is the structurally sensible choice.
+            ends_t = ends
+            if ties_outward:
+                r0 = np.linalg.norm(V[t][:2] - apex)
+                ends_t = {v: p for v, p in ends.items()
+                          if np.linalg.norm(V[v][:2] - apex) >= r0 - 1e-9}
+                if not ends_t:                  # never leave an end unanchored
+                    ends_t = ends
             if mode == "hybrid":
-                walk = turn_route(V, mesh_adj, q_of, s2, lam, t, ends) or [t]
+                walk = turn_route(V, mesh_adj, q_of, s2, lam, t, ends_t) or [t]
                 for a, b in zip(walk[:-1], walk[1:]):
                     routes.add(frozenset((a, b)))
                     grown.update((a, b))
             else:
+                r = rows + [n] * len(ends_t) + list(ends_t)
+                c_ = cols + list(ends_t) + [n] * len(ends_t)
+                vals = np.r_[w, w, list(ends_t.values()), list(ends_t.values())]
+                Gv = coo_matrix((vals, (r, c_)), shape=(n + 1, n + 1)).tocsr()
+                _d, pred, _s = dijkstra(Gv, indices=[n], min_only=True,
+                                        return_predecessors=True)
                 cur, walk = t, [t]
                 while cur != n and int(pred[cur]) >= 0:
                     p = int(pred[cur])
@@ -690,6 +712,12 @@ def main():
                           on["tip_routes"])
     n_aa = sum(1 for c in cables
                if c["path"][0] in boundary and c["path"][-1] in boundary)
+    arch_len = sorted(c["length"] for c in cables
+                      if not (c["path"][0] in boundary and c["path"][-1] in boundary))
+    arch_spread = (arch_len[-1] - arch_len[0]) / np.mean(arch_len) * 100 if arch_len else 0
+    print(f"the {len(arch_len)} cable-to-cable arches: "
+          + ", ".join(f"{x:.3f}" for x in arch_len)
+          + f" m — spread {arch_spread:.1f} %")
     print(f"\n{len(cables)} cables traced from {len(on['edges'])} retained edges "
           f"({n_aa} anchor-to-anchor, {len(cables) - n_aa} cable-to-cable)")
     print(f"{'#':>2}  {'edges':>5}  {'length':>7}  {'q range':>12}  {'ends':>17}  path")
@@ -717,7 +745,9 @@ def main():
                 f"{len(on['kept'])} anchored, {len(on['dropped'])} discarded, "
                 f"{len(anchors)} anchors instead of 12.\nTraced into {len(cables)} "
                 f"cables, numbered by peak force density: {n_aa} running anchor to "
-                f"anchor\nand {len(cables) - n_aa} from one diagonal to the other.")
+                f"anchor\nand {len(cables) - n_aa} from one diagonal to the other. Ties "
+                f"run outward only, so those\n{len(arch_len)} come out within "
+                f"{arch_spread:.1f} % of each other rather than {7.0:.0f} %.")
     for i, c in enumerate(cables, 1):
         # a quarter along, not the midpoint: both diagonals share vertex 70 at their
         # centre, so midpoint labels would sit on top of each other
