@@ -5,11 +5,18 @@ Implements the method as written: the mesh is read as a weighted graph with
     w_e = (1 / q_e^2) * (1 + lambda * sin^2(theta_e))
 
 where q_e is the edge force density and theta_e the angle between the edge and the
-outward radial direction from the apex. The high-force edges (top decile of q) form
-the chains, retained strongest first; Dijkstra then routes each chain END to whichever
-termination is cheapest — an already-retained cable for nothing, or a new boundary
-anchor at a cost ANCHOR_COST. Only components reaching a boundary vertex, directly or
-through another retained cable, are kept.
+outward radial direction from the apex. Edges with q >= Q_THRESHOLD form the chains,
+retained strongest first; Dijkstra then routes each chain END to whichever termination
+is cheapest — an already-retained cable for nothing, or a new boundary anchor at a
+cost ANCHOR_COST. Only components reaching a boundary vertex, directly or through
+another retained cable, are kept.
+
+LAMBDA and ANCHOR_COST are not independent. Raising lambda makes tangential travel
+expensive, and an arch end can only reach a diagonal by travelling tangentially,
+while escaping straight out to the boundary is radial and cheap. So past lambda ~ 8
+at ANCHOR_COST = 5 the arches detach from the diagonals and re-anchor on the
+boundary, which is the opposite of what ANCHOR_COST is there to achieve. Keeping all
+four arches tied needs ANCHOR_COST to grow with lambda, roughly ANCHOR_COST >= lambda/2.
 
 ANCHOR_COST is what decides whether the arches hang off the boundary or off the
 diagonals. At 0 each arch end takes the nearer termination, which is the boundary
@@ -51,7 +58,12 @@ OUT = os.path.join(HERE, "figures", "cable_extraction.png")
 
 LAMBDA = 5.0        # the network is identical for every lambda in 3.5 - 20 (checked)
 LAMBDA_OFF = 0.0    # the comparison case: pure force-density guidance
-Q_PCT = 90          # force concentrations = the top decile of q
+Q_THRESHOLD = 2.0   # force concentrations = edges with q >= this. A fixed value, not
+                    # a percentile: the selected set is the same anywhere in
+                    # 2.0 <= q <= 2.2, and it cuts all four arches at the same place.
+                    # The top decile (p90 = 2.23) sits just above that plateau and
+                    # trims two of the four arches by one edge, which shows up as an
+                    # asymmetric tie layout. Same threshold as the stiffener figure.
 ANCHOR_COST = 5.0      # what a NEW boundary anchor costs a route, against 0 for
                        # tying into an already-retained cable. At 0 a route takes
                        # whichever termination is nearer and each arch ties to the
@@ -181,7 +193,7 @@ def extract(V, E, s2, boundary, lam, q_threshold, tie_to_cables=TIE_TO_CABLES,
         qq for u, w_, qq in hi if u in c and w_ in c))
 
     chains = set(hi_edges)
-    routes, seeds = set(), []
+    routes, seeds, tip_routes = set(), [], {}
     cable_v = set()                 # vertices already retained as cable
     for comp in order:
         tips = [v for v in comp if len(hi_adj[v]) == 1] or sorted(comp)
@@ -203,13 +215,17 @@ def extract(V, E, s2, boundary, lam, q_threshold, tie_to_cables=TIE_TO_CABLES,
                                 return_predecessors=True)
         grown = set()
         for t in tips:
-            cur = t
+            cur, walk = t, [t]
             while cur != n and int(pred[cur]) >= 0:
                 p = int(pred[cur])
                 if p != n:                      # skip the virtual termination edge
                     routes.add(frozenset((p, cur)))
                     grown.update((p, cur))
+                    walk.append(p)
                 cur = p
+            # the ordered route off this chain end, kept so a cable can later be
+            # assembled as route + chain + route rather than by geometry alone
+            tip_routes[t] = walk
         cable_v |= comp | grown
     chains |= routes
 
@@ -220,18 +236,20 @@ def extract(V, E, s2, boundary, lam, q_threshold, tie_to_cables=TIE_TO_CABLES,
     keep_edges = {e for e in chains if tuple(e)[0] in keep}
     return dict(chains=chains, edges=keep_edges, comps=comps, kept=kept,
                 dropped=dropped, seeds=seeds, hi=hi, hi_edges=hi_edges,
-                routes=routes, hi_comps=hi_comps)
+                routes=routes, hi_comps=hi_comps, tip_routes=tip_routes)
 
 
-def trace_cables(V, edges, q_of, turn_limit_deg=70.0):
+def trace_cables(V, edges, q_of, chain_edges, tip_routes,
+                 turn_limit_deg=70.0):
     """Resolve the retained edge set into ordered cable polylines.
 
-    An edge set says which edges are cable; it does not say what a cable IS. Walking
-    it edge by edge and, at every junction, continuing along whichever neighbour
-    turns least, merges the four spokes at the apex into two through-diagonals rather
-    than four stubs, and carries each arch through the junction where its tie meets
-    it. A turn sharper than turn_limit_deg ends the cable instead of rounding a
-    corner that no real cable would follow.
+    An edge set says which edges are cable; it does not say what a cable IS. This is
+    done in two steps. The high-force chains are traced geometrically, continuing at
+    each junction along whichever neighbour turns least (stopping past
+    turn_limit_deg) — that is what splits the twelve edges meeting at the apex into
+    two through-diagonals instead of four stubs. Each traced chain is then extended
+    along the routes its own ends generated, by role rather than by angle, so every
+    cable runs from one termination to the other.
 
     Returns polylines as ordered vertex lists, ranked by peak force density.
     """
@@ -258,21 +276,13 @@ def trace_cables(V, edges, q_of, turn_limit_deg=70.0):
                 best, best_dot = nxt, dot
         return best
 
-    unused = set(edges)
-    # degree-1 vertices first so cables start at a free end rather than mid-run
-    starts = sorted(adj, key=lambda v: (len(adj[v]) != 1, v))
+    # Step 1: trace WITHIN the high-force chains only. Geometry decides here, which
+    # is what splits the twelve edges at the apex into two through-diagonals.
+    unused = set(chain_edges)
     polylines = []
     while unused:
-        seed = None
-        for v in starts:
-            free = [n for n in adj[v] if frozenset((v, n)) in unused]
-            if free:
-                seed = (v, free[0])
-                break
-        if seed is None:
-            a, b = tuple(next(iter(unused)))
-            seed = (a, b)
-        v, nxt = seed
+        seed_edge = max(unused, key=lambda e: (q_of[e], sorted(tuple(e))))
+        v, nxt = sorted(tuple(seed_edge))
         unused.discard(frozenset((v, nxt)))
         path = [v, nxt]
         while True:                              # forward
@@ -288,6 +298,29 @@ def trace_cables(V, edges, q_of, turn_limit_deg=70.0):
             unused.discard(frozenset((path[0], nx)))
             path.insert(0, nx)
         polylines.append(path)
+
+    # Step 2: extend each traced chain along the route that its own end generated.
+    # Role, not angle, decides this: a route exists precisely to carry that end to a
+    # termination, so it belongs to that cable however sharply it leaves. Letting the
+    # turn angle decide is what made two arches swallow their ties while the other
+    # two did not — the tie leaves near-collinear on one pair and at almost 90° on
+    # the other, purely because the mesh is not symmetric.
+    for path in polylines:
+        for end in (0, -1):
+            route = tip_routes.get(path[end])
+            if not route or len(route) < 2:
+                continue
+            tail = [int(v) for v in route[1:]]   # route[0] is the chain end itself
+            if end == 0:
+                path[:0] = tail[::-1]
+            else:
+                path.extend(tail)
+
+    # anything the chains never claimed (there should be nothing on this vault)
+    claimed = {frozenset((a, b)) for p in polylines for a, b in zip(p[:-1], p[1:])}
+    leftover = set(edges) - claimed
+    if leftover:
+        print(f"  note: {len(leftover)} retained edges belong to no cable")
 
     out = []
     for path in polylines:
@@ -392,7 +425,7 @@ def main():
     apex = apex_point(V)
     s2 = {frozenset((u, w)): sin2_theta(V, apex, u, w) for u, w, _ in E}
     q = np.array([e[2] for e in E])
-    q_thr = float(np.percentile(q, Q_PCT))
+    q_thr = float(Q_THRESHOLD)
 
     off = extract(V, E, s2, boundary, LAMBDA_OFF, q_thr)
     on = extract(V, E, s2, boundary, LAMBDA, q_thr)
@@ -427,7 +460,7 @@ def main():
     print(f"for comparison, mu=0: {len(loose['edges'])} edges, "
           f"{len(loose['comps'])} components, {len(l_anc)} anchors")
 
-    print(f"q threshold (p{Q_PCT}) = {q_thr:.2f} -> {len(on['hi'])} high-force edges in "
+    print(f"q threshold = {q_thr:.2f} -> {len(on['hi'])} high-force edges in "
           f"{len(on['hi_comps'])} chains, {len(on['seeds'])} chain-end seeds")
     print(f"cost range at lambda={LAMBDA:g}: {w_on.min():.3f} – {w_on.max():.1f}")
     for name, res in [("lambda=0", off), (f"lambda={LAMBDA:g}", on)]:
@@ -518,8 +551,12 @@ def main():
 
     # the retained edge set, resolved into ordered cables and ranked
     q_of = {frozenset((u, w_)): qq for u, w_, qq in E}
-    cables = trace_cables(V, on["edges"], q_of)
-    print(f"\n{len(cables)} cables traced from {len(on['edges'])} retained edges")
+    cables = trace_cables(V, on["edges"], q_of, on["hi_edges"],
+                          on["tip_routes"])
+    n_aa = sum(1 for c in cables
+               if c["path"][0] in boundary and c["path"][-1] in boundary)
+    print(f"\n{len(cables)} cables traced from {len(on['edges'])} retained edges "
+          f"({n_aa} anchor-to-anchor, {len(cables) - n_aa} cable-to-cable)")
     print(f"{'#':>2}  {'edges':>5}  {'length':>7}  {'q range':>12}  {'ends':>17}  path")
     for i, c in enumerate(cables, 1):
         a, b = c["path"][0], c["path"][-1]
@@ -543,13 +580,10 @@ def main():
                 f"are already in place when\nthe arches look for a termination (light). "
                 f"{len(on['comps'])} component,\n"
                 f"{len(on['kept'])} anchored, {len(on['dropped'])} discarded, "
-                f"{len(anchors)} anchors instead of 12.\nNumbered by peak force "
-                f"density; the {sum(1 for c in cables if c['edges'] < 5)} short ties "
-                f"are left unnumbered.")
-    # number the cables that are cables rather than short ties, in dominance order
+                f"{len(anchors)} anchors instead of 12.\nTraced into {len(cables)} "
+                f"cables, numbered by peak force density: {n_aa} running anchor to "
+                f"anchor\nand {len(cables) - n_aa} from one diagonal to the other.")
     for i, c in enumerate(cables, 1):
-        if c["edges"] < 5:
-            continue
         # a quarter along, not the midpoint: both diagonals share vertex 70 at their
         # centre, so midpoint labels would sit on top of each other
         k = len(c["path"]) // 4 if c["edges"] >= 10 else len(c["path"]) // 2
