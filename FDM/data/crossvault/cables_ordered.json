@@ -1,5 +1,5 @@
 {
- "lam": 5.0,
+ "lam": 15.0,
  "anchor_cost": 5.0,
  "q_threshold": 2.0,
  "apex": [

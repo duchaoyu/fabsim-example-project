@@ -4,8 +4,14 @@ Implements the method as written: the mesh is read as a weighted graph with
 
     w_e = (1 / q_e^2) * (1 + lambda * sin^2(theta_e))
 
-where q_e is the edge force density and theta_e the angle between the edge and the
-outward radial direction from the apex. Edges with q >= Q_THRESHOLD form the chains,
+where q_e is the edge force density and theta_e the angle to a reference direction:
+radial from the apex for a route's FIRST edge, which has no predecessor, and the
+previous edge for every edge after it (THETA_MODE = "hybrid"). Because that reference
+is path-dependent, routing runs over directed edges rather than vertices; Dijkstra is
+still exact, on a state space of 2|E| instead of |V|. THETA_MODE = "radial" restores
+the all-radial definition, where w_e is a constant per edge.
+
+Edges with q >= Q_THRESHOLD form the chains,
 retained strongest first; Dijkstra then routes each chain END to whichever termination
 is cheapest — an already-retained cable for nothing, or a new boundary anchor at a
 cost ANCHOR_COST. Only components reaching a boundary vertex, directly or through
@@ -30,15 +36,16 @@ high-force edges from the union altogether leaves the arches as disconnected stu
 since each arch seed then routes radially outward without ever traversing the arch.
 
 Panels:
-  a  the weighted graph, with a schematic of how theta is measured
+  a  the force-density factor 1/q^2 (the part of the cost that IS per-edge)
   b  lambda = 0: force-density guidance alone, the path drifts onto the arches
-  c  lambda = 5: the radial term restored, chains cross the surface
+  c  lambda = LAMBDA: the penalty restored, chains cross the surface
   d  the assembled subgraph and the boundary-anchor test
   e  the retained cable trajectories in 3D
 
     python FDM/figure_cable_extraction.py
 """
 import collections
+import heapq
 import json
 import os
 
@@ -56,7 +63,15 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 RESULT = os.path.join(HERE, "data", "crossvault", "mesh_out_cross_20240404130204.json")
 OUT = os.path.join(HERE, "figures", "cable_extraction.png")
 
-LAMBDA = 5.0        # the network is identical for every lambda in 3.5 - 20 (checked)
+THETA_MODE = "hybrid"   # "hybrid": a path's FIRST edge is referenced to the outward
+                        # radial direction from the apex (it has no predecessor), and
+                        # every edge after it to the turn from its predecessor. Since
+                        # the reference is then path-dependent, routing runs over
+                        # directed edges. "radial": theta is the angle to the radial
+                        # direction for every edge, so w_e is a constant per edge and
+                        # a vertex-space Dijkstra suffices. Both give the same network
+                        # here; hybrid holds it over a far wider band of lambda.
+LAMBDA = 15.0       # mid-band. Measured good range: 7 - 30 hybrid, 4 - 7.5 radial
 LAMBDA_OFF = 0.0    # the comparison case: pure force-density guidance
 Q_THRESHOLD = 2.0   # force concentrations = edges with q >= this. A fixed value, not
                     # a percentile: the selected set is the same anywhere in
@@ -164,8 +179,64 @@ def graph_components(edges):
     return comps, adj
 
 
+def sin2_turn(V, t, u, v):
+    """sin^2 of the turn between edge (t,u) and edge (u,v), in plan."""
+    d1 = V[u][:2] - V[t][:2]
+    d2 = V[v][:2] - V[u][:2]
+    d1 = d1 / np.linalg.norm(d1)
+    d2 = d2 / np.linalg.norm(d2)
+    return float(np.clip(abs(d1[0] * d2[1] - d1[1] * d2[0]), 0.0, 1.0) ** 2)
+
+
+def turn_route(V, adj, q_of, s2, lam, tip, prices):
+    """Least-cost route from a chain end to any priced termination, with theta read
+    as the turn from the preceding edge.
+
+    Because the reference direction is now path-dependent, the cost of entering an
+    edge depends on how the path arrived, so the search runs over DIRECTED EDGES —
+    state (prev, cur) means 'arrived at cur along prev->cur'. Dijkstra is still
+    exact on that state space; only its size changes, from |V| to 2|E|. The first
+    edge has no predecessor and is referenced radially instead, which is the one
+    place the apex still enters.
+    """
+    def cost(u, v, s2_val):
+        return (1.0 / q_of[frozenset((u, v))] ** 2) * (1.0 + lam * s2_val)
+
+    dist, parent, pq = {}, {}, []
+    for v in adj[tip]:                                  # first edge: radial
+        st = (tip, v)
+        dist[st] = cost(tip, v, s2[frozenset((tip, v))])
+        parent[st] = None
+        heapq.heappush(pq, (dist[st], st))
+    while pq:
+        d, st = heapq.heappop(pq)
+        if d > dist.get(st, np.inf) + 1e-12:
+            continue
+        p, cur = st
+        for nxt in adj[cur]:
+            if nxt == p:
+                continue
+            c = d + cost(cur, nxt, sin2_turn(V, p, cur, nxt))
+            st2 = (cur, nxt)
+            if c < dist.get(st2, np.inf) - 1e-12:
+                dist[st2] = c
+                parent[st2] = st
+                heapq.heappush(pq, (c, st2))
+    best, best_st = np.inf, None
+    for st, d in sorted(dist.items()):                  # sorted: ties break the same
+        if st[1] in prices and d + prices[st[1]] < best - 1e-12:
+            best, best_st = d + prices[st[1]], st
+    if best_st is None:
+        return None
+    path, st = [best_st[1]], best_st
+    while st is not None:
+        path.append(st[0])
+        st = parent[st]
+    return path[::-1]
+
+
 def extract(V, E, s2, boundary, lam, q_threshold, tie_to_cables=TIE_TO_CABLES,
-            anchor_cost=ANCHOR_COST):
+            anchor_cost=ANCHOR_COST, theta_mode=None):
     """The high-force chains, plus the least-cost route that carries each chain END
     out to a support, then filtered on boundary contact. Seeding at the chain ends
     rather than at every high-force vertex is what keeps one tie per chain end
@@ -178,11 +249,16 @@ def extract(V, E, s2, boundary, lam, q_threshold, tie_to_cables=TIE_TO_CABLES,
     force handed to an anchored cable still reaches the support. On this vault that
     is what ties the four arches into the two diagonals instead of sending each arch
     end out to the boundary on its own."""
+    mode = theta_mode or THETA_MODE
     n = max(V) + 1
     w = costs(E, s2, lam)
     rows = [e[0] for e in E] + [e[1] for e in E]
     cols = [e[1] for e in E] + [e[0] for e in E]
-    G = coo_matrix((np.r_[w, w], (rows, cols)), shape=(n, n)).tocsr()
+    q_of = {frozenset((u, w_)): qq for u, w_, qq in E}
+    mesh_adj = collections.defaultdict(set)
+    for u, w_, _ in E:
+        mesh_adj[u].add(w_)
+        mesh_adj[w_].add(u)
 
     hi = [e for e in E if e[2] >= q_threshold]
     hi_edges = {frozenset((u, w_)) for u, w_, _ in hi}
@@ -207,22 +283,30 @@ def extract(V, E, s2, boundary, lam, q_threshold, tie_to_cables=TIE_TO_CABLES,
         if tie_to_cables:
             for v in cable_v:
                 ends[v] = 0.0
-        r = rows + [n] * len(ends) + list(ends)
-        c_ = cols + list(ends) + [n] * len(ends)
-        vals = np.r_[w, w, list(ends.values()), list(ends.values())]
-        Gv = coo_matrix((vals, (r, c_)), shape=(n + 1, n + 1)).tocsr()
-        _d, pred, _s = dijkstra(Gv, indices=[n], min_only=True,
-                                return_predecessors=True)
+        pred = None
+        if mode != "hybrid":
+            r = rows + [n] * len(ends) + list(ends)
+            c_ = cols + list(ends) + [n] * len(ends)
+            vals = np.r_[w, w, list(ends.values()), list(ends.values())]
+            Gv = coo_matrix((vals, (r, c_)), shape=(n + 1, n + 1)).tocsr()
+            _d, pred, _s = dijkstra(Gv, indices=[n], min_only=True,
+                                    return_predecessors=True)
         grown = set()
         for t in tips:
-            cur, walk = t, [t]
-            while cur != n and int(pred[cur]) >= 0:
-                p = int(pred[cur])
-                if p != n:                      # skip the virtual termination edge
-                    routes.add(frozenset((p, cur)))
-                    grown.update((p, cur))
-                    walk.append(p)
-                cur = p
+            if mode == "hybrid":
+                walk = turn_route(V, mesh_adj, q_of, s2, lam, t, ends) or [t]
+                for a, b in zip(walk[:-1], walk[1:]):
+                    routes.add(frozenset((a, b)))
+                    grown.update((a, b))
+            else:
+                cur, walk = t, [t]
+                while cur != n and int(pred[cur]) >= 0:
+                    p = int(pred[cur])
+                    if p != n:                  # skip the virtual termination edge
+                        routes.add(frozenset((p, cur)))
+                        grown.update((p, cur))
+                        walk.append(p)
+                    cur = p
             # the ordered route off this chain end, kept so a cable can later be
             # assembled as route + chain + route rather than by geometry alone
             tip_routes[t] = walk
@@ -380,34 +464,50 @@ def theta_diagram(fig, rect):
         sp.set_color("#e4e2dc")
         sp.set_linewidth(0.7)
 
-    a = np.array([0.14, 0.24])
-    tip = np.array([1.34, 0.76])
-    u = (tip - a) / np.linalg.norm(tip - a)
-    mid = a + u * 0.74
-    ang = np.deg2rad(46.0)
-    d = np.array([u[0]*np.cos(ang) - u[1]*np.sin(ang),
-                  u[0]*np.sin(ang) + u[1]*np.cos(ang)])
+    def rot(v, deg):
+        t = np.deg2rad(deg)
+        return np.array([v[0]*np.cos(t) - v[1]*np.sin(t),
+                         v[0]*np.sin(t) + v[1]*np.cos(t)])
 
-    ax.annotate("", xy=tip, xytext=a,
+    def arc(at, v1, v2, r, label, dy=0.0):
+        ax.add_patch(matplotlib.patches.Arc(
+            at, r, r, angle=0, color=INK_2, lw=1.0,
+            theta1=np.rad2deg(np.arctan2(v1[1], v1[0])),
+            theta2=np.rad2deg(np.arctan2(v2[1], v2[0]))))
+        bis = (v1 + v2) / np.linalg.norm(v1 + v2)
+        ax.text(*(at + bis * (r * 0.72) + np.array([0.0, dy])), label, fontsize=10,
+                color=INK, ha="center", va="center", zorder=8,
+                bbox=dict(fc=SURFACE, ec="none", alpha=0.95, pad=1.0))
+
+    apex = np.array([0.10, 0.34])
+    p0 = np.array([0.62, 0.46])               # the chain end a route starts from
+    radial = (p0 - apex) / np.linalg.norm(p0 - apex)
+    d1 = rot(radial, 30.0)
+    p1 = p0 + d1 * 0.38
+    d2 = rot(d1, -35.0)
+    p2 = p1 + d2 * 0.40
+
+    # the radial reference, through the chain end
+    ax.annotate("", xy=p0 + radial * 0.26, xytext=apex,
                 arrowprops=dict(arrowstyle="-|>", color=SERIES_2, lw=1.2,
                                 ls=(0, (4, 2.5)), shrinkA=0, shrinkB=0))
-    ax.plot(*zip(mid - d * 0.30, mid + d * 0.30), color=SERIES_1, lw=3.2,
-            solid_capstyle="round")
-    ax.plot(*a, "o", color=SERIES_2, ms=6)
-    ax.add_patch(matplotlib.patches.Arc(
-        mid, 0.40, 0.40, angle=0, theta1=np.rad2deg(np.arctan2(u[1], u[0])),
-        theta2=np.rad2deg(np.arctan2(d[1], d[0])), color=INK_2, lw=1.0))
+    ax.plot(*apex, "o", color=SERIES_2, ms=6)
+    # the two edges of the route
+    ax.plot(*zip(p0, p1), color=SERIES_1, lw=3.2, solid_capstyle="round")
+    ax.plot(*zip(p1, p2), color=SERIES_1, lw=3.2, solid_capstyle="round")
+    # and the first edge's direction carried past p1, the reference for the second
+    ax.plot(*zip(p1, p1 + d1 * 0.26), color=INK_3, lw=1.0, ls=(0, (3, 2.5)))
+
+    arc(p0, radial, d1, 0.28, r"$\theta_1$")
+    arc(p1, d2, d1, 0.24, r"$\theta_2$")
 
     bb = dict(fc=SURFACE, ec="none", alpha=0.95, pad=1.4)
-    ax.text(*(a + np.array([0.16, -0.10])), "apex", fontsize=8, color=SERIES_2,
+    ax.text(*(apex + np.array([0.15, -0.11])), "apex", fontsize=8, color=SERIES_2,
             ha="center", va="center", bbox=bb)
-    ax.text(1.32, 0.40, "outward radial", fontsize=8, color=SERIES_2, ha="right",
-            va="center", bbox=bb)
-    ax.text(*(mid + d * 0.44), "edge $e$", fontsize=8, color=SERIES_1, ha="center",
-            va="center", bbox=bb)
-    bis = (u + d) / np.linalg.norm(u + d)
-    ax.text(*(mid + bis * 0.34), r"$\theta_e$", fontsize=12, color=INK,
-            ha="center", va="center", bbox=bb)
+    ax.text(*(apex + radial * 0.52 + np.array([0.0, -0.12])), "radial", fontsize=8,
+            color=SERIES_2, ha="center", va="center", bbox=bb)
+    ax.text(*(0.5 * (p1 + p2) + np.array([0.0, -0.14])), "route", fontsize=8,
+            color=SERIES_1, ha="center", va="center", bbox=bb)
     return ax
 
 
@@ -443,11 +543,11 @@ def main():
         return sum(1 for e in res["edges"] if s2[e] > 0.5)
 
     # over what range of lambda is the extracted network unchanged?
-    plateau = [lam for lam in np.arange(1.0, 20.5, 0.5)
+    plateau = [lam for lam in np.arange(1.0, 45.5, 0.5)
                if extract(V, E, s2, boundary, float(lam), q_thr)["edges"] == on["edges"]]
     lam_lo, lam_hi = min(plateau), max(plateau)
     print(f"network identical to lambda={LAMBDA:g} for lambda in "
-          f"{lam_lo:g} – {lam_hi:g} (scanned 1 – 20 in steps of 0.5)")
+          f"{lam_lo:g} – {lam_hi:g} (scanned 1 – 45 in steps of 0.5)")
 
     mu_plateau = [mu for mu in np.arange(0.5, 40.5, 0.5)
                   if extract(V, E, s2, boundary, LAMBDA, q_thr,
@@ -476,10 +576,14 @@ def main():
     # ------------------------------------------------- a  the weighted graph
     ax_a = fig.add_axes(square(X1, ROW1, H1))
     frame(ax_a)
-    # the slack web puts a long tail on w (up to ~590), so the ramp is cut at 20 and
-    # the tail folded into the top step, keeping contrast where the routes actually go
-    norm = LogNorm(vmin=max(w_on.min(), 1e-2), vmax=20.0)
-    pref = -np.log10(np.clip(w_on, 1e-3, None))
+    # With theta read as a turn, the directional factor depends on how a path
+    # arrives, so it is not a property of the edge and cannot be drawn on one. What
+    # can be drawn is the force-density factor 1/q^2, the part of the cost that is
+    # fixed per edge. The slack web puts a long tail on it, so the ramp is cut at 20
+    # and the tail folded into the top step.
+    w_static = np.array([1.0 / qq ** 2 for _, _, qq in E])
+    norm = LogNorm(vmin=max(w_static.min(), 1e-2), vmax=20.0)
+    pref = -np.log10(np.clip(w_static, 1e-3, None))
     lw = 0.4 + 2.2 * (pref - pref.min()) / np.ptp(pref)
     ax_a.add_collection(LineCollection([[V[u][:2], V[w][:2]] for u, w, _ in E],
                                        array=w_on, cmap=COST_CMAP, norm=norm,
@@ -489,20 +593,23 @@ def main():
               ha="center", va="center",
               bbox=dict(fc=SURFACE, ec="none", alpha=0.9, pad=1.4), zorder=7)
     panel_title(fig, X1, T1, "a", "the mesh as a weighted graph",
-                f"traversal cost at λ = {LAMBDA:g}: dark and thick\n"
-                f"is cheap — high force density, running\n"
-                f"radially. Squaring q makes the preference\n"
-                f"steep rather than gentle, so a route is\n"
-                f"pulled hard onto the strongest edges.")
+                f"the force-density factor 1/q²: dark and thick\n"
+                f"is cheap. Squaring q makes the preference\n"
+                f"steep rather than gentle, so a route is pulled\n"
+                f"hard onto the strongest edges. The directional\n"
+                f"factor is not drawn — it depends on how a path\n"
+                f"arrives, so it is not a property of the edge.")
 
-    theta_diagram(fig, [0.735, 0.418, 0.1848, 0.115])
-    fig.text(0.735, 0.542, "how $\\theta_e$ is measured", fontsize=9, color=INK_2,
-             va="baseline")
+    theta_diagram(fig, [0.735, 0.395, 0.169, 0.105])
+    fig.text(0.735, 0.540,
+             "how $\\theta$ is measured: a route's first edge from\nthe radial, "
+             "every edge after it from the one before",
+             fontsize=8.6, color=INK_2, va="top", linespacing=1.5)
 
     cax = fig.add_axes([X1, 0.505, H1 * FIGH / FIGW, 0.010])
     cb = fig.colorbar(plt.cm.ScalarMappable(norm=norm, cmap=COST_CMAP), cax=cax,
                       orientation="horizontal", extend="max")
-    cb.set_label("traversal cost $w_e$   (log scale, cheap on the left)",
+    cb.set_label("force-density factor $1/q_e^2$   (log scale, cheap on the left)",
                  fontsize=8.8, color=INK_2, labelpad=4)
     cb.outline.set_visible(False)
     cb.ax.tick_params(labelsize=8, colors=INK_2, length=2, pad=2)
@@ -533,7 +640,7 @@ def main():
     ax_c.plot(*apex, "o", color=SERIES_2, ms=5, zorder=5)
     for cv in corners:
         ax_c.plot(*V[cv][:2], "o", color=SERIES_2, ms=4, zorder=5)
-    panel_title(fig, X3, T1, "c", f"λ = {LAMBDA:g}, with the radial term",
+    panel_title(fig, X3, T1, "c", f"λ = {LAMBDA:g}, with the turn penalty",
                 f"{len(on['edges'])} edges. The diagonals now cross the\n"
                 f"surface to all {corners_hit(on)} corners, and the arches\n"
                 f"survive anyway on force alone. Identical for\n"
@@ -636,19 +743,20 @@ def main():
              fontsize=15.5, color=INK, fontweight="semibold", va="baseline")
     fig.text(X1, 0.947,
              "The mesh is treated as a weighted graph in which an edge is cheap to "
-             "traverse where the force density is high and where it runs radially. "
-             "Dijkstra then returns the\ndominant tensile load paths, and the chains it "
-             "finds are kept only where they reach a support. A chain ends wherever "
-             "termination is cheapest: on an\nalready-retained cable for nothing, or on "
-             "the boundary at the price of a new anchor.",
+             "traverse where the force density is high and where the path\ndoes not "
+             "turn. Dijkstra then returns the dominant tensile load paths, and the "
+             "chains it finds are kept only where they reach a\nsupport — a chain ends "
+             "on an already-retained cable for nothing, or on the boundary at the price "
+             "of a new anchor.",
              fontsize=9.5, color=INK_2, va="top", linespacing=1.6)
     fig.text(X1, 0.878,
              r"$w_e \; = \; \frac{1}{q_e^{2}} \, \left(1 + \lambda \sin^{2}\theta_e\right)$",
              fontsize=15, color=INK, va="baseline")
     fig.text(X1, 0.860,
-             "$q_e$  force density        $\\theta_e$  angle to the outward radial "
-             "direction from the apex        $\\lambda$  weight on that penalty"
-             f"        $\\mu$ = {ANCHOR_COST:g}  cost of a new anchor",
+             "$q_e$  force density        $\\theta_e$  angle to the reference "
+             "direction, defined bottom right        "
+             f"$\\lambda$ = {LAMBDA:g}  weight on the penalty        "
+             f"$\\mu$ = {ANCHOR_COST:g}  cost of a new anchor",
              fontsize=8.8, color=INK_2, va="top")
 
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
