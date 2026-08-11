@@ -1,0 +1,456 @@
+"""Figure: extracting cable trajectories from the force-density network.
+
+Implements the method as written: the mesh is read as a weighted graph with
+
+    w_e = (1 / q_e^2) * (1 + lambda * sin^2(theta_e))
+
+where q_e is the edge force density and theta_e the angle between the edge and the
+outward radial direction from the apex. The high-force edges (top decile of q) form
+the chains; Dijkstra then gives the least-cost route from each chain END out to a
+support. Routes and chains are assembled into one subgraph, and only the components
+reaching a boundary vertex — directly or through another retained cable — are kept.
+
+Seeding at the chain ends rather than at every high-force vertex matters: seeding
+everywhere ties each arch back at every node (a comb of ties), and dropping the
+high-force edges from the union altogether leaves the arches as disconnected stubs,
+since each arch seed then routes radially outward without ever traversing the arch.
+
+Panels:
+  a  the weighted graph, with a schematic of how theta is measured
+  b  lambda = 0: force-density guidance alone, the path drifts onto the arches
+  c  lambda = 5: the radial term restored, chains cross the surface
+  d  the assembled subgraph and the boundary-anchor test
+  e  the retained cable trajectories in 3D
+
+    python FDM/figure_cable_extraction.py
+"""
+import collections
+import json
+import os
+
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.collections import LineCollection
+from matplotlib.colors import LinearSegmentedColormap, LogNorm, to_rgb
+from mpl_toolkits.mplot3d.art3d import Line3DCollection, Poly3DCollection
+from scipy.sparse import coo_matrix
+from scipy.sparse.csgraph import dijkstra
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+RESULT = os.path.join(HERE, "data", "crossvault", "mesh_out_cross_20240404130204.json")
+OUT = os.path.join(HERE, "figures", "cable_extraction.png")
+
+LAMBDA = 5.0        # the network is identical for every lambda in 3.5 - 20 (checked)
+LAMBDA_OFF = 0.0    # the comparison case: pure force-density guidance
+Q_PCT = 90          # force concentrations = the top decile of q
+
+INK = "#0b0b0b"
+INK_2 = "#52514e"
+INK_3 = "#8a8983"
+SURFACE = "#fcfcfb"
+MESH = "#e2e0da"
+SERIES_1 = "#2a78d6"   # cables
+SERIES_2 = "#eb6834"   # apex, anchors, the theta construction
+
+# one-hue blue ramp, reversed so that *cheap to traverse* reads dark
+SEQ_BLUE = LinearSegmentedColormap.from_list("seq_blue", [
+    "#cde2fb", "#9ec5f4", "#6da7ec", "#3987e5", "#256abf", "#184f95", "#0d366b",
+])
+COST_CMAP = SEQ_BLUE.reversed()
+
+FIGW, FIGH = 12.4, 12.0
+PLAN_LIM = (-0.075, 1.275)
+
+
+# --------------------------------------------------------------------- the mesh
+def load():
+    d = json.load(open(RESULT))
+    V = {int(k): np.array([v.get("x", 0.0), v.get("y", 0.0), v.get("z", 0.0)])
+         for k, v in d["vertex"].items()}
+    F = [d["face"][k] for k in sorted(d["face"], key=int)]
+    E = []
+    for key, attr in d["edgedata"].items():
+        u, w = (int(t) for t in key.strip("()").split(","))
+        E.append((u, w, float(attr["qpre"][0])))
+    return V, F, E
+
+
+def boundary_vertices(F):
+    """A boundary edge belongs to exactly one face."""
+    seen = collections.Counter()
+    for f in F:
+        for a, b in zip(f, f[1:] + f[:1]):
+            seen[frozenset((a, b))] += 1
+    return {v for e, c in seen.items() if c == 1 for v in e}
+
+
+def apex_point(V):
+    """The apex as a point: centroid of the crown plateau (top 5 % of z). theta only
+    needs an outward radial direction, so it need not land on a vertex."""
+    z = np.array([V[k][2] for k in V])
+    cut = z.max() - 0.05 * (z.max() - z.min())
+    return np.mean([V[k][:2] for k in V if V[k][2] >= cut], axis=0)
+
+
+# ------------------------------------------------------------------- the weights
+def sin2_theta(V, apex, u, w):
+    """sin^2 of the angle between edge (u,w) and the outward radial direction."""
+    r = 0.5 * (V[u][:2] + V[w][:2]) - apex
+    d = V[w][:2] - V[u][:2]
+    nr, nd = np.linalg.norm(r), np.linalg.norm(d)
+    if nr < 1e-9 or nd < 1e-9:
+        return 0.0
+    r, d = r / nr, d / nd
+    return float(np.clip(abs(d[0] * r[1] - d[1] * r[0]), 0.0, 1.0) ** 2)
+
+
+def costs(E, s2, lam):
+    return np.array([(1.0 / qq ** 2) * (1.0 + lam * s2[frozenset((u, w))])
+                     for u, w, qq in E])
+
+
+# ------------------------------------------------------------------- the cables
+def graph_components(edges):
+    """Connected components of a set of frozenset edges, with the adjacency."""
+    adj = collections.defaultdict(set)
+    for e in edges:
+        a, b = tuple(e)
+        adj[a].add(b)
+        adj[b].add(a)
+    seen, comps = set(), []
+    for v0 in adj:
+        if v0 in seen:
+            continue
+        stack, comp = [v0], set()
+        while stack:
+            c = stack.pop()
+            if c in comp:
+                continue
+            comp.add(c)
+            seen.add(c)
+            stack.extend(adj[c] - comp)
+        comps.append(comp)
+    return comps, adj
+
+
+def extract(V, E, s2, boundary, lam, q_threshold):
+    """The high-force chains, plus the least-cost route that carries each chain END
+    out to a support, then filtered on boundary contact. Seeding at the chain ends
+    rather than at every high-force vertex is what keeps one tie per chain end
+    instead of a tie at every node along a chain."""
+    n = max(V) + 1
+    w = costs(E, s2, lam)
+    rows = [e[0] for e in E] + [e[1] for e in E]
+    cols = [e[1] for e in E] + [e[0] for e in E]
+    G = coo_matrix((np.r_[w, w], (rows, cols)), shape=(n, n)).tocsr()
+
+    # multi-source Dijkstra over the whole boundary: pred[v] is then the next step
+    # along v's cheapest route to a support
+    _dist, pred, _src = dijkstra(G, indices=sorted(boundary), min_only=True,
+                                 return_predecessors=True)
+
+    hi = [e for e in E if e[2] >= q_threshold]
+    hi_edges = {frozenset((u, w_)) for u, w_, _ in hi}
+    hi_comps, hi_adj = graph_components(hi_edges)
+    seeds = []
+    for comp in hi_comps:
+        tips = [v for v in comp if len(hi_adj[v]) == 1]
+        seeds += tips or sorted(comp)
+
+    chains = set(hi_edges)
+    routes = set()
+    for s in seeds:
+        c = s
+        while c not in boundary:
+            p = int(pred[c])
+            if p < 0:
+                break
+            routes.add(frozenset((p, c)))
+            c = p
+    chains |= routes
+
+    comps, _ = graph_components(chains)
+    kept = [c for c in comps if c & boundary]
+    dropped = [c for c in comps if not (c & boundary)]
+    keep = {v for c in kept for v in c}
+    keep_edges = {e for e in chains if tuple(e)[0] in keep}
+    return dict(chains=chains, edges=keep_edges, comps=comps, kept=kept,
+                dropped=dropped, seeds=seeds, hi=hi, hi_edges=hi_edges,
+                routes=routes, hi_comps=hi_comps)
+
+
+# ------------------------------------------------------------------- the drawing
+def square(x, y, h):
+    return [x, y, h * FIGH / FIGW, h]
+
+
+def frame(ax):
+    ax.set_aspect("equal")
+    ax.set_anchor("NW")
+    ax.set_xlim(*PLAN_LIM)
+    ax.set_ylim(*PLAN_LIM)
+    ax.set_axis_off()
+
+
+def draw_mesh(ax, V, E, color=MESH, lw=0.5):
+    ax.add_collection(LineCollection([[V[u][:2], V[w][:2]] for u, w, _ in E],
+                                     colors=color, linewidths=lw, zorder=0))
+
+
+def draw_cables(ax, V, edges, color=SERIES_1, lw=2.3, zorder=3):
+    ax.add_collection(LineCollection([[V[a][:2], V[b][:2]]
+                                      for a, b in (tuple(e) for e in edges)],
+                                     colors=color, linewidths=lw, zorder=zorder,
+                                     capstyle="round"))
+
+
+def panel_title(fig, x, y, tag, title, subtitle):
+    fig.text(x, y, tag, fontsize=12, fontweight="bold", color=INK, va="baseline")
+    fig.text(x + 0.017, y, title, fontsize=11.5, color=INK, va="baseline")
+    fig.text(x, y - 0.011, subtitle, fontsize=8.8, color=INK_2, va="top",
+             linespacing=1.55)
+
+
+def theta_diagram(fig, rect):
+    """A schematic definition of theta, on its own surface at a size where the four
+    labels fit, rather than squeezed on top of the network."""
+    ax = fig.add_axes(rect)
+    ax.set_xlim(0, 1.66)
+    ax.set_ylim(0, 1)
+    ax.set_aspect("equal")      # the angle has to be drawn true
+    ax.set_anchor("NW")
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.set_facecolor(SURFACE)
+    for sp in ax.spines.values():
+        sp.set_color("#e4e2dc")
+        sp.set_linewidth(0.7)
+
+    a = np.array([0.14, 0.24])
+    tip = np.array([1.34, 0.76])
+    u = (tip - a) / np.linalg.norm(tip - a)
+    mid = a + u * 0.74
+    ang = np.deg2rad(46.0)
+    d = np.array([u[0]*np.cos(ang) - u[1]*np.sin(ang),
+                  u[0]*np.sin(ang) + u[1]*np.cos(ang)])
+
+    ax.annotate("", xy=tip, xytext=a,
+                arrowprops=dict(arrowstyle="-|>", color=SERIES_2, lw=1.2,
+                                ls=(0, (4, 2.5)), shrinkA=0, shrinkB=0))
+    ax.plot(*zip(mid - d * 0.30, mid + d * 0.30), color=SERIES_1, lw=3.2,
+            solid_capstyle="round")
+    ax.plot(*a, "o", color=SERIES_2, ms=6)
+    ax.add_patch(matplotlib.patches.Arc(
+        mid, 0.40, 0.40, angle=0, theta1=np.rad2deg(np.arctan2(u[1], u[0])),
+        theta2=np.rad2deg(np.arctan2(d[1], d[0])), color=INK_2, lw=1.0))
+
+    bb = dict(fc=SURFACE, ec="none", alpha=0.95, pad=1.4)
+    ax.text(*(a + np.array([0.16, -0.10])), "apex", fontsize=8, color=SERIES_2,
+            ha="center", va="center", bbox=bb)
+    ax.text(1.32, 0.40, "outward radial", fontsize=8, color=SERIES_2, ha="right",
+            va="center", bbox=bb)
+    ax.text(*(mid + d * 0.44), "edge $e$", fontsize=8, color=SERIES_1, ha="center",
+            va="center", bbox=bb)
+    bis = (u + d) / np.linalg.norm(u + d)
+    ax.text(*(mid + bis * 0.34), r"$\theta_e$", fontsize=12, color=INK,
+            ha="center", va="center", bbox=bb)
+    return ax
+
+
+def note(ax, text, xy, xytext, ha="center"):
+    ax.annotate(text, xy=xy, xytext=xytext, fontsize=8.2, color=INK_2, ha=ha,
+                va="center", linespacing=1.4,
+                bbox=dict(fc=SURFACE, ec="none", alpha=0.85, pad=1.6),
+                arrowprops=dict(arrowstyle="-", color=INK_3, lw=0.8,
+                                shrinkA=1, shrinkB=2))
+
+
+def main():
+    V, F, E = load()
+    boundary = boundary_vertices(F)
+    apex = apex_point(V)
+    s2 = {frozenset((u, w)): sin2_theta(V, apex, u, w) for u, w, _ in E}
+    q = np.array([e[2] for e in E])
+    q_thr = float(np.percentile(q, Q_PCT))
+
+    off = extract(V, E, s2, boundary, LAMBDA_OFF, q_thr)
+    on = extract(V, E, s2, boundary, LAMBDA, q_thr)
+    w_on = costs(E, s2, LAMBDA)
+
+    corners = [v for v in boundary
+               if min(np.linalg.norm(V[v][:2] - np.array(c))
+                      for c in [(0, 0), (0, 1.2), (1.2, 0), (1.2, 1.2)]) < 0.06]
+
+    def corners_hit(res):
+        vs = {x for e in res["edges"] for x in tuple(e)}
+        return sum(1 for c in corners if c in vs)
+
+    def tangential(res):
+        return sum(1 for e in res["edges"] if s2[e] > 0.5)
+
+    # over what range of lambda is the extracted network unchanged?
+    plateau = [lam for lam in np.arange(1.0, 20.5, 0.5)
+               if extract(V, E, s2, boundary, float(lam), q_thr)["edges"] == on["edges"]]
+    lam_lo, lam_hi = min(plateau), max(plateau)
+    print(f"network identical to lambda={LAMBDA:g} for lambda in "
+          f"{lam_lo:g} – {lam_hi:g} (scanned 1 – 20 in steps of 0.5)")
+
+    print(f"q threshold (p{Q_PCT}) = {q_thr:.2f} -> {len(on['hi'])} high-force edges in "
+          f"{len(on['hi_comps'])} chains, {len(on['seeds'])} chain-end seeds")
+    print(f"cost range at lambda={LAMBDA:g}: {w_on.min():.3f} – {w_on.max():.1f}")
+    for name, res in [("lambda=0", off), (f"lambda={LAMBDA:g}", on)]:
+        print(f"{name:>10}: {len(res['edges']):3d} edges  {len(res['comps'])} components "
+              f"({len(res['kept'])} anchored, {len(res['dropped'])} discarded)  "
+              f"corners reached {corners_hit(res)}/4  tangential edges {tangential(res)}")
+
+    fig = plt.figure(figsize=(FIGW, FIGH), facecolor=SURFACE)
+    X1, X2, X3 = 0.055, 0.365, 0.675
+    ROW1, H1 = 0.560, 0.195
+    T1, T2 = 0.845, 0.455
+
+    # ------------------------------------------------- a  the weighted graph
+    ax_a = fig.add_axes(square(X1, ROW1, H1))
+    frame(ax_a)
+    # the slack web puts a long tail on w (up to ~590), so the ramp is cut at 20 and
+    # the tail folded into the top step, keeping contrast where the routes actually go
+    norm = LogNorm(vmin=max(w_on.min(), 1e-2), vmax=20.0)
+    pref = -np.log10(np.clip(w_on, 1e-3, None))
+    lw = 0.4 + 2.2 * (pref - pref.min()) / np.ptp(pref)
+    ax_a.add_collection(LineCollection([[V[u][:2], V[w][:2]] for u, w, _ in E],
+                                       array=w_on, cmap=COST_CMAP, norm=norm,
+                                       linewidths=lw, capstyle="round", zorder=1))
+    ax_a.plot(*apex, "o", color=SERIES_2, ms=5.5, zorder=6)
+    ax_a.text(*(apex + np.array([0.15, 0.055])), "apex", fontsize=8.2, color=SERIES_2,
+              ha="center", va="center",
+              bbox=dict(fc=SURFACE, ec="none", alpha=0.9, pad=1.4), zorder=7)
+    panel_title(fig, X1, T1, "a", "the mesh as a weighted graph",
+                f"traversal cost at λ = {LAMBDA:g}: dark and thick\n"
+                f"is cheap — high force density, running\n"
+                f"radially. Squaring q makes the preference\n"
+                f"steep rather than gentle, so a route is\n"
+                f"pulled hard onto the strongest edges.")
+
+    theta_diagram(fig, [0.735, 0.432, 0.1848, 0.115])
+    fig.text(0.735, 0.556, "how $\\theta_e$ is measured", fontsize=9, color=INK_2,
+             va="baseline")
+
+    cax = fig.add_axes([X1, 0.515, H1 * FIGH / FIGW, 0.010])
+    cb = fig.colorbar(plt.cm.ScalarMappable(norm=norm, cmap=COST_CMAP), cax=cax,
+                      orientation="horizontal", extend="max")
+    cb.set_label("traversal cost $w_e$   (log scale, cheap on the left)",
+                 fontsize=8.8, color=INK_2, labelpad=4)
+    cb.outline.set_visible(False)
+    cb.ax.tick_params(labelsize=8, colors=INK_2, length=2, pad=2)
+
+    # ------------------------------------------------- b  lambda = 0
+    ax_b = fig.add_axes(square(X2, ROW1, H1))
+    frame(ax_b)
+    draw_mesh(ax_b, V, E)
+    draw_cables(ax_b, V, off["edges"])
+    ax_b.plot(*apex, "o", color=SERIES_2, ms=5, zorder=5)
+    panel_title(fig, X2, T1, "b", "λ = 0, force density alone",
+                f"{len(off['edges'])} edges, and the diagonals never\n"
+                f"arrive: each one reaches an arch of\n"
+                f"comparable force, turns onto it and follows\n"
+                f"the perimeter instead. {corners_hit(off)} of the 4 corners\n"
+                f"are reached.")
+    hook = min(off["edges"],
+               key=lambda e: np.linalg.norm(np.mean([V[x][:2] for x in tuple(e)], axis=0)
+                                            - np.array([0.30, 0.95])))
+    note(ax_b, "the route turns off the\ndiagonal onto the arch",
+         np.mean([V[x][:2] for x in tuple(hook)], axis=0), (0.66, 1.09))
+
+    # ------------------------------------------------- c  lambda = 5
+    ax_c = fig.add_axes(square(X3, ROW1, H1))
+    frame(ax_c)
+    draw_mesh(ax_c, V, E)
+    draw_cables(ax_c, V, on["edges"])
+    ax_c.plot(*apex, "o", color=SERIES_2, ms=5, zorder=5)
+    for cv in corners:
+        ax_c.plot(*V[cv][:2], "o", color=SERIES_2, ms=4, zorder=5)
+    panel_title(fig, X3, T1, "c", f"λ = {LAMBDA:g}, with the radial term",
+                f"{len(on['edges'])} edges. The diagonals now cross the\n"
+                f"surface to all {corners_hit(on)} corners, and the arches\n"
+                f"survive anyway on force alone. Identical for\n"
+                f"every λ from {lam_lo:g} to {lam_hi:g}, so the value is not\n"
+                f"delicate.")
+
+    # ------------------------------------------------- d  assembled + filtered
+    ax_d = fig.add_axes(square(X1, 0.115, 0.245))
+    frame(ax_d)
+    draw_mesh(ax_d, V, E)
+    hi_e = on["hi_edges"]
+    draw_cables(ax_d, V, on["edges"] - hi_e, color="#9ec5f4", lw=2.0, zorder=2)
+    draw_cables(ax_d, V, on["edges"] & hi_e, color=SERIES_1, lw=2.8, zorder=3)
+    anchors = sorted({x for e in on["edges"] for x in tuple(e)} & boundary)
+    ax_d.plot([V[a][0] for a in anchors], [V[a][1] for a in anchors], "o",
+              color=SERIES_2, ms=4.6, zorder=6, ls="none")
+    panel_title(fig, X1, T2, "d", "assembled, then filtered on anchorage",
+                f"the {len(on['hi'])} high-force edges (dark) form "
+                f"{len(on['hi_comps'])} chains; each chain\nend then gets one least-cost "
+                f"route out to a support\n(light). {len(on['comps'])} components, "
+                f"{len(on['kept'])} anchored, {len(on['dropped'])} discarded — the\n"
+                f"filter is a safeguard, and here it removes nothing.")
+    leg = fig.legend(handles=[
+        plt.Line2D([], [], color=SERIES_1, lw=2.8, label="high-force chain"),
+        plt.Line2D([], [], color="#9ec5f4", lw=2.0, label="route to a support"),
+        plt.Line2D([], [], color=SERIES_2, marker="o", ls="none", ms=4.6,
+                   label=f"boundary anchor ({len(anchors)})")],
+        loc="lower left", bbox_to_anchor=(X1, 0.055), ncol=3, fontsize=8.6,
+        handlelength=1.6, borderpad=0.4, columnspacing=1.6, frameon=False)
+    for t in leg.get_texts():
+        t.set_color(INK_2)
+
+    # ------------------------------------------------- e  the cables in 3D
+    ax_e = fig.add_axes([0.400, 0.080, 0.575, 0.300], projection="3d",
+                        computed_zorder=False)
+    ax_e.set_proj_type("ortho")
+    ax_e.patch.set_visible(False)
+    ax_e.add_collection3d(Poly3DCollection([[V[i] for i in f] for f in F],
+                                           facecolors=SURFACE, alpha=0.72,
+                                           edgecolors="#cac8c2", linewidths=0.4,
+                                           zorder=1))
+    ax_e.add_collection3d(Line3DCollection(
+        [[V[a], V[b]] for a, b in (tuple(e) for e in on["edges"])],
+        colors=SERIES_1, linewidths=2.6, capstyle="round", zorder=3))
+    ax_e.scatter([V[a][0] for a in anchors], [V[a][1] for a in anchors],
+                 [V[a][2] for a in anchors], color=SERIES_2, s=14, zorder=4,
+                 depthshade=False)
+    ax_e.set_xlim(0.02, 1.18)
+    ax_e.set_ylim(0.02, 1.18)
+    ax_e.set_zlim(0.0, 0.42)
+    ax_e.set_box_aspect((1, 1, 0.40), zoom=1.5)
+    ax_e.view_init(elev=24, azim=-58)
+    ax_e.set_axis_off()
+    panel_title(fig, 0.400, T2, "e", "the cable trajectories",
+                "the retained network on the vault: two diagonals crossing at the apex,\n"
+                "four perimeter arches, each tied back to the boundary. Every chain ends\n"
+                "either on a support or on another anchored cable.")
+
+    # -------------------------------------------------------------- framing
+    fig.text(X1, 0.965, "Cable locations, read off the force-density network",
+             fontsize=15.5, color=INK, fontweight="semibold", va="baseline")
+    fig.text(X1, 0.945,
+             "The mesh is treated as a weighted graph in which an edge is cheap to "
+             "traverse where the force density is high and where it runs radially. "
+             "Dijkstra then returns the\ndominant tensile load paths, and the chains it "
+             "finds are kept only where they reach a support.",
+             fontsize=9.5, color=INK_2, va="top", linespacing=1.6)
+    fig.text(X1, 0.900,
+             r"$w_e \; = \; \frac{1}{q_e^{2}} \, \left(1 + \lambda \sin^{2}\theta_e\right)$",
+             fontsize=15, color=INK, va="baseline")
+    fig.text(X1, 0.882,
+             "$q_e$  edge force density        $\\theta_e$  angle between the edge and "
+             "the outward radial direction from the apex        $\\lambda$  weight on "
+             "that penalty",
+             fontsize=8.8, color=INK_2, va="top")
+
+    os.makedirs(os.path.dirname(OUT), exist_ok=True)
+    fig.savefig(OUT, dpi=300, facecolor=SURFACE)
+    print("wrote", OUT)
+
+
+if __name__ == "__main__":
+    main()
