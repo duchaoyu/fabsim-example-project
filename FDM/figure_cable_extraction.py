@@ -39,8 +39,9 @@ Panels:
   a  the force-density factor 1/q^2 (the part of the cost that IS per-edge)
   b  lambda = 0: force-density guidance alone, the path drifts onto the arches
   c  lambda = LAMBDA: the penalty restored, chains cross the surface
-  d  the assembled subgraph and the boundary-anchor test
-  e  the retained cable trajectories in 3D
+  d  lambda = LAMBDA_HIGH: a second value in the band, giving the identical network
+  e  the assembled subgraph and the boundary-anchor test
+  f  the retained cable trajectories in 3D
 
     python FDM/figure_cable_extraction.py
 """
@@ -72,6 +73,7 @@ THETA_MODE = "hybrid"   # "hybrid": a path's FIRST edge is referenced to the out
                         # a vertex-space Dijkstra suffices. Both give the same network
                         # here; hybrid holds it over a far wider band of lambda.
 LAMBDA = 15.0       # mid-band. Measured good range: 7 - 30 hybrid, 4 - 7.5 radial
+LAMBDA_HIGH = 20.0  # a second value inside the band, to show nothing moves
 LAMBDA_OFF = 0.0    # the comparison case: pure force-density guidance
 Q_THRESHOLD = 2.0   # force concentrations = edges with q >= this. A fixed value, not
                     # a percentile: the selected set is the same anywhere in
@@ -555,6 +557,10 @@ def main():
     mu_lo, mu_hi = min(mu_plateau), max(mu_plateau)
     print(f"network identical to mu={ANCHOR_COST:g} for mu in {mu_lo:g} – {mu_hi:g} "
           f"(scanned 0.5 – 40 in steps of 0.5)")
+    high = extract(V, E, s2, boundary, LAMBDA_HIGH, q_thr)
+    broke = extract(V, E, s2, boundary, 100.0, q_thr)
+    print(f"lambda={LAMBDA_HIGH:g}: {len(high['edges'])} edges, "
+          f"identical to lambda={LAMBDA:g}: {high['edges'] == on['edges']}")
     loose = extract(V, E, s2, boundary, LAMBDA, q_thr, anchor_cost=0.0)
     l_anc = {x for e in loose["edges"] for x in tuple(e)} & boundary
     print(f"for comparison, mu=0: {len(loose['edges'])} edges, "
@@ -569,8 +575,8 @@ def main():
               f"corners reached {corners_hit(res)}/4  tangential edges {tangential(res)}")
 
     fig = plt.figure(figsize=(FIGW, FIGH), facecolor=SURFACE)
-    X1, X2, X3 = 0.055, 0.365, 0.675
-    ROW1, H1 = 0.548, 0.190
+    X1, X2, X3, X4 = 0.055, 0.288, 0.521, 0.754
+    ROW1, H1 = 0.560, 0.150
     T1, T2 = 0.828, 0.455
 
     # ------------------------------------------------- a  the weighted graph
@@ -593,12 +599,13 @@ def main():
               ha="center", va="center",
               bbox=dict(fc=SURFACE, ec="none", alpha=0.9, pad=1.4), zorder=7)
     panel_title(fig, X1, T1, "a", "the mesh as a weighted graph",
-                f"the force-density factor 1/q²: dark and thick\n"
-                f"is cheap. Squaring q makes the preference\n"
-                f"steep rather than gentle, so a route is pulled\n"
-                f"hard onto the strongest edges. The directional\n"
-                f"factor is not drawn — it depends on how a path\n"
-                f"arrives, so it is not a property of the edge.")
+                f"the force-density factor 1/q²: dark\n"
+                f"and thick is cheap. Squaring q makes\n"
+                f"the preference steep rather than gentle,\n"
+                f"so a route is pulled hard onto the\n"
+                f"strongest edges. The directional factor\n"
+                f"is not drawn — it depends on how a path\n"
+                f"arrives, not on the edge.")
 
     theta_diagram(fig, [0.735, 0.395, 0.169, 0.105])
     fig.text(0.735, 0.540,
@@ -606,11 +613,11 @@ def main():
              "every edge after it from the one before",
              fontsize=8.6, color=INK_2, va="top", linespacing=1.5)
 
-    cax = fig.add_axes([X1, 0.505, H1 * FIGH / FIGW, 0.010])
+    cax = fig.add_axes([X1, 0.520, 0.20, 0.010])
     cb = fig.colorbar(plt.cm.ScalarMappable(norm=norm, cmap=COST_CMAP), cax=cax,
                       orientation="horizontal", extend="max")
-    cb.set_label("force-density factor $1/q_e^2$   (log scale, cheap on the left)",
-                 fontsize=8.8, color=INK_2, labelpad=4)
+    fig.text(X1, 0.501, "force-density factor $1/q_e^2$   (log scale, cheap on the "
+             "left)", fontsize=8.8, color=INK_2, ha="left", va="top")
     cb.outline.set_visible(False)
     cb.ax.tick_params(labelsize=8, colors=INK_2, length=2, pad=2)
 
@@ -623,9 +630,9 @@ def main():
     panel_title(fig, X2, T1, "b", "λ = 0, force density alone",
                 f"{len(off['edges'])} edges, and the diagonals never\n"
                 f"arrive: each one reaches an arch of\n"
-                f"comparable force, turns onto it and follows\n"
-                f"the perimeter instead. {corners_hit(off)} of the 4 corners\n"
-                f"are reached.")
+                f"comparable force, turns onto it and\n"
+                f"follows the perimeter instead.\n"
+                f"{corners_hit(off)} of the 4 corners are reached.")
     hook = min(off["edges"],
                key=lambda e: np.linalg.norm(np.mean([V[x][:2] for x in tuple(e)], axis=0)
                                             - np.array([0.30, 0.95])))
@@ -641,13 +648,34 @@ def main():
     for cv in corners:
         ax_c.plot(*V[cv][:2], "o", color=SERIES_2, ms=4, zorder=5)
     panel_title(fig, X3, T1, "c", f"λ = {LAMBDA:g}, with the turn penalty",
-                f"{len(on['edges'])} edges. The diagonals now cross the\n"
-                f"surface to all {corners_hit(on)} corners, and the arches\n"
-                f"survive anyway on force alone. Identical for\n"
-                f"every λ from {lam_lo:g} to {lam_hi:g}, so the value is not\n"
-                f"delicate.")
+                f"{len(on['edges'])} edges. The diagonals now cross\n"
+                f"the surface to all {corners_hit(on)} corners, and the\n"
+                f"arches survive anyway on force alone,\n"
+                f"each tied into a diagonal rather than\n"
+                f"to the boundary.")
 
-    # ------------------------------------------------- d  assembled + filtered
+    # ------------------------------------------------- d  a higher lambda
+    ax_hi = fig.add_axes(square(X4, ROW1, H1))
+    frame(ax_hi)
+    draw_mesh(ax_hi, V, E)
+    draw_cables(ax_hi, V, high["edges"])
+    ax_hi.plot(*apex, "o", color=SERIES_2, ms=5, zorder=5)
+    for cv in corners:
+        ax_hi.plot(*V[cv][:2], "o", color=SERIES_2, ms=4, zorder=5)
+    same = high["edges"] == on["edges"]
+    panel_title(fig, X4, T1, "d", f"λ = {LAMBDA_HIGH:g}, further up the band",
+                (f"the same {len(high['edges'])} edges as c, edge for edge.\n"
+                 f"Nothing moves anywhere in λ = {lam_lo:g} – {lam_hi:g}, so λ\n"
+                 f"picks the regime, not the layout within\n"
+                 f"it. Past the band the arches detach: at\n"
+                 f"λ = 100, {len(broke['comps'])} components on "
+                 f"{len({x for e in broke['edges'] for x in tuple(e)} & boundary)} "
+                 f"anchors."
+                 if same else
+                 f"{len(high['edges'])} edges — NOT identical to c, so the\n"
+                 f"plateau claim needs re-checking."))
+
+    # ------------------------------------------------- e  assembled + filtered
     ax_d = fig.add_axes(square(X1, 0.115, 0.245))
     frame(ax_d)
     draw_mesh(ax_d, V, E)
@@ -681,7 +709,7 @@ def main():
     print("wrote data/crossvault/cables_ordered.json")
     ax_d.plot([V[a][0] for a in anchors], [V[a][1] for a in anchors], "o",
               color=SERIES_2, ms=4.6, zorder=6, ls="none")
-    panel_title(fig, X1, T2, "d", "assembled, then filtered on anchorage",
+    panel_title(fig, X1, T2, "e", "assembled, then filtered on anchorage",
                 f"the {len(on['hi'])} high-force edges (dark) form "
                 f"{len(on['hi_comps'])} chains, retained\nstrongest first, so the diagonals "
                 f"are already in place when\nthe arches look for a termination (light). "
@@ -733,7 +761,7 @@ def main():
     ax_e.set_box_aspect((1, 1, 0.40), zoom=1.5)
     ax_e.view_init(elev=24, azim=-58)
     ax_e.set_axis_off()
-    panel_title(fig, 0.400, T2, "e", "the cable trajectories",
+    panel_title(fig, 0.400, T2, "f", "the cable trajectories",
                 f"two diagonals crossing at the apex carry every arch end that reaches\n"
                 f"them, so the four arches hang off the diagonals rather than off the\n"
                 f"boundary, and the whole network lands on just {len(anchors)} corner anchors.")
