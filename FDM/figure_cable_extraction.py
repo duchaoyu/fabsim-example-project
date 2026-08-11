@@ -6,9 +6,16 @@ Implements the method as written: the mesh is read as a weighted graph with
 
 where q_e is the edge force density and theta_e the angle between the edge and the
 outward radial direction from the apex. The high-force edges (top decile of q) form
-the chains; Dijkstra then gives the least-cost route from each chain END out to a
-support. Routes and chains are assembled into one subgraph, and only the components
-reaching a boundary vertex — directly or through another retained cable — are kept.
+the chains, retained strongest first; Dijkstra then routes each chain END to whichever
+termination is cheapest — an already-retained cable for nothing, or a new boundary
+anchor at a cost ANCHOR_COST. Only components reaching a boundary vertex, directly or
+through another retained cable, are kept.
+
+ANCHOR_COST is what decides whether the arches hang off the boundary or off the
+diagonals. At 0 each arch end takes the nearer termination, which is the boundary
+one edge away: 5 separate components on 12 anchors. From about 2 the arches start
+tying into the diagonals, and from 3 upward the result is one connected network on
+the 4 corners, unchanged all the way to 40.
 
 Seeding at the chain ends rather than at every high-force vertex matters: seeding
 everywhere ties each arch back at every node (a comb of ties), and dropping the
@@ -45,6 +52,16 @@ OUT = os.path.join(HERE, "figures", "cable_extraction.png")
 LAMBDA = 5.0        # the network is identical for every lambda in 3.5 - 20 (checked)
 LAMBDA_OFF = 0.0    # the comparison case: pure force-density guidance
 Q_PCT = 90          # force concentrations = the top decile of q
+ANCHOR_COST = 5.0      # what a NEW boundary anchor costs a route, against 0 for
+                       # tying into an already-retained cable. At 0 a route takes
+                       # whichever termination is nearer and each arch ties to the
+                       # boundary (5 components, 12 anchors); from about 2 the arches
+                       # tie into the diagonals instead, and from 5 upward the result
+                       # is one connected network on 4 corner anchors.
+TIE_TO_CABLES = True   # let a chain end on an already-retained cable, not only
+                       # on the boundary — this is what ties the arches into the
+                       # diagonals. Set False for one route per chain end straight
+                       # out to a support.
 
 INK = "#0b0b0b"
 INK_2 = "#52514e"
@@ -135,40 +152,65 @@ def graph_components(edges):
     return comps, adj
 
 
-def extract(V, E, s2, boundary, lam, q_threshold):
+def extract(V, E, s2, boundary, lam, q_threshold, tie_to_cables=TIE_TO_CABLES,
+            anchor_cost=ANCHOR_COST):
     """The high-force chains, plus the least-cost route that carries each chain END
     out to a support, then filtered on boundary contact. Seeding at the chain ends
     rather than at every high-force vertex is what keeps one tie per chain end
-    instead of a tie at every node along a chain."""
+    instead of a tie at every node along a chain.
+
+    tie_to_cables decides what a route is allowed to terminate on. With it off, the
+    only targets are boundary vertices, so every chain runs its own way out to a
+    support. With it on, the chains are retained in order of dominance (strongest
+    first) and each later chain may also stop on an already-retained cable, since
+    force handed to an anchored cable still reaches the support. On this vault that
+    is what ties the four arches into the two diagonals instead of sending each arch
+    end out to the boundary on its own."""
     n = max(V) + 1
     w = costs(E, s2, lam)
     rows = [e[0] for e in E] + [e[1] for e in E]
     cols = [e[1] for e in E] + [e[0] for e in E]
     G = coo_matrix((np.r_[w, w], (rows, cols)), shape=(n, n)).tocsr()
 
-    # multi-source Dijkstra over the whole boundary: pred[v] is then the next step
-    # along v's cheapest route to a support
-    _dist, pred, _src = dijkstra(G, indices=sorted(boundary), min_only=True,
-                                 return_predecessors=True)
-
     hi = [e for e in E if e[2] >= q_threshold]
     hi_edges = {frozenset((u, w_)) for u, w_, _ in hi}
     hi_comps, hi_adj = graph_components(hi_edges)
-    seeds = []
-    for comp in hi_comps:
-        tips = [v for v in comp if len(hi_adj[v]) == 1]
-        seeds += tips or sorted(comp)
+    # strongest chain first, so the diagonals are retained before the arches and are
+    # therefore available as a target for them
+    order = sorted(hi_comps, key=lambda c: -max(
+        qq for u, w_, qq in hi if u in c and w_ in c))
 
     chains = set(hi_edges)
-    routes = set()
-    for s in seeds:
-        c = s
-        while c not in boundary:
-            p = int(pred[c])
-            if p < 0:
-                break
-            routes.add(frozenset((p, c)))
-            c = p
+    routes, seeds = set(), []
+    cable_v = set()                 # vertices already retained as cable
+    for comp in order:
+        tips = [v for v in comp if len(hi_adj[v]) == 1] or sorted(comp)
+        seeds += tips
+        # A virtual super-node holds the two ways a route may terminate: on an
+        # already-retained cable (free) or on the boundary (costing anchor_cost, a
+        # new support to detail and build). Dijkstra from it then gives every vertex
+        # its cheapest termination, and anchor_cost is the knob that trades a new
+        # anchor against tying into a cable that is already anchored.
+        ends = {b: anchor_cost for b in boundary}
+        if tie_to_cables:
+            for v in cable_v:
+                ends[v] = 0.0
+        r = rows + [n] * len(ends) + list(ends)
+        c_ = cols + list(ends) + [n] * len(ends)
+        vals = np.r_[w, w, list(ends.values()), list(ends.values())]
+        Gv = coo_matrix((vals, (r, c_)), shape=(n + 1, n + 1)).tocsr()
+        _d, pred, _s = dijkstra(Gv, indices=[n], min_only=True,
+                                return_predecessors=True)
+        grown = set()
+        for t in tips:
+            cur = t
+            while cur != n and int(pred[cur]) >= 0:
+                p = int(pred[cur])
+                if p != n:                      # skip the virtual termination edge
+                    routes.add(frozenset((p, cur)))
+                    grown.update((p, cur))
+                cur = p
+        cable_v |= comp | grown
     chains |= routes
 
     comps, _ = graph_components(chains)
@@ -297,6 +339,17 @@ def main():
     print(f"network identical to lambda={LAMBDA:g} for lambda in "
           f"{lam_lo:g} – {lam_hi:g} (scanned 1 – 20 in steps of 0.5)")
 
+    mu_plateau = [mu for mu in np.arange(0.5, 40.5, 0.5)
+                  if extract(V, E, s2, boundary, LAMBDA, q_thr,
+                             anchor_cost=float(mu))["edges"] == on["edges"]]
+    mu_lo, mu_hi = min(mu_plateau), max(mu_plateau)
+    print(f"network identical to mu={ANCHOR_COST:g} for mu in {mu_lo:g} – {mu_hi:g} "
+          f"(scanned 0.5 – 40 in steps of 0.5)")
+    loose = extract(V, E, s2, boundary, LAMBDA, q_thr, anchor_cost=0.0)
+    l_anc = {x for e in loose["edges"] for x in tuple(e)} & boundary
+    print(f"for comparison, mu=0: {len(loose['edges'])} edges, "
+          f"{len(loose['comps'])} components, {len(l_anc)} anchors")
+
     print(f"q threshold (p{Q_PCT}) = {q_thr:.2f} -> {len(on['hi'])} high-force edges in "
           f"{len(on['hi_comps'])} chains, {len(on['seeds'])} chain-end seeds")
     print(f"cost range at lambda={LAMBDA:g}: {w_on.min():.3f} – {w_on.max():.1f}")
@@ -307,8 +360,8 @@ def main():
 
     fig = plt.figure(figsize=(FIGW, FIGH), facecolor=SURFACE)
     X1, X2, X3 = 0.055, 0.365, 0.675
-    ROW1, H1 = 0.560, 0.195
-    T1, T2 = 0.845, 0.455
+    ROW1, H1 = 0.548, 0.190
+    T1, T2 = 0.828, 0.455
 
     # ------------------------------------------------- a  the weighted graph
     ax_a = fig.add_axes(square(X1, ROW1, H1))
@@ -332,11 +385,11 @@ def main():
                 f"steep rather than gentle, so a route is\n"
                 f"pulled hard onto the strongest edges.")
 
-    theta_diagram(fig, [0.735, 0.432, 0.1848, 0.115])
-    fig.text(0.735, 0.556, "how $\\theta_e$ is measured", fontsize=9, color=INK_2,
+    theta_diagram(fig, [0.735, 0.418, 0.1848, 0.115])
+    fig.text(0.735, 0.542, "how $\\theta_e$ is measured", fontsize=9, color=INK_2,
              va="baseline")
 
-    cax = fig.add_axes([X1, 0.515, H1 * FIGH / FIGW, 0.010])
+    cax = fig.add_axes([X1, 0.505, H1 * FIGH / FIGW, 0.010])
     cb = fig.colorbar(plt.cm.ScalarMappable(norm=norm, cmap=COST_CMAP), cax=cax,
                       orientation="horizontal", extend="max")
     cb.set_label("traversal cost $w_e$   (log scale, cheap on the left)",
@@ -389,10 +442,11 @@ def main():
               color=SERIES_2, ms=4.6, zorder=6, ls="none")
     panel_title(fig, X1, T2, "d", "assembled, then filtered on anchorage",
                 f"the {len(on['hi'])} high-force edges (dark) form "
-                f"{len(on['hi_comps'])} chains; each chain\nend then gets one least-cost "
-                f"route out to a support\n(light). {len(on['comps'])} components, "
-                f"{len(on['kept'])} anchored, {len(on['dropped'])} discarded — the\n"
-                f"filter is a safeguard, and here it removes nothing.")
+                f"{len(on['hi_comps'])} chains, retained\nstrongest first, so the diagonals "
+                f"are already in place when\nthe arches look for a termination (light). "
+                f"{len(on['comps'])} component,\n"
+                f"{len(on['kept'])} anchored, {len(on['dropped'])} discarded, "
+                f"{len(anchors)} anchors instead of 12.")
     leg = fig.legend(handles=[
         plt.Line2D([], [], color=SERIES_1, lw=2.8, label="high-force chain"),
         plt.Line2D([], [], color="#9ec5f4", lw=2.0, label="route to a support"),
@@ -425,26 +479,28 @@ def main():
     ax_e.view_init(elev=24, azim=-58)
     ax_e.set_axis_off()
     panel_title(fig, 0.400, T2, "e", "the cable trajectories",
-                "the retained network on the vault: two diagonals crossing at the apex,\n"
-                "four perimeter arches, each tied back to the boundary. Every chain ends\n"
-                "either on a support or on another anchored cable.")
+                f"two diagonals crossing at the apex carry every arch end that reaches\n"
+                f"them, so the four arches hang off the diagonals rather than off the\n"
+                f"boundary, and the whole network lands on just {len(anchors)} corner anchors.")
 
     # -------------------------------------------------------------- framing
     fig.text(X1, 0.965, "Cable locations, read off the force-density network",
              fontsize=15.5, color=INK, fontweight="semibold", va="baseline")
-    fig.text(X1, 0.945,
+    fig.text(X1, 0.947,
              "The mesh is treated as a weighted graph in which an edge is cheap to "
              "traverse where the force density is high and where it runs radially. "
              "Dijkstra then returns the\ndominant tensile load paths, and the chains it "
-             "finds are kept only where they reach a support.",
+             "finds are kept only where they reach a support. A chain ends wherever "
+             "termination is cheapest: on an\nalready-retained cable for nothing, or on "
+             "the boundary at the price of a new anchor.",
              fontsize=9.5, color=INK_2, va="top", linespacing=1.6)
-    fig.text(X1, 0.900,
+    fig.text(X1, 0.878,
              r"$w_e \; = \; \frac{1}{q_e^{2}} \, \left(1 + \lambda \sin^{2}\theta_e\right)$",
              fontsize=15, color=INK, va="baseline")
-    fig.text(X1, 0.882,
-             "$q_e$  edge force density        $\\theta_e$  angle between the edge and "
-             "the outward radial direction from the apex        $\\lambda$  weight on "
-             "that penalty",
+    fig.text(X1, 0.860,
+             "$q_e$  force density        $\\theta_e$  angle to the outward radial "
+             "direction from the apex        $\\lambda$  weight on that penalty"
+             f"        $\\mu$ = {ANCHOR_COST:g}  cost of a new anchor",
              fontsize=8.8, color=INK_2, va="top")
 
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
