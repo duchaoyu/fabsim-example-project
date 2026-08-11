@@ -49,9 +49,16 @@ import collections
 import heapq
 import json
 import os
+import shutil
 
 import matplotlib
 matplotlib.use("Agg")
+# Vector export for Illustrator. fonttype 42 embeds TrueType rather than Type 3, so
+# labels arrive as editable text instead of outlines; svg.fonttype "none" leaves SVG
+# text as <text> referencing the font by name.
+matplotlib.rcParams["pdf.fonttype"] = 42
+matplotlib.rcParams["ps.fonttype"] = 42
+matplotlib.rcParams["svg.fonttype"] = "none"
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.collections import LineCollection
@@ -104,16 +111,30 @@ INK_2 = "#52514e"
 INK_3 = "#8a8983"
 SURFACE = "#fcfcfb"
 MESH = "#e2e0da"
-SERIES_1 = "#2a78d6"   # cables
-SERIES_2 = "#eb6834"   # apex, anchors, the theta construction
+RED = "#e34948"        # the palette's red
+SERIES_1 = RED         # cables
+SERIES_2 = "#2a78d6"   # apex, anchors, the theta construction — blue against the red
+                       # cables: the documented diverging pair, so the two never read
+                       # as the same family
 
-# one-hue blue ramp, reversed so that *cheap to traverse* reads dark
-SEQ_BLUE = LinearSegmentedColormap.from_list("seq_blue", [
-    "#cde2fb", "#9ec5f4", "#6da7ec", "#3987e5", "#256abf", "#184f95", "#0d366b",
+
+def _blend(c1, c2, t):
+    a, b = np.array(to_rgb(c1)), np.array(to_rgb(c2))
+    return tuple((1 - t) * a + t * b)
+
+
+# one-hue red ramp, light -> dark, stepped off the palette's red by blending toward
+# the surface at one end and toward ink at the other so no step is eyeballed.
+# Reversed for the cost field so that *cheap to traverse* reads dark.
+SEQ_RED = LinearSegmentedColormap.from_list("seq_red", [
+    _blend(SURFACE, RED, 0.16), _blend(SURFACE, RED, 0.32),
+    _blend(SURFACE, RED, 0.50), _blend(SURFACE, RED, 0.70), RED,
+    _blend(RED, INK, 0.22), _blend(RED, INK, 0.45),
 ])
-COST_CMAP = SEQ_BLUE.reversed()
+COST_CMAP = SEQ_RED.reversed()
+ROUTE_LIGHT = _blend(SURFACE, RED, 0.42)   # the tie routes, a lighter step of the same hue
 
-FIGW, FIGH = 12.4, 12.0
+FIGW, FIGH = 16.5, 13.0
 PLAN_LIM = (-0.075, 1.275)
 
 
@@ -597,9 +618,9 @@ def main():
               f"corners reached {corners_hit(res)}/4  tangential edges {tangential(res)}")
 
     fig = plt.figure(figsize=(FIGW, FIGH), facecolor=SURFACE)
-    X1, X2, X3, X4 = 0.055, 0.288, 0.521, 0.754
-    ROW1, H1 = 0.560, 0.150
-    T1, T2 = 0.828, 0.455
+    X1, X2, X3, X4 = 0.045, 0.280, 0.515, 0.750
+    ROW1, H1 = 0.506, 0.269        # 3.5 in squares, as in the
+    T1, T2 = 0.848, 0.405          # stiffener figure
 
     # ------------------------------------------------- a  the weighted graph
     ax_a = fig.add_axes(square(X1, ROW1, H1))
@@ -621,27 +642,33 @@ def main():
               ha="center", va="center",
               bbox=dict(fc=SURFACE, ec="none", alpha=0.9, pad=1.4), zorder=7)
     panel_title(fig, X1, T1, "a", "the mesh as a weighted graph",
-                f"the force-density factor 1/q²: dark\n"
-                f"and thick is cheap. Squaring q makes\n"
-                f"the preference steep rather than gentle,\n"
-                f"so a route is pulled hard onto the\n"
-                f"strongest edges. The directional factor\n"
-                f"is not drawn — it depends on how a path\n"
-                f"arrives, not on the edge.")
+                f"the force-density factor 1/q²: dark and thick is cheap.\n"
+                f"Squaring q makes the preference steep rather than gentle,\n"
+                f"so a route is pulled hard onto the strongest edges. The\n"
+                f"directional factor is not drawn — it depends on how a\n"
+                f"path arrives, not on the edge.")
 
-    theta_diagram(fig, [0.735, 0.395, 0.169, 0.105])
-    fig.text(0.735, 0.540,
+    theta_diagram(fig, [0.815, 0.355, 0.137, 0.105])
+    fig.text(0.760, 0.490,
              "how $\\theta$ is measured: a route's first edge from\nthe radial, "
              "every edge after it from the one before",
              fontsize=8.6, color=INK_2, va="top", linespacing=1.5)
 
-    cax = fig.add_axes([X1, 0.520, 0.20, 0.010])
-    cb = fig.colorbar(plt.cm.ScalarMappable(norm=norm, cmap=COST_CMAP), cax=cax,
-                      orientation="horizontal", extend="max")
-    fig.text(X1, 0.501, "force-density factor $1/q_e^2$   (log scale, cheap on the "
-             "left)", fontsize=8.8, color=INK_2, ha="left", va="top")
-    cb.outline.set_visible(False)
-    cb.ax.tick_params(labelsize=8, colors=INK_2, length=2, pad=2)
+    # drawn as a mesh rather than with fig.colorbar, which renders the ramp as an
+    # embedded raster image — this keeps the whole page live vector for Illustrator
+    cax = fig.add_axes([X1, 0.468, 0.16, 0.009])
+    ramp = np.geomspace(norm.vmin, norm.vmax, 240)
+    cax.pcolormesh(ramp, np.array([0.0, 1.0]), ramp[None, :-1], cmap=COST_CMAP,
+                   norm=norm, shading="flat", linewidth=0)
+    cax.set_xscale("log")
+    cax.set_xlim(norm.vmin, norm.vmax)
+    cax.set_yticks([])
+    cax.tick_params(labelsize=8, colors=INK_2, length=2, pad=2)
+    for sp in cax.spines.values():
+        sp.set_visible(False)
+    fig.text(X1, 0.452, "force-density factor $1/q_e^2$   (log scale, cheap on the "
+             f"left; the top step holds everything ≥ {norm.vmax:g})",
+             fontsize=8.8, color=INK_2, ha="left", va="top")
 
     # ------------------------------------------------- b  lambda = 0
     ax_b = fig.add_axes(square(X2, ROW1, H1))
@@ -650,11 +677,10 @@ def main():
     draw_cables(ax_b, V, off["edges"])
     ax_b.plot(*apex, "o", color=SERIES_2, ms=5, zorder=5)
     panel_title(fig, X2, T1, "b", "λ = 0, force density alone",
-                f"{len(off['edges'])} edges, and the diagonals never\n"
-                f"arrive: each one reaches an arch of\n"
-                f"comparable force, turns onto it and\n"
-                f"follows the perimeter instead.\n"
-                f"{corners_hit(off)} of the 4 corners are reached.")
+                f"{len(off['edges'])} edges, and the diagonals never arrive: each one\n"
+                f"reaches an arch of comparable force, turns onto it and\n"
+                f"follows the perimeter instead. {corners_hit(off)} of the 4 corners\n"
+                f"are reached.")
     hook = min(off["edges"],
                key=lambda e: np.linalg.norm(np.mean([V[x][:2] for x in tuple(e)], axis=0)
                                             - np.array([0.30, 0.95])))
@@ -670,11 +696,10 @@ def main():
     for cv in corners:
         ax_c.plot(*V[cv][:2], "o", color=SERIES_2, ms=4, zorder=5)
     panel_title(fig, X3, T1, "c", f"λ = {LAMBDA:g}, with the turn penalty",
-                f"{len(on['edges'])} edges. The diagonals now cross\n"
-                f"the surface to all {corners_hit(on)} corners, and the\n"
-                f"arches survive anyway on force alone,\n"
-                f"each tied into a diagonal rather than\n"
-                f"to the boundary.")
+                f"{len(on['edges'])} edges. The diagonals now cross the surface to\n"
+                f"all {corners_hit(on)} corners, and the arches survive anyway on force\n"
+                f"alone, each tied into a diagonal rather than to the\n"
+                f"boundary.")
 
     # ------------------------------------------------- d  a higher lambda
     ax_hi = fig.add_axes(square(X4, ROW1, H1))
@@ -686,10 +711,9 @@ def main():
         ax_hi.plot(*V[cv][:2], "o", color=SERIES_2, ms=4, zorder=5)
     same = high["edges"] == on["edges"]
     panel_title(fig, X4, T1, "d", f"λ = {LAMBDA_HIGH:g}, further up the band",
-                (f"the same {len(high['edges'])} edges as c, edge for edge.\n"
-                 f"Nothing moves anywhere in λ = {lam_lo:g} – {lam_hi:g}, so λ\n"
-                 f"picks the regime, not the layout within\n"
-                 f"it. Past the band the arches detach: at\n"
+                (f"the same {len(high['edges'])} edges as c, edge for edge. Nothing moves\n"
+                 f"anywhere in λ = {lam_lo:g} – {lam_hi:g}, so λ picks the regime, not the\n"
+                 f"layout within it. Past the band the arches detach: at\n"
                  f"λ = 100, {len(broke['comps'])} components on "
                  f"{len({x for e in broke['edges'] for x in tuple(e)} & boundary)} "
                  f"anchors."
@@ -698,11 +722,11 @@ def main():
                  f"plateau claim needs re-checking."))
 
     # ------------------------------------------------- e  assembled + filtered
-    ax_d = fig.add_axes(square(X1, 0.115, 0.245))
+    ax_d = fig.add_axes(square(X1, 0.055, 0.280))
     frame(ax_d)
     draw_mesh(ax_d, V, E)
     hi_e = on["hi_edges"]
-    draw_cables(ax_d, V, on["edges"] - hi_e, color="#9ec5f4", lw=2.0, zorder=2)
+    draw_cables(ax_d, V, on["edges"] - hi_e, color=ROUTE_LIGHT, lw=2.0, zorder=2)
     draw_cables(ax_d, V, on["edges"] & hi_e, color=SERIES_1, lw=2.8, zorder=3)
     anchors = sorted({x for e in on["edges"] for x in tuple(e)} & boundary)
 
@@ -738,16 +762,15 @@ def main():
     ax_d.plot([V[a][0] for a in anchors], [V[a][1] for a in anchors], "o",
               color=SERIES_2, ms=4.6, zorder=6, ls="none")
     panel_title(fig, X1, T2, "e", "assembled, then filtered on anchorage",
-                f"the {len(on['hi'])} high-force edges (dark) form "
-                f"{len(on['hi_comps'])} chains, retained\nstrongest first, so the diagonals "
-                f"are already in place when\nthe arches look for a termination (light). "
-                f"{len(on['comps'])} component,\n"
-                f"{len(on['kept'])} anchored, {len(on['dropped'])} discarded, "
-                f"{len(anchors)} anchors instead of 12.\nTraced into {len(cables)} "
-                f"cables, numbered by peak force density: {n_aa} running anchor to "
-                f"anchor\nand {len(cables) - n_aa} from one diagonal to the other. Ties "
-                f"run outward only, so those\n{len(arch_len)} come out within "
-                f"{arch_spread:.1f} % of each other rather than {7.0:.0f} %.")
+                f"the {len(on['hi'])} high-force edges (dark) form {len(on['hi_comps'])} "
+                f"chains, retained strongest first, so the diagonals are\nalready in place "
+                f"when the arches look for a termination (light). {len(on['comps'])} "
+                f"component, {len(on['kept'])} anchored, "
+                f"{len(on['dropped'])} discarded,\n{len(anchors)} anchors instead of 12. "
+                f"Traced into {len(cables)} cables: {n_aa} run anchor to anchor, "
+                f"{len(cables) - n_aa} diagonal to diagonal.\nTies run outward only, so "
+                f"those {len(arch_len)} come out within {arch_spread:.1f} % of each other "
+                f"rather than {7.0:.0f} %.")
     for i, c in enumerate(cables, 1):
         # a quarter along, not the midpoint: both diagonals share vertex 70 at their
         # centre, so midpoint labels would sit on top of each other
@@ -762,10 +785,10 @@ def main():
 
     leg = fig.legend(handles=[
         plt.Line2D([], [], color=SERIES_1, lw=2.8, label="high-force chain"),
-        plt.Line2D([], [], color="#9ec5f4", lw=2.0, label="route to a support"),
+        plt.Line2D([], [], color=ROUTE_LIGHT, lw=2.0, label="route to a support"),
         plt.Line2D([], [], color=SERIES_2, marker="o", ls="none", ms=4.6,
                    label=f"boundary anchor ({len(anchors)})")],
-        loc="lower left", bbox_to_anchor=(X1, 0.055), ncol=3, fontsize=8.6,
+        loc="lower left", bbox_to_anchor=(X1, 0.012), ncol=3, fontsize=8.6,
         handlelength=1.6, borderpad=0.4, columnspacing=1.6, frameon=False)
     for t in leg.get_texts():
         t.set_color(INK_2)
@@ -788,18 +811,18 @@ def main():
     ax_e.set_xlim(0.02, 1.18)
     ax_e.set_ylim(0.02, 1.18)
     ax_e.set_zlim(0.0, 0.42)
-    ax_e.set_box_aspect((1, 1, 0.40), zoom=1.5)
+    ax_e.set_box_aspect((1, 1, 0.40), zoom=1.32)
     ax_e.view_init(elev=24, azim=-58)
     ax_e.set_axis_off()
-    panel_title(fig, 0.400, T2, "f", "the cable trajectories",
+    panel_title(fig, 0.430, T2, "f", "the cable trajectories",
                 f"two diagonals crossing at the apex carry every arch end that reaches\n"
                 f"them, so the four arches hang off the diagonals rather than off the\n"
                 f"boundary, and the whole network lands on just {len(anchors)} corner anchors.")
 
     # -------------------------------------------------------------- framing
-    fig.text(X1, 0.965, "Cable locations, read off the force-density network",
+    fig.text(X1, 0.972, "Cable locations, read off the force-density network",
              fontsize=15.5, color=INK, fontweight="semibold", va="baseline")
-    fig.text(X1, 0.947,
+    fig.text(X1, 0.952,
              "The mesh is treated as a weighted graph in which an edge is cheap to "
              "traverse where the force density is high and where the path\ndoes not "
              "turn. Dijkstra then returns the dominant tensile load paths, and the "
@@ -807,10 +830,10 @@ def main():
              "on an already-retained cable for nothing, or on the boundary at the price "
              "of a new anchor.",
              fontsize=9.5, color=INK_2, va="top", linespacing=1.6)
-    fig.text(X1, 0.878,
+    fig.text(X1, 0.890,
              r"$w_e \; = \; \frac{1}{q_e^{2}} \, \left(1 + \lambda \sin^{2}\theta_e\right)$",
              fontsize=15, color=INK, va="baseline")
-    fig.text(X1, 0.860,
+    fig.text(X1, 0.872,
              "$q_e$  force density        $\\theta_e$  angle to the reference "
              "direction, defined bottom right        "
              f"$\\lambda$ = {LAMBDA:g}  weight on the penalty        "
@@ -819,7 +842,15 @@ def main():
 
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     fig.savefig(OUT, dpi=300, facecolor=SURFACE)
-    print("wrote", OUT)
+    stem = os.path.splitext(OUT)[0]
+    for ext in ("pdf", "svg"):
+        fig.savefig(f"{stem}.{ext}", facecolor=SURFACE)
+    # Illustrator's own format is PDF-based, so the PDF opens directly under a .ai
+    # name; everything stays live vector, nothing is flattened.
+    shutil.copyfile(f"{stem}.pdf", f"{stem}.ai")
+    for ext in ("png", "pdf", "svg", "ai"):
+        f = f"{stem}.{ext}"
+        print(f"wrote {os.path.relpath(f, HERE)}  ({os.path.getsize(f)/1024:.0f} kB)")
 
 
 if __name__ == "__main__":
