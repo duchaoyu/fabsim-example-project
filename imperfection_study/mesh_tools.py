@@ -36,6 +36,31 @@ def save_off(path, V, F):
             f.write(f"3 {tri[0]} {tri[1]} {tri[2]}\n")
 
 
+def boundary_vertices(F):
+    """Vertices on the mesh boundary, as a sorted index array.
+
+    Topological — an edge used by exactly one face is a boundary edge — which is
+    the same test the solver uses to pick the clamped degrees of freedom
+    (fem_batch_sensitivity.cpp, findBoundaryVertices).  A geometric test would not
+    do: it has to agree with what is actually held fixed, and on a flat rest mesh
+    there is no z to separate boundary from interior at all.
+    """
+    from collections import Counter
+    seen = Counter()
+    for tri in F:
+        for a, b in ((tri[0], tri[1]), (tri[1], tri[2]), (tri[2], tri[0])):
+            seen[(min(a, b), max(a, b))] += 1
+    return np.array(sorted({v for e, n in seen.items() if n == 1 for v in e}),
+                    dtype=int)
+
+
+def interior_mask(V, F):
+    """Boolean mask of the free (unclamped) vertices."""
+    m = np.ones(len(V), dtype=bool)
+    m[boundary_vertices(F)] = False
+    return m
+
+
 def boundary_radius(V):
     """Mean radius of the outermost ring of vertices, in metres.
 

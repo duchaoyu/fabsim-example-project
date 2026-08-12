@@ -95,7 +95,7 @@ def load_runs(path):
     out = {}
     for r in rows:
         for k, v in list(r.items()):
-            if k not in ("run", "factor", "mesh"):
+            if k not in ("run", "factor", "mesh", "geometry"):
                 r[k] = float(v) if v not in ("", "nan") else float("nan")
         out[r["run"]] = r
     return out
@@ -109,7 +109,13 @@ def load_floor(path):
 
 
 def sensitivities(runs):
-    """Per-factor table rows."""
+    """Per-factor table rows.
+
+    The nominal value and the relative perturbation are read back from the run
+    CSV rather than recomputed from the config, so this works for any geometry:
+    the nominal stretch factors differ between the disc and a fitted case study,
+    and delta_R is relative to each geometry's own characteristic radius.
+    """
     base = runs["A0"]
     pairs = {}
     for run_id, factor, sign in cfg.BLOCK_A:
@@ -121,12 +127,12 @@ def sensitivities(runs):
     for factor in cfg.BLOCK_A_FACTORS:
         rp, rm = pairs[factor][+1], pairs[factor][-1]
         tol = TOLERANCES[factor]
-        x0 = cfg.NOMINAL[factor]
-        rel = tol.rel_at(x0)
+        x0 = rp["value"]
+        rel = abs(rp["perturbed"] - x0) / x0
 
         row = {"factor": factor,
                "nominal": x0,
-               "delta_abs": tol.absolute(x0),
+               "delta_abs": abs(rp["perturbed"] - x0),
                "delta_rel": rel,
                "kind": "+".join(tol.kind),
                "status": tol.status}
@@ -148,6 +154,17 @@ def sensitivities(runs):
         row["L_pos_mean"]  = 0.5 * (lp + lm)
         row["L_pos_asym"]  = abs(lp - lm) / (0.5 * (lp + lm)) if (lp + lm) else np.nan
         row["L_pos_shape_mean"] = 0.5 * (rp["L_pos_shape"] + rm["L_pos_shape"])
+
+        # L_target exists only where the geometry carries a design target.  Unlike
+        # L_pos it is non-zero at the baseline — that residual is the model's own
+        # mismatch, not an imperfection — so what matters is how far the
+        # perturbation moves it relative to that standing offset.
+        lt0 = base.get("L_target", np.nan)
+        row["L_target_base"]  = lt0
+        row["L_target_plus"]  = rp.get("L_target", np.nan) - lt0
+        row["L_target_minus"] = rm.get("L_target", np.nan) - lt0
+        row["L_target_half"]  = 0.5 * (rp.get("L_target", np.nan)
+                                       - rm.get("L_target", np.nan))
         table.append(row)
     return table
 
@@ -183,18 +200,27 @@ def overlap_matrix(runs, run_dir):
     return names, M
 
 
-def print_tables(table, floor, measured_mm):
+def print_tables(table, floor, measured_mm, g, base_row):
     est = [r["factor"] for r in table if r["status"] == "estimate"]
+    has_target = np.isfinite(table[0]["L_target_base"])
 
     print("=" * 92)
-    print("BLOCK A — method check on the circular dome")
+    print(f"BLOCK A — method check on {g.name}")
     print("=" * 92)
-    print(f"nominal: s_wale={cfg.S_WALE_NOM}  s_course={cfg.S_COURSE_NOM}  "
-          f"p={cfg.PRESSURE_NOM:.0f} Pa  E1={cfg.E1_NOM:.0f} N/m  "
-          f"E2/E1={cfg.R_RATIO_NOM:.4f}  nu={cfg.NU_NOM}  R={cfg.R_BOUNDARY_NOM} m")
+    print(f"nominal: s_wale={g.s_wale:.4f}  s_course={g.s_course:.4f}  "
+          f"p={g.pressure:.0f} Pa  E1={g.E1:.0f} N/m  "
+          f"E2/E1={g.r_ratio:.4f}  nu={g.nu}  R_char={base_row['radius_m']:.4f} m")
+    print(f"         {g.nominal_source}")
     print(f"baseline: h_crown={table[0]['crown_height_base'] * 1e3:.2f} mm  "
           f"sigma_max={table[0]['max_stress_base']:.1f} N/m  "
-          f"H_apex={table[0]['H_apex_base']:.4f} 1/m")
+          f"H_apex={table[0]['H_apex_base']:.4f} 1/m  "
+          f"stress ratio={base_row['stress_ratio']:.2f}")
+    if has_target:
+        print(f"         L_target at the nominal = "
+              f"{table[0]['L_target_base'] * 1e3:.2f} mm — the model's own mismatch "
+              f"with the design shape,")
+        print(f"         before any imperfection.  Every band below has to be read "
+              f"against it.")
     if floor:
         # The probe re-solves the baseline along a different continuation path.
         # It comes back identical to the 1e-8 m precision the solver prints, so
@@ -222,6 +248,47 @@ def print_tables(table, floor, measured_mm):
               f"{100 * r['crown_height_asym']:6.1f} "
               f"{r['L_pos_mean'] * 1e3:8.3f} "
               f"{100 * r['L_pos_asym']:7.1f}")
+
+    # ── Deviation from the design target ──────────────────────────────────────
+    if has_target:
+        lt0 = table[0]["L_target_base"]
+        print("\n" + "-" * 92)
+        print("Deviation from the design target")
+        print("-" * 92)
+        # The nominal is a FITTED minimum of L_target in the stretch-factor
+        # directions, so there the first derivative vanishes and both signs make
+        # the fit worse: the meaningful quantity is the increase, not a central
+        # difference, which would come out near zero and say nothing.  The
+        # material and load factors were not fitted, so those do carry a slope —
+        # one sign improves L_target.  Reporting both makes the distinction
+        # visible instead of averaging it away.
+        print(f"{'factor':10s} {'dL(+)':>9s} {'dL(-)':>9s} {'mean':>8s} "
+              f"{'of L_tgt':>9s}  {'behaviour':<28s}")
+        print(f"{'':10s} {'mm':>9s} {'mm':>9s} {'mm':>8s} {'%':>9s}")
+        for r in sorted(table, key=lambda r: -(r["L_target_plus"]
+                                               + r["L_target_minus"])):
+            dp, dm = r["L_target_plus"], r["L_target_minus"]
+            mean = 0.5 * (dp + dm)
+            both_up = dp > 0 and dm > 0
+            kind = ("stationary — cost is second order" if both_up
+                    else "sloped — one sign improves the fit")
+            print(f"{r['factor']:10s} {dp * 1e3:9.3f} {dm * 1e3:9.3f} "
+                  f"{mean * 1e3:8.3f} {100 * mean / lt0:9.1f}  {kind:<28s}")
+        biggest = max(table, key=lambda r: 0.5 * (r["L_target_plus"]
+                                                  + r["L_target_minus"]))
+        b_mean = 0.5 * (biggest["L_target_plus"] + biggest["L_target_minus"])
+        frac = b_mean / lt0
+        print(f"\nlargest single-tolerance penalty: {biggest['factor']} adds "
+              f"{b_mean * 1e3:.2f} mm,")
+        print(f"  {100 * frac:.0f}% of the {lt0 * 1e3:.2f} mm standing mismatch.")
+        if frac < 0.5:
+            print("  -> for this geometry the design/model mismatch dominates the")
+            print("     tolerances.  Tightening fabrication cannot close a gap that")
+            print("     is already there at the nominal; the parameterisation has to")
+            print("     be richer first (per-region factors rather than uniform).")
+        else:
+            print("  -> the tolerances move the shape by an amount comparable to the")
+            print("     standing mismatch, so both matter and neither can be ignored.")
 
     # ── Linearity verdict ─────────────────────────────────────────────────────
     worst = max(table, key=lambda r: r["crown_height_asym"])
@@ -378,8 +445,10 @@ def make_figure(table, rss, measured_mm, overlap, path):
 
 
 def main():
+    import geometry as geom
     ap = argparse.ArgumentParser()
-    ap.add_argument("--runs", default=os.path.join(cfg.DATA_DIR, "block_A.csv"))
+    ap.add_argument("--geometry", default="disc", choices=geom.NAMES)
+    ap.add_argument("--runs", default=None)
     ap.add_argument("--measured-deviation-mm", type=float, default=None,
                     help="crown-height deviation measured in §6.1.3, for the "
                          "reality check")
@@ -388,16 +457,20 @@ def main():
                          "the runs to have been kept with --keep-verts")
     args = ap.parse_args()
 
-    runs  = load_runs(args.runs)
-    floor = load_floor(os.path.join(cfg.DATA_DIR, "block_A_floor.csv"))
+    name  = args.geometry
+    runs  = load_runs(args.runs or
+                      os.path.join(cfg.DATA_DIR, f"block_A_{name}.csv"))
+    floor = load_floor(os.path.join(cfg.DATA_DIR, f"block_A_{name}_floor.csv"))
     table = sensitivities(runs)
 
     rss, worst_case, lp_rss = print_tables(table, floor,
-                                           args.measured_deviation_mm)
+                                           args.measured_deviation_mm,
+                                           geom.get(name), runs["A0"])
 
     overlap = None
     if args.check_overlap:
-        overlap = overlap_matrix(runs, os.path.join(cfg.DATA_DIR, "runs_A"))
+        overlap = overlap_matrix(runs, os.path.join(cfg.DATA_DIR,
+                                                    f"runs_A_{name}"))
         if overlap[0] is None:
             print("\n(--check-overlap: vertex files absent; re-run run_block_A.py "
                   "with --keep-verts)")
@@ -430,14 +503,15 @@ def main():
                 print("     prediction of the joint spread.")
 
     os.makedirs(cfg.FIG_DIR, exist_ok=True)
-    out_csv = os.path.join(cfg.DATA_DIR, "block_A_sensitivity.csv")
+    out_csv = os.path.join(cfg.DATA_DIR, f"block_A_{name}_sensitivity.csv")
     with open(out_csv, "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=list(table[0].keys()))
         w.writeheader()
         w.writerows(table)
 
     fig_path = make_figure(table, rss, args.measured_deviation_mm, overlap,
-                           os.path.join(cfg.FIG_DIR, "blockA_sensitivity.pdf"))
+                           os.path.join(cfg.FIG_DIR,
+                                        f"blockA_{name}_sensitivity.pdf"))
     print(f"\nwrote {out_csv}")
     print(f"wrote {fig_path} (+ .png)")
 
