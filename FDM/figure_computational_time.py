@@ -1,4 +1,9 @@
-"""Figure for Section 6.5.1 — where the wall-clock time of the inverse problem goes.
+"""Figure for Section 6.5.1 — what one forward solve costs, and where the run's
+wall clock actually goes.
+
+Panel (a) is measured live by measure_solve_cost.py: the cost of a solve on each
+case-study mesh, sampled about the recorded optimum. Panels (b) and (c) come from
+the finished runs.
 
 The optimisation drivers never recorded timings, but every objective evaluation
 wrote <prefix>_NNNNN_verts.csv, so two things are recoverable from the run
@@ -18,6 +23,7 @@ rewritten on 2026-05-12 and their wall clocks are lost.
 
 import argparse
 import collections
+import json
 import os
 import re
 import sys
@@ -110,9 +116,46 @@ def main():
     if not data:
         sys.exit("no runs with usable timestamps")
 
-    fig, (axL, axR) = plt.subplots(1, 2, figsize=(9.2, 3.5))
+    fig, (axD, axL, axR) = plt.subplots(1, 3, figsize=(12.6, 3.6))
 
-    # ── Left: the cost of every evaluation over the course of one run ──────────
+    # ── (a) What one solve costs, per geometry, ordered by mesh size ───────────
+    cost_path = os.path.join(HERE, "data", "solve_cost.json")
+    if os.path.exists(cost_path):
+        cost = json.load(open(cost_path))
+        order = sorted(cost, key=lambda k: cost[k]["n_faces"])
+        rng = np.random.default_rng(20260813)
+        for row, key in enumerate(order):
+            c = cost[key]
+            s = np.array(c["samples"])
+            jitter = rng.uniform(-0.16, 0.16, len(s))
+            axD.plot(s, row + jitter, linestyle="none", marker="o",
+                     markersize=3.2, color=C_PLUS, alpha=0.55)
+            med = float(np.median(s))
+            axD.plot([med], [row], marker="|", markersize=16,
+                     markeredgewidth=1.8, color=C_MINUS)
+            axD.text(med * 0.82, row + 0.30, f"{med:.2f} s", fontsize=7,
+                     color=C_MINUS, ha="right", va="center")
+            if c["n_timeout"]:
+                axD.annotate(f"{c['n_timeout']} of {len(s)} over the limit",
+                             xy=(s.max(), row), xytext=(-4, -14),
+                             textcoords="offset points", fontsize=7,
+                             color=C_GREY, ha="right")
+        axD.set_yticks(range(len(order)))
+        axD.set_yticklabels([f"{k}\n{cost[k]['n_faces']} elements"
+                             for k in order])
+        axD.set_ylim(-0.6, len(order) - 0.4)
+        axD.invert_yaxis()
+        axD.set_xscale("log")
+        axD.set_xlabel("cost of one forward solve (s)")
+        axD.set_title("(a) 25 design points about each optimum", loc="left")
+        axD.grid(axis="x", color="#DDDDDD", linewidth=0.5)
+        axD.set_axisbelow(True)
+        axD.tick_params(axis="y", length=0)
+    else:
+        axD.text(0.5, 0.5, "run measure_solve_cost.py first",
+                 ha="center", transform=axD.transAxes, color=C_GREY)
+
+    # ── (b) The cost of every evaluation over the course of one run ────────────
     d = data[0]
     axL.plot(d["at"], d["dt"], linestyle="none", marker="o", markersize=1.6,
              color=d["colour"], alpha=0.55, label="converged solve")
@@ -131,14 +174,14 @@ def main():
     axL.set_yscale("log")
     axL.set_xlabel("forward solve")
     axL.set_ylabel("cost of one evaluation (s)")
-    axL.set_title(f"(a) {d['label']}: {d['n_eval']} evaluations, "
+    axL.set_title(f"(b) {d['label']}: {d['n_eval']} evaluations, "
                   f"{d['total']/60:.0f} min", loc="left")
     axL.legend(loc="lower right", frameon=False, handletextpad=0.4,
                borderaxespad=0.2)
     axL.grid(axis="y", color="#DDDDDD", linewidth=0.5)
     axL.set_axisbelow(True)
 
-    # ── Right: how concentrated that wall clock is ─────────────────────────────
+    # ── (c) how concentrated that wall clock is ─────────────────────────────
     for k, d in enumerate(data):
         # Every evaluation, costed: converged ones at their measured dt, failed
         # ones at the driver limit. Sorted cheapest-first, then accumulated.
@@ -171,7 +214,7 @@ def main():
     axR.set_ylim(0, 100)
     axR.set_xlabel("evaluations, cheapest first (%)")
     axR.set_ylabel("cumulative wall clock (%)")
-    axR.set_title("(b) The tail is the cost", loc="left")
+    axR.set_title("(c) The tail is the cost", loc="left")
     axR.legend(loc="upper left", frameon=False)
     axR.grid(color="#DDDDDD", linewidth=0.5)
     axR.set_axisbelow(True)
