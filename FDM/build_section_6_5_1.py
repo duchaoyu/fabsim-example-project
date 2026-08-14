@@ -63,7 +63,8 @@ BODY = [
 
 ("p", f"The cost of the workflow is set almost entirely by the inner forward solve "
       f"of Section 6.3.7. Everything outside it is done once per target and costs "
-      f"seconds: on the shell with openings the force density optimisation takes "
+      f"seconds: on the shell with openings the force density method (FDM) form "
+      f"finding of Section 6.2 takes "
       f"{FDM_S:.1f} s and the directional field {FIELD_S:.1f} s, against the hours "
       f"the inverse problem takes on the same mesh. The question is therefore what "
       f"one forward solve costs, how many of them a strategy needs, and why the "
@@ -193,7 +194,7 @@ BODY = [
       "part of the time, whereas the outer region sweeps deserve to run to their "
       "own convergence."),
 
-("h2", "What the form finding costs, and why so little"),
+("h2", "What the FDM form finding costs, and why so little"),
 
 ("p", f"The inverse problem is not the only optimisation in the workflow, and the "
       f"comparison with the one that precedes it is instructive, the more so "
@@ -201,8 +202,8 @@ BODY = [
       f"carried through both stages as a mesh of {fdm['n_verts']} vertices, "
       f"{fdm['n_faces']} faces and {fdm['n_edges']} edges, of which "
       f"{fdm['n_free']} vertices are free and the remainder fixed on the "
-      f"boundary. On that mesh the force density stage of Section 6.2 solves for "
-      f"one force density per edge — {fdm['n_design']} design variables — and "
+      f"boundary. On that mesh the FDM stage of Section 6.2 solves for one force "
+      f"density per edge — {fdm['n_design']} design variables — and "
       f"converges in {fdm['iters']} L-BFGS-B iterations and {FDM_S:.1f} s, a mean "
       f"of {FDM_MS:.1f} ms per iteration. The inverse problem on the identical "
       f"mesh carries between three and twenty design variables and takes between "
@@ -212,9 +213,9 @@ BODY = [
 
 ("p", f"Two things account for it, and they are worth separating because only one "
       f"is intrinsic. The first is the cost of a single equilibrium solve: "
-      f"{fdm['inflate_ms']:.2f} ms for the force density network against "
+      f"{fdm['inflate_ms']:.2f} ms for the FDM network against "
       f"{MD5:.2f} s for the membrane, a factor of about {FDM_RATIO:.0f}. That gap "
-      f"is intrinsic to the physics being solved. The force density equilibrium is "
+      f"is intrinsic to the physics being solved. The FDM equilibrium is "
       f"linear in the vertex positions once the densities are fixed, so a single "
       f"LU factorisation is reused across the {PICARD} Picard steps "
       f"that resolve the pressure coupling, whereas the membrane solve is a Newton "
@@ -223,7 +224,7 @@ BODY = [
       f"vertex counts do not imply equal cost when the equations differ in kind."),
 
 ("p", f"The second is the cost of a gradient, and that one is an implementation "
-      f"choice. The force density stage differentiates its objective by an "
+      f"choice. The FDM stage differentiates its objective by an "
       f"adjoint: three linear solves per iteration, one per coordinate axis, "
       f"independent of the number of design variables. The inverse problem uses "
       f"finite differences, at n + 1 nonlinear solves per gradient. At the sizes "
@@ -272,7 +273,7 @@ BODY = [
       "gradient for the membrane solve in place of finite differences, is a larger "
       "undertaking, since it requires differentiating through the Newton iteration "
       "and the switching of the cable segments between taut and slack; but it is "
-      "not speculative, being the device the force density stage of this same "
+      "not speculative, being the device the FDM stage of this same "
       "workflow already uses, and it is the one change that would lift the ceiling "
       "on the number of design variables rather than merely lower the cost of the "
       "present ones."),
