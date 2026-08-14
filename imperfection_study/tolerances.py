@@ -81,46 +81,65 @@ TOLERANCES = {
     "s_wale": Tol(
         value=0.05, relative=False,
         kind=(SYSTEMATIC, INDEPENDENT),
-        source="§6.2.3 commanded vs realised stretch factor",
+        source="stitch size from the Chapter 4 tensile tests, accumulated over "
+               "the panel",
         status=ESTIMATE,
-        note="absolute on the stretch factor; 4.5% of the nominal 1.10. "
-             "Systematic (machine setting, common to the panel) and independent "
-             "(region-to-region realisation).",
+        note="The mechanism is stitch size, not the stretch factor directly: "
+             "the factor is what the commanded stitch length delivers, so a "
+             "small per-stitch error — of the order of 0.1 mm — accumulates "
+             "over the courses of a whole fabric into a stretch-factor "
+             "deviation. 0.05 is 4.5% of the nominal 1.10 and is a stand-in "
+             "until that accumulation is computed from the measured stitch "
+             "size. Systematic (machine setting, common to the panel) and "
+             "independent (region-to-region realisation).",
     ),
     "s_course": Tol(
         value=0.05, relative=False,
         kind=(SYSTEMATIC, INDEPENDENT),
-        source="§6.2.3 commanded vs realised stretch factor",
+        source="stitch size from the Chapter 4 tensile tests, accumulated over "
+               "the panel",
         status=ESTIMATE,
         note="as s_wale.",
     ),
     "pressure": Tol(
         value=0.05, relative=True,
         kind=(SYSTEMATIC,),
-        source="§6.1.3 scatter in the sensor record while a state is held",
+        source="§6.1.2 sensor resolution and the valve control band",
         status=ESTIMATE,
-        note="50 Pa at the nominal 1000 Pa. Systematic: the whole structure "
-             "sees one internal pressure at a given instant.",
+        note="50 Pa at the nominal 1000 Pa. Bounded below by what the sensor "
+             "can resolve and above by the band the valve holds between "
+             "corrections. Systematic: the whole structure sees one internal "
+             "pressure at a given instant.",
     ),
     "E1": Tol(
         value=0.10, relative=True,
         kind=(SYSTEMATIC,),
-        source="Chapter 4 biaxial tests, specimen-to-specimen scatter",
+        source="Chapter 4 tensile tests: scatter across repeats and yarn "
+               "batches",
         status=ESTIMATE,
-        note="Systematic only: one panel is one fabric, so a modulus error "
-             "applies everywhere at once.",
+        note="Two sources are folded together here and Chapter 4 reports them "
+             "separately: repeat-to-repeat scatter on nominally identical "
+             "specimens, which is fabrication limitation, and batch-to-batch "
+             "variation in the yarn itself. The measured spread should replace "
+             "this 10%, which is assumed. Systematic only: one panel is one "
+             "fabric, so a modulus error applies everywhere at once.",
     ),
     "r": Tol(
         value=0.10, relative=True,
         kind=(SYSTEMATIC,),
-        source="Chapter 4 biaxial tests, specimen-to-specimen scatter",
+        source="Chapter 4 tensile tests: scatter across repeats and yarn "
+               "batches",
         status=ESTIMATE,
-        note="r is the paper ratio E2/E1. Systematic only, as E1.",
+        note="r is the paper ratio E2/E1, so it inherits the scatter of both "
+             "moduli and is not independent of E1 — a joint block should draw "
+             "them from the measured covariance rather than separately. "
+             "Systematic only, as E1.",
     ),
     "nu": Tol(
         value=0.10, relative=True,
         kind=(SYSTEMATIC,),
-        source="Chapter 4 biaxial tests, specimen-to-specimen scatter",
+        source="Chapter 4 tensile tests: scatter across repeats and yarn "
+               "batches",
         status=ESTIMATE,
         note="Systematic only. Not exercised in Block A (Poisson's ratio enters "
              "from Block B on).",
@@ -128,22 +147,28 @@ TOLERANCES = {
     "rho": Tol(
         value=0.001, relative=True,
         kind=(INDEPENDENT,),
-        source="turnbuckle pitch",
+        source="channel insertion and anchorage take-up; turnbuckle pitch sets "
+               "the adjustment resolution",
         status=ESTIMATE,
-        note="Rest-length scale. 1.25 mm of thread on a ~1.3 m cable is 0.1%. "
-             "Independent per cable: each turnbuckle is set separately. "
-             "Quantised rather than Gaussian in reality — a half-turn is the "
-             "resolution — which the joint block should eventually respect. "
-             "Not exercised in Block A (no cable on the circular dome).",
+        note="Rest-length scale. The cable's effective rest length is set by "
+             "how it seats in its channel and by the take-up at the anchorage, "
+             "not by a cut length; the turnbuckle then adjusts it in steps, so "
+             "the residual error is quantised rather than Gaussian — a "
+             "half-turn is the resolution, 1.25 mm of thread on a ~1.3 m cable "
+             "being 0.1%. Independent per cable: each anchorage is made "
+             "separately. Not exercised in Block A (no cable in this model).",
     ),
     "R": Tol(
-        value=0.005, relative=False,
+        value=0.002, relative=False,
         kind=(SYSTEMATIC,),
-        source="§6.1.2 screw spacing on the boundary ring",
+        source="§5.5.2 boundary displacement, ±2 mm",
         status=ESTIMATE,
-        note="5 mm on a 600 mm radius, 0.83%. Systematic: a mis-set ring is "
-             "round but the wrong size. An out-of-round boundary is a separate, "
-             "non-uniform imperfection and is not this parameter.",
+        note="2 mm on a 600 mm radius, 0.33%: the boundary is anchored to a "
+             "tolerance rather than exactly. Applied here as a uniform radial "
+             "error, which is the single-parameter reading of it; a ±2 mm "
+             "anchoring imprecision that varies around the ring is a "
+             "non-uniform imperfection and is not this parameter. Was 5 mm "
+             "(screw spacing) before §5.5.2 supplied a figure.",
     ),
 }
 

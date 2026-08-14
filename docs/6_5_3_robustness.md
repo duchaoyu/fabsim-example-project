@@ -4,6 +4,25 @@ The design of Section 6.4 is computed from nominal values: a stretch factor the 
 
 Six factors are perturbed one at a time by plus and minus one tolerance about a nominal working point: the two stretch factors s_wale and s_course, the membrane stiffness E1, the orthotropy ratio E2/E1, the inflation pressure p, and the boundary radius R. Thirteen solves per geometry — a baseline and twelve perturbations — on two geometries. The circular dome of Section 6.2 serves as the method check: it has a flat rest mesh and no design target of its own, so its deviations are referenced to its own baseline equilibrium. The creased shell of Section 6.4.1 is the case that carries a target, and is where the question of what the tolerances mean can actually be answered.
 
+## Where the tolerances come from
+
+A robustness study is worth exactly what its tolerances are worth, so each is stated with the mechanism behind it rather than as a bare magnitude. The mechanisms differ in kind, and that matters as much as the numbers: some errors apply to the whole structure at once because one panel is one fabric knitted on one machine setting, while others are drawn afresh for each region or each cable because each is made by hand.
+
+| parameter | one tolerance | where it comes from | error model | status |
+|---|---|---|---|---|
+| s_wale, s_course | 0.05 on the factor | Stitch size, measured in the Chapter 4 tensile tests. The stretch factor is what the commanded stitch length delivers, so a per-stitch error of the order of 0.1 mm accumulates over the courses of a panel into a factor deviation. | systematic + independent | estimate |
+| E1, E2/E1 | 10% | Chapter 4 tensile tests: scatter across repeats on nominally identical specimens, which is fabrication limitation, and across yarn batches. Chapter 4 reports the measured spread; it should replace this assumed 10%. | systematic | estimate |
+| p | 50 Pa (5%) | Sensor resolution and the width of the band the valve holds between corrections, from 6.1.2. | systematic | estimate |
+| R | 2 mm (0.33%) | Boundary displacement, given as ±2 mm in 5.5.2: the ring is anchored to a tolerance rather than exactly. Entered here as a uniform radial error. | systematic | estimate |
+| nu | 10% | As E1. Not exercised in Block A; Poisson's ratio enters from Block B. | systematic | estimate |
+| cable rest length | 0.1% | Channel insertion and anchorage take-up set the effective rest length; the turnbuckle then adjusts it in half-turn steps, so the residual is quantised rather than Gaussian. Not exercised in Block A, which has no cable. | independent | estimate |
+
+*Table 6.X: The tolerances, their mechanisms and their error models. Systematic errors apply to the whole structure at once; independent ones are drawn separately per region or per cable. Every magnitude is currently an estimate: the section each waits on is named, and tolerances.py records the same table in machine-readable form.*
+
+Two of these are not exercised in this block and are listed so that the budget is not mistaken for a complete one. Poisson's ratio enters from Block B, and the cable rest length cannot enter at all here because the model carries no cable — which, as Figure 6.34 shows, is also why the creased shell has a standing mismatch in the first place. The cable is therefore both a missing tolerance and a missing element, and the second is the more consequential of the two.
+
+The stretch-factor entry deserves its own remark, because it is the dominant term in everything that follows and it is the one furthest from a direct measurement. The quantity the fabrication controls is stitch size, not the stretch factor; the factor is a consequence of it. A per-stitch error of the order of a tenth of a millimetre is small against any single stitch, but it accumulates along a course, and it is that accumulation, over a panel of the size built here, that produces a stretch-factor deviation of the order assumed. Converting the measured stitch-size scatter into a factor tolerance is the single most valuable input this study is waiting on, and it is arithmetic on data Chapter 4 already has rather than a new experiment.
+
 ## How the responses are measured
 
 Two outputs are reported for each perturbation. The crown height is a scalar and admits the usual first-order treatment: a central difference gives the half-range, and an elasticity, the relative change in crown height per relative change in the factor, makes the six comparable across their different units. L_pos is the RMS displacement of the surface from the baseline equilibrium, taken over interior vertices only. The boundary is clamped, so its deviation is zero by construction and including it would deflate every figure by an amount set by nothing but boundary discretisation.
@@ -21,15 +40,15 @@ The numerical floor was measured rather than assumed. Re-solving the baseline al
 | s_wale | 0.05 | -10.64 | +9.61 | -10.12 | -1.36 | 10.2% | 6.67 |
 | E2/E1 | 0.250 | -6.71 | +7.38 | -7.05 | -0.43 | 9.6% | 4.36 |
 | p | 50 Pa | +5.06 | -5.23 | +5.14 | +0.63 | 3.3% | 3.21 |
-| R | 5 mm | +2.23 | -2.23 | +2.23 | +1.63 | 0.4% | 3.82 |
+| R | 2 mm | +0.89 | -0.89 | +0.89 | +1.63 | 0.2% | 1.53 |
 
 *Table 6.Y: Block A on the circular dome. Crown-height response to one tolerance either side of the nominal, sorted by effect. Elasticity is the relative change in crown height per relative change in the factor; asymmetry is the difference between the two signs as a fraction of the first difference, and a value under 15% means the response may be rescaled to a different tolerance without re-running. L_pos is the RMS surface displacement from the baseline over interior vertices.*
 
-The predicted spread with all six factors at one tolerance is 32.2 mm RSS in crown height, 19.6% of the 164.2 mm the dome rises, and 62.2 mm if every error happens to align. Three things in the table are worth drawing out.
+The predicted spread with all six factors at one tolerance is 32.2 mm RSS in crown height, 19.6% of the 164.2 mm the dome rises, and 60.9 mm if every error happens to align. Three things in the table are worth drawing out.
 
 s_course dominates, at 2.7 times the next factor, because the course direction is the stiff one — E2 is 2.5 times E1 — so pre-strain applied along it does the most work. It is also the factor whose tolerance is the least well known, which is where the uncertainty in this study sits.
 
-R has the second-largest elasticity at +1.63 and nearly the smallest effect, purely because its tolerance is tight: 0.8% of the nominal, against 4.5 to 10% for the others. It is a factor worth controlling precisely rather than one that does not matter, and the distinction is only visible because elasticity and effect are reported separately.
+R has the second-largest elasticity at +1.63, behind only s_course and ahead of both moduli — the crown responds strongly to a relative change in boundary radius — and yet has the smallest effect of the six, purely because its tolerance is tight: 0.33% of the nominal against 4.5 to 10% for the others. It is a factor worth anchoring precisely rather than one that does not matter, and the distinction is only visible because elasticity and effect are reported separately. It is also the factor most sensitive to the tolerance being right: the ±2 mm of 5.5.2 replaced an earlier assumption of 5 mm taken from screw spacing, and the row shrank in proportion, the response being linear to 0.2%.
 
 The six factors are very nearly degenerate on this geometry. The median absolute cosine between their displacement fields is 0.996 off the diagonal, and p / E1 sit at -1.000. They excite one and the same axisymmetric inflation mode, differing in sign and amplitude but not in shape. Two consequences follow. A measured deviation cannot be attributed to a factor by this block, only bounded in size; attribution needs a geometry on which the fields separate. And a joint sampling of all six would give a broad, right-skewed distribution of L_pos with a mean below the RSS, because near-parallel contributions add and cancel algebraically. The crown-height RSS is unaffected by this: for a scalar output RSS is correct whenever the factor errors are independent, whatever the shape of the response.
 
@@ -42,7 +61,7 @@ The six factors are very nearly degenerate on this geometry. The median absolute
 | E1 | 500 N/m | -5.44 | +6.48 | -5.96 | -0.15 | 17.5% | 4.51 |
 | p | 50 Pa | +2.94 | -2.98 | +2.96 | +0.15 | 1.3% | 2.24 |
 | E2/E1 | 0.250 | -2.27 | +2.64 | -2.45 | -0.06 | 15.2% | 2.35 |
-| R | 5 mm | +0.94 | -0.93 | +0.93 | +0.28 | 1.5% | 3.74 |
+| R | 2 mm | +0.37 | -0.37 | +0.37 | +0.28 | 0.6% | 1.50 |
 
 *Table 6.Z: Block A on the creased shell, about the fitted isotropic nominal. Same columns. E1 at 17.5% and E2/E1 at 15.2% exceed the linearity threshold, so those two rows should not be rescaled.*
 
@@ -60,11 +79,11 @@ One further caution on reading the table for this geometry. L_target is stationa
 
 ## What this establishes, and what it does not
 
-Within the tolerances assumed, construction imprecision moves the crown height by about 20% on the dome and 7% on the creased shell, and the surface by 21 and 21 mm RMS respectively. On the geometry that has a target, that is smaller than and geometrically unrelated to the error the model already carries. The practical reading is that for this case study fabrication tolerance is not the limiting factor on how closely the built shape matches the design, and effort is better spent on the model than on the workshop.
+Within the tolerances assumed, construction imprecision moves the crown height by about 20% on the dome and 7% on the creased shell, and the surface by 20 and 20 mm RMS respectively. On the geometry that has a target, that is smaller than and geometrically unrelated to the error the model already carries. The practical reading is that for this case study fabrication tolerance is not the limiting factor on how closely the built shape matches the design, and effort is better spent on the model than on the workshop.
 
 Three limits should be stated with equal clarity. All six tolerances are estimates; none is yet backed by a measurement, and the dominant one, the stretch factor, is the one with no measurement behind it at all. Replacing an estimate does not require re-running provided the response is linear over the tolerance, which the block checks by the asymmetry between the plus and minus responses: on the dome the worst is 13.4% (E1), inside the 15% threshold, so the responses rescale; on the creased shell E1 reaches 17.5% and E2/E1 15.2%, so those two rows do not rescale safely and want a smaller-delta re-run once the material scatter is known. The stretch-factor rows, at 1.5 to 2.8%, are solidly linear on both — which is the important case, since that is the estimate most likely to be revised.
 
-The perturbations here are uniform: a single stretch factor wrong everywhere, a single radius wrong everywhere. Real imprecision is also non-uniform, and the two need not have the same effect. The reference dome makes the point by accident — its boundary vertices run between 597.8 and 600.0 mm, a 2.2 mm out-of-round span at 0.58 mm standard deviation, which is 22% of the radius tolerance being tested. The nominal baseline already carries an out-of-round imperfection comparable to the tolerance under test, so a dedicated out-of-round study has to be measured against this mesh's existing scatter rather than against a perfect circle.
+The perturbations here are uniform: a single stretch factor wrong everywhere, a single radius wrong everywhere. Real imprecision is also non-uniform, and the two need not have the same effect. The boundary makes the point sharply. The ±2 mm of 5.5.2 is an anchoring tolerance, and an anchoring error that varies around the ring is not a change of radius at all; entering it as a uniform radial error, as here, captures only its mean. The reference mesh shows the rest is not negligible: its boundary vertices run between 597.8 and 600.0 mm, a 2.2 mm out-of-round span at 0.58 mm standard deviation — 110% of the 2 mm tolerance being tested, so the nominal baseline already carries a non-uniform boundary imperfection larger than the uniform one under test. A dedicated out-of-round study is therefore worth more than tightening delta_R, and it has to be measured against this mesh's existing scatter rather than against a perfect circle.
 
 And this is one geometry perturbed one factor at a time about a single-region, cable-free model. The case study of Section 6.4.6 is multi-region and carries cables, whose rest length is a tolerance of its own and a quantised one, set by the resolution of a turnbuckle rather than by a Gaussian. Independent per-region draws, and a joint sampling that lets the factors interfere, remain to be run.
 
@@ -88,7 +107,9 @@ And this is one geometry perturbed one factor at a time about a single-region, c
 
 Every number above is read from the Block A outputs by build_section_6_5_3.py: the per-factor responses from data/block_A_{disc,2part}_sensitivity.csv, and the spreads, cosines and out-of-round figures from data/block_A_overlap.json, itself produced by analyse_block_A.py --check-overlap and plot_shape.py. Re-run those and rebuild and the section follows.
 
-1. The tolerances are estimates. tolerances.py records the source each one waits on. Until they are measured every magnitude in this section is conditional, and that should be said in the text as well as here if the section goes out before the measurements come in.
+1. The tolerances are estimates, and the provenance table now names the mechanism behind each rather than a bare magnitude. Three are one step from being measured rather than assumed. The stretch-factor tolerance needs the measured stitch-size scatter converted into a factor deviation by accumulation over a panel — arithmetic on Chapter 4 data, not a new experiment, and the largest single improvement available to this study. E1 and E2/E1 need Chapter 4's reported spread across repeats and yarn batches in place of the assumed 10%, and they should be drawn from the measured covariance rather than independently, since the ratio inherits the scatter of both moduli. The pressure band should come from the 6.1.2 sensor record.
+
+1a. delta_R has already changed on this basis, from 5 mm assumed from screw spacing to the ±2 mm that 5.5.2 gives, and Block A was re-run rather than rescaled. The effect is small — the crown-height RSS moves from 32.25 to 32.18 mm on the dome and from 27.00 to 26.99 mm on the creased shell — because R was already the smallest contributor. The consequence that does matter is for the out-of-round argument, since the reference mesh's own scatter is now larger than the tolerance rather than a fifth of it.
 
 2. Two scripts disagree about the standing mismatch. analyse_block_A.py reports L_target = 24.59 mm; plot_shape.py prints 20.65 mm RMS for what reads as the same quantity. The difference is that plot_shape averages over all vertices while the analysis restricts to interior ones, and the clamped boundary deflates the former. The section uses 24.59 mm. Worth making plot_shape mask the boundary so the two agree.
 

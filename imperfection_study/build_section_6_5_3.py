@@ -39,7 +39,43 @@ ov = json.load(open(os.path.join(HERE, "data", "block_A_overlap.json")))
 NAME = {"s_wale": "s_wale", "s_course": "s_course", "pressure": "p",
         "E1": "E1", "r": "E2/E1", "R": "R"}
 DELTA = {"s_wale": "0.05", "s_course": "0.05", "pressure": "50 Pa",
-         "E1": "500 N/m", "r": "0.250", "R": "5 mm"}
+         "E1": "500 N/m", "r": "0.250", "R": "2 mm"}
+
+# Where each tolerance comes from, for the provenance table. Kept in step with
+# tolerances.py, which holds the magnitudes and the error models.
+PROVENANCE = [
+    ("s_wale, s_course", "0.05 on the factor",
+     "Stitch size, measured in the Chapter 4 tensile tests. The stretch factor "
+     "is what the commanded stitch length delivers, so a per-stitch error of "
+     "the order of 0.1 mm accumulates over the courses of a panel into a "
+     "factor deviation.",
+     "systematic + independent", "estimate"),
+    ("E1, E2/E1", "10%",
+     "Chapter 4 tensile tests: scatter across repeats on nominally identical "
+     "specimens, which is fabrication limitation, and across yarn batches. "
+     "Chapter 4 reports the measured spread; it should replace this assumed "
+     "10%.",
+     "systematic", "estimate"),
+    ("p", "50 Pa (5%)",
+     "Sensor resolution and the width of the band the valve holds between "
+     "corrections, from 6.1.2.",
+     "systematic", "estimate"),
+    ("R", "2 mm (0.33%)",
+     "Boundary displacement, given as ±2 mm in 5.5.2: the ring is anchored to "
+     "a tolerance rather than exactly. Entered here as a uniform radial error.",
+     "systematic", "estimate"),
+    ("nu", "10%",
+     "As E1. Not exercised in Block A; Poisson's ratio enters from Block B.",
+     "systematic", "estimate"),
+    ("cable rest length", "0.1%",
+     "Channel insertion and anchorage take-up set the effective rest length; "
+     "the turnbuckle then adjusts it in half-turn steps, so the residual is "
+     "quantised rather than Gaussian. Not exercised in Block A, which has no "
+     "cable.",
+     "independent", "estimate"),
+]
+PROV_HEAD = ("parameter", "one tolerance", "where it comes from", "error model",
+             "status")
 
 MM = 1e3
 
@@ -105,6 +141,38 @@ BODY = [
       f"Section 6.4.1 is the case that carries a target, and is where the "
       f"question of what the tolerances mean can actually be answered."),
 
+("h2", "Where the tolerances come from"),
+
+("p", "A robustness study is worth exactly what its tolerances are worth, so "
+      "each is stated with the mechanism behind it rather than as a bare "
+      "magnitude. The mechanisms differ in kind, and that matters as much as "
+      "the numbers: some errors apply to the whole structure at once because "
+      "one panel is one fabric knitted on one machine setting, while others are "
+      "drawn afresh for each region or each cable because each is made by "
+      "hand."),
+
+("table_prov", None),
+
+("p", "Two of these are not exercised in this block and are listed so that the "
+      "budget is not mistaken for a complete one. Poisson's ratio enters from "
+      "Block B, and the cable rest length cannot enter at all here because the "
+      "model carries no cable — which, as Figure 6.34 shows, is also why the "
+      "creased shell has a standing mismatch in the first place. The cable is "
+      "therefore both a missing tolerance and a missing element, and the second "
+      "is the more consequential of the two."),
+
+("p", "The stretch-factor entry deserves its own remark, because it is the "
+      "dominant term in everything that follows and it is the one furthest from "
+      "a direct measurement. The quantity the fabrication controls is stitch "
+      "size, not the stretch factor; the factor is a consequence of it. A "
+      "per-stitch error of the order of a tenth of a millimetre is small "
+      "against any single stitch, but it accumulates along a course, and it is "
+      "that accumulation, over a panel of the size built here, that produces a "
+      "stretch-factor deviation of the order assumed. Converting the measured "
+      "stitch-size scatter into a factor tolerance is the single most valuable "
+      "input this study is waiting on, and it is arithmetic on data Chapter 4 "
+      "already has rather than a new experiment."),
+
 ("h2", "How the responses are measured"),
 
 ("p", f"Two outputs are reported for each perturbation. The crown height is a "
@@ -153,11 +221,17 @@ BODY = [
       f"sits."),
 
 ("p", f"R has the second-largest elasticity at "
-      f"{float(disc['R']['crown_height_elast']):+.2f} and nearly the smallest "
-      f"effect, purely because its tolerance is tight: 0.8% of the nominal, "
-      f"against 4.5 to 10% for the others. It is a factor worth controlling "
-      f"precisely rather than one that does not matter, and the distinction is "
-      f"only visible because elasticity and effect are reported separately."),
+      f"{float(disc['R']['crown_height_elast']):+.2f}, behind only s_course and "
+      f"ahead of both moduli — the crown responds strongly to a relative change "
+      f"in boundary radius — and yet has the smallest effect of the six, purely "
+      f"because its tolerance is tight: 0.33% of the nominal against 4.5 to 10% "
+      f"for the others. It is a factor worth anchoring precisely rather than "
+      f"one that does not matter, and the distinction is only visible because "
+      f"elasticity and effect are reported separately. It is also the factor "
+      f"most sensitive to the tolerance being right: the ±2 mm of 5.5.2 "
+      f"replaced an earlier assumption of 5 mm taken from screw spacing, and "
+      f"the row shrank in proportion, the response being linear to "
+      f"{100 * float(disc['R']['crown_height_asym']):.1f}%."),
 
 ("p", f"The six factors are very nearly degenerate on this geometry. The median "
       f"absolute cosine between their displacement fields is "
@@ -254,17 +328,21 @@ BODY = [
 
 ("p", f"The perturbations here are uniform: a single stretch factor wrong "
       f"everywhere, a single radius wrong everywhere. Real imprecision is also "
-      f"non-uniform, and the two need not have the same effect. The reference "
-      f"dome makes the point by accident — its boundary vertices run between "
-      f"{OOR['boundary_radius_min_mm']:.1f} and "
-      f"{OOR['boundary_radius_max_mm']:.1f} mm, a "
-      f"{OOR['span_mm']:.1f} mm out-of-round span at "
-      f"{OOR['boundary_radius_std_mm']:.2f} mm standard deviation, which is "
-      f"{OOR['pct_of_delta_R']}% of the radius tolerance being tested. The "
-      f"nominal baseline already carries an out-of-round imperfection "
-      f"comparable to the tolerance under test, so a dedicated out-of-round "
-      f"study has to be measured against this mesh's existing scatter rather "
-      f"than against a perfect circle."),
+      f"non-uniform, and the two need not have the same effect. The boundary "
+      f"makes the point sharply. The ±2 mm of 5.5.2 is an anchoring tolerance, "
+      f"and an anchoring error that varies around the ring is not a change of "
+      f"radius at all; entering it as a uniform radial error, as here, captures "
+      f"only its mean. The reference mesh shows the rest is not negligible: its "
+      f"boundary vertices run between {OOR['boundary_radius_min_mm']:.1f} and "
+      f"{OOR['boundary_radius_max_mm']:.1f} mm, a {OOR['span_mm']:.1f} mm "
+      f"out-of-round span at {OOR['boundary_radius_std_mm']:.2f} mm standard "
+      f"deviation — {OOR['pct_of_delta_R']}% of the "
+      f"{OOR['delta_R_mm']:.0f} mm tolerance being tested, so the nominal "
+      f"baseline already carries a non-uniform boundary imperfection larger "
+      f"than the uniform one under test. A dedicated out-of-round study is "
+      f"therefore worth more than tightening delta_R, and it has to be measured "
+      f"against this mesh's existing scatter rather than against a perfect "
+      f"circle."),
 
 ("p", "And this is one geometry perturbed one factor at a time about a "
       "single-region, cable-free model. The case study of Section 6.4.6 is "
@@ -311,10 +389,27 @@ NOTES = [
       "out-of-round figures from data/block_A_overlap.json, itself produced by "
       "analyse_block_A.py --check-overlap and plot_shape.py. Re-run those and "
       "rebuild and the section follows."),
-("p", "1. The tolerances are estimates. tolerances.py records the source each "
-      "one waits on. Until they are measured every magnitude in this section is "
-      "conditional, and that should be said in the text as well as here if the "
-      "section goes out before the measurements come in."),
+("p", "1. The tolerances are estimates, and the provenance table now names the "
+      "mechanism behind each rather than a bare magnitude. Three are one step "
+      "from being measured rather than assumed. The stretch-factor tolerance "
+      "needs the measured stitch-size scatter converted into a factor "
+      "deviation by accumulation over a panel — arithmetic on Chapter 4 data, "
+      "not a new experiment, and the largest single improvement available to "
+      "this study. E1 and E2/E1 need Chapter 4's reported spread across repeats "
+      "and yarn batches in place of the assumed 10%, and they should be drawn "
+      "from the measured covariance rather than independently, since the ratio "
+      "inherits the scatter of both moduli. The pressure band should come from "
+      "the 6.1.2 sensor record."),
+
+("p", "1a. delta_R has already changed on this basis, from 5 mm assumed from "
+      "screw spacing to the ±2 mm that 5.5.2 gives, and Block A was re-run "
+      f"rather than rescaled. The effect is small — the crown-height RSS moves "
+      f"from 32.25 to {D['crown_rss_mm']:.2f} mm on the dome and from 27.00 to "
+      f"{T['crown_rss_mm']:.2f} mm on the creased shell — because R was already "
+      f"the smallest contributor. The consequence "
+      "that does matter is for the out-of-round argument, since the reference "
+      "mesh's own scatter is now larger than the tolerance rather than a fifth "
+      "of it."),
 ("p", "2. Two scripts disagree about the standing mismatch. analyse_block_A.py "
       "reports L_target = 24.59 mm; plot_shape.py prints 20.65 mm RMS for what "
       "reads as the same quantity. The difference is that plot_shape averages "
@@ -337,10 +432,10 @@ NOTES = [
 ]
 
 
-def add_table(doc, rows_):
-    t = doc.add_table(rows=1, cols=len(HEAD))
+def add_table(doc, rows_, head=HEAD):
+    t = doc.add_table(rows=1, cols=len(head))
     t.style = "Table Grid"
-    for i, h in enumerate(HEAD):
+    for i, h in enumerate(head):
         cell = t.rows[0].cells[i]
         cell.text = h
         for r in cell.paragraphs[0].runs:
@@ -355,13 +450,19 @@ def add_table(doc, rows_):
     return t
 
 
-def md_table(rows_):
-    out = ["| " + " | ".join(HEAD) + " |", "|" + "---|" * len(HEAD)]
+def md_table(rows_, head=HEAD):
+    out = ["| " + " | ".join(head) + " |", "|" + "---|" * len(head)]
     out += ["| " + " | ".join(r) + " |" for r in rows_]
     return "\n".join(out) + "\n"
 
 
 TABLE_CAPTIONS = {
+    "table_prov":
+        "Table 6.X: The tolerances, their mechanisms and their error models. "
+        "Systematic errors apply to the whole structure at once; independent "
+        "ones are drawn separately per region or per cable. Every magnitude is "
+        "currently an estimate: the section each waits on is named, and "
+        "tolerances.py records the same table in machine-readable form.",
     "table_disc":
         "Table 6.Y: Block A on the circular dome. Crown-height response to one "
         "tolerance either side of the nominal, sorted by effect. Elasticity is "
@@ -386,6 +487,9 @@ def build_md():
             lines.append(f"## {text}\n")
         elif kind == "p":
             lines.append(f"{text}\n")
+        elif kind == "table_prov":
+            lines.append(md_table(PROVENANCE, PROV_HEAD))
+            lines.append(f"*{TABLE_CAPTIONS[kind]}*\n")
         elif kind.startswith("table_"):
             lines.append(md_table(rows(disc if kind == "table_disc" else twopart)))
             lines.append(f"*{TABLE_CAPTIONS[kind]}*\n")
@@ -411,7 +515,10 @@ def build_docx():
             p = doc.add_paragraph(text)
             p.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
         elif kind.startswith("table_"):
-            add_table(doc, rows(disc if kind == "table_disc" else twopart))
+            if kind == "table_prov":
+                add_table(doc, PROVENANCE, PROV_HEAD)
+            else:
+                add_table(doc, rows(disc if kind == "table_disc" else twopart))
             cap = doc.add_paragraph(TABLE_CAPTIONS[kind])
             cap.runs[0].font.size = Pt(9)
             cap.runs[0].font.italic = True
