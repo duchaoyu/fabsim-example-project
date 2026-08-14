@@ -1,0 +1,107 @@
+"""Block A at a range of tolerance magnitudes, not just at one.
+
+Block A asks what each factor does at plus and minus one assumed tolerance. Five
+of the six tolerances are estimates, so the more useful question is what happens
+when an estimate turns out to be half, or twice, what was assumed. This sweeps
+each factor over a range of multiples of its assumed delta and records the same
+metrics, so the answer can be read off a curve instead of rescaled by hand -
+which matters because the +/- responses are not perfectly symmetric.
+
+It reuses run_block_A.run_params and run_block_A.metrics, so the sweep and the
+Block A table cannot disagree: at a multiple of 1.0 it reproduces the table.
+
+    python3 run_tolerance_sweep.py --geometry disc
+    python3 run_tolerance_sweep.py --geometry 2part
+
+Writes data/tolerance_sweep_<geometry>.csv.
+"""
+
+import argparse
+import csv
+import os
+
+import numpy as np
+
+import geometry as geom
+import imperfection_config as cfg
+import mesh_tools
+import fem_runner
+from run_block_A import (measured_radius, metrics, nominal_dict, run_params)
+from tolerances import TOLERANCES
+
+MULTIPLES = (0.25, 0.5, 1.0, 1.5, 2.0)
+
+
+def sweep_params(g, nom, factor, mult):
+    """As run_params, but at a fractional multiple of the tolerance.
+
+    Tol.perturb scales linearly in `sign`, so a fractional sign is a fractional
+    tolerance. The radius case needs its own mesh per magnitude, hence the tag.
+    """
+    if factor != "R":
+        return run_params(g, nom, factor, mult)
+
+    val = TOLERANCES["R"].perturb(nom["R"], mult)
+    tag = f"{g.name}_R{'p' if mult > 0 else 'm'}{abs(mult):g}".replace(".", "")
+    mesh, _ = mesh_tools.radius_variant(
+        g.mesh, val / nom["R"], cfg.MESH_DIR, tag)
+    return dict(g.params()), mesh
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--geometry", default="disc", choices=geom.NAMES)
+    args = ap.parse_args()
+
+    g = geom.get(args.geometry)
+    os.makedirs(cfg.MESH_DIR, exist_ok=True)
+    run_dir = os.path.join(cfg.DATA_DIR, f"runs_sweep_{g.name}")
+    os.makedirs(run_dir, exist_ok=True)
+
+    V_ref, F_ref = mesh_tools.load_off(g.mesh)
+    nom = nominal_dict(g)
+    free = mesh_tools.interior_mask(V_ref, F_ref)
+    V_target = mesh_tools.load_off(g.target)[0] if g.target else None
+
+    p0, mesh0 = run_params(g, nom, None, 0)
+    radius0 = measured_radius(mesh0)
+    out0 = fem_runner.run(mesh0, os.path.join(run_dir, "S0"), **p0)
+    V_base = out0["verts"]
+    base = metrics(out0, radius0, V_base, radius0, V_ref, V_target, free)
+
+    print(f"geometry {g.name}: {len(V_ref)} v, {int(free.sum())} interior")
+    print(f"baseline crown {1e3 * base['crown_height']:.1f} mm, "
+          f"L_target {1e3 * base['L_target']:.2f} mm"
+          if V_target is not None else
+          f"baseline crown {1e3 * base['crown_height']:.1f} mm")
+
+    rows = [dict(factor="baseline", multiple=0.0, delta_abs=0.0, **base)]
+    n = 0
+    for factor in cfg.BLOCK_A_FACTORS:
+        tol = TOLERANCES[factor]
+        for mult in MULTIPLES:
+            for sign in (+1, -1):
+                m = sign * mult
+                p, mesh = sweep_params(g, nom, factor, m)
+                radius = measured_radius(mesh)
+                tag = f"{factor}_{'p' if sign > 0 else 'm'}{mult:g}"
+                out = fem_runner.run(mesh, os.path.join(run_dir, tag), **p)
+                r = metrics(out, radius, V_base, radius0, V_ref, V_target, free)
+                rows.append(dict(factor=factor, multiple=m,
+                                 delta_abs=m * tol.absolute(nom[factor]), **r))
+                n += 1
+                print(f"  {tag:16s} crown {1e3 * r['crown_height']:8.2f} mm  "
+                      f"L_pos {1e3 * r['L_pos']:6.2f} mm" +
+                      (f"  L_target {1e3 * r['L_target']:6.2f} mm"
+                       if V_target is not None else ""))
+
+    out_csv = os.path.join(cfg.DATA_DIR, f"tolerance_sweep_{g.name}.csv")
+    with open(out_csv, "w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=list(rows[0]))
+        w.writeheader()
+        w.writerows(rows)
+    print(f"\n{n} runs\nwrote {out_csv}")
+
+
+if __name__ == "__main__":
+    main()

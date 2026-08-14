@@ -19,7 +19,7 @@ A robustness study is worth exactly what its tolerances are worth, so each is st
 
 *Table 6.X: The tolerances, their mechanisms and their error models. Systematic errors apply to the whole structure at once; independent ones are drawn separately per region or per cable. Every magnitude is currently an estimate: the section each waits on is named, and tolerances.py records the same table in machine-readable form.*
 
-Two of these are not exercised in this block and are listed so that the budget is not mistaken for a complete one. Poisson's ratio enters from Block B, and the cable rest length cannot enter at all here because the model carries no cable — which, as Figure 6.34 shows, is also why the creased shell has a standing mismatch in the first place. The cable is therefore both a missing tolerance and a missing element, and the second is the more consequential of the two.
+Two of these are not exercised in this block and are listed so that the budget is not mistaken for a complete one. Poisson's ratio enters from Block B, and the cable rest length cannot enter at all here because the model carries no cable — which, as Figure 6.35 shows, is also why the creased shell has a standing mismatch in the first place. The cable is therefore both a missing tolerance and a missing element, and the second is the more consequential of the two.
 
 The stretch-factor entry deserves its own remark, because it is the dominant term in everything that follows and it is the one furthest from a direct measurement. The quantity the fabrication controls is stitch size, not the stretch factor; the factor is a consequence of it. A per-stitch error of the order of a tenth of a millimetre is small against any single stitch, but it accumulates along a course, and it is that accumulation, over a panel of the size built here, that produces a stretch-factor deviation of the order assumed. Converting the measured stitch-size scatter into a factor tolerance is the single most valuable input this study is waiting on, and it is arithmetic on data Chapter 4 already has rather than a new experiment.
 
@@ -31,18 +31,24 @@ The nominal for the creased shell is not free to be chosen. Its rest mesh is the
 
 The numerical floor was measured rather than assumed. Re-solving the baseline along a different stretch-factor continuation path reproduces it to below 0.01 um in both outputs, at the 1e-8 m precision of the solver's output. Every response reported below is physical by five orders of magnitude.
 
+## Response against tolerance, rather than at one tolerance
+
+Reporting a response at one assumed tolerance answers a question nobody is in a position to ask yet, since five of the six magnitudes are estimates. Figure 6.31 therefore sweeps each factor over a range of multiples of its assumed tolerance, from a quarter to twice, and plots the deviation that results. A reader who later learns that the stitch size gives a stretch-factor tolerance of 0.03 rather than 0.05 reads up from 0.6 on the horizontal axis instead of rescaling a table entry by hand.
+
+The curves are straight to the eye over the whole range, which is worth more than it appears. The claim that an estimate may be replaced without re-running rested until now on the asymmetry between the plus and minus responses at a single magnitude — a local check. These sweeps show the response is linear from a quarter to twice the assumed tolerance for every factor on both geometries, so rescaling is licensed across the whole plausible range and not merely near the assumed point. The two rows the asymmetry check flagged, E1 and E2/E1 on the creased shell, are covered directly by the swept curve and need no rescaling at all.
+
 ## The circular dome
 
-| factor | tolerance | crown, +d (mm) | crown, -d (mm) | half-range (mm) | elasticity | asymmetry | L_pos (mm) |
-|---|---|---|---|---|---|---|---|
-| s_course | 0.05 | -26.45 | +28.31 | -27.38 | -3.67 | 6.8% | 17.23 |
-| E1 | 500 N/m | -9.64 | +11.02 | -10.33 | -0.63 | 13.4% | 6.45 |
-| s_wale | 0.05 | -10.64 | +9.61 | -10.12 | -1.36 | 10.2% | 6.67 |
-| E2/E1 | 0.250 | -6.71 | +7.38 | -7.05 | -0.43 | 9.6% | 4.36 |
-| p | 50 Pa | +5.06 | -5.23 | +5.14 | +0.63 | 3.3% | 3.21 |
-| R | 2 mm | +0.89 | -0.89 | +0.89 | +1.63 | 0.2% | 1.53 |
+| factor | one tolerance | crown height (mm) | surface, L_pos (mm) | elasticity | asymmetry |
+|---|---|---|---|---|---|
+| s_course | 0.05 | -27.38 | 17.23 | -3.67 | 6.8% |
+| E1 | 500 N/m | -10.33 | 6.45 | -0.63 | 13.4% |
+| s_wale | 0.05 | -10.12 | 6.67 | -1.36 | 10.2% |
+| E2/E1 | 0.250 | -7.05 | 4.36 | -0.43 | 9.6% |
+| p | 50 Pa | +5.14 | 3.21 | +0.63 | 3.3% |
+| R | 2 mm | +0.89 | 1.53 | +1.63 | 0.2% |
 
-*Table 6.Y: Block A on the circular dome. Crown-height response to one tolerance either side of the nominal, sorted by effect. Elasticity is the relative change in crown height per relative change in the factor; asymmetry is the difference between the two signs as a fraction of the first difference, and a value under 15% means the response may be rescaled to a different tolerance without re-running. L_pos is the RMS surface displacement from the baseline over interior vertices.*
+*Table 6.Y: Block A on the circular dome, sorted by effect. Crown height is the half-range of the central difference at one tolerance either side of the nominal, and L_pos the RMS surface displacement from the baseline over interior vertices. Elasticity is the relative change in crown height per relative change in the factor, which is what makes six parameters in six different units comparable. Asymmetry is the difference between the two signs as a fraction of the first difference; under 15% the response may be rescaled to a different tolerance rather than re-run. Figure 6.31 gives the same responses as a function of tolerance magnitude.*
 
 The predicted spread with all six factors at one tolerance is 32.2 mm RSS in crown height, 19.6% of the 164.2 mm the dome rises, and 60.9 mm if every error happens to align. Three things in the table are worth drawing out.
 
@@ -54,16 +60,16 @@ The six factors are very nearly degenerate on this geometry. The median absolute
 
 ## The creased shell
 
-| factor | tolerance | crown, +d (mm) | crown, -d (mm) | half-range (mm) | elasticity | asymmetry | L_pos (mm) |
-|---|---|---|---|---|---|---|---|
-| s_course | 0.05 | -20.99 | +21.31 | -21.15 | -1.22 | 1.5% | 16.26 |
-| s_wale | 0.05 | -14.97 | +15.40 | -15.18 | -0.88 | 2.8% | 10.64 |
-| E1 | 500 N/m | -5.44 | +6.48 | -5.96 | -0.15 | 17.5% | 4.51 |
-| p | 50 Pa | +2.94 | -2.98 | +2.96 | +0.15 | 1.3% | 2.24 |
-| E2/E1 | 0.250 | -2.27 | +2.64 | -2.45 | -0.06 | 15.2% | 2.35 |
-| R | 2 mm | +0.37 | -0.37 | +0.37 | +0.28 | 0.6% | 1.50 |
+| factor | one tolerance | crown height (mm) | surface, L_pos (mm) | elasticity | asymmetry |
+|---|---|---|---|---|---|
+| s_course | 0.05 | -21.15 | 16.26 | -1.22 | 1.5% |
+| s_wale | 0.05 | -15.18 | 10.64 | -0.88 | 2.8% |
+| E1 | 500 N/m | -5.96 | 4.51 | -0.15 | 17.5% |
+| p | 50 Pa | +2.96 | 2.24 | +0.15 | 1.3% |
+| E2/E1 | 0.250 | -2.45 | 2.35 | -0.06 | 15.2% |
+| R | 2 mm | +0.37 | 1.50 | +0.28 | 0.6% |
 
-*Table 6.Z: Block A on the creased shell, about the fitted isotropic nominal. Same columns. E1 at 17.5% and E2/E1 at 15.2% exceed the linearity threshold, so those two rows should not be rescaled.*
+*Table 6.Z: Block A on the creased shell, about the fitted isotropic nominal. Same columns. E1 at 17.5% and E2/E1 at 15.2% exceed the asymmetry threshold, so those two rows should not be rescaled by hand; the swept curves of Figure 6.31 cover them directly.*
 
 The predicted spread is 27.0 mm RSS, similar in absolute terms to the dome's but only 7.0% of the crown height here against 19.6% there, because this shell is more than twice as tall. The ordering of the six is the dome's with a single swap, s_wale overtaking E1, so the dominant tolerance does not change with geometry — at least between these two, and before cables and multiple regions enter.
 
@@ -71,9 +77,9 @@ The predicted spread is 27.0 mm RSS, similar in absolute terms to the dome's but
 
 The creased shell can answer a question the dome cannot, because it has a design target to be wrong about. The standing mismatch at the nominal is 24.6 mm. The largest single tolerance, s_course, adds 16.3 mm on top of it. The tolerances are therefore not the binding error, and the two are not merely different in size but in kind: the cosine between the mismatch field and the s_course displacement field is +0.006, orthogonal to three decimal places.
 
-Figure 6.33 shows what that means on the surface. The mismatch is a narrow stripe along x = 0 reaching 91 mm: the target has a sharp crease between its two lobes, and the section through them has the target dipping to 292 mm at the valley while the equilibrium runs flat across at 380 to 385 mm. The tolerance perturbation, by contrast, is a broad smooth mode that lifts or drops the whole cap by about 20 mm and does nothing at the valley. No tightening of these six tolerances moves this shape toward its target.
+Figure 6.34 shows what that means on the surface. The mismatch is a narrow stripe along x = 0 reaching 91 mm: the target has a sharp crease between its two lobes, and the section through them has the target dipping to 292 mm at the valley while the equilibrium runs flat across at 380 to 385 mm. The tolerance perturbation, by contrast, is a broad smooth mode that lifts or drops the whole cap by about 20 mm and does nothing at the valley. No tightening of these six tolerances moves this shape toward its target.
 
-Figure 6.34 says why, and corrects the obvious reading. The natural conclusion from the saturated anisotropic fit is that a uniform two-parameter pre-strain is too poor a parameterisation to form a crease. That is not what happened. The target was form-found with a tie along the valley — the force densities of the form-finding carry a stiff line exactly along x = 0 — and the finite-element model has no cable there. The stiff line of the form finding and the stripe of the mismatch are the same line. The crease is missing from the simulation because the element that creates it was not carried across from the form finding, not because the stretch-factor field is too coarse to express it. The fix is to model the valley tie, and only then to ask whether the parameterisation is rich enough.
+Figure 6.35 says why, and corrects the obvious reading. The natural conclusion from the saturated anisotropic fit is that a uniform two-parameter pre-strain is too poor a parameterisation to form a crease. That is not what happened. The target was form-found with a tie along the valley — the force densities of the form-finding carry a stiff line exactly along x = 0 — and the finite-element model has no cable there. The stiff line of the form finding and the stripe of the mismatch are the same line. The crease is missing from the simulation because the element that creates it was not carried across from the form finding, not because the stretch-factor field is too coarse to express it. The fix is to model the valley tie, and only then to ask whether the parameterisation is rich enough.
 
 One further caution on reading the table for this geometry. L_target is stationary in the stretch factors at the nominal, because the nominal is a fitted minimum: both signs make it worse, by 4.84 and 4.89 mm. A central difference at an optimum is second order and therefore near zero and meaningless, so the analysis reports the increase instead. In the directions that were never fitted — E1, p and R — one sign does improve L_target, as it should.
 
@@ -87,21 +93,25 @@ The perturbations here are uniform: a single stretch factor wrong everywhere, a 
 
 And this is one geometry perturbed one factor at a time about a single-region, cable-free model. The case study of Section 6.4.6 is multi-region and carries cables, whose rest length is a tolerance of its own and a quantised one, set by the resolution of a turnbuckle rather than by a Gaussian. Independent per-region draws, and a joint sampling that lets the factors interfere, remain to be run.
 
+![tolerance_sweep](../imperfection_study/figures/tolerance_sweep.png)
+
+*Figure 6.31: Deviation against tolerance magnitude, each factor swept from a quarter to twice its assumed tolerance, 60 solves per geometry. The dotted vertical is the tolerance assumed in the tables. (a) and (b) give the surface movement from the baseline equilibrium on each geometry. (c) gives what the creased shell is actually judged on, its deviation from the design target: every curve starts at the standing mismatch and rises, so no tolerance at any magnitude in range brings the built shape closer to the shape it was designed to hold. Curves are the worse of the two signs at each magnitude.*
+
 ![blockA_disc_sensitivity](../imperfection_study/figures/blockA_disc_sensitivity.png)
 
-*Figure 6.31: Block A on the circular dome. (a) Crown-height response to plus and minus one tolerance, sorted by effect. (b) Surface deviation L_pos, with the two signs shown separately as ticks. (c) Asymmetry between the two signs, against the 15% linearity threshold. (d) Pairwise cosine between the per-factor displacement fields: the six are nearly the same mode, and p and E1 are exactly opposed.*
+*Figure 6.32: Block A on the circular dome. (a) Crown-height response to plus and minus one tolerance, sorted by effect. (b) Surface deviation L_pos, with the two signs shown separately as ticks. (c) Asymmetry between the two signs, against the 15% linearity threshold. (d) Pairwise cosine between the per-factor displacement fields: the six are nearly the same mode, and p and E1 are exactly opposed.*
 
 ![blockA_2part_sensitivity](../imperfection_study/figures/blockA_2part_sensitivity.png)
 
-*Figure 6.32: Block A on the creased shell, the same four panels. The ordering of the factors is the dome's with one swap, but E1 and E2/E1 exceed the linearity threshold here, so those two rows do not rescale to a different tolerance.*
+*Figure 6.33: Block A on the creased shell, the same four panels. The ordering of the factors is the dome's with one swap, but E1 and E2/E1 exceed the linearity threshold here, so those two rows do not rescale to a different tolerance.*
 
 ![blockA_2part_shape](../imperfection_study/figures/blockA_2part_shape.png)
 
-*Figure 6.33: Where the tolerance shows up, rather than how much. (a) The standing mismatch between the baseline equilibrium and the design target is a narrow stripe along the valley. (b) The dominant tolerance moves the whole cap smoothly and does nothing at the valley. (c) The section through the lobes: the target creases to 292 mm where the equilibrium runs flat at 380 to 385 mm. (d) The section through the saddle, where the perturbation acts and the mismatch does not.*
+*Figure 6.34: Where the tolerance shows up, rather than how much. (a) The standing mismatch between the baseline equilibrium and the design target is a narrow stripe along the valley. (b) The dominant tolerance moves the whole cap smoothly and does nothing at the valley. (c) The section through the lobes: the target creases to 292 mm where the equilibrium runs flat at 380 to 385 mm. (d) The section through the saddle, where the perturbation acts and the mismatch does not.*
 
 ![2part_target_diagnosis](../imperfection_study/figures/2part_target_diagnosis.png)
 
-*Figure 6.34: The standing mismatch is a missing valley tie, not a limit of the parameterisation. (a) The force densities of the form finding carry a stiff line along x = 0. (b) The finite-element model has no cable there, so the crease never forms. (c) The stiff line and the mismatch are the same line.*
+*Figure 6.35: The standing mismatch is a missing valley tie, not a limit of the parameterisation. (a) The force densities of the form finding carry a stiff line along x = 0. (b) The finite-element model has no cable there, so the crease never forms. (c) The stiff line and the mismatch are the same line.*
 
 # Notes for revision — not part of the section
 
@@ -113,7 +123,7 @@ Every number above is read from the Block A outputs by build_section_6_5_3.py: t
 
 2. Two scripts disagree about the standing mismatch. analyse_block_A.py reports L_target = 24.59 mm; plot_shape.py prints 20.65 mm RMS for what reads as the same quantity. The difference is that plot_shape averages over all vertices while the analysis restricts to interior ones, and the clamped boundary deflates the former. The section uses 24.59 mm. Worth making plot_shape mask the boundary so the two agree.
 
-3. Figure numbers 6.31 to 6.34 are provisional and assume 6.29 and 6.30 belong to Section 6.5.1.
+3. Figure numbers 6.31 to 6.35 are provisional and assume 6.29 and 6.30 belong to Section 6.5.1.
 
 4. Blocks B to E are not built. B adds Poisson's ratio and cable rest length at the case-study optimum and needs the n-region binary; C draws per-region and per-cable independently; D samples jointly and reports the distribution of L_pos against the RSS predicted here; E repeats B on a second geometry. Block A already answers part of E's question — the dominant tolerance is s_course on both geometries — so E is testing whether that survives cables and regions.
 

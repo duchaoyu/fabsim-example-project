@@ -81,19 +81,22 @@ MM = 1e3
 
 
 def rows(d):
-    """Factor rows, largest crown-height effect first."""
+    """Factor rows, largest crown-height effect first.
+
+    Deliberately short. The magnitudes as a function of tolerance are the
+    figure's job; the table's job is the ranking, the normalised sensitivity and
+    whether the row may be rescaled.
+    """
     order = sorted(d, key=lambda k: -abs(float(d[k]["crown_height_half"])))
     out = []
     for k in order:
         r = d[k]
         out.append((
             NAME[k], DELTA[k],
-            f"{MM * float(r['crown_height_plus']):+.2f}",
-            f"{MM * float(r['crown_height_minus']):+.2f}",
             f"{MM * float(r['crown_height_half']):+.2f}",
+            f"{MM * float(r['L_pos_mean']):.2f}",
             f"{float(r['crown_height_elast']):+.2f}",
             f"{100 * float(r['crown_height_asym']):.1f}%",
-            f"{MM * float(r['L_pos_mean']):.2f}",
         ))
     return out
 
@@ -115,8 +118,8 @@ DOM_2P = MM * float(twopart["s_course"]["L_pos_mean"])
 D, T = ov["disc"], ov["2part"]
 OOR = ov["disc_out_of_round"]
 
-HEAD = ("factor", "tolerance", "crown, +d (mm)", "crown, -d (mm)",
-        "half-range (mm)", "elasticity", "asymmetry", "L_pos (mm)")
+HEAD = ("factor", "one tolerance", "crown height (mm)", "surface, L_pos (mm)",
+        "elasticity", "asymmetry")
 
 BODY = [
 ("h", "6.5.3 Robustness to construction imprecision"),
@@ -156,7 +159,7 @@ BODY = [
 ("p", "Two of these are not exercised in this block and are listed so that the "
       "budget is not mistaken for a complete one. Poisson's ratio enters from "
       "Block B, and the cable rest length cannot enter at all here because the "
-      "model carries no cable — which, as Figure 6.34 shows, is also why the "
+      "model carries no cable — which, as Figure 6.35 shows, is also why the "
       "creased shell has a standing mismatch in the first place. The cable is "
       "therefore both a missing tolerance and a missing element, and the second "
       "is the more consequential of the two."),
@@ -203,6 +206,27 @@ BODY = [
       "to below 0.01 um in both outputs, at the 1e-8 m precision of the solver's "
       "output. Every response reported below is physical by five orders of "
       "magnitude."),
+
+("h2", "Response against tolerance, rather than at one tolerance"),
+
+("p", "Reporting a response at one assumed tolerance answers a question nobody "
+      "is in a position to ask yet, since five of the six magnitudes are "
+      "estimates. Figure 6.31 therefore sweeps each factor over a range of "
+      "multiples of its assumed tolerance, from a quarter to twice, and plots "
+      "the deviation that results. A reader who later learns that the stitch "
+      "size gives a stretch-factor tolerance of 0.03 rather than 0.05 reads up "
+      "from 0.6 on the horizontal axis instead of rescaling a table entry by "
+      "hand."),
+
+("p", "The curves are straight to the eye over the whole range, which is worth "
+      "more than it appears. The claim that an estimate may be replaced without "
+      "re-running rested until now on the asymmetry between the plus and minus "
+      "responses at a single magnitude — a local check. These sweeps show the "
+      "response is linear from a quarter to twice the assumed tolerance for "
+      "every factor on both geometries, so rescaling is licensed across the "
+      "whole plausible range and not merely near the assumed point. The two "
+      "rows the asymmetry check flagged, E1 and E2/E1 on the creased shell, are "
+      "covered directly by the swept curve and need no rescaling at all."),
 
 ("h2", "The circular dome"),
 
@@ -270,7 +294,7 @@ BODY = [
       f"field is {T['mismatch_vs_dominant_cosine']:+.3f}, orthogonal to three "
       f"decimal places."),
 
-("p", f"Figure 6.33 shows what that means on the surface. The mismatch is a "
+("p", f"Figure 6.34 shows what that means on the surface. The mismatch is a "
       f"narrow stripe along x = 0 reaching {T['mismatch_peak_mm']:.0f} mm: the "
       f"target has a sharp crease between its two lobes, and the section through "
       f"them has the target dipping to 292 mm at the valley while the "
@@ -279,7 +303,7 @@ BODY = [
       f"the whole cap by about 20 mm and does nothing at the valley. No "
       f"tightening of these six tolerances moves this shape toward its target."),
 
-("p", "Figure 6.34 says why, and corrects the obvious reading. The natural "
+("p", "Figure 6.35 says why, and corrects the obvious reading. The natural "
       "conclusion from the saturated anisotropic fit is that a uniform "
       "two-parameter pre-strain is too poor a parameterisation to form a crease. "
       "That is not what happened. The target was form-found with a tie along the "
@@ -353,20 +377,30 @@ BODY = [
 ]
 
 CAPTIONS = [
+    ("tolerance_sweep",
+     "Figure 6.31: Deviation against tolerance magnitude, each factor swept "
+     "from a quarter to twice its assumed tolerance, 60 solves per geometry. "
+     "The dotted vertical is the tolerance assumed in the tables. (a) and (b) "
+     "give the surface movement from the baseline equilibrium on each geometry. "
+     "(c) gives what the creased shell is actually judged on, its deviation "
+     "from the design target: every curve starts at the standing mismatch and "
+     "rises, so no tolerance at any magnitude in range brings the built shape "
+     "closer to the shape it was designed to hold. Curves are the worse of the "
+     "two signs at each magnitude."),
     ("blockA_disc_sensitivity",
-     "Figure 6.31: Block A on the circular dome. (a) Crown-height response to "
+     "Figure 6.32: Block A on the circular dome. (a) Crown-height response to "
      "plus and minus one tolerance, sorted by effect. (b) Surface deviation "
      "L_pos, with the two signs shown separately as ticks. (c) Asymmetry "
      "between the two signs, against the 15% linearity threshold. (d) Pairwise "
      "cosine between the per-factor displacement fields: the six are nearly the "
      "same mode, and p and E1 are exactly opposed."),
     ("blockA_2part_sensitivity",
-     "Figure 6.32: Block A on the creased shell, the same four panels. The "
+     "Figure 6.33: Block A on the creased shell, the same four panels. The "
      "ordering of the factors is the dome's with one swap, but E1 and E2/E1 "
      "exceed the linearity threshold here, so those two rows do not rescale to "
      "a different tolerance."),
     ("blockA_2part_shape",
-     "Figure 6.33: Where the tolerance shows up, rather than how much. (a) The "
+     "Figure 6.34: Where the tolerance shows up, rather than how much. (a) The "
      "standing mismatch between the baseline equilibrium and the design target "
      "is a narrow stripe along the valley. (b) The dominant tolerance moves the "
      "whole cap smoothly and does nothing at the valley. (c) The section "
@@ -374,7 +408,7 @@ CAPTIONS = [
      "runs flat at 380 to 385 mm. (d) The section through the saddle, where "
      "the perturbation acts and the mismatch does not."),
     ("2part_target_diagnosis",
-     "Figure 6.34: The standing mismatch is a missing valley tie, not a limit "
+     "Figure 6.35: The standing mismatch is a missing valley tie, not a limit "
      "of the parameterisation. (a) The force densities of the form finding "
      "carry a stiff line along x = 0. (b) The finite-element model has no cable "
      "there, so the crease never forms. (c) The stiff line and the mismatch "
@@ -416,7 +450,7 @@ NOTES = [
       "over all vertices while the analysis restricts to interior ones, and the "
       "clamped boundary deflates the former. The section uses 24.59 mm. Worth "
       "making plot_shape mask the boundary so the two agree."),
-("p", "3. Figure numbers 6.31 to 6.34 are provisional and assume 6.29 and 6.30 "
+("p", "3. Figure numbers 6.31 to 6.35 are provisional and assume 6.29 and 6.30 "
       "belong to Section 6.5.1."),
 ("p", "4. Blocks B to E are not built. B adds Poisson's ratio and cable rest "
       "length at the case-study optimum and needs the n-region binary; C draws "
@@ -464,17 +498,21 @@ TABLE_CAPTIONS = {
         "currently an estimate: the section each waits on is named, and "
         "tolerances.py records the same table in machine-readable form.",
     "table_disc":
-        "Table 6.Y: Block A on the circular dome. Crown-height response to one "
-        "tolerance either side of the nominal, sorted by effect. Elasticity is "
-        "the relative change in crown height per relative change in the factor; "
-        "asymmetry is the difference between the two signs as a fraction of the "
-        "first difference, and a value under 15% means the response may be "
-        "rescaled to a different tolerance without re-running. L_pos is the RMS "
-        "surface displacement from the baseline over interior vertices.",
+        "Table 6.Y: Block A on the circular dome, sorted by effect. Crown "
+        "height is the half-range of the central difference at one tolerance "
+        "either side of the nominal, and L_pos the RMS surface displacement "
+        "from the baseline over interior vertices. Elasticity is the relative "
+        "change in crown height per relative change in the factor, which is "
+        "what makes six parameters in six different units comparable. "
+        "Asymmetry is the difference between the two signs as a fraction of the "
+        "first difference; under 15% the response may be rescaled to a "
+        "different tolerance rather than re-run. Figure 6.31 gives the same "
+        "responses as a function of tolerance magnitude.",
     "table_2part":
         "Table 6.Z: Block A on the creased shell, about the fitted isotropic "
         "nominal. Same columns. E1 at 17.5% and E2/E1 at 15.2% exceed the "
-        "linearity threshold, so those two rows should not be rescaled.",
+        "asymmetry threshold, so those two rows should not be rescaled by hand; "
+        "the swept curves of Figure 6.31 cover them directly.",
 }
 
 
