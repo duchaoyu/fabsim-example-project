@@ -49,6 +49,7 @@ class Geometry:
     target: Optional[str]   # design-target OFF, or None
     nominal_source: str     # where the working point comes from
     note: str = ""
+    cable: Optional[dict] = None   # {"indices": [...], "EA": N}, or None
 
     def r_char(self) -> float:
         """Mean in-plane radius of the clamped boundary ring, in metres."""
@@ -56,9 +57,12 @@ class Geometry:
         return mesh_tools.boundary_radius(V)
 
     def params(self) -> dict:
-        return {"sf_wale": self.s_wale, "sf_course": self.s_course,
-                "knit_dir_deg": self.knit_dir_deg, "pressure": self.pressure,
-                "E1": self.E1, "r_ratio": self.r_ratio, "nu": self.nu}
+        p = {"sf_wale": self.s_wale, "sf_course": self.s_course,
+             "knit_dir_deg": self.knit_dir_deg, "pressure": self.pressure,
+             "E1": self.E1, "r_ratio": self.r_ratio, "nu": self.nu}
+        if self.cable is not None:
+            p["cable"] = dict(self.cable)
+        return p
 
 
 # Motif 1, shared by both geometries: E1 = 5000 N/m, E2 = 12507 N/m, nu = 0.198.
@@ -115,12 +119,50 @@ def _make_2part():
     )
 
 
+# The case study as it is actually designed: the optimised stretch factors of
+# strategy D in Section 6.4.1, with the crease cable that optimisation had. The
+# reference for robustness is this equilibrium — the shape the design says the
+# structure will take — not the design target, which the optimisation was only
+# ever able to approach.
+_D_OPTIMUM = dict(s_wale=1.299156, s_course=0.960304)
+
+
+def _crease_cable():
+    with open(os.path.join(HERE, "data", "cable_2part_crease.json")) as f:
+        d = json.load(f)
+    return {"indices": d["indices"], "EA": d["EA"]}
+
+
+def _make_2part_cable():
+    return Geometry(
+        name="2part_cable", mesh=_2part_mesh,
+        s_wale=_D_OPTIMUM["s_wale"], s_course=_D_OPTIMUM["s_course"],
+        knit_dir_deg=0.0, pressure=1000.0,
+        target=_2part_mesh,
+        nominal_source="strategy D of §6.4.1: the optimised anisotropic "
+                       "stretch factors with the crease cable, "
+                       f"sf_wale = {_D_OPTIMUM['s_wale']:.6f}, "
+                       f"sf_course = {_D_OPTIMUM['s_course']:.6f}, "
+                       "mean vertex distance 7.895 mm from the target",
+        note="The case study as designed. The cable at the crease is the "
+             "element whose absence leaves the cable-free 2part a 24.6 mm "
+             "standing mismatch, so this is the geometry on which a tolerance "
+             "budget is worth computing. Deviations are measured from this "
+             "equilibrium: the question is how far the built structure moves "
+             "from what the optimisation said it would be.",
+        cable=_crease_cable(),
+        **_MOTIF1,
+    )
+
+
 def get(name):
     if name == "disc":
         return DISC
     if name == "2part":
         return _make_2part()
-    raise ValueError(f"unknown geometry {name!r}; expected 'disc' or '2part'")
+    if name == "2part_cable":
+        return _make_2part_cable()
+    raise ValueError(f"unknown geometry {name!r}; expected one of {NAMES}")
 
 
-NAMES = ["disc", "2part"]
+NAMES = ["disc", "2part", "2part_cable"]

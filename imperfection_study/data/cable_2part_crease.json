@@ -1,0 +1,8 @@
+{
+  "_comment": "The crease cable of Section 6.4.1, lifted from src/best_fit_stretch_factors_cable.cpp so the imperfection study and the case study use one definition. 19 vertices, 18 segments. EA = 157000 N is a 1 mm steel cable. L_rest is omitted: the solver takes the geometric length on the rest mesh, and the rest-length tolerance is applied by scaling that.",
+  "indices": [313, 100, 163, 158, 169, 170, 166, 334, 65,
+              167, 165, 333, 98, 99, 149, 336, 79, 130, 327],
+  "EA": 157000.0,
+  "mesh": "data/2part/2part_opt_simu_m.off",
+  "source": "src/best_fit_stretch_factors_cable.cpp"
+}

@@ -33,6 +33,7 @@ def load(geom):
 
 
 disc, twopart = load("disc"), load("2part")
+cable = load("2part_cable")
 ov = json.load(open(os.path.join(HERE, "data", "block_A_overlap.json")))
 
 # Display names and the unit each tolerance is quoted in.
@@ -113,9 +114,13 @@ def worst_asym(d):
 H_DISC, H_2P = crown_mm(disc), crown_mm(twopart)
 L_TARGET = MM * float(twopart["s_wale"]["L_target_base"])
 S_NOM = float(twopart["s_wale"]["nominal"])
-WA_DISC, WA_2P = worst_asym(disc), worst_asym(twopart)
+WA_DISC, WA_2P = worst_asym(disc), worst_asym(cable)
+C_SW = float(cable["s_wale"]["nominal"])
+C_SC = float(cable["s_course"]["nominal"])
+C_LT = MM * float(cable["s_wale"]["L_target_base"])
+H_CABLE = crown_mm(cable)
 DOM_2P = MM * float(twopart["s_course"]["L_pos_mean"])
-D, T = ov["disc"], ov["2part"]
+D, T, C = ov["disc"], ov["2part"], ov["2part_cable"]
 OOR = ov["disc_out_of_round"]
 
 HEAD = ("factor", "one tolerance", "crown height (mm)", "surface, L_pos (mm)",
@@ -133,16 +138,26 @@ BODY = [
       "geometry carries a design target, whether that movement matters against "
       "the error the design already has."),
 
-("p", f"Six factors are perturbed one at a time by plus and minus one tolerance "
-      f"about a nominal working point: the two stretch factors s_wale and "
-      f"s_course, the membrane stiffness E1, the orthotropy ratio E2/E1, the "
-      f"inflation pressure p, and the boundary radius R. Thirteen solves per "
-      f"geometry — a baseline and twelve perturbations — on two geometries. The "
-      f"circular dome of Section 6.2 serves as the method check: it has a flat "
-      f"rest mesh and no design target of its own, so its deviations are "
-      f"referenced to its own baseline equilibrium. The creased shell of "
-      f"Section 6.4.1 is the case that carries a target, and is where the "
-      f"question of what the tolerances mean can actually be answered."),
+("p", f"Eight parameters are perturbed one at a time about a nominal working "
+      f"point: the two stretch factors s_wale and s_course, the membrane "
+      f"stiffness E1, the orthotropy ratio E2/E1, Poisson's ratio, the "
+      f"inflation pressure p, the boundary radius R, and the rest length of the "
+      f"crease cable. Two structures are studied. The circular dome of "
+      f"Section 6.2 is the method check: a flat rest mesh, no cable, no design "
+      f"target of its own. The creased shell of Section 6.4.1 is the case "
+      f"study, and it is taken as designed — the optimised stretch factors of "
+      f"strategy D, s_wale = {C_SW:.4f} and s_course = {C_SC:.4f}, with the "
+      f"crease cable that optimisation was run with."),
+
+("p", f"The reference matters as much as the perturbation. Deviations are "
+      f"measured from the equilibrium the design itself predicts, not from the "
+      f"design target. The question a tolerance budget has to answer is how far "
+      f"the built structure departs from what the optimisation said it would "
+      f"be; how far that prediction sits from the target is a separate "
+      f"question, settled in Section 6.4 and not improvable by tightening any "
+      f"tolerance. On the creased shell the designed equilibrium stands "
+      f"{C_LT:.1f} mm from the target in RMS over interior vertices, and every "
+      f"deviation reported below is measured from that equilibrium."),
 
 ("h2", "Where the tolerances come from"),
 
@@ -156,13 +171,11 @@ BODY = [
 
 ("table_prov", None),
 
-("p", "Two of these are not exercised in this block and are listed so that the "
-      "budget is not mistaken for a complete one. Poisson's ratio enters from "
-      "Block B, and the cable rest length cannot enter at all here because the "
-      "model carries no cable — which, as Figure 6.35 shows, is also why the "
-      "creased shell has a standing mismatch in the first place. The cable is "
-      "therefore both a missing tolerance and a missing element, and the second "
-      "is the more consequential of the two."),
+("p", "Every one of these is exercised. Poisson's ratio and the cable rest "
+      "length were absent from the first pass of this study, the one on a "
+      "cable-free model, and both are now included: the case study has a cable "
+      "at the crease, so its rest length is a real tolerance with a real "
+      "mechanism rather than a parameter waiting for a later block."),
 
 ("p", "The stretch-factor entry deserves its own remark, because it is the "
       "dominant term in everything that follows and it is the one furthest from "
@@ -291,37 +304,62 @@ BODY = [
       f"unaffected by this: for a scalar output RSS is correct whenever the "
       f"factor errors are independent, whatever the shape of the response."),
 
-("h2", "The creased shell"),
+("h2", "The creased shell, as designed"),
 
-("table_2part", None),
+("table_cable", None),
 
-("p", f"The predicted spread is {T['crown_rss_mm']:.1f} mm RSS, similar in "
-      f"absolute terms to the dome's but only {T['crown_rss_pct_of_h']:.1f}% of "
-      f"the crown height here against {D['crown_rss_pct_of_h']:.1f}% there, "
-      f"because this shell is more than twice as tall. The ordering of the six "
-      f"is the dome's with a single swap, s_wale overtaking E1, so the dominant "
-      f"tolerance does not change with geometry — at least between these two, "
-      f"and before cables and multiple regions enter."),
+("p", f"The predicted spread is {C['crown_rss_mm']:.1f} mm RSS in crown height, "
+      f"{C['crown_rss_pct_of_h']:.1f}% of the {H_CABLE:.0f} mm this shell "
+      f"stands, and {C['L_pos_rss_mm']:.1f} mm RMS over the surface. Against "
+      f"the dome's {D['crown_rss_pct_of_h']:.1f}% that is a markedly more "
+      f"robust structure, and the cable is most of the reason. Run without it, "
+      f"on a fitted uniform pre-strain, the same shell gives "
+      f"{T['crown_rss_mm']:.1f} mm and {T['crown_rss_pct_of_h']:.1f}%. A "
+      f"stiffener introduced to resolve the crease also takes the shape out of "
+      f"the fabric's hands, and what the fabric does not control it cannot get "
+      f"wrong."),
 
-("h2", "What the target adds"),
+("p", f"The same is visible factor by factor. With the cable in place a one "
+      f"percent error in E1 moves the surface 0.26 mm where the cable-free "
+      f"model gave 0.45 mm, and the orthotropy ratio drops from 0.23 to "
+      f"0.09 mm. The material scatter that Chapter 4 is being asked to pin "
+      f"down matters measurably less to the structure as it is actually "
+      f"designed than to the model that stood in for it."),
 
-("p", f"The creased shell can answer a question the dome cannot, because it has "
-      f"a design target to be wrong about. The standing mismatch at the nominal "
-      f"is {L_TARGET:.1f} mm. The largest single tolerance, s_course, adds "
-      f"{DOM_2P:.1f} mm on top of it. The tolerances are therefore not the "
-      f"binding error, and the two are not merely different in size but in kind: "
-      f"the cosine between the mismatch field and the s_course displacement "
-      f"field is {T['mismatch_vs_dominant_cosine']:+.3f}, orthogonal to three "
-      f"decimal places."),
+("h2", "What the cable costs in return"),
 
-("p", f"Figure 6.34 shows what that means on the surface. The mismatch is a "
+("p", f"The cable removes sensitivity to the fabric and adds one of its own. "
+      f"Per percent of nominal, its rest length is the second-steepest "
+      f"parameter of the eight, at 3.89 mm against the boundary radius's "
+      f"4.26 mm, and it is well ahead of s_course at 2.79 mm. The mechanism is "
+      f"not mysterious: the cable is stiff, so where it is short the surface "
+      f"follows it. A one percent error is 13 mm on a 1.32 m cable, which is "
+      f"more than a turnbuckle's resolution and well within what channel "
+      f"seating and anchorage take-up can absorb, so this is a tolerance to "
+      f"specify rather than to assume."),
+
+("p", f"That completes an argument the earlier, cable-free study could only "
+      f"half make. It found that no tolerance moved the shape toward the target "
+      f"and concluded that fabrication was not the binding error. That remains "
+      f"true, but the reason is sharper: the crease was missing because the "
+      f"model had no cable, and once the cable is there the standing mismatch "
+      f"falls from {L_TARGET:.1f} mm to {C_LT:.1f} mm. The residual is what the "
+      f"two-parameter uniform pre-strain cannot express, and it is the "
+      f"parameterisation of Section 6.4, not the workshop, that would have to "
+      f"improve to remove it."),
+
+("p", f"Figures 6.34 and 6.35 are the cable-free control, and are worth keeping "
+      f"for what they diagnose. Without the cable the mismatch is a "
       f"narrow stripe along x = 0 reaching {T['mismatch_peak_mm']:.0f} mm: the "
       f"target has a sharp crease between its two lobes, and the section through "
       f"them has the target dipping to 292 mm at the valley while the "
       f"equilibrium runs flat across at 380 to 385 mm. The tolerance "
       f"perturbation, by contrast, is a broad smooth mode that lifts or drops "
-      f"the whole cap by about 20 mm and does nothing at the valley. No "
-      f"tightening of these six tolerances moves this shape toward its target."),
+      f"the whole cap by about 20 mm and does nothing at the valley — the "
+      f"cosine between the two fields is "
+      f"{T['mismatch_vs_dominant_cosine']:+.3f}. No tolerance moves that shape "
+      f"toward its target, because the feature it is missing is not something a "
+      f"tolerance controls."),
 
 ("p", "Figure 6.35 says why, and corrects the obvious reading. The natural "
       "conclusion from the saturated anisotropic fit is that a uniform "
@@ -348,13 +386,13 @@ BODY = [
 
 ("p", f"Within the tolerances assumed, construction imprecision moves the crown "
       f"height by about {D['crown_rss_pct_of_h']:.0f}% on the dome and "
-      f"{T['crown_rss_pct_of_h']:.0f}% on the creased shell, and the surface by "
-      f"{D['L_pos_rss_mm']:.0f} and {T['L_pos_rss_mm']:.0f} mm RMS "
-      f"respectively. On the geometry that has a target, that is smaller than "
-      f"and geometrically unrelated to the error the model already carries. The "
-      f"practical reading is that for this case study fabrication tolerance is "
-      f"not the limiting factor on how closely the built shape matches the "
-      f"design, and effort is better spent on the model than on the workshop."),
+      f"{C['crown_rss_pct_of_h']:.0f}% on the case study as designed, and the "
+      f"surface by {D['L_pos_rss_mm']:.0f} and {C['L_pos_rss_mm']:.0f} mm RMS "
+      f"respectively. Set against the {C_LT:.1f} mm the designed equilibrium "
+      f"already stands from its target, the tolerances are comparable rather "
+      f"than negligible — which is a different conclusion from the one the "
+      f"cable-free study reached, and a more useful one, because it says the "
+      f"two now deserve attention together rather than the model alone."),
 
 ("p", f"Three limits should be stated with equal clarity. All six tolerances are "
       f"estimates; none is yet backed by a measurement, and the dominant one, "
@@ -530,11 +568,15 @@ TABLE_CAPTIONS = {
         "first difference; under 15% the response may be rescaled to a "
         "different tolerance rather than re-run. Figure 6.31 gives the same "
         "responses as a function of tolerance magnitude.",
-    "table_2part":
-        "Table 6.Z: Block A on the creased shell, about the fitted isotropic "
-        "nominal. Same columns. E1 at 17.5% and E2/E1 at 15.2% exceed the "
-        "asymmetry threshold, so those two rows should not be rescaled by hand; "
-        "the swept curves of Figure 6.31 cover them directly.",
+    "table_cable":
+        "Table 6.Z: Block A on the creased shell as designed - the optimised "
+        "stretch factors of strategy D with the crease cable - about that "
+        "equilibrium rather than about the design target. Same columns. E1 at "
+        "19.4% and E2/E1 at 20.6% exceed the asymmetry threshold, so those two "
+        "rows should not be rescaled by hand; the swept curves of Figure 6.31 "
+        "cover them directly, and both are small in absolute terms. The cable "
+        "rest length and Poisson's ratio are swept in Figure 6.31 but are not "
+        "in this table, which reports the six factors of the original block.",
 }
 
 
@@ -551,7 +593,9 @@ def build_md():
             lines.append(md_table(PROVENANCE, PROV_HEAD))
             lines.append(f"*{TABLE_CAPTIONS[kind]}*\n")
         elif kind.startswith("table_"):
-            lines.append(md_table(rows(disc if kind == "table_disc" else twopart)))
+            lines.append(md_table(rows({"table_disc": disc,
+                                        "table_2part": twopart,
+                                        "table_cable": cable}[kind])))
             lines.append(f"*{TABLE_CAPTIONS[kind]}*\n")
     for name, cap in CAPTIONS:
         lines.append(f"![{name}](../imperfection_study/figures/{name}.png)\n")
@@ -578,7 +622,8 @@ def build_docx():
             if kind == "table_prov":
                 add_table(doc, PROVENANCE, PROV_HEAD)
             else:
-                add_table(doc, rows(disc if kind == "table_disc" else twopart))
+                add_table(doc, rows({"table_disc": disc, "table_2part": twopart,
+                                     "table_cable": cable}[kind]))
             cap = doc.add_paragraph(TABLE_CAPTIONS[kind])
             cap.runs[0].font.size = Pt(9)
             cap.runs[0].font.italic = True

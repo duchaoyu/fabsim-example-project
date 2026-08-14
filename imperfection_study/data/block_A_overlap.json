@@ -1,27 +1,27 @@
 {
-  "_comment": "Aggregates from analyse_block_A.py --check-overlap and plot_shape.py, which compute them from the stored Block A runs rather than re-solving. Regenerate with: python3 analyse_block_A.py --geometry disc|2part --check-overlap, and python3 plot_shape.py --geometry 2part. These figures are from the run with delta_R = 2 mm, per 5.5.2; an earlier run used 5 mm.",
+  "_comment": "Aggregates from analyse_block_A.py --check-overlap and plot_shape.py, which compute them from the stored Block A runs rather than re-solving. Regenerate with: python3 analyse_block_A.py --geometry disc|2part --check-overlap, and python3 plot_shape.py --geometry 2part. These figures are from the run with delta_R = 2 mm, per 5.5.2; an earlier run used 5 mm. The 2part_cable entry is the case study as designed - optimised stretch factors plus the crease cable - and is the one a tolerance budget should be read from.",
   "disc": {
     "crown_rss_mm": 32.181,
-    "crown_rss_pct_of_h": 19.60,
+    "crown_rss_pct_of_h": 19.6,
     "crown_aligned_mm": 60.908,
-    "crown_aligned_pct_of_h": 37.10,
+    "crown_aligned_pct_of_h": 37.1,
     "L_pos_rss_mm": 20.357,
     "median_abs_cosine": 0.996,
     "most_aligned_pair": "p / E1",
-    "most_aligned_cosine": -1.000,
+    "most_aligned_cosine": -1.0,
     "numerical_floor": "< 0.01 um in both L_pos and crown height, bounded by the 1e-8 m output precision"
   },
   "2part": {
     "crown_rss_mm": 26.986,
     "crown_rss_pct_of_h": 6.99,
-    "crown_aligned_mm": 48.080,
+    "crown_aligned_mm": 48.08,
     "crown_aligned_pct_of_h": 12.45,
     "L_pos_rss_mm": 20.266,
     "median_abs_cosine": 0.964,
     "most_aligned_pair": "p / E1",
-    "most_aligned_cosine": -1.000,
+    "most_aligned_cosine": -1.0,
     "mismatch_vs_dominant_cosine": 0.006,
-    "mismatch_peak_mm": 90.60,
+    "mismatch_peak_mm": 90.6,
     "numerical_floor": "< 0.01 um in both L_pos and crown height, bounded by the 1e-8 m output precision"
   },
   "disc_out_of_round": {
@@ -31,5 +31,19 @@
     "span_mm": 2.2,
     "delta_R_mm": 2.0,
     "pct_of_delta_R": 110
+  },
+  "2part_cable": {
+    "crown_rss_mm": 19.197,
+    "crown_rss_pct_of_h": 5.07,
+    "crown_aligned_mm": 27.489,
+    "crown_aligned_pct_of_h": 7.26,
+    "L_pos_rss_mm": 15.969,
+    "median_abs_cosine": 0.86,
+    "most_aligned_pair": "p / E1",
+    "most_aligned_cosine": -1.0,
+    "L_target_base_mm": 10.262,
+    "crown_base_mm": 378.84,
+    "numerical_floor": "< 0.01 um in both L_pos and crown height",
+    "note": "strategy D optimum with the crease cable; the reference for every deviation is this equilibrium, not the design target"
   }
 }

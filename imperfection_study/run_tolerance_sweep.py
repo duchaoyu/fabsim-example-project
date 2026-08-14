@@ -57,6 +57,22 @@ def sweep_params(g, nom, factor, mult):
 PARAM_KEY = {"s_wale": "sf_wale", "s_course": "sf_course",
              "pressure": "pressure", "E1": "E1", "r": "r_ratio", "nu": "nu"}
 
+# Tolerance-table key for factors whose study name differs.
+TOL_KEY = {"cable_L": "rho"}
+
+
+def factors_for(g):
+    """The six of Block A, plus Poisson's ratio, plus the cable if there is one.
+
+    Block A left nu out because it enters the case study from Block B, and the
+    cable out because its geometries had none. Neither reason applies once the
+    case study is run as designed, and both are cheap to include.
+    """
+    fs = list(cfg.BLOCK_A_FACTORS) + ["nu"]
+    if g.cable is not None:
+        fs.append("cable_L")
+    return fs
+
 
 def percent_params(g, nom, factor, pct):
     """Perturb `factor` by pct percent of its own nominal value."""
@@ -66,6 +82,13 @@ def percent_params(g, nom, factor, pct):
         tag = f"{g.name}_pc{'p' if pct > 0 else 'm'}{abs(pct):g}".replace(".", "")
         mesh, _ = mesh_tools.radius_variant(g.mesh, scale, cfg.MESH_DIR, tag)
         return p, mesh
+    if factor == "cable_L":
+        # The rest length the cable is built to, as a fraction of the length it
+        # would take on the rest mesh: what channel seating and anchorage
+        # take-up get wrong.
+        L0 = fem_runner.cable_length(g.mesh, g.cable["indices"])
+        p["cable"] = dict(g.cable, L_rest=L0 * scale)
+        return p, g.mesh
     p[PARAM_KEY[factor]] = nom[factor] * scale
     return p, g.mesh
 
@@ -104,14 +127,14 @@ def main():
     key = "percent" if args.percent else "multiple"
     rows = [dict(factor="baseline", **{key: 0.0}, delta_abs=0.0, **base)]
     n = 0
-    for factor in cfg.BLOCK_A_FACTORS:
-        tol = TOLERANCES[factor]
+    for factor in (factors_for(g) if args.percent else cfg.BLOCK_A_FACTORS):
+        tol = TOLERANCES[TOL_KEY.get(factor, factor)]
         for step in steps:
             for sign in (+1, -1):
                 s = sign * step
                 if args.percent:
                     p, mesh = percent_params(g, nom, factor, s)
-                    delta_abs = nom[factor] * s / 100.0
+                    delta_abs = nom.get(factor, float("nan")) * s / 100.0
                 else:
                     p, mesh = sweep_params(g, nom, factor, s)
                     delta_abs = s * tol.absolute(nom[factor])
