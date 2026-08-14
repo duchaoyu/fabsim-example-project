@@ -301,11 +301,11 @@ TABLE = [
     ("Middle crease, anisotropic, cable (D)", "6.4.1", "341 / 634", "2",
      "39", "0.029 s", "1.12 s"),
     ("Free-form shell, 9 regions", "6.4.2", "497 / 929", "30",
-     "622", f"{MB5:.2f} s", "not recorded"),
+     "622", f"{MB5:.2f} s", f"≥ {622 * MB5:.0f} s †"),
     ("Fluted dome, 16 regions, D8-reduced", "6.4.3", "1309 / 2137", "7 + 1",
-     "378 + 34", f"{MC5:.2f} s", "not recorded"),
+     "378 + 34", f"{MC5:.2f} s", f"≥ {412 * MC5:.0f} s †"),
     ("Openings, 1 region", "6.4.6", "847 / 1563", "3",
-     "162", f"{MD5:.2f} s", "not recorded"),
+     "162", f"{MD5:.2f} s", f"≥ {162 * MD5:.0f} s †"),
     ("Openings, 4 adaptive regions", "6.4.6", "847 / 1563", "9",
      "2959", "0.34 s", "184 min"),
     ("Openings, 10 field-aligned regions", "6.4.6", "847 / 1563", "20",
@@ -313,6 +313,23 @@ TABLE = [
     ("Openings, 10 symmetric regions, warm-started", "6.4.6", "847 / 1563", "10",
      "90", "0.46 s", "4.8 min"),
 ]
+
+TABLE_CAPTION = (
+    "Table 6.X: Computational cost of the case studies. For the crease strategies "
+    "the solve cost is the mean over the run itself, which is warm-started in "
+    "process; entries marked * exclude the single non-converging solve discussed "
+    "in the text. For the free-form shell, the fluted dome and the single-region "
+    "fit it is the median over twenty-five design points about the optimum, each "
+    "a cold solve. For the three region-scheme runs it is the median over the "
+    "recorded run. Wall clocks marked † were lost when the output files were "
+    "rewritten and are not measurements: they are the evaluation count times the "
+    "median solve cost, and therefore lower bounds, since they credit the run "
+    "with no non-converging solves at all. The three measured region-scheme runs "
+    f"exceed the same bound by factors of {184 * 60 / (2959 * 0.34):.0f}, "
+    f"{68 * 60 / (1241 * 0.39):.0f} and {4.8 * 60 / (90 * 0.46):.0f} "
+    "respectively, so the true figures are plausibly of the order of ten minutes "
+    "rather than one."
+)
 
 CAPTIONS = {
     "computational_time":
@@ -406,6 +423,7 @@ def build_md():
             for row in TABLE[1:]:
                 lines.append("| " + " | ".join(row) + " |")
             lines.append("")
+            lines.append(f"*{TABLE_CAPTION}*\n")
     for name, cap in CAPTIONS.items():
         lines.append(f"![{name}](../FDM/figures/{name}.png)\n")
         lines.append(f"*{cap}*\n")
@@ -443,19 +461,7 @@ def build_docx():
                     cells[i].text = v
                     for r in cells[i].paragraphs[0].runs:
                         r.font.size = Pt(8)
-            cap = doc.add_paragraph("Table 6.X: Computational cost of the case "
-                                    "studies. For the crease strategies the solve "
-                                    "cost is the mean over the run itself, which "
-                                    "is warm-started in process; entries marked * "
-                                    "exclude the single non-converging solve "
-                                    "discussed in the text. For the free-form "
-                                    "shell, the fluted dome and the single-region "
-                                    "fit it is the median over twenty-five design "
-                                    "points about the optimum, each a cold solve. "
-                                    "For the three region-scheme runs it is the "
-                                    "median over the recorded run. Wall clocks "
-                                    "marked not recorded were lost when the output "
-                                    "files were rewritten.")
+            cap = doc.add_paragraph(TABLE_CAPTION)
             cap.runs[0].font.size = Pt(9)
             cap.runs[0].font.italic = True
 

@@ -20,12 +20,14 @@ Because the outer problem is solved with finite-difference gradients, one L-BFGS
 | Middle crease, isotropic, cable (B) | 6.4.1 | 341 / 634 | 1 | 67 | 0.014 s | 0.93 s |
 | Middle crease, anisotropic, no cable (C) | 6.4.1 | 341 / 634 | 2 | 93 | 0.024 s* | 53.4 s |
 | Middle crease, anisotropic, cable (D) | 6.4.1 | 341 / 634 | 2 | 39 | 0.029 s | 1.12 s |
-| Free-form shell, 9 regions | 6.4.2 | 497 / 929 | 30 | 622 | 0.13 s | not recorded |
-| Fluted dome, 16 regions, D8-reduced | 6.4.3 | 1309 / 2137 | 7 + 1 | 378 + 34 | 0.12 s | not recorded |
-| Openings, 1 region | 6.4.6 | 847 / 1563 | 3 | 162 | 0.66 s | not recorded |
+| Free-form shell, 9 regions | 6.4.2 | 497 / 929 | 30 | 622 | 0.13 s | ≥ 78 s † |
+| Fluted dome, 16 regions, D8-reduced | 6.4.3 | 1309 / 2137 | 7 + 1 | 378 + 34 | 0.12 s | ≥ 49 s † |
+| Openings, 1 region | 6.4.6 | 847 / 1563 | 3 | 162 | 0.66 s | ≥ 107 s † |
 | Openings, 4 adaptive regions | 6.4.6 | 847 / 1563 | 9 | 2959 | 0.34 s | 184 min |
 | Openings, 10 field-aligned regions | 6.4.6 | 847 / 1563 | 20 | 1241 | 0.39 s | 68 min |
 | Openings, 10 symmetric regions, warm-started | 6.4.6 | 847 / 1563 | 10 | 90 | 0.46 s | 4.8 min |
+
+*Table 6.X: Computational cost of the case studies. For the crease strategies the solve cost is the mean over the run itself, which is warm-started in process; entries marked * exclude the single non-converging solve discussed in the text. For the free-form shell, the fluted dome and the single-region fit it is the median over twenty-five design points about the optimum, each a cold solve. For the three region-scheme runs it is the median over the recorded run. Wall clocks marked † were lost when the output files were rewritten and are not measurements: they are the evaluation count times the median solve cost, and therefore lower bounds, since they credit the run with no non-converging solves at all. The three measured region-scheme runs exceed the same bound by factors of 11, 8 and 7 respectively, so the true figures are plausibly of the order of ten minutes rather than one.*
 
 The table separates two populations that should not be averaged. The strategies with a global or symmetry-reduced parameter set converge in a few hundred evaluations and finish in one to two minutes of solve time: 622 evaluations for the free-form shell over thirty variables, 412 for the fluted dome across its two phases, 162 for the single-region fit of the shell with openings. The alternating region schemes are one to two orders of magnitude more expensive. The adaptive partition of the shell with openings took 2959 evaluations and 184 minutes, because every element on a region boundary is trial-assigned to each neighbouring region at one forward solve per trial, and the sweep repeats until no element moves. It is the discrete outer step, not the continuous inner one, that makes region refinement expensive, and its cost scales with the length of the region boundaries rather than with the number of variables. The twenty-variable field-aligned partition needed 1241 evaluations against the nine-variable adaptive partition's 2959.
 
