@@ -106,75 +106,49 @@ def panel(ax, rows, column, signed_from_base, title, ylabel,
     return ax
 
 
-def geometry_panel(ax, gname, title, show_cable):
-    """Plan of the structure with the two length parameters marked on it.
-
-    The curves in (c) and (d) are about a ring and a cable; this says where on
-    the structure those are, in the same colours.
-    """
-    g = geom.get(gname)
-    V, F = mesh_tools.load_off(g.mesh)
-    interior = mesh_tools.interior_mask(V, F)
-
-    for tri in F:
-        loop = list(tri) + [tri[0]]
-        ax.plot(V[loop, 0], V[loop, 1], lw=0.25, color="#DDDDDD", zorder=1)
-
-    bnd = ~interior
-    ax.scatter(V[bnd, 0], V[bnd, 1], s=9, color=COLOUR["R"], zorder=3,
-               label="anchored boundary, $R$")
-    if show_cable and g.cable is not None:
-        idx = list(g.cable["indices"])
-        ax.plot(V[idx, 0], V[idx, 1], "-o", ms=3, lw=2.0,
-                color=COLOUR["cable_L"], zorder=4,
-                label="crease cable, $L_\\mathrm{rest}$")
-
-    ax.set_aspect("equal")
-    ax.set_title(title, loc="left")
-    ax.set_xlabel("x (m)")
-    ax.set_ylabel("y (m)")
-    # The plan is a disc in a square frame, so the corners are empty.
-    ax.legend(frameon=False, loc="upper left", fontsize=7.5,
-              handlelength=1.2, borderaxespad=0.0)
-    for side in ("top", "right"):
-        ax.spines[side].set_visible(False)
-    return ax
-
-
 def main():
     disc, cable = load("disc"), load("2part_cable")
     disc_mm, cable_mm = load("disc", "absolute"), load("2part_cable", "absolute")
 
-    fig, axes = plt.subplots(2, 3, figsize=(14.6, 7.8))
-    MM_X = dict(xlabel="length error (mm)", xlim=(0, 20.5),
-                xticks=(0, 5, 10, 15, 20))
+    fig, axes = plt.subplots(1, 2, figsize=(11.2, 4.6))
 
-    panel(axes[0][0], disc, "L_pos", True,
-          "(a) circular dome: material and pre-strain",
-          "deviation from the designed\nequilibrium (mm)",
-          order=RATIO_ORDER, mark=[(1.0, "1%")])
-    panel(axes[0][1], cable, "L_pos", True,
-          "(b) creased shell as designed: material and pre-strain",
-          "deviation from the designed\nequilibrium (mm)",
-          order=RATIO_ORDER, mark=[(1.0, "1%")])
-    panel(axes[1][0], disc_mm, "L_pos", True,
-          "(d) circular dome: boundary radius",
-          "deviation from the designed\nequilibrium (mm)",
-          order=LENGTH_FACTORS, mark=[(2.0, "\u00b12 mm, \u00a75.5.2")], **MM_X)
-    panel(axes[1][1], cable_mm, "L_pos", True,
-          "(e) creased shell: boundary radius and cable rest length",
-          "deviation from the designed\nequilibrium (mm)",
-          order=LENGTH_FACTORS, mark=[(2.0, "\u00b12 mm, \u00a75.5.2")], **MM_X)
+    for ax, (rows_pc, rows_mm, title) in zip(axes, [
+            (disc, disc_mm, "(a) circular dome"),
+            (cable, cable_mm,
+             "(b) creased shell as designed: optimised factors + crease cable"),
+    ]):
+        # Dimensionless parameters read on the bottom axis, in percent.
+        panel(ax, rows_pc, "L_pos", True, title,
+              "deviation from the designed equilibrium (mm)",
+              order=RATIO_ORDER)
 
-    geometry_panel(axes[0][2], "disc",
-                   "(c) where the dome is held", show_cable=False)
-    geometry_panel(axes[1][2], "2part_cable",
-                   "(f) where the shell is held and stiffened", show_cable=True)
+        # The two set as lengths read on the top axis, in millimetres, so that
+        # every parameter sits on one pair of axes and may be compared by eye.
+        top = ax.twiny()
+        top.set_xlim(0, 20.5)
+        top.set_xticks([0, 5, 10, 15, 20])
+        top.set_xlabel("length error (mm), dashed curves")
+        top.spines["right"].set_visible(False)
+        present = {r["factor"] for r in rows_mm}
+        for factor in LENGTH_FACTORS:
+            if factor not in present:
+                continue
+            xs, ys, _ = curve(rows_mm, factor, "L_pos", True)
+            top.plot(xs, ys, "--o", ms=2.8, lw=1.5, color=COLOUR[factor],
+                     label=LABEL[factor], zorder=3)
+        top.axvline(2.0, color="#BBBBBB", lw=0.8, ls=":", zorder=0)
+        y_mid = 0.45 * ax.get_ylim()[1]
+        top.annotate("\u00b12 mm, \u00a75.5.2", xy=(2.0, y_mid), xytext=(4, 0),
+                     textcoords="offset points", fontsize=7, color="#888888",
+                     rotation=90, va="center", ha="left")
 
-    for row in axes:
-        for a in row[:2]:
-            a.legend(ncol=2, frameon=False, loc="upper left",
-                     handlelength=1.4, columnspacing=1.0)
+        h1, l1 = ax.get_legend_handles_labels()
+        h2, l2 = top.get_legend_handles_labels()
+        if ax.get_legend() is not None:
+            ax.get_legend().remove()
+        ax.legend(h1 + h2, l1 + l2, ncol=2, frameon=False, loc="upper left",
+                  handlelength=1.6, columnspacing=1.0, fontsize=8)
+
     fig.tight_layout()
 
     os.makedirs(cfg.FIG_DIR, exist_ok=True)
