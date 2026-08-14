@@ -1,0 +1,34 @@
+{
+  "_comment": "Aggregates from analyse_block_A.py --check-overlap and plot_shape.py, which compute them from the stored Block A runs rather than re-solving. Regenerate with: python3 analyse_block_A.py --geometry disc|2part --check-overlap, and python3 plot_shape.py --geometry 2part.",
+  "disc": {
+    "crown_rss_mm": 32.246,
+    "crown_rss_pct_of_h": 19.64,
+    "crown_aligned_mm": 62.246,
+    "crown_aligned_pct_of_h": 37.92,
+    "L_pos_rss_mm": 20.656,
+    "median_abs_cosine": 0.996,
+    "most_aligned_pair": "p / E1",
+    "most_aligned_cosine": -1.000,
+    "numerical_floor": "< 0.01 um in both L_pos and crown height, bounded by the 1e-8 m output precision"
+  },
+  "2part": {
+    "crown_rss_mm": 27.000,
+    "crown_rss_pct_of_h": 6.99,
+    "crown_aligned_mm": 48.640,
+    "crown_aligned_pct_of_h": 12.60,
+    "L_pos_rss_mm": 20.553,
+    "median_abs_cosine": 0.964,
+    "most_aligned_pair": "p / E1",
+    "most_aligned_cosine": -1.000,
+    "mismatch_vs_dominant_cosine": 0.006,
+    "mismatch_peak_mm": 90.60,
+    "numerical_floor": "< 0.01 um in both L_pos and crown height, bounded by the 1e-8 m output precision"
+  },
+  "disc_out_of_round": {
+    "boundary_radius_min_mm": 597.8,
+    "boundary_radius_max_mm": 600.0,
+    "boundary_radius_std_mm": 0.58,
+    "span_mm": 2.2,
+    "pct_of_delta_R": 22
+  }
+}
