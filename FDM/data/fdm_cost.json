@@ -1,5 +1,5 @@
 {
-  "_comment": "Cost of the one-shot form-finding stage, per geometry. Measured on the timing machine of Section 6.5.1 (Xeon Gold 5412U). Timings are the Elapsed line each fofin_*.py now prints, which brackets scipy.optimize.minimize only and excludes I/O and plotting. ms_per_iter is one L-BFGS-B iteration: an equilibrium solve plus a gradient. inflate_ms, where present, is the equilibrium solve alone, timed over repeats at the converged densities. The B5 and C5 runs were executed concurrently with each other on separate cores; the D5 samples were taken with the machine otherwise idle.",
+  "_comment": "Cost of the one-shot form-finding stage, per geometry. Measured on the timing machine of Section 6.5.1 (Xeon Gold 5412U). Timings are the Elapsed line each fofin_*.py prints, which brackets scipy.optimize.minimize only and excludes I/O and plotting. ms_per_iter is one L-BFGS-B iteration: an equilibrium solve plus a gradient. The B5 and C5 entries carry a 'before' block recording the same script before the adjoint gradient and vectorised inflate were ported into it from fofin_D5.py; those runs were executed concurrently on separate cores, the rest with the machine otherwise idle.",
   "D5 (6.4.6)": {
     "form_finding_script": "fofin_D5.py",
     "gradient": "adjoint",
@@ -20,39 +20,63 @@
   },
   "B5 (6.4.2)": {
     "form_finding_script": "fofin_B5.py",
-    "gradient": "direct sensitivity",
+    "gradient": "adjoint",
     "n_verts": 269,
     "n_faces": 504,
     "n_edges": 772,
     "n_free": 237,
     "n_design": 772,
-    "iters": 507,
+    "iters": 505,
     "converged": false,
     "maxiter": 500,
-    "samples_s": [171.00],
-    "ms_per_iter": 337.3,
-    "rmse_m": 0.0604,
+    "samples_s": [1.54],
+    "ms_per_iter": 3.1,
+    "rmse_m": 0.0605,
     "span_m": 20.0,
-    "note": "stopped at the iteration cap, not at convergence; the wall clock is therefore a floor. Runs on input/B5.obj, a coarser mesh than the 497/929 remesh the inverse problem of 6.4.2 uses."
+    "before": {
+      "gradient": "direct sensitivity",
+      "iters": 507,
+      "samples_s": [171.00],
+      "ms_per_iter": 337.3,
+      "rmse_m": 0.0604
+    },
+    "note": "stops at the iteration cap, not at convergence, so the wall clock is a floor in both states. Runs on input/B5.obj, a coarser mesh than the 497/929 remesh the inverse problem of 6.4.2 uses."
   },
   "C5 (6.4.3)": {
     "form_finding_script": "fofin_C5_dense.py",
-    "gradient": "direct sensitivity",
+    "gradient": "adjoint",
     "n_verts": 1114,
     "n_faces": 2137,
     "n_edges": 3250,
     "n_free": 1025,
     "n_design": 3250,
-    "iters": 992,
+    "iters": 1142,
     "converged": true,
-    "samples_s": [2047.12],
-    "ms_per_iter": 2063.6,
-    "rmse_m": 0.00098,
+    "samples_s": [12.04],
+    "ms_per_iter": 10.5,
+    "rmse_m": 0.00096,
+    "before": {
+      "gradient": "direct sensitivity",
+      "iters": 992,
+      "samples_s": [2047.12],
+      "ms_per_iter": 2063.6,
+      "rmse_m": 0.00098,
+      "split_ms": {"equilibrium": 543.2, "gradient": 1614.8},
+      "equilibrium_split_ms": {"compas_normals_loop": 510.8, "assembly": 5.7, "five_spsolve": 19.6}
+    },
     "note": "runs on data/C5/C5_remeshed.obj, the same file the inverse problem of 6.4.3 uses; compas welds it to 1114 vertices where the FEM driver reads 1309."
   },
   "2part (6.4.1)": {
     "form_finding_script": "square_crease.py",
     "measured": false,
     "note": "not comparable and not measurable here. It is an interactive session - 200 fixed-point fd_numpy steps driven through a compas_view2 viewer - rather than a fitted optimisation over q, and it needs compas_fd and compas_view2, neither installed on the timing machine."
+  },
+  "port_verification": {
+    "gradient_max_rel_diff": 3.865e-15,
+    "gradient_cosine_similarity": 1.0,
+    "gradient_speedup_at_C5": 456,
+    "loads_max_rel_diff_C5": 1.027e-15,
+    "loads_max_rel_diff_B5": 1.416e-15,
+    "note": "adjoint against direct sensitivity at a perturbed q, and vectorised vertex normals/areas against compas vertex_normal()*vertex_area(), both on the meshes used."
   }
 }

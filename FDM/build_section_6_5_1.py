@@ -59,11 +59,11 @@ FDM_RMS_PC = 100 * fdm_res["rmse_m"] / fdm_res["span_m"]
 FDM_CROWN_UM = 1e6 * abs(fdm_res["fdm_crown_m"] - fdm_res["target_crown_m"])
 FEM_BEST_MM = 1e3 * min(min(v["loss"]) for v in hist.values())
 
-# Cost of one L-BFGS-B iteration, adjoint against direct sensitivity.
-PER_VAR_B5 = fdm_b5["ms_per_iter"] / fdm_b5["n_design"]
-PER_VAR_C5 = fdm_c5["ms_per_iter"] / fdm_c5["n_design"]
-DIRECT_RATIO = fdm_c5["ms_per_iter"] / fdm["ms_per_iter"]
-D5_IF_DIRECT_MIN = (PER_VAR_C5 * fdm["n_design"] * fdm["iters"] / 1e3) / 60
+# Cost of one L-BFGS-B iteration, before and after the adjoint was ported in.
+PORT = fdm_all["port_verification"]
+B4_C5_SPLIT = fdm_c5["before"]["split_ms"]
+B4_C5_EQ = fdm_c5["before"]["equilibrium_split_ms"]
+DIRECT_RATIO = fdm_c5["before"]["ms_per_iter"] / fdm_c5["ms_per_iter"]
 
 BODY = [
 ("h", "6.5.1 Computational time"),
@@ -82,9 +82,10 @@ BODY = [
       f"shell with openings the force density method (FDM) form finding of "
       f"Section 6.2 takes {FDM_S:.1f} s and the directional field "
       f"{FIELD_S:.1f} s, against the hours the inverse problem takes on the same "
-      f"mesh. That margin is not uniform across the case studies, and the reason "
-      f"it is not turns out to be the most transferable result in this section, "
-      f"so it is taken up separately below. The question first is what one "
+      f"mesh. The other geometries cost {fdm_b5['samples_s'][0]:.1f} s and "
+      f"{fdm_c5['samples_s'][0]:.0f} s, though two of the three took a hundred "
+      f"times longer until an implementation detail was changed, which is taken "
+      f"up separately below. The question first is what one "
       f"forward solve costs, how many of them a strategy needs, and why the two "
       f"do not multiply to the observed wall clock."),
 
@@ -268,31 +269,45 @@ BODY = [
       f"partition and by symmetry, to a size at which the penalty is affordable "
       f"rather than absent."),
 
-("p", f"How much that choice is worth need not be argued, because the workflow "
-      f"contains the controlled experiment. The form finding for the free-form "
-      f"shell and for the fluted dome is the same method on the same solver, but "
-      f"implemented by direct sensitivity: rather than solving three adjoint "
-      f"systems, each iteration solves for the full sensitivity of every free "
-      f"vertex to every force density, an n_free by n_edge system per coordinate "
-      f"axis. One iteration of the openings form finding costs "
-      f"{fdm['ms_per_iter']:.1f} ms at {fdm['n_design']} design variables; one "
-      f"iteration of the fluted dome costs {fdm_c5['ms_per_iter'] / 1e3:.2f} s at "
-      f"{fdm_c5['n_design']}, and one of the free-form shell "
-      f"{fdm_b5['ms_per_iter'] / 1e3:.2f} s at {fdm_b5['n_design']}. That is a "
-      f"factor of {DIRECT_RATIO:.0f} per iteration between the two "
-      f"implementations at comparable size, and it shows in the wall clocks: "
-      f"{FDM_S:.1f} s for the openings against "
-      f"{fdm_c5['samples_s'][0] / 60:.0f} minutes for the fluted dome. The direct "
-      f"cost is linear in the number of design variables, at "
-      f"{PER_VAR_C5:.2f} ms per variable per iteration on the dome and "
-      f"{PER_VAR_B5:.2f} ms on the free-form shell, where the adjoint cost is "
-      f"flat. Had the openings form finding been written the same way, its "
-      f"{fdm['iters']} iterations would have cost of the order of "
-      f"{D5_IF_DIRECT_MIN:.0f} minutes instead of nine seconds. The reduction "
-      f"this section recommends for the inverse problem is therefore not a "
-      f"hypothetical: the workflow already contains one stage that took it and "
-      f"two that did not, and the difference between them was measured rather "
-      f"than argued."),
+("p", f"How much that choice is worth need not be argued, because it was "
+      f"measured. The form finding for the free-form shell and for the fluted "
+      f"dome was originally written by direct sensitivity: rather than solving "
+      f"three adjoint systems, each iteration solved for the full sensitivity of "
+      f"every free vertex to every force density, a system with one right-hand "
+      f"side per design variable per coordinate axis — "
+      f"{3 * fdm_c5['n_design']} of them per iteration on the dome, where the "
+      f"adjoint uses three. On the dome that gradient took "
+      f"{B4_C5_SPLIT['gradient'] / 1e3:.2f} s of a "
+      f"{fdm_c5['before']['ms_per_iter'] / 1e3:.2f} s iteration, and the "
+      f"equilibrium solve most of the rest, itself dominated not by linear "
+      f"algebra but by a per-vertex Python loop over the mesh library, "
+      f"{B4_C5_EQ['compas_normals_loop']:.0f} ms of it against "
+      f"{B4_C5_EQ['five_spsolve']:.1f} ms for the five linear solves. Neither "
+      f"cost is intrinsic. Substituting the adjoint of the openings "
+      f"implementation, and its vectorised assembly of the pressure loads, "
+      f"leaves the objective and the gradient unchanged — the two gradient "
+      f"formulations agree to "
+      f"{PORT['gradient_max_rel_diff']:.0e} relative and the two load "
+      f"assemblies to {PORT['loads_max_rel_diff_C5']:.0e} — and reduces one "
+      f"iteration on the dome from {fdm_c5['before']['ms_per_iter'] / 1e3:.2f} s "
+      f"to {fdm_c5['ms_per_iter']:.1f} ms. The run falls from "
+      f"{fdm_c5['before']['samples_s'][0] / 60:.0f} minutes to "
+      f"{fdm_c5['samples_s'][0]:.0f} seconds, and the free-form shell from "
+      f"{fdm_b5['before']['samples_s'][0]:.0f} s to "
+      f"{fdm_b5['samples_s'][0]:.2f} s, at the same fit in both cases. The "
+      f"figures in the table are the ported ones."),
+
+("p", f"That is worth stating plainly because it is the same argument this "
+      f"section makes about the inverse problem, and here it has been carried "
+      f"out rather than recommended. Nothing about the fluted dome made its form "
+      f"finding a {fdm_c5['before']['samples_s'][0] / 60:.0f}-minute job; it was "
+      f"a {DIRECT_RATIO:.0f}-fold penalty per iteration, paid for a gradient "
+      f"identical to fifteen decimal places. The workflow accumulated three "
+      f"implementations of one method, and the differences between them were "
+      f"never visible because nothing recorded a time. That is the practical "
+      f"argument for instrumenting a research pipeline: not that the numbers are "
+      f"interesting in themselves, but that a cost nobody measures is a cost "
+      f"nobody notices."),
 
 ("p", f"The two fits are worth holding against each other, since both are RMS "
       f"deviations from the same target surface. The form finding reaches "
@@ -384,15 +399,15 @@ TABLE = [
     ("Crease, form finding ‡", "6.2", "—", "—", "—", "—", "interactive"),
     ("Free-form shell, form finding ‡", "6.2",
      f"{fdm_b5['n_verts']} / {fdm_b5['n_faces']}", f"{fdm_b5['n_design']}",
-     f"{fdm_b5['iters']}", f"{fdm_b5['ms_per_iter'] / 1e3:.2f} s",
-     f"{fdm_b5['samples_s'][0] / 60:.1f} min §"),
+     f"{fdm_b5['iters']}", f"{fdm_b5['ms_per_iter']:.1f} ms",
+     f"{fdm_b5['samples_s'][0]:.2f} s §"),
     ("Fluted dome, form finding ‡", "6.2",
      f"{fdm_c5['n_verts']} / {fdm_c5['n_faces']}", f"{fdm_c5['n_design']}",
-     f"{fdm_c5['iters']}", f"{fdm_c5['ms_per_iter'] / 1e3:.2f} s",
-     f"{fdm_c5['samples_s'][0] / 60:.1f} min"),
+     f"{fdm_c5['iters']}", f"{fdm_c5['ms_per_iter']:.1f} ms",
+     f"{fdm_c5['samples_s'][0]:.1f} s"),
     ("Openings, form finding ‡", "6.2",
      f"{fdm['n_verts']} / {fdm['n_faces']}", f"{fdm['n_design']}",
-     f"{fdm['iters']}", f"{fdm['ms_per_iter'] / 1e3:.3f} s", f"{FDM_S:.1f} s"),
+     f"{fdm['iters']}", f"{fdm['ms_per_iter']:.1f} ms", f"{FDM_S:.1f} s"),
 ]
 
 TABLE_CAPTION = (
@@ -413,13 +428,14 @@ TABLE_CAPTION = (
     "finding that precedes each of them, and for those rows the solve cost is "
     "one L-BFGS-B iteration — an equilibrium solve and a gradient — rather than "
     "a single membrane solve, so it is comparable within the block and not "
-    "against the rows above. They are not comparable among themselves either "
-    "without the caveat that carries the argument of this section: the openings "
-    "form finding takes its gradient by an adjoint and the other two by direct "
-    "sensitivity. The crease form finding is an interactive session rather than "
-    "a fitted optimisation and has no meaningful wall clock. The entry marked § "
-    "stopped at its iteration cap rather than at convergence, so it too is a "
-    "floor."
+    "against the rows above. All three now use the adjoint gradient; the "
+    "free-form shell and the fluted dome took "
+    f"{fdm_b5['before']['samples_s'][0]:.0f} s and "
+    f"{fdm_c5['before']['samples_s'][0] / 60:.0f} min before it was ported into "
+    "them, at the same fit, as discussed below. The crease form finding is an "
+    "interactive session rather than a fitted optimisation and has no meaningful "
+    "wall clock. The entry marked § stopped at its iteration cap rather than at "
+    "convergence, so it too is a floor."
 )
 
 CAPTIONS = {
@@ -504,13 +520,18 @@ NOTES = [
       "neither installed here. Remeshing and cable extraction are also "
       "unmeasured."),
 
-("p", "8. The gradient implementations diverged without anyone deciding they "
-      "should. fofin_D5.py uses an adjoint; fofin_B5.py, fofin_C5.py and "
-      "fofin_C5_dense.py solve for the full sensitivity matrix. The measured "
-      "penalty is a factor of about 260 per iteration. Porting the adjoint from "
-      "fofin_D5.py to the other two is a contained change and would bring the "
-      "fluted dome form finding from 34 minutes to seconds; worth doing before "
-      "any sweep that re-runs form finding many times."),
+("p", "8. The adjoint gradient and vectorised load assembly of fofin_D5.py have "
+      "been ported into fofin_B5.py and fofin_C5_dense.py. Verification before "
+      "the change: the two gradient forms agree to 3.9e-15 relative with cosine "
+      "similarity 1.0 at a perturbed q, and the vectorised loads agree with "
+      "compas vertex_normal()*vertex_area() to 1.4e-15 on both meshes. After the "
+      "change the fits are unchanged (B5 0.0604 to 0.0605 m, C5 0.00098 to "
+      "0.00096 m). The iteration counts shift slightly, 992 to 1142 on the dome, "
+      "because L-BFGS-B follows a marginally different path once the gradient "
+      "differs in the last bits; the stored form-finding results were not "
+      "regenerated, so if the reported 6.4.2 and 6.4.3 geometries are ever "
+      "rebuilt they will differ in the last decimals from the ones on disk. "
+      "fofin_C5.py and fofin_C5_smooth.py still carry the old formulation."),
 
 ("p", "9. fofin_B5.py imported compas.numerical, which no longer exists in "
       "compas 2.x, so it could not run at all on the timing machine until the "
