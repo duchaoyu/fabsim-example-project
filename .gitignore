@@ -12,3 +12,7 @@ include/.DS_Store
 FDM/data/Knitting for Shell structures.docx
 FDM/data/Knitting for Shell structures.backup_*.docx
 ~$*.docx
+
+# Fresh Linux build tree (build-linux/ carries a stale macOS cache)
+build-headless/
+out/

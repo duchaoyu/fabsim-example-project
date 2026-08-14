@@ -51,6 +51,11 @@ std::vector<int>             face_region;   // 0, 1, or 2
 double E1, E2, nu, thickness, mass, pressure;
 
 int      sim_count = 0;
+
+// Set HEADLESS=1 to run without a display: polyscope uses its mock backend, the
+// screenshots and the interactive view are skipped, and nothing else changes.
+// The optimisation is identical either way.
+const bool headless = std::getenv("HEADLESS") != nullptr;
 VectorXd warm_start;
 
 // ── Screenshot state ──────────────────────────────────────────────────────────
@@ -222,6 +227,7 @@ double fitLoss(const fsim::Mat3<double>& Vsim)
 // ── Screenshot ────────────────────────────────────────────────────────────────
 void takeScreenshot(const fsim::Mat3<double>& V, const std::string& label)
 {
+  if (headless) return;
   if (!ps_mesh) return;
   VectorXd vres = (V - Vtarget).rowwise().norm();
   std::vector<double> fres(F.rows());
@@ -390,10 +396,10 @@ int reassignBoundaryFaces(const std::array<double,3>& sf1,
 int main()
 {
   // ── Configuration ──────────────────────────────────────────────────────────
-  const std::string folder      = "/Users/duch/Documents/PhD/knit/2024_prototypes/2part/";
+  const std::string folder      = "data/2part/";
   const std::string mesh_ref    = folder + "2part_opt_simu_m.off";
   const std::string mesh_target = folder + "2part_opt_simu_m.off";
-  const std::string out_dir     = "/Users/duch/Downloads/";
+  const std::string out_dir     = "out/";
 
   E1 = 5000.0; E2 = 12507.0; nu = 0.198; thickness = 1.0; mass = 0.001; pressure = 1000.0;
 
@@ -439,7 +445,7 @@ int main()
   // ── Polyscope init ─────────────────────────────────────────────────────────
   screenshots_dir = out_dir + "sf_3region_adaptive_screenshots/";
   std::system(("mkdir -p \"" + screenshots_dir + "\"").c_str());
-  polyscope::init();
+  polyscope::init(headless ? "openGL_mock" : "openGL3_glfw");
   polyscope::options::groundPlaneMode = polyscope::GroundPlaneMode::None;
   std::vector<double> face_reg_d(face_region.size());
   for (int f = 0; f < (int)face_region.size(); ++f) face_reg_d[f] = face_region[f] / 2.0;
@@ -543,6 +549,6 @@ int main()
       std::vector<double>(vres_opt.data(), vres_opt.data() + vres_opt.size()))
       ->setColorMap("reds");
   polyscope::registerSurfaceMesh("Target mesh", Vtarget, F)->setEnabled(false);
-  polyscope::show();
+  if (!headless) polyscope::show();
   return 0;
 }

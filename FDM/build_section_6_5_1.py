@@ -386,6 +386,8 @@ TABLE = [
      "93", "0.024 s*", "53.4 s"),
     ("Middle crease, anisotropic, cable (D)", "6.4.1", "341 / 634", "2",
      "39", "0.029 s", "1.12 s"),
+    ("Middle crease, 3 adaptive regions (E)", "6.4.1", "341 / 634", "4",
+     "554", "0.006 s", "3.4 s"),
     ("Free-form shell, 9 regions", "6.4.2", "497 / 929", "30",
      "622", f"{MB5:.2f} s", f"≥ {622 * MB5:.0f} s †"),
     ("Fluted dome, 16 regions, D8-reduced", "6.4.3", "1309 / 2137", "7 + 1",
@@ -501,11 +503,21 @@ NOTES = [
 ("p", "4. Fluted dome cable count. Section 6.4.3 describes twelve radial cables "
       "plus one circumferential, then refers to 24 cables. The stored result has "
       "16 regions and 24 cable sections under D8 symmetry, i.e. eight sectors."),
-("p", "5. Strategy E of Section 6.4.1 is absent from the table because its "
-      "executable initialises Polyscope and needs a display; its solve count was "
-      "never recorded. It can be added by running "
-      "build-linux/best_fit_stretch_factors_3region_adaptive on a machine with a "
-      "display, or by removing the visualisation calls."),
+("p", "5. Strategy E of Section 6.4.1 is now in the table: 554 Newton solves in "
+      "3.4 s, over four design variables — sf1 and sf2 for the constrained pair "
+      "R0=R1 and for R2 — reaching a mean distance of 6.14 mm from 18.16 mm, a "
+      "66% improvement, with a maximum of 33 mm. Its region sweep converged, no "
+      "faces swapping on the last pass, at R0=175, R1=131, R2=328 faces. Two "
+      "things were needed to obtain this. The driver now takes HEADLESS=1, which "
+      "selects Polyscope's mock backend and skips the screenshots and the "
+      "interactive view, leaving the optimisation untouched; without it the "
+      "executable needs a display. And the build was broken on Linux for any "
+      "target linking Polyscope: a macOS-generated glfw_config.h, with "
+      "_GLFW_COCOA defined, sat in external/polyscope/deps/glfw/src and shadowed "
+      "the one CMake generates per build directory, so glfw tried to compile "
+      "against Carbon. It has been renamed to glfw_config.h.macos-stale. The "
+      "binary used here is build-headless/, configured fresh; build-linux/ still "
+      "carries the macOS cache."),
 ("p", "6. A latent trap, worth a sentence somewhere in 6.3.7. For the shell with "
       "openings the rest mesh is the target mesh, so any evaluation that returns "
       "the rest shape unchanged scores an exact zero on the objective. The "
