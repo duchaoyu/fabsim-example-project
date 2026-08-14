@@ -386,7 +386,7 @@ TABLE = [
      "93", "0.024 s*", "53.4 s"),
     ("Middle crease, anisotropic, cable (D)", "6.4.1", "341 / 634", "2",
      "39", "0.029 s", "1.12 s"),
-    ("Middle crease, 3 adaptive regions (E)", "6.4.1", "341 / 634", "4",
+    ("Middle crease, 3 adaptive regions (E) ‖", "6.4.1", "341 / 634", "4",
      "554", "0.006 s", "3.4 s"),
     ("Free-form shell, 9 regions", "6.4.2", "497 / 929", "30",
      "622", f"{MB5:.2f} s", f"≥ {622 * MB5:.0f} s †"),
@@ -421,7 +421,10 @@ TABLE_CAPTION = (
     "Table 6.X: Computational cost of the case studies. For the crease strategies "
     "the solve cost is the mean over the run itself, which is warm-started in "
     "process; entries marked * exclude the single non-converging solve discussed "
-    "in the text. For the free-form shell, the fluted dome and the single-region "
+    "in the text. The entry marked ‖ was solved to a Newton threshold of 1e-4, "
+    "where every other crease strategy used 1e-6, so neither its solve cost nor "
+    "its wall clock is comparable with the four rows above it. For the free-form "
+    "shell, the fluted dome and the single-region "
     "fit it is the median over twenty-five design points about the optimum, each "
     "a cold solve. For the three region-scheme runs it is the median over the "
     "recorded run. Wall clocks marked † were lost when the output files were "
@@ -565,6 +568,21 @@ NOTES = [
       "regenerated, so if the reported 6.4.2 and 6.4.3 geometries are ever "
       "rebuilt they will differ in the last decimals from the ones on disk. "
       "fofin_C5.py and fofin_C5_smooth.py still carry the old formulation."),
+
+("p", "10. Strategy E looks an order of magnitude faster than strategy C and is "
+      "not. Two things account for the gap, and neither is that the adaptive "
+      "scheme is cheaper. First, C's 53.4 s is one solve: the single design "
+      "point at which Newton exhausted its iteration limit cost about 51 s, so "
+      "C's other 92 solves account for roughly 2.2 s, against E's 3.4 s for 554 "
+      "solves — the same order of magnitude of productive work. Second, "
+      "best_fit_stretch_factors_3region_adaptive.cpp sets the Newton threshold "
+      "to 1e-4 where every other crease driver sets 1e-6, which both lowers its "
+      "per-solve cost and lets it leave a badly conditioned design point that "
+      "the others would grind on. It is the only driver in the set with a "
+      "different tolerance, and it is not clear the difference was intentional. "
+      "Either the tolerance should be brought into line and the run repeated, or "
+      "the text should say why strategy E is solved less tightly than the "
+      "strategies it is compared against in 6.4.1."),
 
 ("p", "9. fofin_B5.py imported compas.numerical, which no longer exists in "
       "compas 2.x, so it could not run at all on the timing machine until the "
