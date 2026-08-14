@@ -7,7 +7,7 @@ Laplacian-smoothed remesh.  Saves:
   data/C5/mesh_out_C5_smooth_latest.json        (fixed-name for downstream)
   data/C5/C5_smooth_fdm_result.png              (matplotlib visualisation)
 """
-import os, datetime
+import os, datetime, time
 import numpy as np
 import scipy
 import scipy.sparse
@@ -115,12 +115,16 @@ print(f"Target span={span:.3f} m  height={height:.3f} m  pressure={PRESSURE}", f
 print(f"Solver: L-BFGS-B (max {MAXITER} iters)\n", flush=True)
 
 q0     = np.full(n_e, Q_INIT)
+t_opt0 = time.perf_counter()
 result = minimize(obj_grad, q0, jac=True, method="L-BFGS-B",
                   bounds=[(Q_MIN, None)] * n_e,
                   options={"maxiter": MAXITER, "ftol": 1e-8, "gtol": 1e-8, "disp": True})
+t_opt = time.perf_counter() - t_opt0
 
 print(f"\nConverged: {result.success}  |  {result.message}", flush=True)
 print(f"obj={result.fun:.6f}  calls={_call[0]}", flush=True)
+print(f"Elapsed:   {t_opt:.2f} s for {_call[0]} iters "
+      f"({1e3*t_opt/max(_call[0],1):.1f} ms/iter, {n_e} design variables)", flush=True)
 
 q_opt = result.x
 xyz_full = np.zeros((n_v, 3), dtype=float)

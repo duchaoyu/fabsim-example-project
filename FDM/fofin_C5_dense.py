@@ -5,7 +5,7 @@ Identical pipeline to fofin_C5.py but takes the denser .obj as the target.
 Output goes to data/mesh_out_C5_dense_<timestamp>.json so existing C5 results
 in data/ aren't overwritten.
 """
-import os, datetime
+import os, datetime, time
 import numpy as np
 import scipy
 import scipy.sparse
@@ -111,12 +111,16 @@ print(f"Target span={span:.3f}  height={height:.3f}  pressure={PRESSURE}, q_init
 print(f"Solver: L-BFGS-B (max {MAXITER} iters)\n")
 
 q0 = np.full(n_e, Q_INIT)
+t_opt0 = time.perf_counter()
 result = minimize(obj_grad, q0, jac=True, method="L-BFGS-B",
                   bounds=[(Q_MIN, None)] * n_e,
                   options={"maxiter": MAXITER, "ftol": 1e-8, "gtol": 1e-8, "disp": True})
 
+t_opt = time.perf_counter() - t_opt0
 print(f"\nConverged: {result.success}  |  {result.message}")
 print(f"obj={result.fun:.6f}  calls={_call[0]}")
+print(f"Elapsed:   {t_opt:.2f} s for {_call[0]} iters "
+      f"({1e3*t_opt/max(_call[0],1):.1f} ms/iter, {n_e} design variables)")
 
 q_opt = result.x
 xyz_full = np.zeros((n_v, 3), dtype=float)

@@ -27,7 +27,9 @@ OUT_MD = os.path.join(ROOT, "docs", "6_5_1_computational_time.md")
 
 cost = json.load(open(os.path.join(HERE, "data", "solve_cost.json")))
 hist = json.load(open(os.path.join(HERE, "data", "D5", "loss_history.json")))
-fdm = json.load(open(os.path.join(HERE, "data", "fdm_cost.json")))["D5 (6.4.6)"]
+fdm_all = json.load(open(os.path.join(HERE, "data", "fdm_cost.json")))
+fdm = fdm_all["D5 (6.4.6)"]
+fdm_b5, fdm_c5 = fdm_all["B5 (6.4.2)"], fdm_all["C5 (6.4.3)"]
 fdm_res = json.load(open(sorted(glob.glob(
     os.path.join(HERE, "data", "D5", "D5_fdm_*.json")))[-1]))
 
@@ -57,6 +59,12 @@ FDM_RMS_PC = 100 * fdm_res["rmse_m"] / fdm_res["span_m"]
 FDM_CROWN_UM = 1e6 * abs(fdm_res["fdm_crown_m"] - fdm_res["target_crown_m"])
 FEM_BEST_MM = 1e3 * min(min(v["loss"]) for v in hist.values())
 
+# Cost of one L-BFGS-B iteration, adjoint against direct sensitivity.
+PER_VAR_B5 = fdm_b5["ms_per_iter"] / fdm_b5["n_design"]
+PER_VAR_C5 = fdm_c5["ms_per_iter"] / fdm_c5["n_design"]
+DIRECT_RATIO = fdm_c5["ms_per_iter"] / fdm["ms_per_iter"]
+D5_IF_DIRECT_MIN = (PER_VAR_C5 * fdm["n_design"] * fdm["iters"] / 1e3) / 60
+
 BODY = [
 ("h", "6.5.1 Computational time"),
 
@@ -70,13 +78,15 @@ BODY = [
       "implementation does not do."),
 
 ("p", f"The cost of the workflow is set almost entirely by the inner forward solve "
-      f"of Section 6.3.7. Everything outside it is done once per target and costs "
-      f"seconds: on the shell with openings the force density method (FDM) form "
-      f"finding of Section 6.2 takes "
-      f"{FDM_S:.1f} s and the directional field {FIELD_S:.1f} s, against the hours "
-      f"the inverse problem takes on the same mesh. The question is therefore what "
-      f"one forward solve costs, how many of them a strategy needs, and why the "
-      f"two do not multiply to the observed wall clock."),
+      f"of Section 6.3.7. Everything outside it is done once per target: on the "
+      f"shell with openings the force density method (FDM) form finding of "
+      f"Section 6.2 takes {FDM_S:.1f} s and the directional field "
+      f"{FIELD_S:.1f} s, against the hours the inverse problem takes on the same "
+      f"mesh. That margin is not uniform across the case studies, and the reason "
+      f"it is not turns out to be the most transferable result in this section, "
+      f"so it is taken up separately below. The question first is what one "
+      f"forward solve costs, how many of them a strategy needs, and why the two "
+      f"do not multiply to the observed wall clock."),
 
 ("h2", "What one forward solve costs"),
 
@@ -243,19 +253,46 @@ BODY = [
       f"vertex counts do not imply equal cost when the equations differ in kind."),
 
 ("p", f"The second is the cost of a gradient, and that one is an implementation "
-      f"choice. The FDM stage differentiates its objective by an "
-      f"adjoint: three linear solves per iteration, one per coordinate axis, "
-      f"independent of the number of design variables. The inverse problem uses "
-      f"finite differences, at n + 1 nonlinear solves per gradient. At the sizes "
-      f"used here that is between three and thirty-one solves where the adjoint "
-      f"would be three, but the scaling is the real point. Under finite "
-      f"differences the form finding would need {fdm['n_design'] + 1} solves per "
-      f"gradient and some {(fdm['n_design'] + 1) * fdm['iters'] / 1e6:.1f} million "
-      f"over its {fdm['iters']} iterations; it is the adjoint alone that makes a "
-      f"design space of that dimension ordinary. The inverse problem tolerates "
-      f"finite differences because its design vector was first reduced, by the "
-      f"region partition and by symmetry, to a size at which the penalty is "
-      f"affordable rather than absent."),
+      f"choice rather than a property of the problem. The openings form finding "
+      f"differentiates its objective by an adjoint: three linear solves per "
+      f"iteration, one per coordinate axis, independent of the number of design "
+      f"variables. The inverse problem uses finite differences, at n + 1 "
+      f"nonlinear solves per gradient. At the sizes used here that is between "
+      f"three and thirty-one solves where the adjoint would be three, but the "
+      f"scaling is the real point. Under finite differences the form finding "
+      f"would need {fdm['n_design'] + 1} solves per gradient and some "
+      f"{(fdm['n_design'] + 1) * fdm['iters'] / 1e6:.1f} million over its "
+      f"{fdm['iters']} iterations; it is the adjoint alone that makes a design "
+      f"space of that dimension ordinary. The inverse problem tolerates finite "
+      f"differences because its design vector was first reduced, by the region "
+      f"partition and by symmetry, to a size at which the penalty is affordable "
+      f"rather than absent."),
+
+("p", f"How much that choice is worth need not be argued, because the workflow "
+      f"contains the controlled experiment. The form finding for the free-form "
+      f"shell and for the fluted dome is the same method on the same solver, but "
+      f"implemented by direct sensitivity: rather than solving three adjoint "
+      f"systems, each iteration solves for the full sensitivity of every free "
+      f"vertex to every force density, an n_free by n_edge system per coordinate "
+      f"axis. One iteration of the openings form finding costs "
+      f"{fdm['ms_per_iter']:.1f} ms at {fdm['n_design']} design variables; one "
+      f"iteration of the fluted dome costs {fdm_c5['ms_per_iter'] / 1e3:.2f} s at "
+      f"{fdm_c5['n_design']}, and one of the free-form shell "
+      f"{fdm_b5['ms_per_iter'] / 1e3:.2f} s at {fdm_b5['n_design']}. That is a "
+      f"factor of {DIRECT_RATIO:.0f} per iteration between the two "
+      f"implementations at comparable size, and it shows in the wall clocks: "
+      f"{FDM_S:.1f} s for the openings against "
+      f"{fdm_c5['samples_s'][0] / 60:.0f} minutes for the fluted dome. The direct "
+      f"cost is linear in the number of design variables, at "
+      f"{PER_VAR_C5:.2f} ms per variable per iteration on the dome and "
+      f"{PER_VAR_B5:.2f} ms on the free-form shell, where the adjoint cost is "
+      f"flat. Had the openings form finding been written the same way, its "
+      f"{fdm['iters']} iterations would have cost of the order of "
+      f"{D5_IF_DIRECT_MIN:.0f} minutes instead of nine seconds. The reduction "
+      f"this section recommends for the inverse problem is therefore not a "
+      f"hypothetical: the workflow already contains one stage that took it and "
+      f"two that did not, and the difference between them was measured rather "
+      f"than argued."),
 
 ("p", f"The two fits are worth holding against each other, since both are RMS "
       f"deviations from the same target surface. The form finding reaches "
@@ -303,10 +340,11 @@ BODY = [
       "gradient for the membrane solve in place of finite differences, is a larger "
       "undertaking, since it requires differentiating through the Newton iteration "
       "and the switching of the cable segments between taut and slack; but it is "
-      "not speculative, being the device the FDM stage of this same "
+      "not speculative, being the device the openings form finding of this same "
       "workflow already uses, and it is the one change that would lift the ceiling "
       "on the number of design variables rather than merely lower the cost of the "
-      "present ones."),
+      "present ones. The two form-finding runs written the other way put a "
+      "measured figure on what declining it costs."),
 
 ("p", "A final methodological remark, since it cost real effort to recover. The "
       "optimisation drivers recorded parameters, losses and evaluation counts, but "
@@ -343,9 +381,18 @@ TABLE = [
      "1241", "0.39 s", "68 min"),
     ("Openings, 10 symmetric regions, warm-started", "6.4.6", "847 / 1563", "10",
      "90", "0.46 s", "4.8 min"),
-    ("Openings, force density form finding ‡", "6.2",
+    ("Crease, form finding ‡", "6.2", "—", "—", "—", "—", "interactive"),
+    ("Free-form shell, form finding ‡", "6.2",
+     f"{fdm_b5['n_verts']} / {fdm_b5['n_faces']}", f"{fdm_b5['n_design']}",
+     f"{fdm_b5['iters']}", f"{fdm_b5['ms_per_iter'] / 1e3:.2f} s",
+     f"{fdm_b5['samples_s'][0] / 60:.1f} min §"),
+    ("Fluted dome, form finding ‡", "6.2",
+     f"{fdm_c5['n_verts']} / {fdm_c5['n_faces']}", f"{fdm_c5['n_design']}",
+     f"{fdm_c5['iters']}", f"{fdm_c5['ms_per_iter'] / 1e3:.2f} s",
+     f"{fdm_c5['samples_s'][0] / 60:.1f} min"),
+    ("Openings, form finding ‡", "6.2",
      f"{fdm['n_verts']} / {fdm['n_faces']}", f"{fdm['n_design']}",
-     f"{fdm['iters']}", f"{fdm['inflate_ms'] / 1e3:.3f} s", f"{FDM_S:.1f} s"),
+     f"{fdm['iters']}", f"{fdm['ms_per_iter'] / 1e3:.3f} s", f"{FDM_S:.1f} s"),
 ]
 
 TABLE_CAPTION = (
@@ -362,12 +409,17 @@ TABLE_CAPTION = (
     f"exceed the same bound by factors of {184 * 60 / (2959 * 0.34):.0f}, "
     f"{68 * 60 / (1241 * 0.39):.0f} and {4.8 * 60 / (90 * 0.46):.0f} "
     "respectively, so the true figures are plausibly of the order of ten minutes "
-    "rather than one. The last row, marked ‡, is not an inverse problem but the "
-    "form finding that precedes them all, on the same mesh as the shell with "
-    "openings; its solve is an FDM equilibrium rather than a membrane solve and "
-    "its gradient is an adjoint rather than a finite difference, which is why "
-    f"{fdm['n_design']} design variables cost less than three do in the rows "
-    "above."
+    "rather than one. The rows marked ‡ are not inverse problems but the form "
+    "finding that precedes each of them, and for those rows the solve cost is "
+    "one L-BFGS-B iteration — an equilibrium solve and a gradient — rather than "
+    "a single membrane solve, so it is comparable within the block and not "
+    "against the rows above. They are not comparable among themselves either "
+    "without the caveat that carries the argument of this section: the openings "
+    "form finding takes its gradient by an adjoint and the other two by direct "
+    "sensitivity. The crease form finding is an interactive session rather than "
+    "a fitted optimisation and has no meaningful wall clock. The entry marked § "
+    "stopped at its iteration cap rather than at convergence, so it too is a "
+    "floor."
 )
 
 CAPTIONS = {
@@ -400,9 +452,12 @@ NOTES = [
       "FDM/optimisation/*_optimised*.json; D5 wall clocks and tail statistics from "
       "the per-evaluation output-file timestamps; loss trajectories from "
       "FDM/reconstruct_loss_history.py; form-finding and directional-field costs "
-      "from FDM/data/fdm_cost.json, whose samples come from FDM/fofin_D5.py, now "
-      "instrumented to report and store its elapsed time, iteration count and "
-      "design dimension, and from the whole-script wall clock of "
+      "from FDM/data/fdm_cost.json, whose samples come from FDM/fofin_D5.py, "
+      "FDM/fofin_B5.py and FDM/fofin_C5_dense.py, all three now instrumented to "
+      "report their elapsed time, iteration count and design dimension, the B5 "
+      "and C5 runs having been executed concurrently on separate cores while the "
+      "D5 samples were taken on an otherwise idle machine, and from the "
+      "whole-script wall clock of "
       "FDM/directional_field_D5.py; the per-solve figure of "
       f"{fdm['inflate_ms']:.2f} ms is {fdm['inflate_repeats']} repeats of "
       "inflate() at the converged densities."),
@@ -436,13 +491,32 @@ NOTES = [
       "adaptive run and 21 of the field-aligned run. Without the gate the "
       "objective has a perfect-scoring attractor that corresponds to a structure "
       "that never inflated."),
-("p", "7. Form-finding cost is measured for the shell with openings only. The "
-      "equivalent stage for the free-form shell and the fluted dome "
-      "(FDM/fofin_B5.py, FDM/fofin_C5_smooth.py) is unmeasured, because those two "
-      "scripts import compas, which is not installed on the timing machine. Both "
-      "are one-shot stages of the same kind and should be seconds, but the claim "
-      "in the opening paragraph rests on one geometry. The remeshing and "
-      "cable-extraction steps are also unmeasured."),
+("p", "7. Form-finding cost is now measured for three of the four geometries. Two "
+      "caveats attach to the new rows. The free-form shell stopped at its "
+      "iteration cap rather than at convergence, so 171 s is a floor and its fit, "
+      "0.30% of span, is well short of the 0.08% the other two reach; and it runs "
+      "on input/B5.obj, 269 vertices, where the inverse problem of 6.4.2 uses a "
+      "497/929 remesh, so the two are not the same discretisation. Whether the "
+      "form finding behind the reported 6.4.2 result was this run or one on the "
+      "finer mesh is worth confirming. The crease form finding (square_crease.py) "
+      "remains unmeasured and is a different kind of object: an interactive "
+      "session of fixed-point fd_numpy steps, needing compas_fd and compas_view2, "
+      "neither installed here. Remeshing and cable extraction are also "
+      "unmeasured."),
+
+("p", "8. The gradient implementations diverged without anyone deciding they "
+      "should. fofin_D5.py uses an adjoint; fofin_B5.py, fofin_C5.py and "
+      "fofin_C5_dense.py solve for the full sensitivity matrix. The measured "
+      "penalty is a factor of about 260 per iteration. Porting the adjoint from "
+      "fofin_D5.py to the other two is a contained change and would bring the "
+      "fluted dome form finding from 34 minutes to seconds; worth doing before "
+      "any sweep that re-runs form finding many times."),
+
+("p", "9. fofin_B5.py imported compas.numerical, which no longer exists in "
+      "compas 2.x, so it could not run at all on the timing machine until the "
+      "import was made to fall back across both APIs. Other scripts in FDM/ may "
+      "carry the same breakage; fofin_C5.py and the fofin_butt/cross/seismic "
+      "family were not checked."),
 ]
 
 

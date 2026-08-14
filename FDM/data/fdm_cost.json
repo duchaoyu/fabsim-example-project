@@ -1,18 +1,58 @@
 {
-  "_comment": "Cost of the one-shot pre-FEM stages. Measured on the timing machine of Section 6.5.1 (Xeon Gold 5412U). Form-finding timings are the Elapsed line of FDM/fofin_D5.py, which brackets scipy.optimize.minimize only and excludes I/O and plotting; the per-solve figure is 20 repeats of inflate() at the converged densities. Directional-field timings are whole-script wall clock, figure included.",
+  "_comment": "Cost of the one-shot form-finding stage, per geometry. Measured on the timing machine of Section 6.5.1 (Xeon Gold 5412U). Timings are the Elapsed line each fofin_*.py now prints, which brackets scipy.optimize.minimize only and excludes I/O and plotting. ms_per_iter is one L-BFGS-B iteration: an equilibrium solve plus a gradient. inflate_ms, where present, is the equilibrium solve alone, timed over repeats at the converged densities. The B5 and C5 runs were executed concurrently with each other on separate cores; the D5 samples were taken with the machine otherwise idle.",
   "D5 (6.4.6)": {
     "form_finding_script": "fofin_D5.py",
+    "gradient": "adjoint",
     "n_verts": 847,
     "n_faces": 1563,
     "n_edges": 2410,
     "n_free": 716,
     "n_design": 2410,
     "iters": 1173,
+    "converged": true,
     "picard_steps": 5,
     "samples_s": [9.339, 9.13, 9.31, 9.31, 9.06],
+    "ms_per_iter": 7.9,
     "inflate_ms": 6.85,
     "inflate_repeats": 20,
     "field_script": "directional_field_D5.py",
     "field_samples_s": [18.83, 18.65, 18.47, 18.54]
+  },
+  "B5 (6.4.2)": {
+    "form_finding_script": "fofin_B5.py",
+    "gradient": "direct sensitivity",
+    "n_verts": 269,
+    "n_faces": 504,
+    "n_edges": 772,
+    "n_free": 237,
+    "n_design": 772,
+    "iters": 507,
+    "converged": false,
+    "maxiter": 500,
+    "samples_s": [171.00],
+    "ms_per_iter": 337.3,
+    "rmse_m": 0.0604,
+    "span_m": 20.0,
+    "note": "stopped at the iteration cap, not at convergence; the wall clock is therefore a floor. Runs on input/B5.obj, a coarser mesh than the 497/929 remesh the inverse problem of 6.4.2 uses."
+  },
+  "C5 (6.4.3)": {
+    "form_finding_script": "fofin_C5_dense.py",
+    "gradient": "direct sensitivity",
+    "n_verts": 1114,
+    "n_faces": 2137,
+    "n_edges": 3250,
+    "n_free": 1025,
+    "n_design": 3250,
+    "iters": 992,
+    "converged": true,
+    "samples_s": [2047.12],
+    "ms_per_iter": 2063.6,
+    "rmse_m": 0.00098,
+    "note": "runs on data/C5/C5_remeshed.obj, the same file the inverse problem of 6.4.3 uses; compas welds it to 1114 vertices where the FEM driver reads 1309."
+  },
+  "2part (6.4.1)": {
+    "form_finding_script": "square_crease.py",
+    "measured": false,
+    "note": "not comparable and not measurable here. It is an interactive session - 200 fixed-point fd_numpy steps driven through a compas_view2 viewer - rather than a fitted optimisation over q, and it needs compas_fd and compas_view2, neither installed on the timing machine."
   }
 }

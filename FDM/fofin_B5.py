@@ -10,7 +10,7 @@ Pipeline:
   3. Optimise force densities q so that inflated FDM equilibrium ≈ S
   4. Save result to data/ and visualise
 """
-import os, datetime
+import os, datetime, time
 import numpy as np
 import scipy
 import scipy.sparse
@@ -18,8 +18,10 @@ import scipy.sparse.linalg
 from scipy.optimize import minimize
 
 from compas.datastructures import Mesh
-from compas.numerical.matrices import connectivity_matrix
-from compas.numerical import fd_numpy
+try:                                        # compas 2.x
+    from compas.matrices import connectivity_matrix
+except ImportError:                         # compas 1.x
+    from compas.numerical.matrices import connectivity_matrix
 
 HERE    = os.path.dirname(os.path.abspath(__file__))
 INPUT   = os.path.join(HERE, "input", "B5.obj")
@@ -143,6 +145,7 @@ print(f"Solver: L-BFGS-B (max {MAXITER} iters)\n")
 q0     = np.full(n_e, Q_INIT)
 bounds = [(Q_MIN, None)] * n_e
 
+t_opt0 = time.perf_counter()
 result = minimize(
     objective_and_gradient,
     q0,
@@ -151,9 +154,12 @@ result = minimize(
     bounds=bounds,
     options={"maxiter": MAXITER, "ftol": 1e-12, "gtol": 1e-8, "disp": True},
 )
+t_opt = time.perf_counter() - t_opt0
 
 print(f"\nConverged: {result.success}  |  {result.message}")
 print(f"Final obj={result.fun:.6f}  calls={_call_count[0]}")
+print(f"Elapsed:   {t_opt:.2f} s for {_call_count[0]} iters "
+      f"({1e3*t_opt/max(_call_count[0],1):.1f} ms/iter, {n_e} design variables)")
 
 q_opt = result.x
 
