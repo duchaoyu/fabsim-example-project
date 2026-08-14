@@ -241,8 +241,10 @@ BODY = [
       f"0.26 mm."),
 
 ("p", f"The boundary radius and the cable rest length are set as lengths, not "
-      f"as fractions, so they are plotted against the top axis in millimetres. "
-      f"At the "
+      f"as fractions, so they are plotted against the top axis, in centimetres. "
+      f"The two scales run over the same numbers, 0 to 2% below and 0 to 2 cm "
+      f"above, so a curve's position on the page means the same thing whichever "
+      f"axis it belongs to. At the "
       f"±2 mm of 5.5.2 the boundary contributes about 1.9 mm of surface "
       f"deviation on both geometries. Ten millimetres of radius error would "
       f"give 7.5 mm and ten of cable error 2.9 mm — the cable is the gentler of "
@@ -454,7 +456,7 @@ CAPTIONS = [
      "curves are the material and pre-strain parameters and read on the bottom "
      "axis, in percent of nominal. The dashed curves are the two that are set "
      "as lengths — the boundary radius, and on the creased shell the crease "
-     "cable's rest length — and read on the top axis, in millimetres, because a "
+     "cable's rest length — and read on the top axis, over 0 to 2 cm, because a "
      "ring is anchored to a distance and a cable is cut and taken up by one, "
      "and a percentage of nominal is a detour through a number nobody sets. The "
      "dotted vertical is the ±2 mm of 5.5.2. Curves are the worse of the two "

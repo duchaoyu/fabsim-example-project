@@ -124,21 +124,24 @@ def main():
 
         # The two set as lengths read on the top axis, in millimetres, so that
         # every parameter sits on one pair of axes and may be compared by eye.
+        # In centimetres, so the two scales run over the same numbers: 0 to 2%
+        # below, 0 to 2 cm above. The gridlines then line up and a curve's
+        # position on the page means the same thing on either axis.
         top = ax.twiny()
-        top.set_xlim(0, 20.5)
-        top.set_xticks([0, 5, 10, 15, 20])
-        top.set_xlabel("length error (mm), dashed curves")
+        top.set_xlim(0, 2.05)
+        top.set_xticks([0, 0.5, 1.0, 1.5, 2.0])
+        top.set_xlabel("length error (cm), dashed curves")
         top.spines["right"].set_visible(False)
         present = {r["factor"] for r in rows_mm}
         for factor in LENGTH_FACTORS:
             if factor not in present:
                 continue
             xs, ys, _ = curve(rows_mm, factor, "L_pos", True)
-            top.plot(xs, ys, "--o", ms=2.8, lw=1.5, color=COLOUR[factor],
-                     label=LABEL[factor], zorder=3)
-        top.axvline(2.0, color="#BBBBBB", lw=0.8, ls=":", zorder=0)
+            top.plot([x / 10.0 for x in xs], ys, "--o", ms=2.8, lw=1.5,
+                     color=COLOUR[factor], label=LABEL[factor], zorder=3)
+        top.axvline(0.2, color="#BBBBBB", lw=0.8, ls=":", zorder=0)
         y_mid = 0.45 * ax.get_ylim()[1]
-        top.annotate("\u00b12 mm, \u00a75.5.2", xy=(2.0, y_mid), xytext=(4, 0),
+        top.annotate("\u00b12 mm, \u00a75.5.2", xy=(0.2, y_mid), xytext=(4, 0),
                      textcoords="offset points", fontsize=7, color="#888888",
                      rotation=90, va="center", ha="left")
 
