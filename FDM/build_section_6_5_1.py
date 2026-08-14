@@ -11,6 +11,7 @@ the data in step.
     python3 build_section_6_5_1.py
 """
 
+import glob
 import json
 import os
 
@@ -27,6 +28,8 @@ OUT_MD = os.path.join(ROOT, "docs", "6_5_1_computational_time.md")
 cost = json.load(open(os.path.join(HERE, "data", "solve_cost.json")))
 hist = json.load(open(os.path.join(HERE, "data", "D5", "loss_history.json")))
 fdm = json.load(open(os.path.join(HERE, "data", "fdm_cost.json")))["D5 (6.4.6)"]
+fdm_res = json.load(open(sorted(glob.glob(
+    os.path.join(HERE, "data", "D5", "D5_fdm_*.json")))[-1]))
 
 
 def med(case):
@@ -48,6 +51,11 @@ FIELD_S = sorted(fdm["field_samples_s"])[len(fdm["field_samples_s"]) // 2]
 FDM_RATIO = MD5 / (fdm["inflate_ms"] / 1e3)
 PICARD = ("zero one two three four five six seven eight nine ten"
           .split()[fdm["picard_steps"]])
+
+FDM_RMS_MM = 1e3 * fdm_res["rmse_m"]
+FDM_RMS_PC = 100 * fdm_res["rmse_m"] / fdm_res["span_m"]
+FDM_CROWN_UM = 1e6 * abs(fdm_res["fdm_crown_m"] - fdm_res["target_crown_m"])
+FEM_BEST_MM = 1e3 * min(min(v["loss"]) for v in hist.values())
 
 BODY = [
 ("h", "6.5.1 Computational time"),
@@ -205,7 +213,13 @@ BODY = [
       f"boundary. On that mesh the FDM stage of Section 6.2 solves for one force "
       f"density per edge — {fdm['n_design']} design variables — and "
       f"converges in {fdm['iters']} L-BFGS-B iterations and {FDM_S:.1f} s, a mean "
-      f"of {FDM_MS:.1f} ms per iteration. The inverse problem on the identical "
+      f"of {FDM_MS:.1f} ms per iteration. What it buys is a close fit: the "
+      f"form-found network sits {FDM_RMS_MM:.2f} mm RMS from the target surface, "
+      f"{FDM_RMS_PC:.3f}% of the {fdm_res['span_m']:.3f} m span, with the crown "
+      f"reproduced to within {FDM_CROWN_UM:.0f} µm, at force densities spanning "
+      f"{fdm_res['q_min']:.2f} to {fdm_res['q_max']:.2f} under unit pressure, the "
+      f"lower end resting on the floor imposed by the bounds. The inverse problem "
+      f"on the identical "
       f"mesh carries between three and twenty design variables and takes between "
       f"four minutes and three hours. The form finding therefore optimises two "
       f"orders of magnitude more variables in a thousandth of the time, and none "
@@ -237,6 +251,17 @@ BODY = [
       f"finite differences because its design vector was first reduced, by the "
       f"region partition and by symmetry, to a size at which the penalty is "
       f"affordable rather than absent."),
+
+("p", f"The two fits are worth holding against each other, since both are RMS "
+      f"deviations from the same target surface. The form finding reaches "
+      f"{FDM_RMS_MM:.2f} mm in {FDM_S:.1f} s; the best of the inverse runs of "
+      f"Section 6.4.6 reaches {FEM_BEST_MM:.2f} mm in an hour. The target is "
+      f"therefore very nearly attainable as a pure tension network, and the "
+      f"residual is not a failure of the form finding but the cost of realising "
+      f"that network in a knitted fabric of finite and directional stiffness, "
+      f"under the region and cable constraints the fabrication imposes. It is "
+      f"the materialisation, not the geometry, that the expensive optimisation "
+      f"is paying for."),
 
 ("h2", "Scale, and the cost of not instrumenting"),
 
