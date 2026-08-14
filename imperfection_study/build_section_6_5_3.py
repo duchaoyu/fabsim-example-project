@@ -464,11 +464,12 @@ CAPTIONS = [
      "between the two signs, against the 15% linearity threshold. (d) Pairwise "
      "cosine between the per-factor displacement fields: the six are nearly the "
      "same mode, and p and E1 are exactly opposed."),
-    ("blockA_2part_sensitivity",
-     "Figure 6.33: Block A on the creased shell, the same four panels. The "
-     "ordering of the factors is the dome's with one swap, but E1 and E2/E1 "
-     "exceed the linearity threshold here, so those two rows do not rescale to "
-     "a different tolerance."),
+    ("blockA_2part_cable_sensitivity",
+     "Figure 6.33: Block A on the creased shell as designed, the same four "
+     "panels. The responses are smaller than the dome's throughout, the cable "
+     "carrying what the fabric would otherwise have to. E1 and E2/E1 exceed the "
+     "15% asymmetry threshold in panel (c), but both are under 3 mm, so the "
+     "non-linearity is on a quantity too small to matter."),
     ("blockA_2part_shape",
      "Figure 6.34: Where the tolerance shows up, rather than how much. (a) The "
      "standing mismatch between the baseline equilibrium and the design target "

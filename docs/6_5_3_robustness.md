@@ -113,9 +113,9 @@ And this is one geometry perturbed one factor at a time about a single-region, c
 
 *Figure 6.32: Block A on the circular dome. (a) Crown-height response to plus and minus one tolerance, sorted by effect. (b) Surface deviation L_pos, with the two signs shown separately as ticks. (c) Asymmetry between the two signs, against the 15% linearity threshold. (d) Pairwise cosine between the per-factor displacement fields: the six are nearly the same mode, and p and E1 are exactly opposed.*
 
-![blockA_2part_sensitivity](../imperfection_study/figures/blockA_2part_sensitivity.png)
+![blockA_2part_cable_sensitivity](../imperfection_study/figures/blockA_2part_cable_sensitivity.png)
 
-*Figure 6.33: Block A on the creased shell, the same four panels. The ordering of the factors is the dome's with one swap, but E1 and E2/E1 exceed the linearity threshold here, so those two rows do not rescale to a different tolerance.*
+*Figure 6.33: Block A on the creased shell as designed, the same four panels. The responses are smaller than the dome's throughout, the cable carrying what the fabric would otherwise have to. E1 and E2/E1 exceed the 15% asymmetry threshold in panel (c), but both are under 3 mm, so the non-linearity is on a quantity too small to matter.*
 
 ![blockA_2part_shape](../imperfection_study/figures/blockA_2part_shape.png)
 
