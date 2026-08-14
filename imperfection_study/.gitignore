@@ -1,8 +1,4 @@
 # Per-run solver output: regenerated in 2.2 s by run_block_A.py
-data/runs_A/
 data/meshes/
 __pycache__/
-data/runs_A_2part/
-data/runs_A_disc/
-data/runs_sweep_disc/
-data/runs_sweep_2part/
+data/runs_*/
