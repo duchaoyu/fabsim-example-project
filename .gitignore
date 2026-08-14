@@ -7,3 +7,8 @@ build/
 
 .DS_Store
 include/.DS_Store
+
+# Thesis manuscript and its backups: 100+ MB, exceeds the GitHub file limit
+FDM/data/Knitting for Shell structures.docx
+FDM/data/Knitting for Shell structures.backup_*.docx
+~$*.docx
