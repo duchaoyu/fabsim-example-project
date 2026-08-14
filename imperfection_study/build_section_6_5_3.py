@@ -231,24 +231,36 @@ BODY = [
       "six factors can be read against one another."),
 
 ("p", f"One percent is not a small error here. On the dome a one percent error "
-      f"in the boundary radius moves the surface 4.6 mm and a one percent error "
-      f"in s_course 3.8 mm; on the creased shell the same two give 4.3 and "
-      f"3.6 mm, against a standing mismatch of {L_TARGET:.1f} mm. Two percent "
-      f"roughly doubles both, the responses being linear across the range. The "
-      f"weak factors are weak by an order of magnitude rather than marginally: "
-      f"a one percent error in the orthotropy ratio moves the creased shell by "
-      f"0.23 mm, which is below the precision any of this is measured to."),
+      f"in s_course moves the surface 3.9 mm and on the case study 2.8 mm, "
+      f"against a designed equilibrium that stands {C_LT:.1f} mm from its "
+      f"target. Two percent roughly doubles both, the responses being linear "
+      f"across the range. The weak parameters are weak by an order of magnitude "
+      f"rather than marginally: one percent on the orthotropy ratio or on "
+      f"Poisson's ratio moves the case study by about 0.09 mm, below the "
+      f"precision any of this is measured to, and one percent on E1 by "
+      f"0.26 mm."),
 
-("p", "The comparison on a common axis also reorders the six, and the "
-      "reordering is the useful part. Ranked by response per percent, R is the "
-      "steepest factor on both geometries, ahead of s_course; ranked at the "
-      "assumed tolerances, as in the tables below, R is the smallest "
-      "contributor of all. Both are true, and they answer different questions. "
-      "R is the most dangerous parameter and the least troublesome one, because "
-      "it is the best controlled: the boundary is anchored to 0.33% where the "
-      "stretch factor is assumed good to 4.5%. The practical consequence is "
-      "that the ranking in a tolerance budget is a statement about the workshop "
-      "as much as about the structure, and it moves if the workshop does."),
+("p", f"The boundary radius and the cable rest length are set as lengths, not "
+      f"as fractions, so panels (c) and (d) give them in millimetres. At the "
+      f"±2 mm of 5.5.2 the boundary contributes about 1.9 mm of surface "
+      f"deviation on both geometries. Ten millimetres of radius error would "
+      f"give 7.5 mm and ten of cable error 2.9 mm — the cable is the gentler of "
+      f"the two per millimetre, and only overtakes the stretch factors when "
+      f"expressed as a percentage because it is 1.32 m long. Both are "
+      f"quantities a workshop can measure directly, which makes them the two "
+      f"tolerances in this study that could be replaced by a measurement "
+      f"tomorrow."),
+
+("p", "Which parameter matters most depends on the unit the question is asked "
+      "in, and that is not a defect of the analysis but the substance of it. "
+      "Per percent of nominal the boundary radius is the steepest parameter of "
+      "the eight on both geometries; at the tolerances actually assumed, as in "
+      "the tables below, it is the smallest contributor of all, because it is "
+      "anchored to 0.33% where the stretch factor is assumed good to 4.5%. Both "
+      "readings are true. R is the most dangerous parameter and the least "
+      "troublesome one. The practical consequence is that the ranking in a "
+      "tolerance budget is a statement about the workshop as much as about the "
+      "structure, and it moves if the workshop does."),
 
 ("p", "The curves are straight over the whole range, which is worth more than "
       "it appears. The claim that an estimate may be replaced without re-running "
@@ -436,17 +448,15 @@ BODY = [
 
 CAPTIONS = [
     ("tolerance_percent",
-     "Figure 6.31: Deviation against parameter error, the same relative error "
-     "applied to every parameter so that the six may be compared, 60 solves per "
-     "geometry. The shaded band is ±1%. (a) and (b) give the surface movement "
-     "from the baseline equilibrium on each geometry; R is the steepest factor "
-     "on both, though it is also the best controlled, its assumed tolerance "
-     "being 0.33% where the stretch factors are assumed to 4.5% and the moduli "
-     "to 10%. (c) gives what the creased shell is judged on, its deviation from "
-     "the design target: the curves sit on the standing mismatch and rise, so "
-     "no parameter error in this range brings the built shape closer to the "
-     "shape it was designed to hold. Responses are linear, so the assumed "
-     "tolerances that fall outside the frame may be read by proportion."),
+     "Figure 6.31: Deviation from the designed equilibrium against how wrong "
+     "each parameter is, 0 to 2% of nominal for the material and pre-strain "
+     "parameters in (a) and (b), and 0 to 20 mm for the two that are set as "
+     "lengths in (c) and (d) — a boundary ring is anchored to a distance and a "
+     "cable is cut and taken up by one, so a percentage of nominal is a detour "
+     "through a number nobody sets. The dotted line in (c) and (d) is the ±2 mm "
+     "of 5.5.2. Curves are the worse of the two signs at each magnitude, and "
+     "are linear throughout, so a response may be read at whatever tolerance "
+     "the measurements eventually give. 180 solves across the two geometries."),
     ("blockA_disc_sensitivity",
      "Figure 6.32: Block A on the circular dome. (a) Crown-height response to "
      "plus and minus one tolerance, sorted by effect. (b) Surface deviation "

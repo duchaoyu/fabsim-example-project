@@ -37,6 +37,13 @@ MULTIPLES = (0.25, 0.5, 1.0, 1.5, 2.0)
 # unit relative error, which its 0.33% tolerance hides.
 PERCENTS = (0.25, 0.5, 1.0, 1.5, 2.0)
 
+# --absolute mode: the two geometric parameters in millimetres, which is the
+# unit they are actually specified and measured in. A boundary ring is anchored
+# to a distance and a cable is cut to a length; percent of nominal is a detour
+# through a number nobody sets.
+ABS_MM = (2.5, 5.0, 10.0, 15.0, 20.0)
+ABS_FACTORS = ("R", "cable_L")
+
 
 def sweep_params(g, nom, factor, mult):
     """As run_params, but at a fractional multiple of the tolerance.
@@ -74,6 +81,22 @@ def factors_for(g):
     return fs
 
 
+def absolute_params(g, nom, factor, mm):
+    """Perturb a geometric factor by mm millimetres of its own length."""
+    p = dict(g.params())
+    d = mm / 1000.0
+    if factor == "R":
+        tag = f"{g.name}_mm{'p' if mm > 0 else 'm'}{abs(mm):g}".replace(".", "")
+        mesh, _ = mesh_tools.radius_variant(
+            g.mesh, (nom["R"] + d) / nom["R"], cfg.MESH_DIR, tag)
+        return p, mesh
+    if factor == "cable_L":
+        L0 = fem_runner.cable_length(g.mesh, g.cable["indices"])
+        p["cable"] = dict(g.cable, L_rest=L0 + d)
+        return p, g.mesh
+    raise ValueError(f"{factor} is not a length")
+
+
 def percent_params(g, nom, factor, pct):
     """Perturb `factor` by pct percent of its own nominal value."""
     p = dict(g.params())
@@ -96,6 +119,9 @@ def percent_params(g, nom, factor, pct):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--geometry", default="disc", choices=geom.NAMES)
+    ap.add_argument("--absolute", action="store_true",
+                    help="sweep the geometric factors R and cable rest length "
+                         "in millimetres rather than percent")
     ap.add_argument("--percent", action="store_true",
                     help="sweep a common percentage of nominal rather than "
                          "multiples of each factor's assumed tolerance")
@@ -123,16 +149,29 @@ def main():
           if V_target is not None else
           f"baseline crown {1e3 * base['crown_height']:.1f} mm")
 
-    steps = PERCENTS if args.percent else MULTIPLES
-    key = "percent" if args.percent else "multiple"
+    if args.absolute:
+        steps, key = ABS_MM, "mm"
+    elif args.percent:
+        steps, key = PERCENTS, "percent"
+    else:
+        steps, key = MULTIPLES, "multiple"
     rows = [dict(factor="baseline", **{key: 0.0}, delta_abs=0.0, **base)]
     n = 0
-    for factor in (factors_for(g) if args.percent else cfg.BLOCK_A_FACTORS):
+    if args.absolute:
+        loop_factors = [f for f in ABS_FACTORS if f != "cable_L" or g.cable]
+    elif args.percent:
+        loop_factors = factors_for(g)
+    else:
+        loop_factors = list(cfg.BLOCK_A_FACTORS)
+    for factor in loop_factors:
         tol = TOLERANCES[TOL_KEY.get(factor, factor)]
         for step in steps:
             for sign in (+1, -1):
                 s = sign * step
-                if args.percent:
+                if args.absolute:
+                    p, mesh = absolute_params(g, nom, factor, s)
+                    delta_abs = s / 1000.0
+                elif args.percent:
                     p, mesh = percent_params(g, nom, factor, s)
                     delta_abs = nom.get(factor, float("nan")) * s / 100.0
                 else:
@@ -140,7 +179,8 @@ def main():
                     delta_abs = s * tol.absolute(nom[factor])
                 radius = measured_radius(mesh)
                 tag = (f"{factor}_{'p' if sign > 0 else 'm'}{step:g}"
-                       + ("pc" if args.percent else ""))
+                       + ("mm" if args.absolute else
+                          "pc" if args.percent else ""))
                 out = fem_runner.run(mesh, os.path.join(run_dir, tag), **p)
                 r = metrics(out, radius, V_base, radius0, V_ref, V_target, free)
                 rows.append(dict(factor=factor, **{key: s},
@@ -151,7 +191,8 @@ def main():
                       (f"  L_target {1e3 * r['L_target']:6.2f} mm"
                        if V_target is not None else ""))
 
-    suffix = "_percent" if args.percent else ""
+    suffix = ("_absolute" if args.absolute else
+              "_percent" if args.percent else "")
     out_csv = os.path.join(cfg.DATA_DIR,
                            f"tolerance_sweep_{g.name}{suffix}.csv")
     with open(out_csv, "w", newline="") as f:
