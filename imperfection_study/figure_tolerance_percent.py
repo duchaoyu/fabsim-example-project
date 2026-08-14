@@ -20,7 +20,11 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
+import numpy as np
+
+import geometry as geom
 import imperfection_config as cfg
+import mesh_tools
 from tolerances import TOLERANCES
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -102,11 +106,46 @@ def panel(ax, rows, column, signed_from_base, title, ylabel,
     return ax
 
 
+def geometry_panel(ax, gname, title, show_cable):
+    """Plan of the structure with the two length parameters marked on it.
+
+    The curves in (c) and (d) are about a ring and a cable; this says where on
+    the structure those are, in the same colours.
+    """
+    g = geom.get(gname)
+    V, F = mesh_tools.load_off(g.mesh)
+    interior = mesh_tools.interior_mask(V, F)
+
+    for tri in F:
+        loop = list(tri) + [tri[0]]
+        ax.plot(V[loop, 0], V[loop, 1], lw=0.25, color="#DDDDDD", zorder=1)
+
+    bnd = ~interior
+    ax.scatter(V[bnd, 0], V[bnd, 1], s=9, color=COLOUR["R"], zorder=3,
+               label="anchored boundary, $R$")
+    if show_cable and g.cable is not None:
+        idx = list(g.cable["indices"])
+        ax.plot(V[idx, 0], V[idx, 1], "-o", ms=3, lw=2.0,
+                color=COLOUR["cable_L"], zorder=4,
+                label="crease cable, $L_\\mathrm{rest}$")
+
+    ax.set_aspect("equal")
+    ax.set_title(title, loc="left")
+    ax.set_xlabel("x (m)")
+    ax.set_ylabel("y (m)")
+    # The plan is a disc in a square frame, so the corners are empty.
+    ax.legend(frameon=False, loc="upper left", fontsize=7.5,
+              handlelength=1.2, borderaxespad=0.0)
+    for side in ("top", "right"):
+        ax.spines[side].set_visible(False)
+    return ax
+
+
 def main():
     disc, cable = load("disc"), load("2part_cable")
     disc_mm, cable_mm = load("disc", "absolute"), load("2part_cable", "absolute")
 
-    fig, axes = plt.subplots(2, 2, figsize=(10.4, 7.6))
+    fig, axes = plt.subplots(2, 3, figsize=(14.6, 7.8))
     MM_X = dict(xlabel="length error (mm)", xlim=(0, 20.5),
                 xticks=(0, 5, 10, 15, 20))
 
@@ -119,16 +158,21 @@ def main():
           "deviation from the designed\nequilibrium (mm)",
           order=RATIO_ORDER, mark=[(1.0, "1%")])
     panel(axes[1][0], disc_mm, "L_pos", True,
-          "(c) circular dome: boundary radius",
+          "(d) circular dome: boundary radius",
           "deviation from the designed\nequilibrium (mm)",
           order=LENGTH_FACTORS, mark=[(2.0, "\u00b12 mm, \u00a75.5.2")], **MM_X)
     panel(axes[1][1], cable_mm, "L_pos", True,
-          "(d) creased shell: boundary radius and cable rest length",
+          "(e) creased shell: boundary radius and cable rest length",
           "deviation from the designed\nequilibrium (mm)",
           order=LENGTH_FACTORS, mark=[(2.0, "\u00b12 mm, \u00a75.5.2")], **MM_X)
 
+    geometry_panel(axes[0][2], "disc",
+                   "(c) where the dome is held", show_cable=False)
+    geometry_panel(axes[1][2], "2part_cable",
+                   "(f) where the shell is held and stiffened", show_cable=True)
+
     for row in axes:
-        for a in row:
+        for a in row[:2]:
             a.legend(ncol=2, frameon=False, loc="upper left",
                      handlelength=1.4, columnspacing=1.0)
     fig.tight_layout()

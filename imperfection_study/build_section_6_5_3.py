@@ -240,6 +240,15 @@ BODY = [
       f"precision any of this is measured to, and one percent on E1 by "
       f"0.26 mm."),
 
+("p", f"Panels (c) and (f) say where on the structure those two parameters "
+      f"are. The dome is held on its ring alone. The creased shell is held on "
+      f"its ring and stiffened along the single line x = 0, where the crease "
+      f"cable runs the full span between two boundary anchorages: 19 vertices, "
+      f"18 segments, 1.32 m of steel at EA = 157 kN. That the cable and the "
+      f"crease are the same line is the point of the design, and it is also why "
+      f"its rest length is a tolerance worth specifying — an error in it moves "
+      f"the feature the structure exists to hold."),
+
 ("p", f"The boundary radius and the cable rest length are set as lengths, not "
       f"as fractions, so panels (c) and (d) give them in millimetres. At the "
       f"±2 mm of 5.5.2 the boundary contributes about 1.9 mm of surface "
@@ -449,12 +458,15 @@ BODY = [
 CAPTIONS = [
     ("tolerance_percent",
      "Figure 6.31: Deviation from the designed equilibrium against how wrong "
-     "each parameter is, 0 to 2% of nominal for the material and pre-strain "
-     "parameters in (a) and (b), and 0 to 20 mm for the two that are set as "
-     "lengths in (c) and (d) — a boundary ring is anchored to a distance and a "
-     "cable is cut and taken up by one, so a percentage of nominal is a detour "
-     "through a number nobody sets. The dotted line in (c) and (d) is the ±2 mm "
-     "of 5.5.2. Curves are the worse of the two signs at each magnitude, and "
+     "each parameter is. (a) and (b) give the material and pre-strain "
+     "parameters at 0 to 2% of nominal; (d) and (e) give the two that are set "
+     "as lengths, at 0 to 20 mm, because a ring is anchored to a distance and a "
+     "cable is cut and taken up by one, and a percentage of nominal is a detour "
+     "through a number nobody sets. The dotted line in (d) and (e) is the "
+     "\u00b12 mm of 5.5.2. (c) and (f) locate those two parameters on the "
+     "structures in the same colours: the anchored boundary that R scales, and "
+     "the crease cable along x = 0 whose rest length is the other length "
+     "tolerance. Curves are the worse of the two signs at each magnitude and "
      "are linear throughout, so a response may be read at whatever tolerance "
      "the measurements eventually give. 180 solves across the two geometries."),
     ("blockA_disc_sensitivity",
