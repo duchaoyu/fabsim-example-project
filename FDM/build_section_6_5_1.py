@@ -30,6 +30,7 @@ hist = json.load(open(os.path.join(HERE, "data", "D5", "loss_history.json")))
 fdm_all = json.load(open(os.path.join(HERE, "data", "fdm_cost.json")))
 fdm = fdm_all["D5 (6.4.6)"]
 fdm_b5, fdm_c5 = fdm_all["B5 (6.4.2)"], fdm_all["C5 (6.4.3)"]
+fdm_2p = fdm_all["2part (6.4.1)"]
 fdm_res = json.load(open(sorted(glob.glob(
     os.path.join(HERE, "data", "D5", "D5_fdm_*.json")))[-1]))
 
@@ -82,10 +83,11 @@ BODY = [
       f"shell with openings the force density method (FDM) form finding of "
       f"Section 6.2 takes {FDM_S:.1f} s and the directional field "
       f"{FIELD_S:.1f} s, against the hours the inverse problem takes on the same "
-      f"mesh. The other geometries cost {fdm_b5['samples_s'][0]:.1f} s and "
-      f"{fdm_c5['samples_s'][0]:.0f} s, though two of the three took a hundred "
-      f"times longer until an implementation detail was changed, which is taken "
-      f"up separately below. The question first is what one "
+      f"mesh. The other geometries cost {fdm_b5['samples_s'][0]:.1f} s, "
+      f"{fdm_c5['samples_s'][0]:.0f} s and {fdm_2p['samples_s'][0]:.0f} s, "
+      f"though two of them took a hundred times longer until an implementation "
+      f"detail was changed, which is taken up separately below. The question "
+      f"first is what one "
       f"forward solve costs, how many of them a strategy needs, and why the two "
       f"do not multiply to the observed wall clock."),
 
@@ -396,7 +398,10 @@ TABLE = [
      "1241", "0.39 s", "68 min"),
     ("Openings, 10 symmetric regions, warm-started", "6.4.6", "847 / 1563", "10",
      "90", "0.46 s", "4.8 min"),
-    ("Crease, form finding ‡", "6.2", "—", "—", "—", "—", "interactive"),
+    ("Crease, form finding ‡", "6.2",
+     f"{fdm_2p['n_verts']} / {fdm_2p['n_faces']}", f"{fdm_2p['n_design']}",
+     f"{fdm_2p['iters']}", f"{fdm_2p['ms_per_iter'] / 1e3:.2f} s",
+     f"{fdm_2p['samples_s'][0]:.1f} s ¶"),
     ("Free-form shell, form finding ‡", "6.2",
      f"{fdm_b5['n_verts']} / {fdm_b5['n_faces']}", f"{fdm_b5['n_design']}",
      f"{fdm_b5['iters']}", f"{fdm_b5['ms_per_iter']:.1f} ms",
@@ -432,10 +437,11 @@ TABLE_CAPTION = (
     "free-form shell and the fluted dome took "
     f"{fdm_b5['before']['samples_s'][0]:.0f} s and "
     f"{fdm_c5['before']['samples_s'][0] / 60:.0f} min before it was ported into "
-    "them, at the same fit, as discussed below. The crease form finding is an "
-    "interactive session rather than a fitted optimisation and has no meaningful "
-    "wall clock. The entry marked § stopped at its iteration cap rather than at "
-    "convergence, so it too is a floor."
+    "them, at the same fit, as discussed below. The entry marked § stopped at "
+    "its iteration cap rather than at convergence, so it too is a floor, and the "
+    "one marked ¶ is a fixed budget of ten gradient-descent steps with no "
+    "convergence test at all, whose fit was still improving when it stopped; it "
+    "also still uses direct sensitivity."
 )
 
 CAPTIONS = {
@@ -514,11 +520,26 @@ NOTES = [
       "on input/B5.obj, 269 vertices, where the inverse problem of 6.4.2 uses a "
       "497/929 remesh, so the two are not the same discretisation. Whether the "
       "form finding behind the reported 6.4.2 result was this run or one on the "
-      "finer mesh is worth confirming. The crease form finding (square_crease.py) "
-      "remains unmeasured and is a different kind of object: an interactive "
-      "session of fixed-point fd_numpy steps, needing compas_fd and compas_view2, "
-      "neither installed here. Remeshing and cable extraction are also "
+      "finer mesh is worth confirming. Remeshing and cable extraction are also "
       "unmeasured."),
+
+("p", "7a. The crease form finding is fofin_butt_steps.py, which reads "
+      "data/2part.json (341/634, the mesh of 6.4.1) and writes the "
+      "mesh_out_2parts_*.json results, not square_crease.py. It times at 10.0 s "
+      "for its ten steps, but three caveats attach and each wants a decision. It "
+      "cannot run as committed: it imports compas.numerical, gone in compas 2.x, "
+      "and compas_view2, which it also calls inside the step loop; the timing "
+      "comes from a harness reproducing its arithmetic with fd_numpy from "
+      "compas_fd and the drawing removed. It carries a shape bug — qpre, a list "
+      "of length n_e, plus sum_gradient of shape (n_e, 1), broadcasts to n_e by "
+      "n_e, and a whole row is then assigned as each edge's force density, which "
+      "fd_numpy rejects — so as committed it cannot have produced the stored "
+      "results, and whatever did produce them is not in the repository in "
+      "runnable form. And its optimiser is ten fixed steps of hand-coded "
+      "gradient descent with no convergence test; the fit was still improving at "
+      "the last step, 0.0237 m to 0.0030 m over the ten. It is also the one form "
+      "finding still using direct sensitivity, 65% of its time, so note 8 "
+      "applies to it too."),
 
 ("p", "8. The adjoint gradient and vectorised load assembly of fofin_D5.py have "
       "been ported into fofin_B5.py and fofin_C5_dense.py. Verification before "

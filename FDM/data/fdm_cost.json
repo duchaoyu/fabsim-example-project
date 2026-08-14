@@ -67,9 +67,25 @@
     "note": "runs on data/C5/C5_remeshed.obj, the same file the inverse problem of 6.4.3 uses; compas welds it to 1114 vertices where the FEM driver reads 1309."
   },
   "2part (6.4.1)": {
-    "form_finding_script": "square_crease.py",
-    "measured": false,
-    "note": "not comparable and not measurable here. It is an interactive session - 200 fixed-point fd_numpy steps driven through a compas_view2 viewer - rather than a fitted optimisation over q, and it needs compas_fd and compas_view2, neither installed on the timing machine."
+    "form_finding_script": "fofin_butt_steps.py",
+    "gradient": "direct sensitivity",
+    "optimiser": "hand-coded gradient descent, 10 fixed steps, time_step 1.0",
+    "n_verts": 341,
+    "n_faces": 634,
+    "n_edges": 974,
+    "n_free": 295,
+    "n_design": 974,
+    "iters": 10,
+    "converged": null,
+    "picard_steps": 5,
+    "pressure": 1.2,
+    "samples_s": [10.04],
+    "ms_per_iter": 1004.3,
+    "rms_dev_m": 0.00300,
+    "rms_dev_start_m": 0.02370,
+    "split_s": {"initial_inflate": 0.31, "gradient": 6.52, "inflate_per_step": 3.41},
+    "harness": "timed by scratchpad/time_crease_fdm.py, which reproduces the arithmetic of fofin_butt_steps.py with fd_numpy taken from compas_fd and the viewer calls dropped; the committed script imports compas.numerical and compas_view2 and cannot run here.",
+    "note": "10 fixed steps with no convergence test - the deviation was still falling at step 10. The committed script also has a shape bug: qpre (a list of length n_e) plus sum_gradient (n_e, 1) broadcasts to n_e by n_e and assigns a whole row as each edge's force density, which fd_numpy then rejects; the harness applies the elementwise update the surrounding code implies. As committed the script therefore cannot have produced the stored mesh_out_2parts_*.json."
   },
   "port_verification": {
     "gradient_max_rel_diff": 3.865e-15,
