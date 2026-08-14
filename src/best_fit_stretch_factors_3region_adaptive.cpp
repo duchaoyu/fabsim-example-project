@@ -173,7 +173,7 @@ VectorXd newtonSolve(fsim::OrthotropicStVKMembrane& model, const VectorXd& x0)
 {
   optim::NewtonSolver<double> solver;
   solver.options.display         = optim::SolverDisplay::quiet;
-  solver.options.threshold       = 1e-4;
+  solver.options.threshold       = 1e-6;   // as in every other 6.4.1 driver
   solver.options.iteration_limit = 10000;
   for (int b : bdrs) {
     solver.options.fixed_dofs.push_back(b*3);
