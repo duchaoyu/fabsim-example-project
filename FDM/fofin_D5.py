@@ -4,7 +4,7 @@ FDM form-finding for D5_remeshed.obj.
 Key implementation detail: adjoint gradient — 3 sparse solves per iteration
 instead of 3*n_e, giving ~800x speedup over the naive formulation.
 """
-import os, datetime, json
+import os, datetime, json, time
 import numpy as np
 import scipy.sparse
 import scipy.sparse.linalg
@@ -159,12 +159,16 @@ def obj_and_grad(q_vec):
 
 # ── Optimise ──────────────────────────────────────────────────────────────────
 q0     = np.full(n_e, Q_INIT)
+t_opt0 = time.perf_counter()
 result = minimize(obj_and_grad, q0, jac=True, method="L-BFGS-B",
                   bounds=[(Q_MIN, None)] * n_e,
                   options={"maxiter": MAXITER, "ftol": 1e-8, "gtol": 1e-8})
+t_opt  = time.perf_counter() - t_opt0
 
 print(f"\nConverged: {result.success}  |  {result.message}")
 print(f"Final obj={result.fun:.6f}  iters={_iter[0]}")
+print(f"Elapsed:   {t_opt:.2f} s for {_iter[0]} iters "
+      f"({1e3*t_opt/max(_iter[0],1):.1f} ms/iter, {n_e} design variables)")
 q_opt = result.x
 
 # ── Final result ──────────────────────────────────────────────────────────────
@@ -185,6 +189,8 @@ with open(out, "w") as f:
                "fdm_crown_m": float(V_result[:, 2].max()),
                "rmse_m": float(rmse), "pressure": PRESSURE,
                "converged": bool(result.success),
+               "n_edges": int(n_e), "iters": int(_iter[0]),
+               "elapsed_s": float(t_opt),
                "q_min": float(q_opt.min()), "q_max": float(q_opt.max()),
                "verts": V_result.tolist(), "q": q_opt.tolist()}, f)
 print(f"Saved JSON: {out}")

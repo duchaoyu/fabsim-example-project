@@ -1,0 +1,18 @@
+{
+  "_comment": "Cost of the one-shot pre-FEM stages. Measured on the timing machine of Section 6.5.1 (Xeon Gold 5412U). Form-finding timings are the Elapsed line of FDM/fofin_D5.py, which brackets scipy.optimize.minimize only and excludes I/O and plotting; the per-solve figure is 20 repeats of inflate() at the converged densities. Directional-field timings are whole-script wall clock, figure included.",
+  "D5 (6.4.6)": {
+    "form_finding_script": "fofin_D5.py",
+    "n_verts": 847,
+    "n_faces": 1563,
+    "n_edges": 2410,
+    "n_free": 716,
+    "n_design": 2410,
+    "iters": 1173,
+    "picard_steps": 5,
+    "samples_s": [9.339, 9.13, 9.31, 9.31, 9.06],
+    "inflate_ms": 6.85,
+    "inflate_repeats": 20,
+    "field_script": "directional_field_D5.py",
+    "field_samples_s": [18.83, 18.65, 18.47, 18.54]
+  }
+}

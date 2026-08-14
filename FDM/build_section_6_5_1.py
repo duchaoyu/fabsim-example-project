@@ -26,6 +26,7 @@ OUT_MD = os.path.join(ROOT, "docs", "6_5_1_computational_time.md")
 
 cost = json.load(open(os.path.join(HERE, "data", "solve_cost.json")))
 hist = json.load(open(os.path.join(HERE, "data", "D5", "loss_history.json")))
+fdm = json.load(open(os.path.join(HERE, "data", "fdm_cost.json")))["D5 (6.4.6)"]
 
 
 def med(case):
@@ -41,22 +42,32 @@ def spread(case):
 M2, MB5, MC5, MD5 = (med(k) for k in ("2part (6.4.1)", "B5 (6.4.2)",
                                       "C5 (6.4.3)", "D5 (6.4.6)"))
 
+FDM_S = sorted(fdm["samples_s"])[len(fdm["samples_s"]) // 2]
+FDM_MS = 1e3 * FDM_S / fdm["iters"]
+FIELD_S = sorted(fdm["field_samples_s"])[len(fdm["field_samples_s"]) // 2]
+FDM_RATIO = MD5 / (fdm["inflate_ms"] / 1e3)
+PICARD = ("zero one two three four five six seven eight nine ten"
+          .split()[fdm["picard_steps"]])
+
 BODY = [
 ("h", "6.5.1 Computational time"),
 
 ("p", "All timings in this section were measured on a single workstation with an "
-      "Intel Xeon Gold 5412U, twenty cores and 16 GB of memory, with the forward "
-      "solver compiled at -O3 and using CHOLMOD for the sparse factorisation. The "
-      "forward solve is serial. One objective evaluation occupies one core, and "
-      "the other nineteen stay idle unless several evaluations are dispatched at "
-      "once, which the present implementation does not do."),
+      "Intel Xeon Gold 5412U, twenty cores and 16 GB of memory. The forward solver "
+      "is serial, compiled with GCC 14.2.0 at -O3, and uses CHOLMOD 5.3.1 "
+      "(SuiteSparse 7.10.1) for the sparse factorisation, with the AMD ordering "
+      "rather than nested dissection, METIS not being linked. One objective "
+      "evaluation occupies one core, and the other nineteen stay idle unless "
+      "several evaluations are dispatched at once, which the present "
+      "implementation does not do."),
 
-("p", "The cost of the workflow is set almost entirely by the inner forward solve "
-      "of Section 6.3.7. Everything outside it is either done once — the force "
-      "density optimisation, the directional field, the initial region partition — "
-      "or is arithmetic on a design vector of at most thirty entries. The question "
-      "is therefore what one forward solve costs, how many of them a strategy "
-      "needs, and why the two do not multiply to the observed wall clock."),
+("p", f"The cost of the workflow is set almost entirely by the inner forward solve "
+      f"of Section 6.3.7. Everything outside it is done once per target and costs "
+      f"seconds: on the shell with openings the force density optimisation takes "
+      f"{FDM_S:.1f} s and the directional field {FIELD_S:.1f} s, against the hours "
+      f"the inverse problem takes on the same mesh. The question is therefore what "
+      f"one forward solve costs, how many of them a strategy needs, and why the "
+      f"two do not multiply to the observed wall clock."),
 
 ("h2", "What one forward solve costs"),
 
@@ -182,6 +193,50 @@ BODY = [
       "part of the time, whereas the outer region sweeps deserve to run to their "
       "own convergence."),
 
+("h2", "What the form finding costs, and why so little"),
+
+("p", f"The inverse problem is not the only optimisation in the workflow, and the "
+      f"comparison with the one that precedes it is instructive, the more so "
+      f"because the two run on the same discretisation. The shell with openings is "
+      f"carried through both stages as a mesh of {fdm['n_verts']} vertices, "
+      f"{fdm['n_faces']} faces and {fdm['n_edges']} edges, of which "
+      f"{fdm['n_free']} vertices are free and the remainder fixed on the "
+      f"boundary. On that mesh the force density stage of Section 6.2 solves for "
+      f"one force density per edge — {fdm['n_design']} design variables — and "
+      f"converges in {fdm['iters']} L-BFGS-B iterations and {FDM_S:.1f} s, a mean "
+      f"of {FDM_MS:.1f} ms per iteration. The inverse problem on the identical "
+      f"mesh carries between three and twenty design variables and takes between "
+      f"four minutes and three hours. The form finding therefore optimises two "
+      f"orders of magnitude more variables in a thousandth of the time, and none "
+      f"of the difference is a difference in resolution."),
+
+("p", f"Two things account for it, and they are worth separating because only one "
+      f"is intrinsic. The first is the cost of a single equilibrium solve: "
+      f"{fdm['inflate_ms']:.2f} ms for the force density network against "
+      f"{MD5:.2f} s for the membrane, a factor of about {FDM_RATIO:.0f}. That gap "
+      f"is intrinsic to the physics being solved. The force density equilibrium is "
+      f"linear in the vertex positions once the densities are fixed, so a single "
+      f"LU factorisation is reused across the {PICARD} Picard steps "
+      f"that resolve the pressure coupling, whereas the membrane solve is a Newton "
+      f"iteration on a nonlinear material law in which cable segments change "
+      f"between taut and slack across four pressure continuation stages. Equal "
+      f"vertex counts do not imply equal cost when the equations differ in kind."),
+
+("p", f"The second is the cost of a gradient, and that one is an implementation "
+      f"choice. The force density stage differentiates its objective by an "
+      f"adjoint: three linear solves per iteration, one per coordinate axis, "
+      f"independent of the number of design variables. The inverse problem uses "
+      f"finite differences, at n + 1 nonlinear solves per gradient. At the sizes "
+      f"used here that is between three and thirty-one solves where the adjoint "
+      f"would be three, but the scaling is the real point. Under finite "
+      f"differences the form finding would need {fdm['n_design'] + 1} solves per "
+      f"gradient and some {(fdm['n_design'] + 1) * fdm['iters'] / 1e6:.1f} million "
+      f"over its {fdm['iters']} iterations; it is the adjoint alone that makes a "
+      f"design space of that dimension ordinary. The inverse problem tolerates "
+      f"finite differences because its design vector was first reduced, by the "
+      f"region partition and by symmetry, to a size at which the penalty is "
+      f"affordable rather than absent."),
+
 ("h2", "Scale, and the cost of not instrumenting"),
 
 ("p", "Set against fabrication, none of this is expensive. The most costly single "
@@ -213,7 +268,14 @@ BODY = [
       "small perturbations a finite-difference gradient takes, which is exactly "
       "where the subprocess driver throws the previous solution away. Neither "
       "change affects any result reported in this chapter, and either would move a "
-      "region-refinement run from hours to minutes."),
+      "region-refinement run from hours to minutes. A third reduction, an adjoint "
+      "gradient for the membrane solve in place of finite differences, is a larger "
+      "undertaking, since it requires differentiating through the Newton iteration "
+      "and the switching of the cable segments between taut and slack; but it is "
+      "not speculative, being the device the force density stage of this same "
+      "workflow already uses, and it is the one change that would lift the ceiling "
+      "on the number of design variables rather than merely lower the cost of the "
+      "present ones."),
 
 ("p", "A final methodological remark, since it cost real effort to recover. The "
       "optimisation drivers recorded parameters, losses and evaluation counts, but "
@@ -281,7 +343,13 @@ NOTES = [
       "sources; evaluation counts for B5, C5 and D5 from the n_calls fields of "
       "FDM/optimisation/*_optimised*.json; D5 wall clocks and tail statistics from "
       "the per-evaluation output-file timestamps; loss trajectories from "
-      "FDM/reconstruct_loss_history.py."),
+      "FDM/reconstruct_loss_history.py; form-finding and directional-field costs "
+      "from FDM/data/fdm_cost.json, whose samples come from FDM/fofin_D5.py, now "
+      "instrumented to report and store its elapsed time, iteration count and "
+      "design dimension, and from the whole-script wall clock of "
+      "FDM/directional_field_D5.py; the per-solve figure of "
+      f"{fdm['inflate_ms']:.2f} ms is {fdm['inflate_repeats']} repeats of "
+      "inflate() at the converged densities."),
 ("p", "1. Fabrication times. Two [X] placeholders remain in the comparison "
       "paragraph — knitting hours and assembly time per specimen."),
 ("p", "2. The finite-difference step. Section 6.3.7 states 0.05. optimise_B5.py "
@@ -312,6 +380,13 @@ NOTES = [
       "adaptive run and 21 of the field-aligned run. Without the gate the "
       "objective has a perfect-scoring attractor that corresponds to a structure "
       "that never inflated."),
+("p", "7. Form-finding cost is measured for the shell with openings only. The "
+      "equivalent stage for the free-form shell and the fluted dome "
+      "(FDM/fofin_B5.py, FDM/fofin_C5_smooth.py) is unmeasured, because those two "
+      "scripts import compas, which is not installed on the timing machine. Both "
+      "are one-shot stages of the same kind and should be seconds, but the claim "
+      "in the opening paragraph rests on one geometry. The remeshing and "
+      "cable-extraction steps are also unmeasured."),
 ]
 
 
