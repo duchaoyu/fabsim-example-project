@@ -56,6 +56,14 @@ plt.rcParams.update({
 C_PLUS, C_MINUS = "#0077BB", "#EE7733"
 C_GREY = "#666666"
 
+# Case-study names for the axes, keyed by the internal geometry codes.
+NAMES = {
+    "2part (6.4.1)": "Middle crease",
+    "B5 (6.4.2)":    "Free-form shell",
+    "D5 (6.4.6)":    "Openings",
+    "C5 (6.4.3)":    "Fluted dome",
+}
+
 # The runs that kept their timestamps, with the wall-clock limit the driver used.
 RUNS = [
     ("d5_4ra_v3",   "4 adaptive regions",     40.0, C_PLUS),
@@ -141,7 +149,7 @@ def main():
                              textcoords="offset points", fontsize=7,
                              color=C_GREY, ha="right")
         axD.set_yticks(range(len(order)))
-        axD.set_yticklabels([f"{k}\n{cost[k]['n_faces']} elements"
+        axD.set_yticklabels([f"{NAMES.get(k, k)}\n{cost[k]['n_faces']} elements"
                              for k in order])
         axD.set_ylim(-0.6, len(order) - 0.4)
         axD.invert_yaxis()
@@ -174,8 +182,9 @@ def main():
     axL.set_yscale("log")
     axL.set_xlabel("forward solve")
     axL.set_ylabel("cost of one evaluation (s)")
-    axL.set_title(f"(b) {d['label']}: {d['n_eval']} evaluations, "
-                  f"{d['total']/60:.0f} min", loc="left")
+    axL.set_title(f"(b) Openings, {d['label']}\n"
+                  f"{d['n_eval']} evaluations, {d['total']/60:.0f} min",
+                  loc="left")
     axL.legend(loc="lower right", frameon=False, handletextpad=0.4,
                borderaxespad=0.2)
     axL.grid(axis="y", color="#DDDDDD", linewidth=0.5)
@@ -214,7 +223,7 @@ def main():
     axR.set_ylim(0, 100)
     axR.set_xlabel("evaluations, cheapest first (%)")
     axR.set_ylabel("cumulative wall clock (%)")
-    axR.set_title("(c) The tail is the cost", loc="left")
+    axR.set_title("(c) Openings, cumulative running time", loc="left")
     axR.legend(loc="upper left", frameon=False)
     axR.grid(color="#DDDDDD", linewidth=0.5)
     axR.set_axisbelow(True)
