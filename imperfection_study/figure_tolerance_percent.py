@@ -80,7 +80,7 @@ def curve(rows, factor, column, signed_from_base):
 
 
 def panel(ax, rows, column, signed_from_base, title, ylabel,
-          order=None, xlabel="parameter error (% of nominal)",
+          order=None, xlabel="parameter error (%), solid curves",
           xlim=(0, 2.05), xticks=(0, 0.5, 1.0, 1.5, 2.0), mark=None):
     present = {r["factor"] for r in rows}
     for factor in (order or ORDER):
@@ -130,7 +130,7 @@ def main():
         top = ax.twiny()
         top.set_xlim(0, 2.05)
         top.set_xticks([0, 0.5, 1.0, 1.5, 2.0])
-        top.set_xlabel("length error (cm), dashed curves")
+        top.set_xlabel("distance (cm), dashed curves")
         top.spines["right"].set_visible(False)
         present = {r["factor"] for r in rows_mm}
         for factor in LENGTH_FACTORS:
