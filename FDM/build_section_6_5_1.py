@@ -133,7 +133,12 @@ BODY = [
       "region refinement expensive, and its cost scales with the length of the "
       "region boundaries rather than with the number of variables. The "
       "twenty-variable field-aligned partition needed 1241 evaluations against "
-      "the nine-variable adaptive partition's 2959."),
+      "the nine-variable adaptive partition's 2959. The last row belongs to "
+      "neither population, being the form finding that precedes the inverse "
+      "problem rather than an instance of it; it is there for the comparison "
+      "drawn below, and it is cheaper than every run on the same mesh despite "
+      "carrying the largest design vector in the table by two orders of "
+      "magnitude."),
 
 ("h2", "Where the wall clock goes"),
 
@@ -338,6 +343,9 @@ TABLE = [
      "1241", "0.39 s", "68 min"),
     ("Openings, 10 symmetric regions, warm-started", "6.4.6", "847 / 1563", "10",
      "90", "0.46 s", "4.8 min"),
+    ("Openings, force density form finding ‡", "6.2",
+     f"{fdm['n_verts']} / {fdm['n_faces']}", f"{fdm['n_design']}",
+     f"{fdm['iters']}", f"{fdm['inflate_ms'] / 1e3:.3f} s", f"{FDM_S:.1f} s"),
 ]
 
 TABLE_CAPTION = (
@@ -354,7 +362,12 @@ TABLE_CAPTION = (
     f"exceed the same bound by factors of {184 * 60 / (2959 * 0.34):.0f}, "
     f"{68 * 60 / (1241 * 0.39):.0f} and {4.8 * 60 / (90 * 0.46):.0f} "
     "respectively, so the true figures are plausibly of the order of ten minutes "
-    "rather than one."
+    "rather than one. The last row, marked ‡, is not an inverse problem but the "
+    "form finding that precedes them all, on the same mesh as the shell with "
+    "openings; its solve is an FDM equilibrium rather than a membrane solve and "
+    "its gradient is an adjoint rather than a finite difference, which is why "
+    f"{fdm['n_design']} design variables cost less than three do in the rows "
+    "above."
 )
 
 CAPTIONS = {
