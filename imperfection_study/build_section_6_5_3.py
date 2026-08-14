@@ -207,26 +207,44 @@ BODY = [
       "output. Every response reported below is physical by five orders of "
       "magnitude."),
 
-("h2", "Response against tolerance, rather than at one tolerance"),
+("h2", "How wrong is too wrong"),
 
 ("p", "Reporting a response at one assumed tolerance answers a question nobody "
       "is in a position to ask yet, since five of the six magnitudes are "
-      "estimates. Figure 6.31 therefore sweeps each factor over a range of "
-      "multiples of its assumed tolerance, from a quarter to twice, and plots "
-      "the deviation that results. A reader who later learns that the stitch "
-      "size gives a stretch-factor tolerance of 0.03 rather than 0.05 reads up "
-      "from 0.6 on the horizontal axis instead of rescaling a table entry by "
-      "hand."),
+      "estimates. Figure 6.31 asks the question the other way round: it applies "
+      "the same relative error to every parameter, from a quarter of a percent "
+      "to two percent of nominal, and plots what the surface does. The axis is "
+      "then a property of the fabrication rather than of an assumption, and the "
+      "six factors can be read against one another."),
 
-("p", "The curves are straight to the eye over the whole range, which is worth "
-      "more than it appears. The claim that an estimate may be replaced without "
-      "re-running rested until now on the asymmetry between the plus and minus "
-      "responses at a single magnitude — a local check. These sweeps show the "
-      "response is linear from a quarter to twice the assumed tolerance for "
-      "every factor on both geometries, so rescaling is licensed across the "
-      "whole plausible range and not merely near the assumed point. The two "
-      "rows the asymmetry check flagged, E1 and E2/E1 on the creased shell, are "
-      "covered directly by the swept curve and need no rescaling at all."),
+("p", f"One percent is not a small error here. On the dome a one percent error "
+      f"in the boundary radius moves the surface 4.6 mm and a one percent error "
+      f"in s_course 3.8 mm; on the creased shell the same two give 4.3 and "
+      f"3.6 mm, against a standing mismatch of {L_TARGET:.1f} mm. Two percent "
+      f"roughly doubles both, the responses being linear across the range. The "
+      f"weak factors are weak by an order of magnitude rather than marginally: "
+      f"a one percent error in the orthotropy ratio moves the creased shell by "
+      f"0.23 mm, which is below the precision any of this is measured to."),
+
+("p", "The comparison on a common axis also reorders the six, and the "
+      "reordering is the useful part. Ranked by response per percent, R is the "
+      "steepest factor on both geometries, ahead of s_course; ranked at the "
+      "assumed tolerances, as in the tables below, R is the smallest "
+      "contributor of all. Both are true, and they answer different questions. "
+      "R is the most dangerous parameter and the least troublesome one, because "
+      "it is the best controlled: the boundary is anchored to 0.33% where the "
+      "stretch factor is assumed good to 4.5%. The practical consequence is "
+      "that the ranking in a tolerance budget is a statement about the workshop "
+      "as much as about the structure, and it moves if the workshop does."),
+
+("p", "The curves are straight over the whole range, which is worth more than "
+      "it appears. The claim that an estimate may be replaced without re-running "
+      "rested until now on the asymmetry between the plus and minus responses at "
+      "a single magnitude — a local check. These sweeps show the response is "
+      "linear on every factor and both geometries, so a response may be scaled "
+      "to whatever tolerance the measurements eventually give, and read beyond "
+      "the frame of the figure for the parameters whose assumed tolerances are "
+      "larger than two percent."),
 
 ("h2", "The circular dome"),
 
@@ -247,11 +265,13 @@ BODY = [
 ("p", f"R has the second-largest elasticity at "
       f"{float(disc['R']['crown_height_elast']):+.2f}, behind only s_course and "
       f"ahead of both moduli — the crown responds strongly to a relative change "
-      f"in boundary radius — and yet has the smallest effect of the six, purely "
-      f"because its tolerance is tight: 0.33% of the nominal against 4.5 to 10% "
-      f"for the others. It is a factor worth anchoring precisely rather than "
-      f"one that does not matter, and the distinction is only visible because "
-      f"elasticity and effect are reported separately. It is also the factor "
+      f"in boundary radius, and Figure 6.31 shows it steeper still than "
+      f"s_course when the two are given the same relative error — and yet it "
+      f"has the smallest effect of the six here, purely because its tolerance "
+      f"is tight: 0.33% of the nominal against 4.5 to 10% for the others. It is "
+      f"a factor worth anchoring precisely rather than one that does not "
+      f"matter, and the distinction is only visible because elasticity and "
+      f"effect are reported separately. It is also the factor "
       f"most sensitive to the tolerance being right: the ±2 mm of 5.5.2 "
       f"replaced an earlier assumption of 5 mm taken from screw spacing, and "
       f"the row shrank in proportion, the response being linear to "
@@ -377,16 +397,18 @@ BODY = [
 ]
 
 CAPTIONS = [
-    ("tolerance_sweep",
-     "Figure 6.31: Deviation against tolerance magnitude, each factor swept "
-     "from a quarter to twice its assumed tolerance, 60 solves per geometry. "
-     "The dotted vertical is the tolerance assumed in the tables. (a) and (b) "
-     "give the surface movement from the baseline equilibrium on each geometry. "
-     "(c) gives what the creased shell is actually judged on, its deviation "
-     "from the design target: every curve starts at the standing mismatch and "
-     "rises, so no tolerance at any magnitude in range brings the built shape "
-     "closer to the shape it was designed to hold. Curves are the worse of the "
-     "two signs at each magnitude."),
+    ("tolerance_percent",
+     "Figure 6.31: Deviation against parameter error, the same relative error "
+     "applied to every parameter so that the six may be compared, 60 solves per "
+     "geometry. The shaded band is ±1%. (a) and (b) give the surface movement "
+     "from the baseline equilibrium on each geometry; R is the steepest factor "
+     "on both, though it is also the best controlled, its assumed tolerance "
+     "being 0.33% where the stretch factors are assumed to 4.5% and the moduli "
+     "to 10%. (c) gives what the creased shell is judged on, its deviation from "
+     "the design target: the curves sit on the standing mismatch and rise, so "
+     "no parameter error in this range brings the built shape closer to the "
+     "shape it was designed to hold. Responses are linear, so the assumed "
+     "tolerances that fall outside the frame may be read by proportion."),
     ("blockA_disc_sensitivity",
      "Figure 6.32: Block A on the circular dome. (a) Crown-height response to "
      "plus and minus one tolerance, sorted by effect. (b) Surface deviation "

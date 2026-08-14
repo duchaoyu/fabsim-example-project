@@ -31,6 +31,12 @@ from tolerances import TOLERANCES
 
 MULTIPLES = (0.25, 0.5, 1.0, 1.5, 2.0)
 
+# --percent mode: the same fractional error applied to every parameter, so the
+# six are compared on a common footing rather than each at its own assumed
+# tolerance. This is the axis that shows R to be the most damaging factor per
+# unit relative error, which its 0.33% tolerance hides.
+PERCENTS = (0.25, 0.5, 1.0, 1.5, 2.0)
+
 
 def sweep_params(g, nom, factor, mult):
     """As run_params, but at a fractional multiple of the tolerance.
@@ -48,9 +54,28 @@ def sweep_params(g, nom, factor, mult):
     return dict(g.params()), mesh
 
 
+PARAM_KEY = {"s_wale": "sf_wale", "s_course": "sf_course",
+             "pressure": "pressure", "E1": "E1", "r": "r_ratio", "nu": "nu"}
+
+
+def percent_params(g, nom, factor, pct):
+    """Perturb `factor` by pct percent of its own nominal value."""
+    p = dict(g.params())
+    scale = 1.0 + pct / 100.0
+    if factor == "R":
+        tag = f"{g.name}_pc{'p' if pct > 0 else 'm'}{abs(pct):g}".replace(".", "")
+        mesh, _ = mesh_tools.radius_variant(g.mesh, scale, cfg.MESH_DIR, tag)
+        return p, mesh
+    p[PARAM_KEY[factor]] = nom[factor] * scale
+    return p, g.mesh
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--geometry", default="disc", choices=geom.NAMES)
+    ap.add_argument("--percent", action="store_true",
+                    help="sweep a common percentage of nominal rather than "
+                         "multiples of each factor's assumed tolerance")
     args = ap.parse_args()
 
     g = geom.get(args.geometry)
@@ -75,27 +100,37 @@ def main():
           if V_target is not None else
           f"baseline crown {1e3 * base['crown_height']:.1f} mm")
 
-    rows = [dict(factor="baseline", multiple=0.0, delta_abs=0.0, **base)]
+    steps = PERCENTS if args.percent else MULTIPLES
+    key = "percent" if args.percent else "multiple"
+    rows = [dict(factor="baseline", **{key: 0.0}, delta_abs=0.0, **base)]
     n = 0
     for factor in cfg.BLOCK_A_FACTORS:
         tol = TOLERANCES[factor]
-        for mult in MULTIPLES:
+        for step in steps:
             for sign in (+1, -1):
-                m = sign * mult
-                p, mesh = sweep_params(g, nom, factor, m)
+                s = sign * step
+                if args.percent:
+                    p, mesh = percent_params(g, nom, factor, s)
+                    delta_abs = nom[factor] * s / 100.0
+                else:
+                    p, mesh = sweep_params(g, nom, factor, s)
+                    delta_abs = s * tol.absolute(nom[factor])
                 radius = measured_radius(mesh)
-                tag = f"{factor}_{'p' if sign > 0 else 'm'}{mult:g}"
+                tag = (f"{factor}_{'p' if sign > 0 else 'm'}{step:g}"
+                       + ("pc" if args.percent else ""))
                 out = fem_runner.run(mesh, os.path.join(run_dir, tag), **p)
                 r = metrics(out, radius, V_base, radius0, V_ref, V_target, free)
-                rows.append(dict(factor=factor, multiple=m,
-                                 delta_abs=m * tol.absolute(nom[factor]), **r))
+                rows.append(dict(factor=factor, **{key: s},
+                                 delta_abs=delta_abs, **r))
                 n += 1
-                print(f"  {tag:16s} crown {1e3 * r['crown_height']:8.2f} mm  "
+                print(f"  {tag:18s} crown {1e3 * r['crown_height']:8.2f} mm  "
                       f"L_pos {1e3 * r['L_pos']:6.2f} mm" +
                       (f"  L_target {1e3 * r['L_target']:6.2f} mm"
                        if V_target is not None else ""))
 
-    out_csv = os.path.join(cfg.DATA_DIR, f"tolerance_sweep_{g.name}.csv")
+    suffix = "_percent" if args.percent else ""
+    out_csv = os.path.join(cfg.DATA_DIR,
+                           f"tolerance_sweep_{g.name}{suffix}.csv")
     with open(out_csv, "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=list(rows[0]))
         w.writeheader()

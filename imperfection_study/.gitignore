@@ -2,3 +2,7 @@
 data/runs_A/
 data/meshes/
 __pycache__/
+data/runs_A_2part/
+data/runs_A_disc/
+data/runs_sweep_disc/
+data/runs_sweep_2part/
