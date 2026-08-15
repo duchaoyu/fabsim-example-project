@@ -103,20 +103,34 @@ def main():
     k_mean, k_max, k_cost = (exponent(D, mean), exponent(D, mx),
                              exponent(D, calls))
 
-    fig = plt.figure(figsize=(13.2, 7.4))
-    gs = fig.add_gridspec(2, 4, height_ratios=[1.0, 0.95], hspace=0.42,
-                          wspace=0.42)
+    # One x axis for the whole top row: linear in the span, ticked as panel (b)
+    # is, so the three panels are read against the same scale.
+    XLIM = (D.min() - 0.09 * (D.max() - D.min()),
+            D.max() + 0.09 * (D.max() - D.min()))
+    XTICKS = [1.5, 2.0, 2.5, 3.0]
 
-    # (a) absolute deviation, log-log with the fitted power law
-    ax = fig.add_subplot(gs[0, 0])
+    def span_axis(ax):
+        ax.set_xscale("linear")
+        ax.set_xlim(*XLIM)
+        ax.set_xticks(XTICKS)
+        ax.set_xlabel("span $D$ (m)")
+
+    fig = plt.figure(figsize=(13.2, 7.4))
+    # Three panels above, four maps below: 12 columns divide evenly into both.
+    gs = fig.add_gridspec(2, 12, height_ratios=[1.0, 0.95], hspace=0.42,
+                          wspace=1.05)
+
+    # (a) absolute deviation, log in y only, with the fitted power law
+    ax = fig.add_subplot(gs[0, 0:4])
     fit = np.linspace(D.min(), D.max(), 50)
     for y, c, lab, k in ((mean, C_MEAN, "mean", k_mean),
                          (mx, C_MAX, "max", k_max)):
-        ax.loglog(D, y, "o-", color=c, ms=4, lw=1.4, label=f"{lab}")
-        ax.loglog(fit, y[0] * (fit / D[0]) ** k, ":", color=c, lw=1.0)
-    ax.loglog(fit, mean[0] * (fit / D[0]), "--", color="#888888", lw=1.0,
-              label="proportional, $D^{1}$")
-    ax.set_xlabel("span $D$ (m)")
+        ax.plot(D, y, "o-", color=c, ms=4, lw=1.4, label=f"{lab}")
+        ax.plot(fit, y[0] * (fit / D[0]) ** k, ":", color=c, lw=1.0)
+    ax.plot(fit, mean[0] * (fit / D[0]), "--", color="#888888", lw=1.0,
+            label="proportional, $D^{1}$")
+    ax.set_yscale("log")
+    span_axis(ax)
     ax.set_ylabel("deviation from target (mm)")
     ax.set_title("(a) deviation vs span", loc="left")
     ax.legend(frameon=False, loc="upper left")
@@ -127,14 +141,14 @@ def main():
                 fontsize=8)
 
     # (b) the same, normalised by span: the question a client asks
-    ax = fig.add_subplot(gs[0, 1])
+    ax = fig.add_subplot(gs[0, 4:8])
     ax.plot(D, [r["mean_pct"] for r in runs], "o-", color=C_MEAN, ms=4,
             lw=1.4, label="mean / $D$")
     ax.plot(D, [r["max_pct"] for r in runs], "o-", color=C_MAX, ms=4,
             lw=1.4, label="max / $D$")
     ax.axhline(runs[0]["mean_pct"], color=C_MEAN, ls=":", lw=0.9)
     ax.axhline(runs[0]["max_pct"], color=C_MAX, ls=":", lw=0.9)
-    ax.set_xlabel("span $D$ (m)")
+    span_axis(ax)
     ax.set_ylabel("deviation as % of span")
     ax.set_title("(b) relative to the span", loc="left")
     ax.legend(frameon=False, loc="upper left")
@@ -143,16 +157,17 @@ def main():
     ax.set_ylim(0, 1.15 * max(r["max_pct"] for r in runs))
 
     # (c) what it costs to get even that
-    ax = fig.add_subplot(gs[0, 2])
+    ax = fig.add_subplot(gs[0, 8:12])
     conv = [r["converged"] for r in runs]
-    ax.loglog(D, calls, "-", color=C_COST, lw=1.4, zorder=1)
+    ax.plot(D, calls, "-", color=C_COST, lw=1.4, zorder=1)
     ax.scatter(D[np.array(conv)], calls[np.array(conv)], s=28, color=C_COST,
                zorder=3, label="converged")
     ax.scatter(D[~np.array(conv)], calls[~np.array(conv)], s=34,
                facecolor="white", edgecolor=C_COST, zorder=3,
                label="stopped at the iteration cap")
-    ax.loglog(fit, calls[0] * (fit / D[0]) ** k_cost, ":", color=C_COST, lw=1.0)
-    ax.set_xlabel("span $D$ (m)")
+    ax.plot(fit, calls[0] * (fit / D[0]) ** k_cost, ":", color=C_COST, lw=1.0)
+    ax.set_yscale("log")
+    span_axis(ax)
     ax.set_ylabel("FEM solves to optimise")
     ax.set_title("(c) cost of optimising", loc="left")
     ax.legend(frameon=False, loc="upper left")
@@ -161,24 +176,11 @@ def main():
     ax.annotate(f"$\\propto D^{{{k_cost:.2f}}}$", xy=(0.97, 0.06),
                 xycoords="axes fraction", ha="right", fontsize=8)
 
-    # (d) where the accuracy went: crown ratio against surface error
-    ax = fig.add_subplot(gs[0, 3])
-    ax.plot(D, [100 * r["crown_ratio"] for r in runs], "o-", color="#AA4499",
-            ms=4, lw=1.4, label="achieved")
-    ax.axhline(100 * runs[0]["target_crown_ratio"], color="#000000", ls="--",
-               lw=1.0, label="target, self-similar")
-    ax.set_xlabel("span $D$ (m)")
-    ax.set_ylabel("crown height as % of span")
-    ax.set_title("(d) crown height", loc="left")
-    ax.legend(frameon=False, loc="lower right")
-    ax.grid(color="#EEEEEE", lw=0.6)
-    ax.set_axisbelow(True)
-
     # Bottom row: where on the surface the deviation is, at each span, each
     # normalised by its own span so the patterns are comparable.
     vmax = max(r["max_pct"] for r in runs)
     for i, r in enumerate(runs):
-        ax = fig.add_subplot(gs[1, i])
+        ax = fig.add_subplot(gs[1, 3 * i:3 * i + 3])
         V, F, interior = r["V"], r["F"], r["interior"]
         full = np.zeros(len(V))
         full[interior] = 100 * r["dev"] / r["D"]
@@ -194,7 +196,7 @@ def main():
             cb = fig.colorbar(tp, ax=ax, fraction=0.046, pad=0.04)
             cb.set_label("deviation, % of span", fontsize=8)
             cb.ax.tick_params(labelsize=7)
-    fig.text(0.5, 0.455, "(e) where the deviation is, each normalised by its "
+    fig.text(0.5, 0.455, "(d) where the deviation is, each normalised by its "
              "own span: the same pattern throughout, growing",
              fontsize=10, ha="center")
 

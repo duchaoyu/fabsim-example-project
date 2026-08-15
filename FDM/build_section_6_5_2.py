@@ -101,7 +101,7 @@ BODY = [
       "is not going wrong at the crown, and it is not the fabric running out "
       "of stretch."),
 
-("p", "Figure 6.31e locates it. The deviation field is plotted at each span, "
+("p", "Figure 6.31d locates it. The deviation field is plotted at each span, "
       "each normalised by its own span so the patterns may be compared, and it "
       "is the same pattern throughout — a grid of nine cells with the error "
       "concentrated in the seams between them and in the four side lobes. That "
@@ -171,15 +171,14 @@ BODY = [
 
 CAPTIONS = [
     ("scalability",
-     "Figure 6.31: The free-form shell at four spans. (a) Mean and maximum "
-     "deviation against span, log-log, with the fitted power laws and the "
+     "Figure 6.31: The free-form shell at four spans. All three upper panels "
+     "share one linear span axis. (a) Mean and maximum deviation against span, "
+     "logarithmic in the deviation, with the fitted power laws and the "
      "proportional line for comparison; both grow faster than the span. (b) The "
      "same normalised by span, which is how a tolerance would be written: "
      "relative accuracy worsens throughout. (c) Optimisation cost, quadratic in "
      "the span, with the two runs that stopped at the iteration cap shown "
-     "hollow. (d) Crown height as a fraction of span, against the self-similar "
-     "target: the crown gets relatively closer even as the surface as a whole "
-     "gets relatively worse. (e) The deviation field at each span, each "
+     "hollow. (d) The deviation field at each span, each "
      "normalised by its own span: the same nine-cell pattern of the region "
      "partition throughout, magnified rather than changed."),
 ]
@@ -203,12 +202,21 @@ NOTES = [
       "'grows roughly as the square of the span' is the honest reading of the "
       "cost, and 'faster than proportionally, close to D^1.8' of the "
       "deviation."),
-("p", "3. The mechanism in Figure 6.31e is an interpretation, well supported by "
+("p", "3. The mechanism in Figure 6.31d is an interpretation, well supported by "
       "the pattern matching the partition but not demonstrated. The "
       "demonstration is a re-run at one span with a finer partition: if the "
       "deviation falls and the pattern subdivides accordingly, the reading is "
       "confirmed. That experiment would also give the regions-against-span "
       "relation the closing paragraph says is missing."),
+("p", "3a. The crown-height panel has been removed from Figure 6.31, and the "
+      "three remaining upper panels put on one linear span axis so they read "
+      "against the same scale; (a) and (c) keep a logarithmic vertical axis, "
+      "so the fitted power laws now appear as curves rather than as straight "
+      "lines. The crown-height claim in the second paragraph of 'Where the "
+      "error is' therefore no longer has a panel behind it. The numbers are "
+      "still in data/scalability.json, as crown_ratio and target_crown_ratio, "
+      "but a reader of the section has to take them on trust. Either quote "
+      "both endpoints in the sentence or drop the claim."),
 ("p", "4. The section numbering follows the thesis: 6.5.1 computational time, "
       "6.5.2 this, 6.5.3 robustness. Figure 6.31 here means the figures of "
       "6.5.3 shift to 6.32 onward; both build scripts should be renumbered "
