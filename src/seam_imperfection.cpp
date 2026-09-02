@@ -414,6 +414,120 @@ int main(int argc, char** argv)
   std::cout << "\n" << sim_count << " Newton solves, " << std::setprecision(1)
             << std::fixed << secs << " s\n  wrote " << csv_path << "\n";
 
+  // ── The soft side: a seam WEAKER than the fabric, down to zero modulus ────
+  //
+  // The cable sweep answers only half the question.  EA is the seam's EXCESS
+  // over the fabric it replaces, and a cable can only add: EA >= 0.  But a real
+  // transition is often weaker than the plain knit around it - a cast-off and
+  // rejoin, an edge picked up stitch by stitch, a line of slipped or dropped
+  // stitches - and the limit of that is zero modulus, a slit that transmits
+  // position but no load.  That is k < 1, i.e. negative excess, and no cable can
+  // represent it.  So the band itself is softened: every face incident on the
+  // seam gets moduli k*E1, k*E2, with k swept from 1 down towards 0.
+  //
+  // Both moduli are scaled by the same k, which keeps E2/E1 (and so nu21) fixed:
+  // the band gets weaker, not differently anisotropic.
+  //
+  // The band is one face ring either side of the seam line - about one 76 mm mesh
+  // band, against a 20 mm seam anyone would actually knit.  So this is the mirror
+  // of the rigid bound: it OVERSTATES the softening, and what it does to the shape
+  // is an upper bound on what a real weak seam can do.
+  //
+  // The rest shape is NOT re-solved.  V0_mod is strategy E's rest shape and stays
+  // fixed, exactly as in the stiffness sweep, so k moves only the stiffness.
+  {
+    std::ofstream sc("out/seam_soft_modulus.csv");
+    sc << "seam,n_band_faces,band_area_frac,k,L_pos_rms,L_pos_max,fit_mean,fit_max,"
+          "crown,d_crown,band_strain_max,solves,status\n";
+    sc << std::setprecision(10);
+
+    auto bandFaces = [&](const std::vector<std::pair<int,int>>& segs) {
+      std::set<int> band;
+      std::map<std::pair<int,int>, std::vector<int>> emap;
+      for (int f = 0; f < F.rows(); ++f)
+        for (int i = 0; i < 3; ++i) {
+          int a = F(f,i), b = F(f,(i+1)%3);
+          if (a > b) std::swap(a, b);
+          emap[{a,b}].push_back(f);
+        }
+      for (auto& s : segs) for (int f : emap[s]) band.insert(f);
+      return std::vector<int>(band.begin(), band.end());
+    };
+
+    auto faceArea = [&](const fsim::Mat3<double>& X, int f) {
+      Eigen::Vector3d a = X.row(F(f,0)), b = X.row(F(f,1)), c = X.row(F(f,2));
+      return 0.5 * (b-a).cross(c-a).norm();
+    };
+    double area_tot = 0.0;
+    for (int f = 0; f < F.rows(); ++f) area_tot += faceArea(V0_mod, f);
+
+    // k = 0 exactly is not run: OrthotropicStVKElement forms nu21 = nu*E2/E1 and
+    // would divide by zero.  k = 1e-6 is the zero-modulus limit in every sense
+    // that matters - the band then carries a millionth of the fabric's load.
+    std::vector<double> ks = {1.0, 0.7, 0.5, 0.3, 0.2, 0.1, 0.05, 0.02, 0.01,
+                              3e-3, 1e-3, 1e-4, 1e-6};
+
+    std::cout << "\n── soft-band sweep: k x fabric modulus on the seam ring ──\n";
+    for (auto& sd : seams) {
+      auto band = bandFaces(*sd.segs);
+      double band_area = 0.0;
+      for (int f : band) band_area += faceArea(V0_mod, f);
+      std::cout << "  " << sd.name << ": band " << band.size() << " faces, "
+                << std::fixed << std::setprecision(1)
+                << 100.0*band_area/area_tot << " % of the surface\n";
+
+      VectorXd x_prev = x_base;
+      for (double k : ks) {
+        std::vector<double> E1k = E1s, E2k = E2s;
+        for (int f : band) { E1k[f] = k*E1; E2k[f] = k*E2; }
+
+        fsim::OrthotropicStVKMembrane m(V0_mod, F, ths, E1k, E2k, nus,
+                                        face_dirs, mass, pressure);
+        int s0 = sim_count;
+        VectorXd xr = newtonSolve(m, x_prev);
+        const char* st = statusName(last_status);
+        auto Vr = Map<const fsim::Mat3<double>>(xr.data(), V0.rows(), 3);
+
+        double ss = 0.0, mx = 0.0;
+        for (int v = 0; v < V0.rows(); ++v) {
+          if (is_bdr[v]) continue;
+          double d = (Vr.row(v) - Vb.row(v)).norm();
+          ss += d*d; mx = std::max(mx, d);
+        }
+        double rms = std::sqrt(ss / n_int);
+
+        // how far the soft band has been pulled open, as an area ratio
+        double bs = 0.0;
+        for (int f : band)
+          bs = std::max(bs, faceArea(Vr, f) / faceArea(Vb, f) - 1.0);
+
+        double crown = Vr.col(2).maxCoeff();
+        sc << sd.name << ',' << band.size() << ',' << band_area/area_tot << ','
+           << k << ',' << rms << ',' << mx << ','
+           << (Vr - Vtarget).rowwise().norm().mean() << ','
+           << (Vr - Vtarget).rowwise().norm().maxCoeff() << ','
+           << crown << ',' << (crown - base_crown) << ',' << bs << ','
+           << (sim_count - s0) << ',' << st << '\n';
+        sc.flush();
+
+        std::cout << "    k=" << std::scientific << std::setprecision(1) << k
+                  << "   L_pos = " << std::fixed << std::setw(8)
+                  << std::setprecision(3) << rms*1000 << " mm   band area +"
+                  << std::setprecision(1) << bs*100 << " %   " << st << "\n"
+                  << std::flush;
+
+        if (std::string(st) == "success" || std::string(st) == "line_search_failed")
+          x_prev = xr;                          // continuation, as in the EA sweep
+
+        std::string nm(sd.name);
+        for (auto& c : nm) if (c == '|') c = '_';
+        if (k == 1e-6) saveMesh("out/seam_soft_" + nm + ".off", Vr, F);
+        if (k == 0.1)  saveMesh("out/seam_soft01_" + nm + ".off", Vr, F);
+      }
+    }
+    std::cout << "  wrote out/seam_soft_modulus.csv\n";
+  }
+
   // ── Two shape dumps for the figure: rigid seam, each seam alone ───────────
   for (auto& sd : seams) {
     VectorXd xr = x_base;
