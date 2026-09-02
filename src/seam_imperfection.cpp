@@ -211,6 +211,85 @@ int main(int argc, char** argv)
             << "Seam R0|R1  : " << seam_C.size() << " segments, rest " << restLen(seam_C)
             << " m, on target " << tgtLen(seam_C) << " m\n";
 
+  // ── Incompatibility carried by the rest shape ─────────────────────────────
+  //
+  // computeAnisotropicRestShape solves a least squares: it finds the rest shape
+  // whose edge vectors come closest to A_f(e) on every face.  A prescribed
+  // metric that jumps across a region boundary is not exactly realisable by any
+  // embedding, so the solve leaves a residual, and that residual is elastic
+  // prestrain the model carries before the membrane is ever inflated.
+  //
+  // It is also precisely what short rows exist to relieve: a knitter who has to
+  // join two regions of different stitch size inserts partial courses so both
+  // reach their own zero-stress metric.  So the per-face residual, read against
+  // distance to the seam, says how much of the boundary the fabric will take out
+  // by short-rowing and the model will not.
+  {
+    std::ofstream rc("out/seam_rest_incompatibility.csv");
+    rc << "face,region,dist_to_seam_M,dist_to_seam_C,strain_max,strain_min,resid_rot\n";
+    rc << std::setprecision(8);
+
+    // face centroids, and centroid distance to each seam polyline
+    auto centroid = [&](const fsim::Mat3<double>& X, int f) {
+      return Eigen::Vector3d((X.row(F(f,0)) + X.row(F(f,1)) + X.row(F(f,2))) / 3.0);
+    };
+    auto distToSeam = [&](const Eigen::Vector3d& c,
+                          const std::vector<std::pair<int,int>>& segs) {
+      double d = 1e9;
+      for (auto& s : segs) {
+        Eigen::Vector3d a = V0.row(s.first), b = V0.row(s.second), ab = b - a;
+        double t = std::clamp((c - a).dot(ab) / ab.squaredNorm(), 0.0, 1.0);
+        d = std::min(d, (c - (a + t * ab)).norm());
+      }
+      return d;
+    };
+
+    for (int f = 0; f < nF; ++f) {
+      // rebuild the face frame exactly as the rest-shape solve does
+      Eigen::Vector3d v0 = V0.row(F(f,0)), v1 = V0.row(F(f,1)), v2 = V0.row(F(f,2));
+      Eigen::Vector3d n = (v1-v0).cross(v2-v0); n.normalize();
+      Eigen::Vector3d d1 = face_dirs[f] - face_dirs[f].dot(n)*n;
+      d1 = (d1.norm() < 1e-10) ? (v1-v0).normalized() : d1.normalized();
+      Eigen::Vector3d d2 = n.cross(d1).normalized();
+      double a1 = s1[f], a2 = s2[f], an = 0.5*(a1+a2);
+      auto Af = [&](const Eigen::Vector3d& e) {
+        return a1*d1.dot(e)*d1 + a2*d2.dot(e)*d2 + an*n.dot(e)*n;
+      };
+      // Rotation-invariant strain: compare the first fundamental form of the
+      // realised rest triangle with that of the prescribed one.  Comparing edge
+      // vectors instead would charge a face for being rotated, which is not
+      // strain and is not what the fabric feels.
+      Eigen::Vector3d e1 = V0.row(F(f,1)) - V0.row(F(f,0));
+      Eigen::Vector3d e2 = V0.row(F(f,2)) - V0.row(F(f,0));
+      Eigen::Vector3d t1 = Af(e1), t2 = Af(e2);
+      Eigen::Vector3d g1 = V0_mod.row(F(f,1)) - V0_mod.row(F(f,0));
+      Eigen::Vector3d g2 = V0_mod.row(F(f,2)) - V0_mod.row(F(f,0));
+      Eigen::Matrix2d Mt, Mg;
+      Mt << t1.dot(t1), t1.dot(t2), t1.dot(t2), t2.dot(t2);
+      Mg << g1.dot(g1), g1.dot(g2), g1.dot(g2), g2.dot(g2);
+      Eigen::SelfAdjointEigenSolver<Eigen::Matrix2d> es(Mt);
+      Eigen::Matrix2d Mt_mhalf = es.operatorInverseSqrt();
+      Eigen::Matrix2d C = Mt_mhalf * Mg * Mt_mhalf;      // right Cauchy-Green
+      Eigen::SelfAdjointEigenSolver<Eigen::Matrix2d> ec(C);
+      double l1 = std::sqrt(std::max(ec.eigenvalues()(0), 0.0));
+      double l2 = std::sqrt(std::max(ec.eigenvalues()(1), 0.0));
+
+      // the rotation-contaminated figure, kept for comparison
+      double num = 0.0, den = 0.0;
+      for (int k = 0; k < 3; ++k) {
+        int i = F(f,k), j = F(f,(k+1)%3);
+        Eigen::Vector3d tgt = Af(Eigen::Vector3d(V0.row(i) - V0.row(j)));
+        Eigen::Vector3d got = V0_mod.row(i) - V0_mod.row(j);
+        num += (got - tgt).squaredNorm(); den += tgt.squaredNorm();
+      }
+      Eigen::Vector3d c = centroid(V0, f);
+      rc << f << ',' << face_region[f] << ','
+         << distToSeam(c, seam_M) << ',' << distToSeam(c, seam_C) << ','
+         << (l2 - 1.0) << ',' << (l1 - 1.0) << ',' << std::sqrt(num/den) << '\n';
+    }
+    std::cout << "  wrote out/seam_rest_incompatibility.csv\n";
+  }
+
   // ── Baseline: no seam, i.e. strategy E itself ─────────────────────────────
   VectorXd x = Map<const VectorXd>(V0.data(), V0.size());
   for (double p : {pressure*0.01, pressure*0.1, pressure*0.5, pressure}) {
