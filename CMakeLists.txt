@@ -60,6 +60,8 @@ add_executable(best_fit_stretch_factors_3region_adaptive src/best_fit_stretch_fa
 target_link_libraries(best_fit_stretch_factors_3region_adaptive fabsim optim polyscope)
 add_executable(best_fit_stretch_factors_3region_adaptive_cable src/best_fit_stretch_factors_3region_adaptive_cable.cpp)
 target_link_libraries(best_fit_stretch_factors_3region_adaptive_cable fabsim optim polyscope)
+add_executable(seam_imperfection src/seam_imperfection.cpp)
+target_link_libraries(seam_imperfection fabsim optim)
 # Some headless drivers are not present in every checkout (they were never synced
 # off the old machine).  Skip them with a warning instead of failing configure.
 foreach(_headless pressure_sensitivity stretch_sensitivity best_fit_height_pressure
