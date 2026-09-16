@@ -40,7 +40,7 @@ from compas.matrices import connectivity_matrix
 HERE  = os.path.dirname(os.path.abspath(__file__))
 ROOT  = os.path.abspath(os.path.join(HERE, ".."))
 DATA  = os.path.join(HERE, "data", "2part")
-INPUT = sys.argv[1] if len(sys.argv) > 1 else os.path.join(DATA, "2parts_smooth.obj")
+INPUT = sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, "data", "2part", "2parts_smooth.obj")
 REF_TRI = os.path.join(ROOT, "data", "2part", "2part_opt_simu_m.off")
 
 TARGET_DIAMETER = 1.2      # m, max(x-span, y-span); same convention as scale_geometry.py
@@ -86,6 +86,17 @@ if abs(scale - 1.0) > 1e-9:
 print(f"Input: {INPUT}", flush=True)
 print(f"  {mesh_target.number_of_vertices()} vertices, {mesh_target.number_of_faces()} triangles", flush=True)
 print(f"  native diameter {diam:.4f} -> scaled by {scale:.6f} to {TARGET_DIAMETER} m", flush=True)
+
+# Orient upright: a hanging/funicular export has its interior below the
+# supports, so flip z to get the compression dome (base z = 0, crown up),
+# matching data/2part/2part_opt_simu_m.off.
+_bdr = set(mesh_target.vertices_on_boundary())
+z_bdr = np.mean([mesh_target.vertex_attribute(v, "z") for v in _bdr])
+z_int = np.mean([mesh_target.vertex_attribute(v, "z") for v in mesh_target.vertices() if v not in _bdr])
+if z_int < z_bdr:
+    print("  hanging form detected -> flipping z to an upright dome", flush=True)
+    for v in mesh_target.vertices():
+        mesh_target.vertex_attribute(v, "z", -mesh_target.vertex_attribute(v, "z"))
 
 # Put the base at z = 0 so the anchors sit on the springing plane.
 zmin = min(mesh_target.vertex_attribute(v, "z") for v in mesh_target.vertices())
