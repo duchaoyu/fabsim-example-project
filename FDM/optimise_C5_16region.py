@@ -22,7 +22,7 @@ Usage:
     python3 optimise_C5_16region.py --phase 2 [--phase1-json optimisation/C5_phase1.json]
     python3 optimise_C5_16region.py --symmetric   # legacy 7-param mode
 """
-import argparse, csv, json, os, subprocess, sys, tempfile
+import argparse, csv, json, os, subprocess, sys, tempfile, time
 import numpy as np
 from scipy.optimize import minimize
 
@@ -173,6 +173,60 @@ def region_knit_dirs(V, F, face_region):
 _call_count = [0]
 _out_prefix  = ["c5_16r"]   # mutable default; overridden in main()
 _target_crown = [None]       # set in main() for validity gate
+
+# ── Wall-clock budget ─────────────────────────────────────────────────────────
+# The FEM objective is expensive and the search can stall on a plateau, so allow
+# a hard time limit: keep the best point seen and stop cleanly rather than
+# running to maxiter.
+_t_start     = [None]
+_time_limit  = [0.0]        # seconds; 0 disables
+_best        = [None]       # (loss, params) of the best evaluation so far
+
+
+class _TimeUp(Exception):
+    pass
+
+
+def _track(loss, params):
+    """Record the best evaluation; raise _TimeUp once the budget is spent."""
+    if _best[0] is None or loss < _best[0][0]:
+        _best[0] = (float(loss), np.array(params, dtype=float).copy())
+    if _time_limit[0] and _t_start[0] is not None:
+        if time.time() - _t_start[0] > _time_limit[0]:
+            raise _TimeUp()
+    return loss
+
+
+class _Result:
+    """Minimal stand-in for a scipy OptimizeResult after an early stop."""
+    def __init__(self, x, fun, nit, msg):
+        self.x, self.fun, self.nit = np.asarray(x), float(fun), nit
+        self.success, self.message = False, msg
+
+
+def _run_minimize(fn, x0, **kw):
+    """minimize() that honours the time limit and always reports the best point.
+
+    scipy's res.fun is the last value the line search accepted, which need not
+    be the loss at res.x; returning the tracked best keeps the reported RMSE
+    consistent with the parameters that are saved.
+    """
+    _t_start[0] = time.time()
+    _best[0] = None
+    try:
+        res = minimize(fn, x0, **kw)
+        if _best[0] is not None and _best[0][0] < res.fun - 1e-15:
+            print(f"  note: scipy reported fun={res.fun:.7f} at its final x, but the "
+                  f"best evaluation seen was {_best[0][0]:.7f}; reporting the best.")
+            return _Result(_best[0][1], _best[0][0], getattr(res, "nit", -1),
+                           "best evaluation (scipy res.fun disagreed)")
+        return res
+    except _TimeUp:
+        el = time.time() - _t_start[0]
+        print(f"\n  TIME LIMIT reached after {el:.1f} s - stopping with the best "
+              f"point seen (loss {_best[0][0]:.7f}).")
+        return _Result(_best[0][1], _best[0][0], -1,
+                       f"stopped at time limit ({_time_limit[0]:.0f} s)")
 
 
 def _check_fem_valid(verts, crown, V_rest):
@@ -350,6 +404,12 @@ def main():
     parser.add_argument("--motif",      type=int,   default=1)
     parser.add_argument("--pressure",   type=float, default=1000.0)
     parser.add_argument("--maxiter",    type=int,   default=300)
+    parser.add_argument("--sweep-ha", type=str, default=None,
+                        help="comma-separated scale_Ha values to evaluate and "
+                             "report, instead of optimising (phase 2 only)")
+    parser.add_argument("--time-limit", type=float, default=0.0,
+                        help="wall-clock budget in seconds; stop with the best "
+                             "point seen so far (0 = no limit)")
     parser.add_argument("--out-prefix", type=str,   default="c5_16r",
                         help="Prefix for output files in optimisation/")
     parser.add_argument("--symmetric",   action="store_true",
@@ -380,6 +440,9 @@ def main():
     interior_idx = np.where(~bdry_mask)[0]
     t_crown      = float(V_target[:, 2].max())
     _target_crown[0] = t_crown   # used by validity gate in run_fem()
+    _time_limit[0] = float(args.time_limit)
+    if _time_limit[0]:
+        print(f"Time limit: {_time_limit[0]:.0f} s")
 
     print(f"FEM mesh : {len(V)} verts, {len(F)} faces")
     print(f"Target   : {len(V_target)} verts, {len(interior_idx)} interior, "
@@ -424,6 +487,21 @@ def main():
         d0 = out0["verts"][interior_idx] - V_target[interior_idx]
         print(f"  crown={out0['crown_height']:.4f} m  (target {t_crown:.4f} m)")
         print(f"  RMSE = {np.sqrt(np.mean(np.sum(d0**2, axis=1))):.4f} m")
+        if args.sweep_ha:
+            print("\nSweeping scale_Ha:")
+            for tok in args.sweep_ha.split(","):
+                ha = float(tok)
+                sf_w, sf_c, sc = expand_phase2(ha, p1_params)
+                out = run_fem(sf_w, sf_c, knit_dirs, args.pressure, args.motif,
+                              region_map_path, phase2_cables, cable_ea, sc, V_rest)
+                if out is None or "verts" not in out:
+                    print(f"  scale_Ha={ha!r:24s} FEM INVALID"); continue
+                d = out["verts"][interior_idx] - V_target[interior_idx]
+                loss = float(np.sqrt(np.mean(np.sum(d ** 2, axis=1))))
+                print(f"  scale_Ha={ha!r:24s} RMSE={loss*1000:8.4f} mm  "
+                      f"crown={out['crown_height']:.8f}")
+            return
+
         if args.maxiter == 0:
             print("maxiter=0 — sanity check only."); return
 
@@ -444,7 +522,7 @@ def main():
             return loss
 
         print(f"\nOptimising 6 params (Phase 1), maxiter={args.maxiter} …")
-        res1 = minimize(obj1, p0, method="L-BFGS-B", bounds=bounds1,
+        res1 = _run_minimize(obj1, p0, method="L-BFGS-B", bounds=bounds1,
                         options={"maxiter": args.maxiter, "ftol": 1e-9,
                                  "gtol": 1e-5, "eps": 0.002})
 
@@ -500,6 +578,21 @@ def main():
         d0 = out0["verts"][interior_idx] - V_target[interior_idx]
         print(f"  crown={out0['crown_height']:.4f} m  (target {t_crown:.4f} m)")
         print(f"  RMSE = {np.sqrt(np.mean(np.sum(d0**2, axis=1))):.4f} m")
+        if args.sweep_ha:
+            print("\nSweeping scale_Ha:")
+            for tok in args.sweep_ha.split(","):
+                ha = float(tok)
+                sf_w, sf_c, sc = expand_phase2(ha, p1_params)
+                out = run_fem(sf_w, sf_c, knit_dirs, args.pressure, args.motif,
+                              region_map_path, phase2_cables, cable_ea, sc, V_rest)
+                if out is None or "verts" not in out:
+                    print(f"  scale_Ha={ha!r:24s} FEM INVALID"); continue
+                d = out["verts"][interior_idx] - V_target[interior_idx]
+                loss = float(np.sqrt(np.mean(np.sum(d ** 2, axis=1))))
+                print(f"  scale_Ha={ha!r:24s} RMSE={loss*1000:8.4f} mm  "
+                      f"crown={out['crown_height']:.8f}")
+            return
+
         if args.maxiter == 0:
             print("maxiter=0 — sanity check only."); return
 
@@ -512,16 +605,15 @@ def main():
                 return 1e3
             diff = out["verts"][interior_idx] - V_target[interior_idx]
             loss = float(np.sqrt(np.mean(np.sum(diff**2, axis=1))))
-            if _call_count[0] % 5 == 0:
-                print(f"  [{_call_count[0]:4d}]  RMSE={loss:.4f} m  "
-                      f"scale_Ha={scale_ha:.4f}")
-            return loss
+            print(f"  [{_call_count[0]:4d}]  RMSE={loss*1000:8.4f} mm  "
+                  f"scale_Ha={scale_ha:.6f}")
+            return _track(loss, p)
 
         print(f"\nOptimising scale_Ha (Phase 2), maxiter={args.maxiter} …")
-        res2 = minimize(obj2, [1.0], method="L-BFGS-B",
-                        bounds=[(0.70, 1.05)],
-                        options={"maxiter": args.maxiter, "ftol": 1e-9,
-                                 "gtol": 1e-5, "eps": 0.005})
+        res2 = _run_minimize(obj2, [1.0], method="L-BFGS-B",
+                             bounds=[(0.70, 1.05)],
+                             options={"maxiter": args.maxiter, "ftol": 1e-9,
+                                      "gtol": 1e-5, "eps": 0.005})
 
         print(f"\nConverged: {res2.success}  |  {res2.message}")
         print(f"Final RMSE: {res2.fun:.4f} m   FEM calls: {_call_count[0]}")
@@ -583,6 +675,21 @@ def main():
         if "verts" in out0:
             d = out0["verts"][interior_idx] - V_target[interior_idx]
             print(f"  RMSE = {np.sqrt(np.mean(np.sum(d**2, axis=1))):.4f} m")
+
+        if args.sweep_ha:
+            print("\nSweeping scale_Ha:")
+            for tok in args.sweep_ha.split(","):
+                ha = float(tok)
+                sf_w, sf_c, sc = expand_phase2(ha, p1_params)
+                out = run_fem(sf_w, sf_c, knit_dirs, args.pressure, args.motif,
+                              region_map_path, phase2_cables, cable_ea, sc, V_rest)
+                if out is None or "verts" not in out:
+                    print(f"  scale_Ha={ha!r:24s} FEM INVALID"); continue
+                d = out["verts"][interior_idx] - V_target[interior_idx]
+                loss = float(np.sqrt(np.mean(np.sum(d ** 2, axis=1))))
+                print(f"  scale_Ha={ha!r:24s} RMSE={loss*1000:8.4f} mm  "
+                      f"crown={out['crown_height']:.8f}")
+            return
 
         if args.maxiter == 0:
             print("maxiter=0 — sanity check only."); return
