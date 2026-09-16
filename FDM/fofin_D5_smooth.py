@@ -61,7 +61,7 @@ _ap = argparse.ArgumentParser()
 _ap.add_argument("--lap-iters",  type=int,   default=10)
 _ap.add_argument("--lap-lambda", type=float, default=0.5)
 _ap.add_argument("--no-smooth",  action="store_true")
-_ap.add_argument("--color", type=str, default="#c0392b",
+_ap.add_argument("--color", type=str, default="#ff0000",
                  help="pipe colour in the q figure")
 ARGS = _ap.parse_args()
 
