@@ -61,6 +61,8 @@ _ap = argparse.ArgumentParser()
 _ap.add_argument("--lap-iters",  type=int,   default=10)
 _ap.add_argument("--lap-lambda", type=float, default=0.5)
 _ap.add_argument("--no-smooth",  action="store_true")
+_ap.add_argument("--color", type=str, default="#c0392b",
+                 help="pipe colour in the q figure")
 ARGS = _ap.parse_args()
 
 V_target, F = load_obj(INPUT)
@@ -267,7 +269,7 @@ for ax, (qq, PP, name) in zip(axes, panels):
     ref98 = np.percentile(qq, 98)
     lw = 0.12 + 4.2 * np.clip(qq / ref98, 0, 1)
     ax.add_collection(LineCollection(PP[:, :, :2], linewidths=lw,
-                                     colors="#1b2a4a", alpha=0.85))
+                                     colors=ARGS.color, alpha=0.85))
     ax.set_xlim(-0.66, 0.66); ax.set_ylim(-0.66, 0.66); ax.set_aspect("equal")
     ax.set_xlabel("x (m)"); ax.set_ylabel("y (m)")
     ax.set_title(f"{name}\nq {qq.min():.3f}-{qq.max():.3f}, "
