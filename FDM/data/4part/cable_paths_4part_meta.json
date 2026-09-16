@@ -1,0 +1,22 @@
+{
+ "lambda": 12.0,
+ "anchor_cost": 6.0,
+ "q_threshold": 2.211462757640456,
+ "q_percentile": 97.0,
+ "apex_xy": [
+  0.013614855147839323,
+  0.00895552905389832
+ ],
+ "n_cables": 2,
+ "n_anchors": 4,
+ "cables": [
+  {
+   "name": "C0_45deg",
+   "n": 25
+  },
+  {
+   "name": "C1_135deg",
+   "n": 25
+  }
+ ]
+}
