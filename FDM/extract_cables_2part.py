@@ -35,11 +35,22 @@ Two things differ from the crossvault and are worth stating plainly.
     more fragmented network — 5 components / 126 edges against 3 / 153.
 
 LAMBDA / ANCHOR_COST are not free.  The module docstring of
-figure_cable_extraction.py requires ANCHOR_COST >= lambda/2, and the value is
-picked by a plateau scan (--scan) rather than inherited: with mu = 10 the
-extracted edge set is identical for lambda = 16 - 23, the widest plateau in
-1 - 45, so LAMBDA = 20 sits mid-band; with lambda = 20 the set is identical for
-mu = 6 - 40.
+figure_cable_extraction.py requires ANCHOR_COST >= lambda/2, and both values are
+picked by a plateau scan (--scan) rather than inherited.  Be honest about what
+the scan found: this network has NO plateau as clean as the crossvault's.
+Scanning lambda = 1 - 45 at mu = 10 in steps of 1 gives seventeen distinct edge
+sets, the widest bands being lambda = 18 - 23 and 31 - 44; scanning mu = 1 - 40
+at lambda = 20 gives thirteen, the widest being mu = 25 - 34 (which is the
+degenerate regime where everything anchors: 46 anchors).  The exact edge set
+therefore wobbles by a few per cent almost everywhere.
+
+What IS stable is the thing that matters — the layout.  Over lambda = 15 - 29
+at mu = 10, and over mu = 8 - 21 at lambda = 20, the set of boundary anchors is
+literally identical (the same 26 vertices, symmetric difference 0) and the
+cable topology does not change; only a handful of edges shift between routes
+(165 - 181 edges, +-5 %).  Below that band a different regime takes over
+(lambda = 8, mu = 5 gives 124 edges on 13 anchors).  LAMBDA = 20, ANCHOR_COST =
+10 sits mid-band in both directions and satisfies mu >= lambda/2 exactly.
 
     python3 FDM/extract_cables_2part.py            # extract + write + plot
     python3 FDM/extract_cables_2part.py --scan     # the lambda / mu plateau scan
