@@ -404,6 +404,13 @@ def main():
     parser.add_argument("--motif",      type=int,   default=1)
     parser.add_argument("--pressure",   type=float, default=1000.0)
     parser.add_argument("--maxiter",    type=int,   default=300)
+    parser.add_argument("--method", type=str, default="L-BFGS-B",
+                        choices=["L-BFGS-B", "Powell", "Nelder-Mead"],
+                        help="Powell/Nelder-Mead are gradient-free; use them when "
+                             "the objective is non-smooth (see --sweep-ha)")
+    parser.add_argument("--ha0", type=float, default=1.0,
+                        help="phase-2 starting scale_Ha; 1.0 sits exactly on a "
+                             "discontinuity, so start off it for a real search")
     parser.add_argument("--sweep-ha", type=str, default=None,
                         help="comma-separated scale_Ha values to evaluate and "
                              "report, instead of optimising (phase 2 only)")
@@ -516,13 +523,13 @@ def main():
                 return 1e3
             diff = out["verts"][interior_idx] - V_target[interior_idx]
             loss = float(np.sqrt(np.mean(np.sum(diff**2, axis=1))))
-            if _call_count[0] % 5 == 0:
-                print(f"  [{_call_count[0]:4d}]  RMSE={loss:.4f} m  "
+            if True:
+                print(f"  [{_call_count[0]:4d}]  RMSE={loss*1000:8.4f} mm "
                       f"p=[{','.join(f'{v:.4f}' for v in p)}]")
-            return loss
+            return _track(loss, p)
 
         print(f"\nOptimising 6 params (Phase 1), maxiter={args.maxiter} …")
-        res1 = _run_minimize(obj1, p0, method="L-BFGS-B", bounds=bounds1,
+        res1 = _run_minimize(obj1, p0, method=args.method, bounds=bounds1,
                         options={"maxiter": args.maxiter, "ftol": 1e-9,
                                  "gtol": 1e-5, "eps": 0.002})
 
@@ -610,10 +617,11 @@ def main():
             return _track(loss, p)
 
         print(f"\nOptimising scale_Ha (Phase 2), maxiter={args.maxiter} …")
-        res2 = _run_minimize(obj2, [1.0], method="L-BFGS-B",
-                             bounds=[(0.70, 1.05)],
-                             options={"maxiter": args.maxiter, "ftol": 1e-9,
-                                      "gtol": 1e-5, "eps": 0.005})
+        _opts2 = ({"maxiter": args.maxiter, "ftol": 1e-9, "gtol": 1e-5,
+                   "eps": 0.005} if args.method == "L-BFGS-B"
+                  else {"maxiter": args.maxiter})
+        res2 = _run_minimize(obj2, [args.ha0], method=args.method,
+                             bounds=[(0.70, 1.05)], options=_opts2)
 
         print(f"\nConverged: {res2.success}  |  {res2.message}")
         print(f"Final RMSE: {res2.fun:.4f} m   FEM calls: {_call_count[0]}")
