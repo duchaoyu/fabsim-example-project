@@ -27,7 +27,7 @@ def load_off(path):
 
 V, F = load_off(os.path.join(DATA, "4part_tri_m.off"))
 rmap = json.load(open(os.path.join(OPT, "4part_region_map.json")))["face_regions"]
-res  = json.load(open(os.path.join(OPT, "4part_result.json")))
+res  = json.load(open(os.path.join(OPT, "4part_d4r_result.json")))
 rmap = np.array(rmap)
 cen  = V[F].mean(axis=1)
 

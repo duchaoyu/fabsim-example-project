@@ -318,6 +318,12 @@ def main():
     ap.add_argument("--scale0", type=float, default=0.97)
     ap.add_argument("--no-cables", action="store_true")
     ap.add_argument("--tag", type=str, default="4part")
+    ap.add_argument("--p0-json", type=str, default=None,
+                    help="warm start from the 'p' vector of a previous result JSON")
+    ap.add_argument("--eps", type=float, default=2e-3,
+                    help="L-BFGS-B finite-difference step")
+    ap.add_argument("--sf-lo", type=float, default=1.001)
+    ap.add_argument("--sf-hi", type=float, default=1.60)
     ap.add_argument("--face-knit", action="store_true",
                     help="write the field's PER-FACE knit angle into the region map "
                          "as face_knit_dirs_deg (fem_batch_nregion honours it and "
@@ -336,7 +342,7 @@ def main():
     V_rest = V.copy()
     bd = boundary_vertices(F)
     interior_idx = np.array([i for i in range(len(V)) if i not in bd])
-    _span = float(max(V[:, 0].ptp(), V[:, 1].ptp()))
+    _span = float(max(np.ptp(V[:, 0]), np.ptp(V[:, 1])))
     _target_crown[0] = float(V_target[:, 2].max())
 
     print(f"Mesh     : {MESH_PATH}")
@@ -395,7 +401,16 @@ def main():
 
     p0 = np.r_[np.full(n_wedge, args.sf0_wale), np.full(n_wedge, args.sf0_course),
                np.full(n_orb, args.scale0)]
-    bounds = [(1.001, 1.60)] * (2*n_wedge) + [(0.75, 1.05)] * n_orb
+    if args.p0_json:
+        prev = json.load(open(args.p0_json))["p"]
+        if len(prev) == len(p0):
+            p0 = np.array(prev, dtype=float)
+            print(f"warm start from {args.p0_json}")
+        else:
+            print(f"WARNING: {args.p0_json} has {len(prev)} params, need {len(p0)} "
+                  f"— ignoring the warm start")
+    bounds = [(args.sf_lo, args.sf_hi)] * (2*n_wedge) + [(0.75, 1.05)] * n_orb
+    p0 = np.clip(p0, [b[0] for b in bounds], [b[1] for b in bounds])
 
     history = []
 
@@ -422,7 +437,7 @@ def main():
     print(f"\nOptimising {len(p0)} parameters (L-BFGS-B, maxiter {args.maxiter}, "
           f"time limit {args.time_limit:.0f} s) ...")
     res = _run_minimize(objective, p0, method="L-BFGS-B", bounds=bounds,
-                        options={"maxiter": args.maxiter, "eps": 2e-3, "ftol": 1e-12})
+                        options={"maxiter": args.maxiter, "eps": args.eps, "ftol": 1e-14})
     print(f"\n{res.message}   calls={_call_count[0]}")
 
     p_best = np.asarray(res.x)
