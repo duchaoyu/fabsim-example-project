@@ -293,6 +293,8 @@ static std::vector<std::vector<int>> parseCablePaths(const std::string& s)
     return result;
 }
 
+std::string g_solver_status = "unrun";
+
 // ── Newton solve ──────────────────────────────────────────────────────────────
 template <class Model>
 static VectorXd newtonSolve(Model& model, const VectorXd& x0)
@@ -307,6 +309,21 @@ static VectorXd newtonSolve(Model& model, const VectorXd& x0)
         solver.options.fixed_dofs.push_back(b*3+2);
     }
     solver.solve(model, x0);
+
+    // Report the solver's exit status: it was previously discarded, so a
+    // non-converged result was indistinguishable from a converged one.
+    const char* st = "unknown";
+    switch (solver.info()) {
+        case optim::SolverStatus::success:                 st = "success"; break;
+        case optim::SolverStatus::line_search_failed:      st = "line_search_failed"; break;
+        case optim::SolverStatus::wrong_descent_direction: st = "wrong_descent_direction"; break;
+        case optim::SolverStatus::regularization_failed:   st = "regularization_failed"; break;
+        case optim::SolverStatus::iteration_overflow:      st = "iteration_overflow"; break;
+        case optim::SolverStatus::NaN_error:               st = "NaN_error"; break;
+        case optim::SolverStatus::uninitialized:           st = "uninitialized"; break;
+    }
+    g_solver_status = st;
+    std::cerr << "SOLVER_STATUS " << st << "\n";
     return solver.var();
 }
 

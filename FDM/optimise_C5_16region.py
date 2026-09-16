@@ -297,6 +297,10 @@ def run_fem(sf_wale, sf_course, knit_dirs,
 
     try:
         res = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+        if os.environ.get("FEM_SHOW_STATUS"):
+            for line in res.stderr.splitlines():
+                if line.startswith("SOLVER_STATUS") or "Mesh:" in line:
+                    print(f"  [{_call_count[0]:4d}] {line.strip()}")
         if res.returncode != 0:
             print(f"  [{_call_count[0]:4d}] FEM error (rc={res.returncode}): "
                   f"{res.stderr[:200]}")
