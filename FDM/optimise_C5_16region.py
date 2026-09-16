@@ -296,7 +296,8 @@ def run_fem(sf_wale, sf_course, knit_dirs,
     cmd    = [BINARY, MESH_PATH, region_map_path, params_path, prefix]
 
     try:
-        res = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+        res = subprocess.run(cmd, capture_output=True, text=True,
+                             timeout=float(os.environ.get("FEM_TIMEOUT", "120")))
         if os.environ.get("FEM_SHOW_STATUS"):
             for line in res.stderr.splitlines():
                 if line.startswith("SOLVER_STATUS") or "Mesh:" in line:
@@ -321,6 +322,9 @@ def run_fem(sf_wale, sf_course, knit_dirs,
                 print(f"  [{_call_count[0]:4d}] FEM INVALID: {reason}")
                 return None
         return out
+    except subprocess.TimeoutExpired:
+        print(f"  [{_call_count[0]:4d}] FEM TIMEOUT (no convergence)")
+        return None
     except Exception as e:
         print(f"  [{_call_count[0]:4d}] FEM exception: {e}")
         return None
@@ -408,6 +412,10 @@ def main():
     parser.add_argument("--motif",      type=int,   default=1)
     parser.add_argument("--pressure",   type=float, default=1000.0)
     parser.add_argument("--maxiter",    type=int,   default=300)
+    parser.add_argument("--sweep-sf", type=str, default=None,
+                        help="phase 1: comma-separated uniform sf values to "
+                             "evaluate (wale=course, inner=outer) to locate a "
+                             "starting point, instead of optimising")
     parser.add_argument("--method", type=str, default="L-BFGS-B",
                         choices=["L-BFGS-B", "Powell", "Nelder-Mead"],
                         help="Powell/Nelder-Mead are gradient-free; use them when "
@@ -518,6 +526,22 @@ def main():
 
         bounds1 = ([(0.7, 2.0)] * 4 +       # sf inner/outer wale+course
                    [(0.70, 1.05)] * 2)        # scale_Si, scale_So
+
+        if args.sweep_sf:
+            print("\nSweeping uniform sf (wale=course, inner=outer):")
+            for tok in args.sweep_sf.split(","):
+                v = float(tok)
+                pv = np.array([v, v, v, v, 1.0, 1.0])
+                sf_w, sf_c, sc = expand_phase1(pv)
+                out = run_fem(sf_w, sf_c, knit_dirs, args.pressure, args.motif,
+                              region_map_path, spoke_paths, cable_ea, sc, V_rest)
+                if out is None or "verts" not in out:
+                    print(f"  sf={v:.4f}   FEM INVALID"); continue
+                d = out["verts"][interior_idx] - V_target[interior_idx]
+                loss = float(np.sqrt(np.mean(np.sum(d ** 2, axis=1))))
+                print(f"  sf={v:.4f}   RMSE={loss*1000:9.4f} mm   "
+                      f"crown={out['crown_height']:.6f}  (target {t_crown:.6f})")
+            return
 
         def obj1(p):
             sf_w, sf_c, sc = expand_phase1(p)

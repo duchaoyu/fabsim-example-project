@@ -1,0 +1,17 @@
+{
+  "phase": 1,
+  "converged": false,
+  "loss_rmse_m": 0.003399044915746889,
+  "n_calls": 80,
+  "pressure": 1000.0,
+  "motif": 1,
+  "symmetric_params": {
+    "sf_wale_in": 1.0030317206666062,
+    "sf_course_in": 1.044374222752703,
+    "sf_wale_out": 1.0667294358497936,
+    "sf_course_out": 1.032,
+    "scale_Si": 1.0,
+    "scale_So": 1.0,
+    "scale_Ha": 1.0
+  }
+}
