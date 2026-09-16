@@ -173,7 +173,7 @@ def region_knit_dirs(V, F, face_region):
 _call_count = [0]
 _out_prefix  = ["c5_16r"]   # mutable default; overridden in main()
 _target_crown = [None]       # set in main() for validity gate
-_min_disp     = [0.0]        # set in main(); absolute displacement floor [m]
+_min_disp     = [0.0]        # set in main() from --min-disp-mm; floor [m]
 
 # ── Wall-clock budget ─────────────────────────────────────────────────────────
 # The FEM objective is expensive and the search can stall on a plateau, so allow
@@ -426,12 +426,11 @@ def main():
                         help="phase 2: drop the D8 symmetry and optimise all 16 "
                              "regions independently (32 sf) plus, with "
                              "--free-cables, all 24 cable scales")
-    parser.add_argument("--min-disp-frac", type=float, default=1e-3,
-                        help="Displacement floor as a fraction of the target "
-                             "span (default 1e-3 = 0.1%%).  A result whose max "
-                             "displacement from rest falls below it is rejected "
-                             "by the validity gate as a degenerate "
-                             "no-deformation fit.  Set 0 to disable.")
+    parser.add_argument("--min-disp-mm", type=float, default=5.0,
+                        help="Absolute displacement floor in mm (default 5.0). "
+                             "A result whose max displacement from rest falls "
+                             "below it is rejected by the validity gate as a "
+                             "degenerate no-deformation fit.  Set 0 to disable.")
     parser.add_argument("--free-cables", action="store_true",
                         help="with --free, also free every cable rest scale")
     parser.add_argument("--sweep-sf", type=str, default=None,
@@ -482,9 +481,9 @@ def main():
     t_crown      = float(V_target[:, 2].max())
     _target_crown[0] = t_crown   # used by validity gate in run_fem()
     _span = float(np.hypot(V_target[:, 0], V_target[:, 1]).max()) * 2.0
-    _min_disp[0] = args.min_disp_frac * _span
-    print(f"  displacement floor: {_min_disp[0]*1000:.4f} mm "
-          f"({args.min_disp_frac:.1e} of {_span:.4f} m span)"
+    _min_disp[0] = args.min_disp_mm / 1000.0
+    print(f"  displacement floor: {args.min_disp_mm:.4f} mm "
+          f"({args.min_disp_mm / (_span * 1000.0) * 100:.3f}% of {_span:.4f} m span)"
           if _min_disp[0] > 0 else "  displacement floor: disabled")
     _time_limit[0] = float(args.time_limit)
     if _time_limit[0]:
