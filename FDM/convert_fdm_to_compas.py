@@ -7,12 +7,20 @@ This reads either format via mesh_io.load_mesh_json, normalises qpre to a
 plain float (the 2024 files store it as a 1-element list), and writes:
 
   <name>_compas2.json    compas 2 serialisation, loads with Mesh.from_json
+  <name>_compas1.json    compas 1.x layout, for Rhino/Grasshopper (--compas1)
   <name>.obj / .off      optional, with --obj / --off
 
+Rhino/Grasshopper ships compas 1.x, whose decoder expects the payload under a
+'value' key.  Handed a compas 2 file (payload under 'data') it throws
+
+    KeyNotFoundException: value
+
+so use --compas1 for anything destined for Rhino.
+
 Usage:
-  python FDM/convert_fdm_to_compas.py [result.json] [--obj] [--off]
+  python FDM/convert_fdm_to_compas.py [result.json] [--obj] [--off] [--compas1]
 """
-import os, sys, argparse
+import os, sys, json, argparse
 import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -25,6 +33,8 @@ ap = argparse.ArgumentParser()
 ap.add_argument("path", nargs="?", default=DEFAULT)
 ap.add_argument("--obj", action="store_true", help="also write .obj")
 ap.add_argument("--off", action="store_true", help="also write .off")
+ap.add_argument("--compas1", action="store_true",
+                help="also write a compas 1.x layout for Rhino/Grasshopper")
 args = ap.parse_args()
 
 src = os.path.abspath(args.path)
@@ -74,6 +84,26 @@ if args.off:
         for fc in faces:
             f.write(str(len(fc)) + " " + " ".join(str(i) for i in fc) + "\n")
     print(f"wrote  : {out}")
+
+if args.compas1:
+    # The flat layout the 2024 scripts wrote, which compas 1.x reads directly.
+    out = stem + "_compas1.json"
+    data = {
+        "attributes":  dict(mesh.attributes),
+        "dva":         dict(mesh.default_vertex_attributes),
+        "dea":         dict(mesh.default_edge_attributes),
+        "dfa":         dict(mesh.default_face_attributes),
+        "vertex":      {str(v): dict(mesh.vertex_attributes(v)) for v in mesh.vertices()},
+        "face":        {str(f): [int(v) for v in mesh.face_vertices(f)] for f in mesh.faces()},
+        "facedata":    {str(f): dict(mesh.face_attributes(f)) for f in mesh.faces()},
+        "edgedata":    {str((int(u), int(v))): dict(mesh.edge_attributes((u, v)))
+                        for u, v in mesh.edges()},
+        "max_vertex":  int(max(mesh.vertices(), default=-1)),
+        "max_face":    int(max(mesh.faces(), default=-1)),
+    }
+    with open(out, "w") as f:
+        json.dump(data, f)
+    print(f"wrote  : {out}   (compas 1.x layout for Rhino)")
 
 # verify the round trip
 from compas.datastructures import Mesh
