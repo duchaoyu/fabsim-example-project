@@ -11,9 +11,9 @@ Length is SCALE x the mesh's mean edge length, then hard-capped at
   python FDM/export_field_lines.py D5 [--scale 0.8] [--max-length 0.02]
 
 Writes, next to the field JSON:
-  <geom>_field_d1.obj      first direction only
-  <geom>_field_d2.obj      second direction only
-  <geom>_field_cross.obj   both, in two named groups
+  <geom>_field_d1.obj      d1 only (wale)      - the default
+  <geom>_field_d2.obj      d2 only (course)     - with --dir d2
+  <geom>_field_cross.obj   both, two groups     - with --dir both
 """
 import os, json, argparse
 import numpy as np
@@ -33,6 +33,8 @@ ap.add_argument("--scale",      type=float, default=0.8,
                 help="segment length as a multiple of mean edge length")
 ap.add_argument("--max-length", type=float, default=0.02,
                 help="hard cap; every segment comes out strictly below this")
+ap.add_argument("--dir", choices=["d1", "d2", "both"], default="d1",
+                help="which direction to write (default d1, the wale direction)")
 a = ap.parse_args()
 
 field_rel, mesh_rel, n1, n2 = GEOM[a.geometry]
@@ -107,9 +109,12 @@ def write_obj(path, groups, header):
 
 print(f"{a.geometry}: {len(keys)} faces, mean edge {mean_edge:.6f} m")
 print(f"segment length {L:.8f} m" + ("  (capped)" if capped else ""))
-write_obj(os.path.join(OUTD, f"{a.geometry}_field_d1.obj"),
-          [(n1, C, D1)], f"{a.geometry} directional field - {n1}")
-write_obj(os.path.join(OUTD, f"{a.geometry}_field_d2.obj"),
-          [(n2, C, D2)], f"{a.geometry} directional field - {n2}")
-write_obj(os.path.join(OUTD, f"{a.geometry}_field_cross.obj"),
-          [(n1, C, D1), (n2, C, D2)], f"{a.geometry} directional field - cross")
+if a.dir == "d1":
+    write_obj(os.path.join(OUTD, f"{a.geometry}_field_d1.obj"),
+              [(n1, C, D1)], f"{a.geometry} directional field - {n1} (wale)")
+elif a.dir == "d2":
+    write_obj(os.path.join(OUTD, f"{a.geometry}_field_d2.obj"),
+              [(n2, C, D2)], f"{a.geometry} directional field - {n2} (course)")
+else:
+    write_obj(os.path.join(OUTD, f"{a.geometry}_field_cross.obj"),
+              [(n1, C, D1), (n2, C, D2)], f"{a.geometry} directional field - cross")
