@@ -173,6 +173,7 @@ def region_knit_dirs(V, F, face_region):
 _call_count = [0]
 _out_prefix  = ["c5_16r"]   # mutable default; overridden in main()
 _target_crown = [None]       # set in main() for validity gate
+_min_disp     = [0.0]        # set in main(); absolute displacement floor [m]
 
 # ── Wall-clock budget ─────────────────────────────────────────────────────────
 # The FEM objective is expensive and the search can stall on a plateau, so allow
@@ -236,8 +237,14 @@ def _check_fem_valid(verts, crown, V_rest):
     Failure modes observed in practice:
       1. NaN/Inf — Newton diverged
       2. max_disp_from_rest == 0 exactly — "Regularization failed": solver
-         returned the byte-identical rest shape.  Valid runs always displace
-         by >= 1e-4 m regardless of sf value or cable count.
+         returned the byte-identical rest shape.
+      2b. max_disp_from_rest below _min_disp — the near-degenerate version of
+         (2).  Because rest == target for these domes, "barely deform" scores
+         a near-perfect RMSE, so the optimiser is attracted to it: 192 of the
+         295 live c5_p1 calls sat under 0.5 mm, in the same narrow stress band
+         (707-818 Pa) as the 83 exact-zero returns, while genuinely deforming
+         calls in the same search reached 90 mm and 13830 Pa.  Those points are
+         not equilibria of a pressurised membrane and must not be scored.
       3. crown outside [0.3×, 3×] t_crown — catastrophic solver failure
       4. Interior vertices below base plane — mesh folded
 
@@ -256,6 +263,9 @@ def _check_fem_valid(verts, crown, V_rest):
         max_disp = float(np.max(np.linalg.norm(verts - V_rest, axis=1)))
         if max_disp < 1e-8:
             return False, f"max_disp={max_disp:.2e} — rest shape returned (Newton did not move)"
+        if _min_disp[0] > 0.0 and max_disp < _min_disp[0]:
+            return False, (f"max_disp={max_disp*1000:.4f} mm < floor "
+                           f"{_min_disp[0]*1000:.4f} mm — degenerate no-deformation fit")
 
     # 3. Crown physically out of range [0.3×t, 3×t]
     if t_crown is not None and (crown < 0.3 * t_crown or crown > 3.0 * t_crown):
@@ -412,6 +422,18 @@ def main():
     parser.add_argument("--motif",      type=int,   default=1)
     parser.add_argument("--pressure",   type=float, default=1000.0)
     parser.add_argument("--maxiter",    type=int,   default=300)
+    parser.add_argument("--free", action="store_true",
+                        help="phase 2: drop the D8 symmetry and optimise all 16 "
+                             "regions independently (32 sf) plus, with "
+                             "--free-cables, all 24 cable scales")
+    parser.add_argument("--min-disp-frac", type=float, default=1e-3,
+                        help="Displacement floor as a fraction of the target "
+                             "span (default 1e-3 = 0.1%%).  A result whose max "
+                             "displacement from rest falls below it is rejected "
+                             "by the validity gate as a degenerate "
+                             "no-deformation fit.  Set 0 to disable.")
+    parser.add_argument("--free-cables", action="store_true",
+                        help="with --free, also free every cable rest scale")
     parser.add_argument("--sweep-sf", type=str, default=None,
                         help="phase 1: comma-separated uniform sf values to "
                              "evaluate (wale=course, inner=outer) to locate a "
@@ -459,6 +481,11 @@ def main():
     interior_idx = np.where(~bdry_mask)[0]
     t_crown      = float(V_target[:, 2].max())
     _target_crown[0] = t_crown   # used by validity gate in run_fem()
+    _span = float(np.hypot(V_target[:, 0], V_target[:, 1]).max()) * 2.0
+    _min_disp[0] = args.min_disp_frac * _span
+    print(f"  displacement floor: {_min_disp[0]*1000:.4f} mm "
+          f"({args.min_disp_frac:.1e} of {_span:.4f} m span)"
+          if _min_disp[0] > 0 else "  displacement floor: disabled")
     _time_limit[0] = float(args.time_limit)
     if _time_limit[0]:
         print(f"Time limit: {_time_limit[0]:.0f} s")
@@ -506,6 +533,87 @@ def main():
         d0 = out0["verts"][interior_idx] - V_target[interior_idx]
         print(f"  crown={out0['crown_height']:.4f} m  (target {t_crown:.4f} m)")
         print(f"  RMSE = {np.sqrt(np.mean(np.sum(d0**2, axis=1))):.4f} m")
+        if args.free:
+            # Seed from the symmetric solution so the free search starts where
+            # the constrained one finished, rather than from a uniform guess.
+            sf_w0, sf_c0, sc0 = expand_phase2(args.ha0, p1_params)
+            n_sf = 2 * N_REGIONS
+            p0 = np.concatenate([sf_w0, sf_c0] +
+                                ([sc0] if args.free_cables else []))
+            bnds = ([(0.7, 2.0)] * n_sf +
+                    ([(0.70, 1.10)] * len(sc0) if args.free_cables else []))
+            print(f"\nFREE mode: {len(p0)} parameters "
+                  f"({n_sf} stretch factors"
+                  + (f" + {len(sc0)} cable scales" if args.free_cables else
+                     ", cables fixed at the symmetric values")
+                  + f"), seeded from the symmetric solution, method={args.method}")
+
+            # Score only vertices the solver can actually move.  C5_remeshed_fem
+            # .off is torn along its 8 seams, so findBoundaryVertices pins 449 of
+            # 1309 vertices - 359 of them seam vertices, not real supports.  With
+            # rest = target those sit at exactly zero deviation by construction
+            # and silently deflate the RMSE.  _movable is derived from the first
+            # valid evaluation and reused.
+            _movable = [None]
+
+            def _movable_idx(verts):
+                if _movable[0] is None:
+                    d = np.linalg.norm(verts - V_rest, axis=1)
+                    free_mask = d > 0.0
+                    idx = np.array([i for i in interior_idx if free_mask[i]])
+                    n_drop = len(interior_idx) - len(idx)
+                    print(f"  scoring on {len(idx)} movable vertices "
+                          f"(dropped {n_drop} frozen of {len(interior_idx)} interior)",
+                          flush=True)
+                    _movable[0] = idx
+                return _movable[0]
+
+            def obj_free(p):
+                sf_w = np.asarray(p[:N_REGIONS], dtype=float)
+                sf_c = np.asarray(p[N_REGIONS:n_sf], dtype=float)
+                sc   = np.asarray(p[n_sf:], dtype=float) if args.free_cables else sc0
+                out = run_fem(sf_w, sf_c, knit_dirs, args.pressure, args.motif,
+                              region_map_path, phase2_cables, cable_ea, sc, V_rest)
+                if out is None or "verts" not in out:
+                    return 1e3          # invalid / rest-shape returns are rejected
+                                        # by _check_fem_valid before reaching here
+                V = out["verts"]
+                mi = _movable_idx(V)
+                diff = V[mi] - V_target[mi]
+                loss = float(np.sqrt(np.mean(np.sum(diff ** 2, axis=1))))
+                old  = float(np.sqrt(np.mean(np.sum(
+                    (V[interior_idx] - V_target[interior_idx]) ** 2, axis=1))))
+                if _call_count[0] % 10 == 0 or loss < (_best[0][0] if _best[0] else 1e9):
+                    print(f"  [{_call_count[0]:5d}]  RMSE={loss*1000:9.4f} mm "
+                          f"(all-interior {old*1000:9.4f} mm)", flush=True)
+                return _track(loss, p)
+
+            _o = ({"maxiter": args.maxiter, "ftol": 1e-10, "gtol": 1e-6, "eps": 0.002}
+                  if args.method == "L-BFGS-B" else {"maxiter": args.maxiter})
+            resF = _run_minimize(obj_free, p0, method=args.method,
+                                 bounds=bnds, options=_o)
+            print(f"\nConverged: {resF.success}  |  {resF.message}")
+            print(f"Best RMSE: {resF.fun*1000:.4f} mm   FEM calls: {_call_count[0]}")
+            xf = resF.x
+            out_json = os.path.join(OUT_DIR, "C5_16region_free.json")
+            with open(out_json, "w") as f:
+                json.dump({"geometry": "C5", "mode": "free (no symmetry)",
+                           "n_regions": N_REGIONS,
+                           "free_cables": bool(args.free_cables),
+                           "method": args.method, "pressure": args.pressure,
+                           "converged": bool(resF.success),
+                           "rmse_m": float(resF.fun), "n_calls": _call_count[0],
+                           "regions": [{"region_id": r,
+                                        "knit_dir_deg": float(knit_dirs[r]),
+                                        "sf_wale": float(xf[r]),
+                                        "sf_course": float(xf[N_REGIONS + r])}
+                                       for r in range(N_REGIONS)],
+                           "cable_rest_scales":
+                               [float(v) for v in (xf[n_sf:] if args.free_cables else sc0)],
+                           }, f, indent=1)
+            print(f"Saved: {out_json}")
+            return
+
         if args.sweep_ha:
             print("\nSweeping scale_Ha:")
             for tok in args.sweep_ha.split(","):
@@ -613,6 +721,87 @@ def main():
         d0 = out0["verts"][interior_idx] - V_target[interior_idx]
         print(f"  crown={out0['crown_height']:.4f} m  (target {t_crown:.4f} m)")
         print(f"  RMSE = {np.sqrt(np.mean(np.sum(d0**2, axis=1))):.4f} m")
+        if args.free:
+            # Seed from the symmetric solution so the free search starts where
+            # the constrained one finished, rather than from a uniform guess.
+            sf_w0, sf_c0, sc0 = expand_phase2(args.ha0, p1_params)
+            n_sf = 2 * N_REGIONS
+            p0 = np.concatenate([sf_w0, sf_c0] +
+                                ([sc0] if args.free_cables else []))
+            bnds = ([(0.7, 2.0)] * n_sf +
+                    ([(0.70, 1.10)] * len(sc0) if args.free_cables else []))
+            print(f"\nFREE mode: {len(p0)} parameters "
+                  f"({n_sf} stretch factors"
+                  + (f" + {len(sc0)} cable scales" if args.free_cables else
+                     ", cables fixed at the symmetric values")
+                  + f"), seeded from the symmetric solution, method={args.method}")
+
+            # Score only vertices the solver can actually move.  C5_remeshed_fem
+            # .off is torn along its 8 seams, so findBoundaryVertices pins 449 of
+            # 1309 vertices - 359 of them seam vertices, not real supports.  With
+            # rest = target those sit at exactly zero deviation by construction
+            # and silently deflate the RMSE.  _movable is derived from the first
+            # valid evaluation and reused.
+            _movable = [None]
+
+            def _movable_idx(verts):
+                if _movable[0] is None:
+                    d = np.linalg.norm(verts - V_rest, axis=1)
+                    free_mask = d > 0.0
+                    idx = np.array([i for i in interior_idx if free_mask[i]])
+                    n_drop = len(interior_idx) - len(idx)
+                    print(f"  scoring on {len(idx)} movable vertices "
+                          f"(dropped {n_drop} frozen of {len(interior_idx)} interior)",
+                          flush=True)
+                    _movable[0] = idx
+                return _movable[0]
+
+            def obj_free(p):
+                sf_w = np.asarray(p[:N_REGIONS], dtype=float)
+                sf_c = np.asarray(p[N_REGIONS:n_sf], dtype=float)
+                sc   = np.asarray(p[n_sf:], dtype=float) if args.free_cables else sc0
+                out = run_fem(sf_w, sf_c, knit_dirs, args.pressure, args.motif,
+                              region_map_path, phase2_cables, cable_ea, sc, V_rest)
+                if out is None or "verts" not in out:
+                    return 1e3          # invalid / rest-shape returns are rejected
+                                        # by _check_fem_valid before reaching here
+                V = out["verts"]
+                mi = _movable_idx(V)
+                diff = V[mi] - V_target[mi]
+                loss = float(np.sqrt(np.mean(np.sum(diff ** 2, axis=1))))
+                old  = float(np.sqrt(np.mean(np.sum(
+                    (V[interior_idx] - V_target[interior_idx]) ** 2, axis=1))))
+                if _call_count[0] % 10 == 0 or loss < (_best[0][0] if _best[0] else 1e9):
+                    print(f"  [{_call_count[0]:5d}]  RMSE={loss*1000:9.4f} mm "
+                          f"(all-interior {old*1000:9.4f} mm)", flush=True)
+                return _track(loss, p)
+
+            _o = ({"maxiter": args.maxiter, "ftol": 1e-10, "gtol": 1e-6, "eps": 0.002}
+                  if args.method == "L-BFGS-B" else {"maxiter": args.maxiter})
+            resF = _run_minimize(obj_free, p0, method=args.method,
+                                 bounds=bnds, options=_o)
+            print(f"\nConverged: {resF.success}  |  {resF.message}")
+            print(f"Best RMSE: {resF.fun*1000:.4f} mm   FEM calls: {_call_count[0]}")
+            xf = resF.x
+            out_json = os.path.join(OUT_DIR, "C5_16region_free.json")
+            with open(out_json, "w") as f:
+                json.dump({"geometry": "C5", "mode": "free (no symmetry)",
+                           "n_regions": N_REGIONS,
+                           "free_cables": bool(args.free_cables),
+                           "method": args.method, "pressure": args.pressure,
+                           "converged": bool(resF.success),
+                           "rmse_m": float(resF.fun), "n_calls": _call_count[0],
+                           "regions": [{"region_id": r,
+                                        "knit_dir_deg": float(knit_dirs[r]),
+                                        "sf_wale": float(xf[r]),
+                                        "sf_course": float(xf[N_REGIONS + r])}
+                                       for r in range(N_REGIONS)],
+                           "cable_rest_scales":
+                               [float(v) for v in (xf[n_sf:] if args.free_cables else sc0)],
+                           }, f, indent=1)
+            print(f"Saved: {out_json}")
+            return
+
         if args.sweep_ha:
             print("\nSweeping scale_Ha:")
             for tok in args.sweep_ha.split(","):
@@ -711,6 +900,87 @@ def main():
         if "verts" in out0:
             d = out0["verts"][interior_idx] - V_target[interior_idx]
             print(f"  RMSE = {np.sqrt(np.mean(np.sum(d**2, axis=1))):.4f} m")
+
+        if args.free:
+            # Seed from the symmetric solution so the free search starts where
+            # the constrained one finished, rather than from a uniform guess.
+            sf_w0, sf_c0, sc0 = expand_phase2(args.ha0, p1_params)
+            n_sf = 2 * N_REGIONS
+            p0 = np.concatenate([sf_w0, sf_c0] +
+                                ([sc0] if args.free_cables else []))
+            bnds = ([(0.7, 2.0)] * n_sf +
+                    ([(0.70, 1.10)] * len(sc0) if args.free_cables else []))
+            print(f"\nFREE mode: {len(p0)} parameters "
+                  f"({n_sf} stretch factors"
+                  + (f" + {len(sc0)} cable scales" if args.free_cables else
+                     ", cables fixed at the symmetric values")
+                  + f"), seeded from the symmetric solution, method={args.method}")
+
+            # Score only vertices the solver can actually move.  C5_remeshed_fem
+            # .off is torn along its 8 seams, so findBoundaryVertices pins 449 of
+            # 1309 vertices - 359 of them seam vertices, not real supports.  With
+            # rest = target those sit at exactly zero deviation by construction
+            # and silently deflate the RMSE.  _movable is derived from the first
+            # valid evaluation and reused.
+            _movable = [None]
+
+            def _movable_idx(verts):
+                if _movable[0] is None:
+                    d = np.linalg.norm(verts - V_rest, axis=1)
+                    free_mask = d > 0.0
+                    idx = np.array([i for i in interior_idx if free_mask[i]])
+                    n_drop = len(interior_idx) - len(idx)
+                    print(f"  scoring on {len(idx)} movable vertices "
+                          f"(dropped {n_drop} frozen of {len(interior_idx)} interior)",
+                          flush=True)
+                    _movable[0] = idx
+                return _movable[0]
+
+            def obj_free(p):
+                sf_w = np.asarray(p[:N_REGIONS], dtype=float)
+                sf_c = np.asarray(p[N_REGIONS:n_sf], dtype=float)
+                sc   = np.asarray(p[n_sf:], dtype=float) if args.free_cables else sc0
+                out = run_fem(sf_w, sf_c, knit_dirs, args.pressure, args.motif,
+                              region_map_path, phase2_cables, cable_ea, sc, V_rest)
+                if out is None or "verts" not in out:
+                    return 1e3          # invalid / rest-shape returns are rejected
+                                        # by _check_fem_valid before reaching here
+                V = out["verts"]
+                mi = _movable_idx(V)
+                diff = V[mi] - V_target[mi]
+                loss = float(np.sqrt(np.mean(np.sum(diff ** 2, axis=1))))
+                old  = float(np.sqrt(np.mean(np.sum(
+                    (V[interior_idx] - V_target[interior_idx]) ** 2, axis=1))))
+                if _call_count[0] % 10 == 0 or loss < (_best[0][0] if _best[0] else 1e9):
+                    print(f"  [{_call_count[0]:5d}]  RMSE={loss*1000:9.4f} mm "
+                          f"(all-interior {old*1000:9.4f} mm)", flush=True)
+                return _track(loss, p)
+
+            _o = ({"maxiter": args.maxiter, "ftol": 1e-10, "gtol": 1e-6, "eps": 0.002}
+                  if args.method == "L-BFGS-B" else {"maxiter": args.maxiter})
+            resF = _run_minimize(obj_free, p0, method=args.method,
+                                 bounds=bnds, options=_o)
+            print(f"\nConverged: {resF.success}  |  {resF.message}")
+            print(f"Best RMSE: {resF.fun*1000:.4f} mm   FEM calls: {_call_count[0]}")
+            xf = resF.x
+            out_json = os.path.join(OUT_DIR, "C5_16region_free.json")
+            with open(out_json, "w") as f:
+                json.dump({"geometry": "C5", "mode": "free (no symmetry)",
+                           "n_regions": N_REGIONS,
+                           "free_cables": bool(args.free_cables),
+                           "method": args.method, "pressure": args.pressure,
+                           "converged": bool(resF.success),
+                           "rmse_m": float(resF.fun), "n_calls": _call_count[0],
+                           "regions": [{"region_id": r,
+                                        "knit_dir_deg": float(knit_dirs[r]),
+                                        "sf_wale": float(xf[r]),
+                                        "sf_course": float(xf[N_REGIONS + r])}
+                                       for r in range(N_REGIONS)],
+                           "cable_rest_scales":
+                               [float(v) for v in (xf[n_sf:] if args.free_cables else sc0)],
+                           }, f, indent=1)
+            print(f"Saved: {out_json}")
+            return
 
         if args.sweep_ha:
             print("\nSweeping scale_Ha:")
