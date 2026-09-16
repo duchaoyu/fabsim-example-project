@@ -1,9 +1,10 @@
 """
 Diagram of the B5 9-region grid and its optimised stretch factors.
 
-Left:   plan view of the FEM mesh with the 3x3 region grid (cuts at +-R/3),
-        each cell labelled with its region id and the crown marked.
-Middle: sf_wale per region.   Right: sf_course per region.
+Panel 1: plan view of the FEM mesh with the 3x3 region grid (cuts at +-R/3),
+         each cell labelled with its region id and the crown marked.
+Panel 2: sf_wale per region.   Panel 3: sf_course per region.
+Panel 4: max z per region (target surface, with the optimised value beneath).
 
 Both stretch-factor panels are sequential one-hue ramps (blue / orange) over
 the *actual* value range, which is very narrow - the absolute span is printed
@@ -20,14 +21,17 @@ from matplotlib.collections import PolyCollection
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, ".."))
 MESH   = os.path.join(ROOT, "data", "B5_remeshed_shared.off")
+OPTIM  = os.path.join(ROOT, "data", "B5_optimised.off")
 PARAMS = os.path.join(HERE, "optimisation", "B5_optimised_params.json")
 OUT    = os.path.join(HERE, "data", "B5", "B5_regions_stretch_factors.png")
 
 # palette (references/palette.md): blue ramp = sequential slot 1, orange = slot 2
 BLUE   = ["#cde2fb", "#9ec5f4", "#6da7ec", "#3987e5", "#256abf", "#184f95", "#0d366b"]
 ORANGE = ["#fce3d6", "#f8c3a6", "#f4a078", "#eb6834", "#c94f22", "#a03c19", "#742a11"]
+AQUA   = ["#d6f2e7", "#a8e2ca", "#6fcda7", "#1baf7a", "#159063", "#10724e", "#0a4e36"]
 CMAP_W = LinearSegmentedColormap.from_list("wale", BLUE)
 CMAP_C = LinearSegmentedColormap.from_list("course", ORANGE)
+CMAP_Z = LinearSegmentedColormap.from_list("maxz", AQUA)
 INK, INK2, GRID = "#0b0b0b", "#52514e", "#b9b8b3"
 
 
@@ -40,6 +44,7 @@ def load_off(path):
 
 
 V, F = load_off(MESH)
+Vo, _ = load_off(OPTIM)
 P = json.load(open(PARAMS))
 R = max(np.ptp(V[:, 0]), np.ptp(V[:, 1])) / 2.0
 cut = R / 3.0                                    # grid cuts at +-0.2 m
@@ -49,7 +54,18 @@ for r in P["regions"]:
     w[r["row"], r["col"]] = r["sf_wale"]
     c[r["row"], r["col"]] = r["sf_course"]
 
-fig, axes = plt.subplots(1, 3, figsize=(15.5, 5.4))
+def region_of(x, y):
+    col_ = 0 if x < -cut else (1 if x < cut else 2)
+    row_ = 0 if y < -cut else (1 if y < cut else 2)
+    return row_, col_
+
+zt = np.full((3, 3), -np.inf); zo = np.full((3, 3), -np.inf)
+for vt, vo in zip(V, Vo):
+    r_, c_ = region_of(vt[0], vt[1])
+    zt[r_, c_] = max(zt[r_, c_], vt[2])
+    zo[r_, c_] = max(zo[r_, c_], vo[2])
+
+fig, axes = plt.subplots(1, 4, figsize=(20.5, 5.4))
 
 # ── Panel 1: the region grid over the mesh plan ───────────────────────────────
 ax = axes[0]
@@ -86,7 +102,8 @@ ax.set_title(f"9-region grid   (cuts at $\\pm R/3 = \\pm{cut:.1f}$ m)",
 
 # ── Panels 2 & 3: the stretch factors ────────────────────────────────────────
 for ax, M, cmap, name in ((axes[1], w, CMAP_W, "sf_wale"),
-                          (axes[2], c, CMAP_C, "sf_course")):
+                          (axes[2], c, CMAP_C, "sf_course"),
+                          (axes[3], zt, CMAP_Z, "max z")):
     im = ax.imshow(M, cmap=cmap, origin="lower", extent=[-0.5, 2.5, -0.5, 2.5])
     lo, hi = M.min(), M.max()
     for r_ in range(3):
@@ -94,20 +111,35 @@ for ax, M, cmap, name in ((axes[1], w, CMAP_W, "sf_wale"),
             v = M[r_, c_]
             dark = (v - lo) / (hi - lo) > 0.55
             ink = "white" if dark else INK
-            ax.text(c_, r_ + 0.10, f"{v:.6f}", ha="center", va="center",
-                    fontsize=11, color=ink)
-            ax.text(c_, r_ - 0.17, f"region {r_*3+c_}", ha="center", va="center",
+            if name == "max z":
+                ax.text(c_, r_ + 0.20, f"{v:.4f} m", ha="center", va="center",
+                        fontsize=11, color=ink)
+                ax.text(c_, r_ + 0.02, f"opt {zo[r_, c_]:.4f} m", ha="center",
+                        va="center", fontsize=7.5, color=ink, alpha=0.8)
+                ax.text(c_, r_ - 0.11, f"{1000*(zo[r_, c_]-v):+.1f} mm", ha="center",
+                        va="center", fontsize=7.5, color=ink, alpha=0.8)
+            else:
+                ax.text(c_, r_ + 0.10, f"{v:.6f}", ha="center", va="center",
+                        fontsize=11, color=ink)
+            ax.text(c_, r_ - 0.27, f"region {r_*3+c_}", ha="center", va="center",
                     fontsize=7.5, color=ink, alpha=0.75)
     ax.set_xticks([0, 1, 2], ["col 0", "col 1", "col 2"], color=INK2)
     ax.set_yticks([0, 1, 2], ["row 0", "row 1", "row 2"], color=INK2)
-    ax.set_title(f"{name}   (span {hi-lo:.2e}, {100*(hi-lo)/M.mean():.2f}%)",
-                 fontsize=10, color=INK)
+    if name == "max z":
+        ax.set_title("max z per region   (target; optimised beneath)",
+                     fontsize=10, color=INK)
+        ax.plot(1, 1, marker="*", ms=14, color="#e34948", mec="white", mew=0.9,
+                zorder=6)
+    else:
+        ax.set_title(f"{name}   (span {hi-lo:.2e}, {100*(hi-lo)/M.mean():.2f}%)",
+                     fontsize=10, color=INK)
     for s in ax.spines.values():
         s.set_visible(False)
     cb = fig.colorbar(im, ax=ax, shrink=0.72, pad=0.03)
     cb.ax.tick_params(labelsize=7.5, colors=INK2)
     cb.outline.set_visible(False)
-    cb.set_label(f"{lo:.6f} – {hi:.6f}", fontsize=8, color=INK2)
+    cb.set_label(f"{lo:.4f} – {hi:.4f} m" if name == "max z"
+                 else f"{lo:.6f} – {hi:.6f}", fontsize=8, color=INK2)
 
 fig.suptitle("B5 inverse optimisation — 9 regions and their rest-shape stretch factors "
              f"(converged, RMSE {1000*P['loss_rmse_m']:.2f} mm, knit direction 0° everywhere)",
