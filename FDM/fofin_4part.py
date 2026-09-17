@@ -28,7 +28,7 @@ Saves into FDM/data/4part/:
 Usage:
   .venv/bin/python FDM/fofin_4part.py [input.obj]
 """
-import os, sys, datetime, time
+import os, sys, datetime, time, json
 import numpy as np
 import scipy.sparse
 import scipy.sparse.linalg
@@ -207,8 +207,10 @@ def inflate(xyz_full, q_vec, pressure):
 
 _call = [0]
 _hist = []
+_call_t = []   # wall clock of every obj_grad call, so the run can be costed
 
 def obj_grad(q_vec):
+    _t_call0 = time.perf_counter()
     xyz_full = np.zeros((n_v, 3), dtype=float)
     for i, v in enumerate(fixed):
         xyz_full[v] = xyz_fixed[i]
@@ -233,6 +235,7 @@ def obj_grad(q_vec):
     _hist.append(rmse)
     if _call[0] % 20 == 0:
         print(f"  iter {_call[0]:4d}  obj={obj:.6f}  RMSE={rmse:.5f} m", flush=True)
+    _call_t.append(time.perf_counter() - _t_call0)
     return obj, grad
 
 
@@ -275,7 +278,38 @@ for p in (50, 90, 95, 97, 99):
     print(f"  q p{p} = {np.percentile(q_opt, p):.4f}", flush=True)
 
 # -- Save --------------------------------------------------------------------
+# Timing was previously printed to stdout only, so it was unrecoverable once the
+# terminal was gone.  Persist it beside the result.
+_ct = np.array(_call_t, dtype=float)
+timing = {
+    "geometry":         "4part",
+    "timestamp":        datetime.datetime.now().isoformat(timespec="seconds"),
+    "n_vertices":       int(n_v),
+    "n_faces":          int(mesh_target.number_of_faces()),
+    "n_edges":          int(n_e),
+    "n_free":           int(len(free)),
+    "n_anchors":        int(len(fixed)),
+    "design_variables": int(n_e),
+    "inflate_iters":    int(INFLATE_IT),
+    "pressure":         float(PRESSURE),
+    "maxiter":          int(MAXITER),
+    "forward_solves":   int(_call[0]),
+    "scipy_nit":        int(getattr(result, "nit", -1)),
+    "optimisation_s":   float(t_opt),
+    "median_call_s":    float(np.median(_ct)) if len(_ct) else None,
+    "mean_call_s":      float(_ct.mean()) if len(_ct) else None,
+    "min_call_s":       float(_ct.min()) if len(_ct) else None,
+    "max_call_s":       float(_ct.max()) if len(_ct) else None,
+    "converged":        bool(result.success),
+    "message":          str(result.message),
+    "rmse_mm":          rmse * 1000.0,
+    "max_dev_mm":       float(dev.max()) * 1000.0,
+}
+
 ts  = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+with open(os.path.join(DATA, "4part_fdm_timing.json"), "w") as _f:
+    json.dump(timing, _f, indent=2)
+print(f"wrote timing -> {os.path.join(DATA, '4part_fdm_timing.json')}", flush=True)
 out = os.path.join(DATA, f"mesh_out_4part_{ts}.json")
 mesh_out.to_json(out)
 mesh_out.to_json(os.path.join(DATA, "mesh_out_4part_latest.json"))
