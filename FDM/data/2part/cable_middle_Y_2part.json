@@ -1,0 +1,46 @@
+{
+  "junction_vertex": 49,
+  "branches": {
+    "stem": [
+      49,
+      1,
+      5,
+      6,
+      48,
+      7,
+      86,
+      0,
+      84,
+      43,
+      79,
+      40
+    ],
+    "left": [
+      49,
+      91,
+      116,
+      126,
+      28,
+      164,
+      187,
+      185
+    ],
+    "right": [
+      49,
+      370,
+      394,
+      405,
+      322,
+      444,
+      467,
+      464
+    ]
+  },
+  "lengths_m": {
+    "stem": 0.6817648537722315,
+    "left": 0.3811850373838216,
+    "right": 0.3811850373838216
+  },
+  "total_length_m": 1.4441349285398748,
+  "note": "half-paths from the junction; the out-and-back duplicates of C14/C00 and the spurious boundary end v494 are removed"
+}
