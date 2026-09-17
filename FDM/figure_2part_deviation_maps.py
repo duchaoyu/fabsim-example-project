@@ -33,9 +33,9 @@ for t in F:
 bdry = {v for e, c in cnt.items() if c == 1 for v in e}
 interior = np.array([i for i in range(nv) if i not in bdry])
 
-RUNS = [("2part_p2",    "24 cables, mirror-tied (15 par)"),
-        ("2part_p3",    "24 cables, all free (48 par)"),
-        ("2part_Y_p2",  "middle Y only (14 par)")]
+RUNS = [("2part_p3",    "24 extracted chains (48 par)"),
+        ("2part_Y_p2",  "middle Y only (14 par)"),
+        ("2part_K_p2",  "4 continuous cables (13 par)")]
 
 devs, metas = [], []
 for tag, label in RUNS:
