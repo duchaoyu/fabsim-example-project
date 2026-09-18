@@ -466,6 +466,12 @@ int main(int argc, char* argv[])
 
     MotifParams mp = motifParams(motif);
 
+    // Optional explicit material override, for a measured material that is
+    // none of the five motifs.  E1, E2 in N/m; nu is nu12.
+    mp.E1 = jsonDouble(ps, "E1", mp.E1);
+    mp.E2 = jsonDouble(ps, "E2", mp.E2);
+    mp.nu = jsonDouble(ps, "nu", mp.nu);
+
     // Per-face knit directions: use field-derived per-face angles if provided,
     // otherwise fall back to the region-level knit_dir_deg.
     const std::vector<double>& face_knit_deg = rmd.face_knit_dirs_deg;
