@@ -64,6 +64,11 @@ struct RegionParams {
     double sf_wale    = 1.0;
     double sf_course  = 1.0;
     double knit_dir_deg = 0.0;
+    // Optional per-region material. Negative means "inherit the global one",
+    // so a params file that says nothing about material behaves as before.
+    double E1 = -1.0;
+    double E2 = -1.0;
+    double nu = -1.0;
 };
 
 // ── Multi-cable aggregate model ───────────────────────────────────────────────
@@ -249,6 +254,9 @@ static std::vector<RegionParams> parseRegions(const std::string& s)
         rp.sf_wale      = jsonDouble(obj, "sf_wale",      1.0);
         rp.sf_course    = jsonDouble(obj, "sf_course",    1.0);
         rp.knit_dir_deg = jsonDouble(obj, "knit_dir_deg", 0.0);
+        rp.E1           = jsonDouble(obj, "E1", -1.0);
+        rp.E2           = jsonDouble(obj, "E2", -1.0);
+        rp.nu           = jsonDouble(obj, "nu", -1.0);
         regions.push_back(rp);
         pos = cb + 1;
     }
@@ -343,6 +351,9 @@ static VectorXd simulate(const std::vector<RegionParams>& regions,
         int r = face_reg[f];
         s1v[f] = 1.0 / regions[r].sf_wale;
         s2v[f] = 1.0 / regions[r].sf_course;
+        if (regions[r].E1 > 0.0) E1s[f] = regions[r].E1;
+        if (regions[r].E2 > 0.0) E2s[f] = regions[r].E2;
+        if (regions[r].nu >= 0.0) nus[f] = regions[r].nu;
     }
 
     fsim::Mat3<double> V0_mod =
