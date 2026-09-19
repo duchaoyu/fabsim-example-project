@@ -94,6 +94,9 @@ def main():
     ap.add_argument("--sf", type=float, nargs="+", default=[SF_DEFAULT],
                     help="uniform stretch factor(s); 1.0 is the flat-membrane "
                          "bifurcation point and is expected to be ill-behaved")
+    ap.add_argument("--pressures", type=float, nargs="+", default=PRESSURES,
+                    help="pressures in Pa; the sampled box tops out at 1200, and "
+                         "2000 was probed and found safe (see config.py)")
     ap.add_argument("--out", default="baseline_inflation",
                     help="basename for the CSV and the per-run directory")
     args = ap.parse_args()
@@ -109,7 +112,7 @@ def main():
             for m in args.motifs
             for mat in ("new", "old")
             for sf in args.sf
-            for p in PRESSURES]
+            for p in args.pressures]
 
     rows = []
     with ProcessPoolExecutor(max_workers=args.jobs) as ex:
