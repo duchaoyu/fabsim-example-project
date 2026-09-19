@@ -65,10 +65,19 @@ PARAMS_CABLE_ORIENT = {
 N_SAMPLES_MATERIAL = 500
 
 # ── Material parameters per motif ─────────────────────────────────────────────
-# motif 1: course-stiff (E2/E1=2.50), motif 2: less course-stiff (E2/E1=1.60)
+# Measured values for the two knitted stitch structures (corrected 2026-09-19).
+# motif 1 = stitch structure 1: course-stiff, E2/E1 = 1.30
+# motif 2 = stitch structure 2: effectively isotropic, E2/E1 = 0.99
+#
+# These replace E1=5000/E2=12507/nu=0.198 (motif 1) and E1=5000/E2=8000/nu=0.198
+# (motif 2), which were estimates.  The anisotropy is much weaker than assumed —
+# motif 1 drops from E2/E1 = 2.50 to 1.30 and motif 2 from 1.60 to 0.99, so
+# motif 2 is no longer course-stiff at all — and nu12 roughly triples.  Any
+# result computed against the old table is superseded; the same numbers are
+# hardcoded in src/fem_batch_sensitivity.cpp and must be kept in step.
 MOTIF_PARAMS = {
-    1: {"E1": 5000.0, "E2": 12507.0, "nu": 0.198},
-    2: {"E1": 5000.0, "E2": 8000.0,  "nu": 0.198},
+    1: {"E1": 10300.0, "E2": 13400.0, "nu": 0.58},
+    2: {"E1":  7700.0, "E2":  7600.0, "nu": 0.65},
 }
 
 # ── Cable ─────────────────────────────────────────────────────────────────────

@@ -19,8 +19,8 @@
 //     Pass "none" (or omit) to use motif params.
 //     Requires fixed_vertices to also be specified (use "auto" for default).
 //
-//   motif 1: E1=5000,  E2=12507  (course-stiff, E2/E1=2.50)
-//   motif 2: E1=5000,  E2=8000   (mild aniso,   E2/E1=1.60)
+//   motif 1: E1=10300, E2=13400  (course-stiff, E2/E1=1.30)  stitch structure 1
+//   motif 2: E1=7700,  E2=7600   (isotropic,    E2/E1=0.99)  stitch structure 2
 //   motif 3: E1=5000,  E2=5000   (isotropic)
 //   motif 4: E1=8000,  E2=5000   (wale-stiff,   E1/E2=1.60)
 //   motif 5: E1=12507, E2=5000   (wale-stiff,   E1/E2=2.50)
@@ -58,8 +58,12 @@ struct MotifParams { double E1, E2, nu, thickness, mass; };
 
 static MotifParams motifParams(int motif)
 {
-    if (motif == 1) return {5000.0, 12507.0, 0.198, 1.0, 0.001};
-    if (motif == 2) return {5000.0,  8000.0, 0.198, 1.0, 0.001};
+    // Motifs 1 and 2 are the two measured knitted stitch structures
+    // (corrected 2026-09-19; keep in step with sensitivity_analysis/config.py).
+    // They were 5000/12507/0.198 and 5000/8000/0.198 — estimates with far more
+    // anisotropy than the fabrics actually have.
+    if (motif == 1) return {10300.0, 13400.0, 0.58, 1.0, 0.001};
+    if (motif == 2) return { 7700.0,  7600.0, 0.65, 1.0, 0.001};
     if (motif == 3) return {5000.0,  5000.0, 0.198, 1.0, 0.001};
     if (motif == 4) return {8000.0,  5000.0, 0.198, 1.0, 0.001};
     if (motif == 5) return {12507.0, 5000.0, 0.198, 1.0, 0.001};
