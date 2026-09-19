@@ -39,10 +39,9 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from config import DATA_DIR, MESH_PATH, MOTIF_PARAMS
 from fea_interface import check_binary, run_fea
 
-SF_WALE   = 1.1
-SF_COURSE = 1.1
-KNIT_DIR  = 0.0
-PRESSURES = [200.0, 400.0, 600.0, 800.0, 1000.0, 1200.0]
+SF_DEFAULT = 1.1
+KNIT_DIR   = 0.0
+PRESSURES  = [200.0, 400.0, 600.0, 800.0, 1000.0, 1200.0]
 
 # The estimates the corrected values replace, kept only for the comparison.
 OLD_MOTIF_PARAMS = {
@@ -54,8 +53,8 @@ OUT_DIR = os.path.join(DATA_DIR, "baseline_inflation")
 
 
 def _one(job):
-    motif, material, pressure = job
-    tag = f"m{motif}_{material}_p{int(pressure)}"
+    motif, material, pressure, sf = job
+    tag = f"m{motif}_{material}_sf{sf:g}_p{int(pressure)}"
     prefix = os.path.join(OUT_DIR, tag)
 
     kwargs = {}
@@ -68,7 +67,7 @@ def _one(job):
         mp = MOTIF_PARAMS[motif]
         E1, E2, nu = mp["E1"], mp["E2"], mp["nu"]
 
-    res = run_fea(SF_WALE, SF_COURSE, KNIT_DIR, pressure, motif, prefix, **kwargs)
+    res = run_fea(sf, sf, KNIT_DIR, pressure, motif, prefix, **kwargs)
 
     return {
         "motif":     motif,
@@ -78,8 +77,8 @@ def _one(job):
         "E2_over_E1": E2 / E1,
         "nu":        nu,
         "pressure":  pressure,
-        "sf_wale":   SF_WALE,
-        "sf_course": SF_COURSE,
+        "sf_wale":   sf,
+        "sf_course": sf,
         "knit_dir":  KNIT_DIR,
         "crown_height":          res["crown_height"],
         "max_stress":            res["max_stress"],
@@ -91,15 +90,25 @@ def _one(job):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--jobs", type=int, default=8)
+    ap.add_argument("--motifs", type=int, nargs="+", default=[1, 2])
+    ap.add_argument("--sf", type=float, nargs="+", default=[SF_DEFAULT],
+                    help="uniform stretch factor(s); 1.0 is the flat-membrane "
+                         "bifurcation point and is expected to be ill-behaved")
+    ap.add_argument("--out", default="baseline_inflation",
+                    help="basename for the CSV and the per-run directory")
     args = ap.parse_args()
+
+    global OUT_DIR
+    OUT_DIR = os.path.join(DATA_DIR, args.out)
 
     check_binary()
     os.makedirs(OUT_DIR, exist_ok=True)
     print(f"mesh   {MESH_PATH}")
 
-    jobs = [(m, mat, p)
-            for m in (1, 2)
+    jobs = [(m, mat, p, sf)
+            for m in args.motifs
             for mat in ("new", "old")
+            for sf in args.sf
             for p in PRESSURES]
 
     rows = []
@@ -113,13 +122,13 @@ def main():
                 print(f"  FAILED {job}: {exc}")
             print(f"  {i}/{len(jobs)}")
 
-    df = pd.DataFrame(rows).sort_values(["motif", "material", "pressure"])
-    out = os.path.join(DATA_DIR, "baseline_inflation.csv")
+    df = pd.DataFrame(rows).sort_values(["motif", "material", "sf_wale", "pressure"])
+    out = os.path.join(DATA_DIR, args.out + ".csv")
     df.to_csv(out, index=False)
     print(f"\nsaved {out}  ({len(df)} rows)")
 
     pd.set_option("display.width", 160)
-    print(df[["motif", "material", "E2_over_E1", "nu", "pressure",
+    print(df[["motif", "material", "E2_over_E1", "nu", "sf_wale", "pressure",
               "crown_height", "mean_stress", "max_stress"]].to_string(index=False))
 
 
