@@ -134,7 +134,15 @@ def tension_indices(group="material_r_cable"):
             # everywhere, so the indicator is constant and its Sobol indices are
             # 0/0.  That is the answer, not a failure — skip it rather than
             # writing a table of NaN.
-            if engaged.std() > 0:
+            #
+            # std > 0 is too weak a test: at N = 4096 the course indicator has 2
+            # slack points in 45056, which passes it and then breaks SALib, whose
+            # first_order() returns the CONST_RESULT array once an A/B subset is
+            # constant ("ValueError: setting an array element with a sequence").
+            # Require both classes to carry at least 1% of the sample, which is
+            # the point below which the indices are noise anyway.
+            engaged_frac = float(engaged.mean())
+            if min(engaged_frac, 1.0 - engaged_frac) >= 0.01:
                 scales.append(("engaged", engaged))
             for lab, Y in scales:
                 si = sobol_analyze.analyze(prob, Y, calc_second_order=False,
