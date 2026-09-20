@@ -218,8 +218,18 @@ def step_sections(force=False):
         met["H_anisotropy"] = np.where(
             Hs > 1e-6, (met["H_mean_x0"] - met["H_mean_y0"]) / Hs, np.nan)
 
+        # The crown_height < 0.02 m cut that used to sit here was a band-aid for
+        # a bug in the estimator, not a statement about the model: the section
+        # mean of H included rim vertices, whose incomplete one-ring makes the
+        # cotangent Laplacian report a spurious H (0.749 / 0.529 m^-1 on the flat
+        # rest mesh, whose true H is zero).  That floor swamped shallow domes and
+        # put a fixed +0.17 offset into H_anisotropy.  With the rim masked
+        # (plot_material_section_sobol._BOUNDARY_MASK) the section mean tracks the
+        # spherical-cap value to 1% from 5 mm crowns to 700 mm, so height no
+        # longer says anything about validity and the cut only removed the
+        # flattest corner of the design box from the fit.
         rough  = met[["r_x0", "r_y0"]].max(axis=1)
-        failed = (sub["crown_height"] < 0.02) | (rough > _ROUGHNESS_MAX)
+        failed = rough > _ROUGHNESS_MAX
         met.loc[failed.values, CURV_OUTPUTS] = np.nan
 
         df = pd.concat([sub, met], axis=1)

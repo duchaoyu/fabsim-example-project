@@ -26,7 +26,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from config import DATA_DIR, MESH_PATH, PARAMS_MATERIAL_NO_CABLE, SOBOL_N_BASE
 from surrogate import ScalarSurrogate
-from curvature import read_off, compute_curvatures
+from curvature import read_off, compute_curvatures, boundary_vertices
 from plot_section_profiles import _slice_plane
 from SALib.sample import saltelli
 from SALib.analyze import sobol as sobol_analyze
@@ -40,6 +40,16 @@ SECTION_DATA_PATH = os.path.join(DATA_DIR, "material_nocable_section_metrics.csv
 _SECTION_TOL = 0.03   # m  (5% of 0.6 m radius)
 
 _REST_VERTS, _FACES = read_off(MESH_PATH)
+
+# Boundary vertices carry an incomplete one-ring, so the cotangent Laplacian does
+# not cancel there and reports a large spurious H: on the flat rest mesh, whose
+# true H is identically zero, the rim gives H_mean_x0 = 0.749 and H_mean_y0 =
+# 0.529 m^-1.  That is an additive floor on every run, and because the two
+# sections are discretised differently it is also a fixed +0.17 offset in
+# H_anisotropy.  Masking the rim returns 0.0000 on the flat mesh for both
+# sections and costs 6 of ~90 crossings.
+_BOUNDARY_MASK = np.zeros(len(_REST_VERTS), dtype=bool)
+_BOUNDARY_MASK[list(boundary_vertices(_FACES, len(_REST_VERTS)))] = True
 
 SECTION_OUTPUTS = [
     "H_mean_x0",
@@ -122,12 +132,14 @@ def _section_metrics(sample_id: int) -> dict:
 
     verts = pd.read_csv(vpath).sort_values("vid")[["x", "y", "z"]].values
     curv  = compute_curvatures(verts, _FACES)
-    H     = curv["H"]
+    H     = curv["H"].copy()
+    H[_BOUNDARY_MASK] = np.nan          # see _BOUNDARY_MASK above
 
     metrics = {}
     for h_key, r_key, ax in [("H_mean_x0", "r_x0", 0), ("H_mean_y0", "r_y0", 1)]:
         pos, z_mm, H_sec = _slice_plane(verts, _FACES, H, fixed_axis=ax)
-        if len(pos) < 5:
+        # Crossings on a rim edge interpolate a masked vertex and come back NaN.
+        if np.sum(np.isfinite(H_sec)) < 5:
             metrics[h_key] = metrics[r_key] = np.nan
             continue
         # Use mean curvature already computed per-vertex (cotangent weights) and
