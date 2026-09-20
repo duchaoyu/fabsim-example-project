@@ -1,0 +1,55 @@
+\FloatBarrier
+\subsection{Knitting Direction}\label{sec:7.3.5}
+
+Section~\ref{sec:7.2} found that the knitting direction reaches none of the outputs except the curvature anisotropy index, and that because the two pre-strains are controlled independently, the curvature distribution a given orientation produces can be corrected by adjusting them. The direction is therefore not fixed by the structural problem, and is determined here on fabrication grounds instead.
+
+The main fabrication constraint on the field is the cable. A channel for the cable to pass through is much easier to knit when the wale or the course runs along the cable's line. So the field is computed to align with the cables' locations from Section~\ref{sec:7.3.4} and to vary smoothly elsewhere.
+
+The field defines both the wale direction \(e_{w}\) and the course direction \(e_{c}\) at every face. The two are orthogonal, so specifying one determines the other, and the field is parameterised by a single angle \(\theta_{f}\) per face, giving the wale direction, with the course direction at \(\theta_{f} + 90^{\circ}\). Following the convention of Section~\ref{sec:5.2.2}, \(\theta_{f}\) is measured from a per-face reference \(u_{f}\) aligned with the first stored edge of the face.
+
+A knitting direction is an axis, not an arrow: \(\theta_{f}\) and \(\theta_{f} + 180^{\circ}\) describe the same fabric. Storing the raw angle therefore misrepresents how similar two neighbouring faces are. The field is therefore represented at each face by the unit complex number
+
+\begin{equation}\label{eq:7:17}
+  z_{f} = e^{2i\theta_{f}} \in \mathbb{C},
+\end{equation}
+which maps the \(180^{\circ}\) periodicity of an axis onto the \(360^{\circ}\) periodicity of a complex argument. The doubling also preserves relative angles, so axes that are close physically remain close in this representation (Figure~\ref{fig:direction}).
+
+The faces adjacent to a cable are taken as field alignment constraints, a face counting as adjacent when it shares at least two vertices with a cable path. Let \(\alpha_{f}\) be the tangent angle of the nearest cable segment at face \(f\), expressed in that face's reference frame \(u_{f}\), so one cable yields a different value at each face along its length. At those faces the field is prescribed as
+
+\begin{equation}\label{eq:7:18}
+  z_{f} =
+  \begin{cases}
+    e^{2i\alpha_{f}}, & \text{wale aligned with the cable,} \\
+    -e^{2i\alpha_{f}}, & \text{course aligned with the cable,}
+  \end{cases}
+\end{equation}
+the sign flip arising because a \(90^{\circ}\) rotation of the physical direction becomes a \(180^{\circ}\) rotation in the complex plane.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=1.000\linewidth]{figures/image111.png}
+  \caption[The doubled complex representation]{The doubled complex representation. Each triangle carries a reference direction \textbf{u}, from which the wale angle θ is measured. Top row: the same axis recorded at θ = 10° and at θ = 190°, differing only in which way the arrow points. Doubling sends both to 2θ = 20° on the unit circle, so the arrow ambiguity disappears. Bottom row: an axis 20° away, recorded at θ = 170° and θ = 350°, both mapping to 2θ = 340°. The two rows are 20° apart physically and 40° apart on the circle, so nearby axes remain nearby and the doubling only removes the ambiguity it is meant to remove.}\label{fig:direction}
+\end{figure}
+
+The cables are not the only lines the field has to follow. The target surface is symmetric about the two plan axes as well as the diagonals, and a mirror line forces a cross field to be either tangent or normal to it, never oblique. With the cables as the only constraint the two axes were left free and drifted \(8\)--\(18^{\circ}\) off, reaching \(36^{\circ}\), while the cable-aligned diagonals held to \(3^{\circ}\). The axes are therefore added as guide bands of their own: every face whose centroid lies within \(30\,\mathrm{mm}\) of an axis in plan, and further than \(60\,\mathrm{mm}\) from the centre, is constrained to the axis tangent on the same footing as a cable face. Adding them does not over-constrain the problem, precisely because the field is a cross field: aligning one branch with a diagonal places the other branch on the perpendicular diagonal, and a radial-circumferential cross field is simultaneously aligned with every line through the origin. The centre is the index-one singularity of that field, which is why the inner radius is excluded. Together the two sets fix 220 of the 1000 faces, 96 along the cables and 124 in the guide bands.
+
+Each face carries its own reference \(u_{f}\), which depends on vertex ordering rather than on surface geometry, so two neighbouring values cannot be compared directly. Each shared edge is therefore assigned a transport rotation \(r_{ij}\). The shared edge is the one direction both faces can measure, so it serves as the pivot: if \(\varphi_{i}\) is the angle from \(u_{i}\) to the shared edge and \(\varphi_{j}\) the angle from \(u_{j}\) to the same edge, then \(r_{ij} = \varphi_{i} - \varphi_{j}\), the angle between the two references once the triangles are unfolded into a common plane. Adding \(r_{ij}\) to the angle of face \(j\) expresses it in the frame of face \(i\), which in the doubled representation is a multiplication:
+
+\begin{equation}\label{eq:7:19}
+  e^{2i\left( \theta_{j} + r_{ij} \right)} = e^{2ir_{ij}} \cdot e^{2i\theta_{j}} = e^{2ir_{ij}}z_{j}.
+\end{equation}
+
+Because transport is a rotation it acts on the field as a single complex factor per edge, independent of the direction being carried. This is what allows the smoothing to be written as a quadratic form rather than evaluated direction by direction.
+
+The smooth field consistent with the cable constraints is then found by minimising
+
+\begin{equation}\label{eq:7:20}
+  \min_{z} \ \sum_{(i,j) \in \mathcal{E}} w_{ij}\left\lvert z_{i} - e^{2ir_{ij}}z_{j} \right\rvert^{2}
+  \quad \text{subject to} \quad z_{f} = \hat{z}_{f}, \ f \in \mathcal{C},
+\end{equation}
+
+where the sum runs over all pairs of adjacent faces in set \(\mathcal{E}\), \(z_{i}\) and \(z_{j}\) are their field values, \(w_{ij}\) is the length of the shared edge, so that the energy does not depend on how finely the mesh is divided, and \(\mathcal{C}\) is the set of constrained faces, along the cables and in the guide bands, whose values \(\hat{z}_{f}\) are fixed by Equation~\eqref{eq:7:18}. Minimising this energy smooths the physical directions rather than the stored angles.
+
+The unit-norm condition \(\lvert z_{f} \rvert = 1\) is relaxed on the free faces, which is what leaves the energy quadratic and the problem linear. The magnitude of the solution carries no directional information and is discarded; it falls below one where a face's neighbours disagree, and is smallest near the singularity, which is a useful indication of where the field is least determined rather than an error. Only the argument is used, and the wale angle is recovered at each face as \(\theta_{f} = \arg z_{f}/2\), with the course direction at \(\theta_{f} + 90^{\circ}\).
+
+The minimisation is carried out with a direct sparse solver. Because the transport factors \(e^{2ir_{ij}}\) are complex, the system matrix is complex Hermitian rather than real, so the real and imaginary parts do not separate and the system is solved over \(\mathbb{C}\). The matrix is assembled in coordinate format and converted to compressed sparse column form using the \texttt{scipy.sparse} module, and the system is solved with \texttt{scipy.sparse.linalg.spsolve}, which performs a sparse LU factorisation through the SuperLU library \cite{scipy2020}. Eliminating the constrained faces leaves one system whose size is the number of free faces, 780 of the 1000 faces of the mesh used here, solved once rather than iterated to convergence.

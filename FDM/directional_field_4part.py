@@ -4,9 +4,9 @@ Directional (cross) field on the 4-part mesh, guided by the extracted cables.
 Same construction as FDM/directional_field_D5.py:
   d1 : wale direction, tangent to the nearest cable
   d2 : course direction, face_normal x d1
-The cable-adjacent faces are a soft constraint with weight CABLE_WEIGHT; every
-other face is smoothed with a face-adjacency Laplacian on the in-plane angle in
-its complex (pi-periodic) representation.
+The cable-adjacent faces are held fixed; every other face is found by minimising
+the Dirichlet energy of the field in its doubled (pi-periodic) complex
+representation, which is one sparse linear solve over the free faces.
 
 The two diagonal cables are not the only lines the field has to follow.  The
 shape is D4, so the x and y axes are mirror lines too, and a mirror line forces
@@ -15,7 +15,7 @@ cables as the only constraint those two axes were left free and drifted 8-18 deg
 (max 36) off, while the diagonals held to 3 deg.  The axes are therefore added
 as guide bands of their own (AXIS_GUIDES): every face whose centroid lies within
 GUIDE_BAND of an axis, and outside GUIDE_R_MIN of the centre, is constrained to
-the axis tangent with weight GUIDE_WEIGHT.
+the axis tangent, on the same footing as the cable faces.
 
 This is consistent, not over-constrained, precisely because the field is a CROSS
 field: aligning a branch with the 45 deg diagonal puts the other branch on the
@@ -31,6 +31,8 @@ knit direction is NOT an optimisation variable.
 import os, json
 from collections import defaultdict
 import numpy as np
+import scipy.sparse as sp
+import scipy.sparse.linalg as spla
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -43,15 +45,15 @@ CABLE_JSON = os.path.join(DATA, "cable_paths_4part.json")
 OUT_JSON   = os.path.join(DATA, "directional_field_4part.json")
 OUT_PNG    = os.path.join(DATA, "4part_directional_field.png")
 
-SMOOTH_ITERS = 300
-CABLE_WEIGHT = 10.0
+# The cable and guide faces are hard constraints in the solve, so no weight
+# is needed; the iteration count that the old Jacobi smoother required is
+# gone with it.
 
 # ── axis guides (the D4 mirror lines the cables do not cover) ────────────────
 AXIS_GUIDES  = True
 AXIS_DIRS    = [(1.0, 0.0), (0.0, 1.0)]   # the x and y axes, in plan
 GUIDE_BAND   = 0.030   # m, half-width of the constrained band around each axis
 GUIDE_R_MIN  = 0.060   # m, skip the singular neighbourhood of the centre
-GUIDE_WEIGHT = 10.0    # same soft weight as the cables
 
 
 def load_off(path):
@@ -128,7 +130,6 @@ if AXIS_GUIDES:
           f"(band {GUIDE_BAND*1e3:.0f} mm, r > {GUIDE_R_MIN*1e3:.0f} mm)")
 
 face_fixed = face_on_cable | face_on_guide
-fixed_w    = np.where(face_on_cable, CABLE_WEIGHT, GUIDE_WEIGHT)
 
 edge_to_faces = defaultdict(list)
 for fi, tri in enumerate(F):
@@ -142,42 +143,63 @@ for e, fl in edge_to_faces.items():
 angles = np.array([np.arctan2(float(d1_init[fi] @ v_frame[fi]),
                               float(d1_init[fi] @ u_frame[fi])) for fi in range(n_f)])
 
-# The constrained faces are pinned to the TARGET angle the cable / guide asks
-# for, not to whatever they currently hold.  Pinning to the current value only
-# gives a face inertia, and over 300 iterations its neighbours drag it off the
-# line anyway - which is what left the -x axis 17 deg out.
-fixed_ang = angles.copy()
+
+def edge_transport(fi, fj, va, vb):
+    """Rotation r_ij carrying face fj's frame into face fi's, about their shared
+    edge (va, vb).
+
+    The shared edge is the one direction both faces can measure, so it is the
+    pivot: r = phi_i - phi_j, where phi_k is the angle from u_k to the edge,
+    measured in face k's own frame.  Adding r to an angle in fj expresses it in
+    fi, which in the doubled representation is a multiplication by exp(2i r).
+    """
+    e = V[vb] - V[va]
+    out = []
+    for f in (fi, fj):
+        t = e - np.dot(e, normals[f]) * normals[f]
+        out.append(np.arctan2(float(t @ v_frame[f]), float(t @ u_frame[f])))
+    return out[0] - out[1]
 
 
-def transport(fi, fj, ang):
-    d = np.cos(ang) * u_frame[fi] + np.sin(ang) * v_frame[fi]
-    d -= np.dot(d, normals[fj]) * normals[fj]
-    L = np.linalg.norm(d)
-    if L < 1e-10:
-        return ang
-    d /= L
-    return np.arctan2(float(d @ v_frame[fj]), float(d @ u_frame[fj]))
+# ── the field as one sparse solve ────────────────────────────────────────────
+# E(z) = sum_ij w_ij |z_i - exp(2i r_ij) z_j|^2  over adjacent face pairs, with
+# z_f = exp(2i theta_f) the doubled (pi-periodic) representation and w_ij the
+# length of the shared edge, so the energy does not depend on how finely the
+# mesh is divided.  The cable and guide faces are held at their target value, so
+# the unknowns are the free faces alone and the energy is a quadratic form in
+# them: L_ff z_f = -L_fc z_c.  This replaces 300 Jacobi sweeps with one exact
+# solve, and removes the constraint weight, which was a soft pull whose value
+# had to be chosen.
+#
+# L is complex Hermitian, NOT real-decoupled: exp(2i r_ij) is complex whenever
+# the frames differ by something other than a multiple of 90 deg, so it mixes
+# the real and imaginary parts and the system has to be solved over C.
+rows, cols, vals = [], [], []
+for (va, vb), fl in edge_to_faces.items():
+    if len(fl) != 2:
+        continue
+    fi, fj = fl
+    w = float(np.linalg.norm(V[vb] - V[va]))
+    R = np.exp(2j * edge_transport(fi, fj, va, vb))
+    rows += [fi, fj, fi, fj]
+    cols += [fi, fj, fj, fi]
+    vals += [w, w, -w * R, -w * np.conj(R)]
+L = sp.coo_matrix((vals, (rows, cols)), shape=(n_f, n_f), dtype=complex).tocsr()
 
+free = np.flatnonzero(~face_fixed)
+fixed = np.flatnonzero(face_fixed)
+z = np.exp(2j * angles)                      # constrained faces hold the target
+print(f"Solving {len(free)} free faces ({len(fixed)} constrained) ...", flush=True)
+rhs = -L[free][:, fixed] @ z[fixed]
+z_free = spla.spsolve(L[free][:, free].tocsc(), rhs)
+z[free] = z_free
 
-print(f"Smoothing {SMOOTH_ITERS} iterations ...", flush=True)
-for it in range(SMOOTH_ITERS):
-    new = angles.copy()
-    for fi in range(n_f):
-        if face_fixed[fi]:
-            w  = fixed_w[fi]
-            da = (fixed_ang[fi] - angles[fi] + np.pi / 2) % np.pi - np.pi / 2
-            zsum, cnt = w * np.exp(1j * (angles[fi] + da)), w
-        else:
-            zsum, cnt = 0j, 0.0
-        for fj in face_adj[fi]:
-            aj = transport(fj, fi, angles[fj])
-            da = (aj - angles[fi] + np.pi / 2) % np.pi - np.pi / 2  # pi-periodic
-            zsum += np.exp(1j * (angles[fi] + da)); cnt += 1.0
-        if cnt > 0:
-            new[fi] = np.angle(zsum)
-    angles = new
-    if (it + 1) % 100 == 0:
-        print(f"  iter {it+1}", flush=True)
+# |z| carries no direction, and the Dirichlet minimiser is not unit-norm; only
+# the argument is used.  A face whose neighbours disagree completely can solve to
+# z ~ 0, where the angle is meaningless, so report the worst case.
+mag = np.abs(z[free])
+print(f"  |z| on free faces: min {mag.min():.3f}  median {np.median(mag):.3f}")
+angles = np.angle(z) / 2.0
 
 d1 = np.cos(angles)[:, None] * u_frame + np.sin(angles)[:, None] * v_frame
 d2 = np.cross(normals, d1)
