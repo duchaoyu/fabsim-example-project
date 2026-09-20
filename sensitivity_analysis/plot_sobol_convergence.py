@@ -45,16 +45,26 @@ SHOWN    = ["crown_height", "H_anisotropy", "mean_stress", "cable_course_tension
 # Colour-blind-safe qualitative set, keyed by parameter *name* so a parameter
 # keeps its colour in both group rows (the cable group has two extra rows before
 # E1, so indexing by column would recolour it).
+# Keyed on the names the bounds actually carry.  The cable slots were renamed
+# cable_*_frac when the rest length became a fraction of the cable-free section
+# length (config.PARAMS_MATERIAL_R_CABLE); the old cable_*_lrest keys are kept as
+# aliases so --full-box and the older studies still resolve.  Without them both
+# cable parameters fell through to the same grey "o" and could not be told apart
+# in the panels or the legend.
 _MARKERS = dict(zip(
-    ["sf_wale", "sf_course", "knit_dir", "pressure", "cable_wale_lrest",
-     "cable_course_lrest", "E1", "r", "nu"],
+    ["sf_wale", "sf_course", "knit_dir", "pressure", "cable_wale_frac",
+     "cable_course_frac", "E1", "r", "nu"],
     ["o", "s", "^", "v", "P", "X", "D", "*", "d"]))
+_MARKERS["cable_wale_lrest"]   = _MARKERS["cable_wale_frac"]
+_MARKERS["cable_course_lrest"] = _MARKERS["cable_course_frac"]
 
 _PARAM_COLOR = dict(zip(
-    ["sf_wale", "sf_course", "knit_dir", "pressure", "cable_wale_lrest",
-     "cable_course_lrest", "E1", "r", "nu"],
+    ["sf_wale", "sf_course", "knit_dir", "pressure", "cable_wale_frac",
+     "cable_course_frac", "E1", "r", "nu"],
     ["#0077BB", "#EE7733", "#009988", "#CC3311", "#AA4499",
      "#EE3377", "#33BBEE", "#555555", "#BBBB44"]))
+_PARAM_COLOR["cable_wale_lrest"]   = _PARAM_COLOR["cable_wale_frac"]
+_PARAM_COLOR["cable_course_lrest"] = _PARAM_COLOR["cable_course_frac"]
 
 
 def sweep(group, bounds):
