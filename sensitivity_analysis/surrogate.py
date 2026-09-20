@@ -4,7 +4,8 @@ GP surrogate models trained on FEA data.
 Scalar outputs: one GP per output per group.
 Field outputs (displacement, stress, curvature): PCA + one GP per PC per group.
 
-Uses scikit-learn GaussianProcessRegressor with Matern(nu=2.5) kernel.
+Uses scikit-learn GaussianProcessRegressor with an ARD Matern(nu=2.5)
+kernel (one length scale per input; see _make_kernel).
 """
 
 import os
@@ -43,23 +44,33 @@ _LOG1P_OUTPUTS = {"cable_wale_tension", "cable_course_tension"}
 
 # Outputs computed FROM other outputs rather than fitted with their own GP.
 #
-# H_anisotropy = (Hx - Hy) / (Hx + Hy) is a deterministic function of two
-# outputs that are already modelled, so fitting a third GP to it meant carrying
-# two models for one quantity — and they could disagree, by up to 0.033 against
-# an H_anisotropy standard deviation of 0.093 (36%).  Deriving it makes the
-# reported anisotropy consistent with the reported curvatures by construction,
-# and costs nothing: held-out R2 is 0.750 derived against 0.741 fitted on the
-# cable group, 0.937 against 0.941 on no-cable.
+# H_anisotropy = (Hx - Hy) / (Hx + Hy) used to be derived here, so that the
+# reported anisotropy was consistent with the reported curvatures by
+# construction.  On the data of the time that cost nothing: held-out R2 was 0.750
+# derived against 0.741 fitted on the cable group, 0.937 against 0.941 on
+# no-cable.  Two later changes broke that.
 #
-# It is NOT dropped, because Sobol indices do not compose: S_T for the ratio
-# cannot be recovered from S_T for Hx and Hy, and the anisotropy indices are
-# where the cable's effect shows up (L_rest^wale reaches S_T 0.31 there against
-# 0.02 on crown height).
-_DERIVED_OUTPUTS = {
-    "H_anisotropy": (("H_mean_x0", "H_mean_y0"),
-                     lambda hx, hy: np.where(np.abs(hx + hy) > 1e-6,
-                                             (hx - hy) / (hx + hy), np.nan)),
-}
+#   1. Masking the rim (plot_material_section_sobol._BOUNDARY_MASK) removed an
+#      additive floor of ~0.66 m^-1 from Hx and Hy, so the denominator Hx + Hy
+#      now genuinely approaches zero on a shallow dome: its minimum over the
+#      retained design is 0.024 (no cable) and 0.017 (cable), against a median of
+#      0.63 and 0.47.  Dropping the crown-height gate re-admitted exactly those
+#      runs.  A ratio whose denominator reaches 3% of its median is ill
+#      conditioned, and a small absolute error in either GP is amplified without
+#      bound.
+#   2. ARD (see _make_kernel) gives Hx and Hy their own length-scale vectors, so
+#      their errors no longer move together and no longer cancel in the
+#      difference.  Both surfaces got MORE accurate (0.991 -> 0.994 and 0.994 ->
+#      0.996) while the derived ratio collapsed, which is what cancellation
+#      looks like.
+#
+# Fitting H_anisotropy directly is insensitive to both: the target itself is
+# bounded (|dH| <= 0.16 no-cable, <= 0.84 cable) and needs no denominator.
+# Held-out R2 is 0.861 and 0.910 fitted, against 0.463 and 0.862 derived.  The
+# price is that the reported anisotropy is no longer the exact ratio of the
+# reported curvatures; that consistency is worth less than a factor of two in
+# accuracy on the study's headline geometric measure.
+_DERIVED_OUTPUTS = {}
 
 # Outputs with a hard physical floor at zero.  A slack cable carries no load, so
 # ~38% of the cable samples sit exactly at T = 0 over L_rest in (1.2, 1.4) m and
@@ -69,8 +80,29 @@ _DERIVED_OUTPUTS = {
 _NONNEG_OUTPUTS = {"cable_wale_tension", "cable_course_tension"}
 
 
-def _make_kernel():
-    return ConstantKernel(1.0) * Matern(nu=2.5) + WhiteKernel(1e-4)
+def _make_kernel(n_dims: int = None):
+    """Matern(5/2) with automatic relevance determination.
+
+    A scalar length_scale (sklearn's default, and what this returned until now)
+    forces one shared scale across all standardised inputs.  That scale has to
+    compromise between the directions the output turns on sharply and the ones it
+    barely depends on, and it settled at 16.9 (no cable) and 11.0 (cable) on
+    inputs spanning about +-1.7 — effectively a linear trend.  Per-dimension
+    length scales cost nothing but optimiser time and recover the structure:
+
+        H_anisotropy   0.750 -> 0.861 (no cable)   0.844 -> 0.910 (cable)
+        H_mean_x0      0.985 -> 0.984              0.894 -> 0.948
+        crown_height   0.990 -> 0.999              0.966 -> 0.998
+
+    The short directions ARD selects for H_anisotropy are knit_dir, E1 and
+    sf_course without cables and the two cable rest lengths with them — the same
+    parameters the Sobol indices rank first, from an independent part of the fit.
+
+    n_dims=None keeps the isotropic kernel, for callers that fit before the input
+    dimension is known.
+    """
+    ls = 1.0 if n_dims is None else np.ones(n_dims)
+    return ConstantKernel(1.0) * Matern(length_scale=ls, nu=2.5) + WhiteKernel(1e-4)
 
 
 def _input_keys(has_cable: bool, bounds: dict = None) -> list:
@@ -133,7 +165,7 @@ class ScalarSurrogate:
             self.scalers_y[col] = sc
 
             gp = GaussianProcessRegressor(
-                kernel=_make_kernel(),
+                kernel=_make_kernel(X_tr.shape[1]),
                 n_restarts_optimizer=5,
                 normalize_y=False,
                 random_state=RANDOM_SEED,
@@ -248,7 +280,7 @@ class FieldSurrogate:
         r2s, rmses = [], []
         for k in range(self.n_components):
             gp = GaussianProcessRegressor(
-                kernel=_make_kernel(),
+                kernel=_make_kernel(X_tr.shape[1]),
                 n_restarts_optimizer=3,
                 normalize_y=True,
                 random_state=RANDOM_SEED,
