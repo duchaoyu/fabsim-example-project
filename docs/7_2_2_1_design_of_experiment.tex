@@ -1,0 +1,65 @@
+\subsubsection{a. Design of experiment (Latin Hypercube Sampling)}\label{sec:7.2.2.1}
+
+Before any simulation runs, the combinations of parameter values to be tested must
+be chosen. A full factorial design is not feasible: ten levels across the nine
+parameters of the cable group would give \(10^{9}\) runs. Latin Hypercube Sampling
+\cite{mckay1992latin} divides each parameter range into \(N\) intervals of equal
+probability and draws one sample from each, then shuffles the assignments across
+parameters independently. The property this provides is that every parameter
+visits every interval of its own range exactly once, at any \(N\). Coverage of
+each parameter individually is therefore guaranteed by construction rather than by
+the number of runs, which is what makes a design of a few thousand runs usable
+across nine dimensions.
+
+The parameters are listed in Table~\ref{tab:7-1}. Two independent groups were
+defined by the presence or absence of boundary cables, giving a seven-parameter
+design without them and a nine-parameter design with two, one along each
+principal direction. Each group was sampled in two blocks, of \(N = 800\) and
+\(N = 1600\), drawn from independent Latin hypercubes with different seeds, so
+that the second block extends the first into one pooled space-filling design
+rather than duplicating its points. This gives 2400 planned runs per group.
+
+Stratification holds within each block rather than across the pooled design.
+Pooling two Latin hypercubes does not yield a single Latin hypercube, but it
+preserves even coverage and leaves the parameters close to uncorrelated: the
+largest pairwise correlation in the retained designs is 0.062 without cables,
+between pressure and the stiffness ratio, and 0.053 with them, between the course
+pre-strain and the wale modulus (Figure~\ref{fig:7-11}).
+
+About 55\% of the planned runs reach the surrogate. Three filters apply in
+sequence, and Table~\ref{tab:7-3} gives the count at each stage. The first is
+numerical convergence to an inflated equilibrium, which 1988 and 1924 runs reach.
+The second is a restriction on model validity: configurations with
+\(s_{wale}\), \(s_{course} \geq 0.95\) are retained, leaving 1336 and 1314. The
+third removes runs whose section profile is too irregular for a section mean
+curvature to be meaningful, and costs almost nothing, one run and six. Of the
+2400 planned combinations per group, 1335 and 1308 survive, or 56\% and 55\%.
+
+The validity restriction rests on two separate grounds. Below \(s = 0.95\) the
+relaxed fabric is larger than the boundary and carries slack, so the simulation
+develops compressive membrane stress, which a membrane cannot sustain; a real
+fabric wrinkles instead, and the linear orthotropic model of
+Section~\ref{sec:5.3.3} does not represent wrinkling. Independently of that, the
+biaxial tests from which the constitutive model was derived do not extend into
+compression, so those configurations lie outside the domain over which the
+material was measured at all.
+
+Attrition is concentrated almost entirely outside the validity box, and is close
+to uniform inside it. Of the planned combinations that satisfy
+\(s_{wale}, s_{course} \geq 0.95\), 99\% and 97\% converge; of those that do not,
+only 62\% and 58\% do. Convergence failures therefore fall where the fabric
+cannot be brought into tension, which is the same region the validity
+restriction excludes on physical grounds. Within the retained design no marginal
+departs detectably from uniform: a Kolmogorov--Smirnov test against the uniform
+distribution on the sampled range gives \(p > 0.3\) for every parameter in both
+groups, so the retained runs remain a space-filling design over the restricted
+box rather than a biased subset of it (Figure~\ref{fig:7-11}).
+
+The indices of Section~\ref{sec:7.2.2.4} therefore describe the response over the
+region in which a tensioned membrane solution exists, and not over the full
+nominal ranges of Table~\ref{tab:7-1}. This is a restriction on the scope of the
+conclusions rather than a defect in the sampling: the excluded region is one in
+which the formwork does not function, so the parameters are ranked over the space
+in which a design could be built. Because the restriction is a box on the inputs
+and not a filter on the outputs, the Saltelli estimator samples the restricted
+box directly and never extrapolates into the excluded region.
