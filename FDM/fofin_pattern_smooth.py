@@ -13,14 +13,14 @@ scaled so its footprint diameter is TARGET_DIAMETER = 1.2 m, matching
 FDM/scale_geometry.py.
 
 Saves into FDM/data/pattern/:
-  mesh_out_pattern_smooth_<timestamp>.json   full result (coords + qpre)
-  mesh_out_pattern_smooth_latest.json        fixed name for downstream scripts
-  pattern_smooth_tri_m.off                  scaled trimesh target (FEM input)
-  pattern_smooth_fdm.off                    FDM equilibrium surface
-  pattern_smooth_fdm_result.png              visualisation
+  mesh_out_pattern_smooth[_TAG]_<timestamp>.json   full result (coords + qpre)
+  mesh_out_pattern_smooth[_TAG]_latest.json        fixed name for downstream scripts
+  pattern_smooth_tri_m.off                        scaled trimesh target (FEM input)
+  pattern_smooth_fdm[_TAG].off                    FDM equilibrium surface
+  pattern_smooth_fdm[_TAG]_result.png             visualisation
 
 Usage:
-  .venv/bin/python FDM/fofin_pattern_smooth.py [input.obj]
+  [LAMBDA_L=1.0] [R_MIN=0.9] [R_MAX=1.1] [MU_CAP=1e3] [TAG=...] .venv/bin/python FDM/fofin_pattern_smooth.py [input.obj]
 """
 import os, sys, datetime, time
 import numpy as np
@@ -33,6 +33,8 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D            # noqa: F401
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+from matplotlib.collections import LineCollection
+from matplotlib.colors import LogNorm, TwoSlopeNorm
 
 from compas.datastructures import Mesh
 from compas.matrices import connectivity_matrix
@@ -47,9 +49,20 @@ TARGET_DIAMETER = 1.2      # m, max(x-span, y-span); same convention as scale_ge
 PRESSURE        = 1.0
 Q_INIT          = 1.0
 Q_MIN           = 0.01
+Q_MAX           = 100.0
 INFLATE_IT      = 5
 INFLATE_DAMP    = 1.0
 MAXITER         = int(os.environ.get("MAXITER", 2000))
+# Weight of the edge-length term, mean((L/L0 - 1)^2), against the position
+# term, mean(|x - x_target|^2) / l0^2 (l0 = mean target edge length). It keeps
+# the net's layout close to the target mesh; 0 is a plain vertex best fit.
+LAMBDA_L        = float(os.environ.get("LAMBDA_L", 1.0))
+# Band on edge length: edges outside R_MIN * L0 .. R_MAX * L0 pay a stiff
+# quadratic penalty MU_CAP * mean(dist(L/L0, [R_MIN, R_MAX])^2).
+R_MIN           = float(os.environ.get("R_MIN", 0.0))
+R_MAX           = float(os.environ.get("R_MAX", "inf"))
+MU_CAP          = float(os.environ.get("MU_CAP", 1e3))
+TAG             = os.environ.get("TAG", "")          # suffix for output files
 
 os.makedirs(DATA, exist_ok=True)
 
@@ -148,48 +161,72 @@ def inflate(xyz_full, q_vec, pressure):
     return xyz
 
 
+T_full = np.array([target_xyz[v] for v in range(n_v)], dtype=float)
+L0     = np.linalg.norm(C.dot(T_full), axis=1)       # target edge lengths
+l0     = float(L0.mean())
+free_idx = np.array(free)
+
 _call = [0]
 _hist = []
 
-def obj_grad(q_vec):
+def equilibrium(q_vec):
     xyz_full = np.zeros((n_v, 3), dtype=float)
     for i, v in enumerate(fixed):
         xyz_full[v] = xyz_fixed[i]
-    xyz_eq = inflate(xyz_full, q_vec, PRESSURE)
+    return inflate(xyz_full, q_vec, PRESSURE)
 
-    X_free = np.array([xyz_eq[v] for v in free])
-    diff   = X_free - S_free
-    obj    = float(np.sum(diff ** 2))
 
-    Q   = scipy.sparse.diags(q_vec)
-    Dn  = Cit.dot(Q).dot(Ci)
-    xyz_arr = np.array([xyz_eq[v] for v in range(n_v)])
+def obj_grad(s_vec):
+    """Objective in s = log q. The gradient uses the adjoint of Dn x = p with
+    the pressure loads held fixed at the last inflation step."""
+    q_vec  = np.exp(s_vec)
+    xyz_eq = equilibrium(q_vec)
+    diff   = xyz_eq[free_idx] - S_free
 
-    grad = np.zeros(n_e)
+    # position term, normalised by the mean target edge length
+    J_x   = float(np.sum(diff ** 2)) / (len(free) * l0 ** 2)
+    g_X   = 2.0 * diff / (len(free) * l0 ** 2)                 # dJ/dX_free
+
+    # edge-length term: keeps the layout of the target mesh
+    U     = C.dot(xyz_eq)
+    L     = np.linalg.norm(U, axis=1)
+    r     = L / L0
+    J_L   = float(np.mean((r - 1.0) ** 2))
+    coef  = 2.0 * LAMBDA_L * (r - 1.0) / (L0 * np.maximum(L, 1e-12) * n_e)
+    # band on edge length: signed distance outside [R_MIN, R_MAX]
+    over  = np.maximum(r - R_MAX, 0.0) - np.maximum(R_MIN - r, 0.0)
+    J_cap = float(np.mean(over ** 2))
+    coef += 2.0 * MU_CAP * over / (L0 * np.maximum(L, 1e-12) * n_e)
+    g_X  += C.T.dot(coef[:, None] * U)[free_idx]
+
+    Dn    = Cit.dot(scipy.sparse.diags(q_vec)).dot(Ci).tocsc()
+    solve = scipy.sparse.linalg.factorized(Dn)
+    grad_q = np.zeros(n_e)
     for ax in range(3):
-        b     = Cit.dot(scipy.sparse.diags(C.dot(xyz_arr[:, ax])))
-        dX_dq = -scipy.sparse.linalg.spsolve(Dn, b)
-        grad += 2.0 * (diff[:, ax] @ dX_dq)
+        adj = solve(g_X[:, ax])
+        grad_q -= Ci.dot(adj) * U[:, ax]
 
     _call[0] += 1
     rmse = float(np.sqrt(np.mean(np.sum(diff ** 2, axis=1))))
     _hist.append(rmse)
-    if _call[0] % 20 == 0:
-        print(f"  iter {_call[0]:4d}  obj={obj:.6f}  RMSE={rmse:.5f} m", flush=True)
-    return obj, grad
+    if _call[0] % 50 == 0:
+        print(f"  iter {_call[0]:4d}  J_x={J_x:.5f}  J_L={J_L:.5f}  L/L0 {r.min():.3f}..{r.max():.3f}  "
+              f"RMSE={rmse*1e3:.2f} mm", flush=True)
+    return J_x + LAMBDA_L * J_L + MU_CAP * J_cap, grad_q * q_vec
 
 
 span   = max(p[0] for p in target_xyz.values()) - min(p[0] for p in target_xyz.values())
 height = max(p[2] for p in target_xyz.values())
 print(f"\npattern smooth FDM: {len(free)} free, {len(fixed)} anchors, {n_e} edges", flush=True)
-print(f"Target span={span:.3f} m  height={height:.3f} m  pressure={PRESSURE}", flush=True)
-print(f"Solver: L-BFGS-B (max {MAXITER} iters)\n", flush=True)
+print(f"Target span={span:.3f} m  height={height:.3f} m  pressure={PRESSURE}  "
+      f"mean edge {l0*1e3:.1f} mm  LAMBDA_L={LAMBDA_L}  L/L0 band [{R_MIN}, {R_MAX}]", flush=True)
+print(f"Solver: L-BFGS-B on log q (max {MAXITER} iters)\n", flush=True)
 
-q0     = np.full(n_e, Q_INIT)
+s0     = np.full(n_e, np.log(Q_INIT))
 t_opt0 = time.perf_counter()
-result = minimize(obj_grad, q0, jac=True, method="L-BFGS-B",
-                  bounds=[(Q_MIN, None)] * n_e,
-                  options={"maxiter": MAXITER, "ftol": 1e-8, "gtol": 1e-8, "disp": True})
+result = minimize(obj_grad, s0, jac=True, method="L-BFGS-B",
+                  bounds=[(np.log(Q_MIN), np.log(Q_MAX))] * n_e,
+                  options={"maxiter": MAXITER, "ftol": 1e-10, "gtol": 1e-8})
 t_opt = time.perf_counter() - t_opt0
 
 print(f"\nConverged: {result.success}  |  {result.message}", flush=True)
@@ -197,11 +234,8 @@ print(f"obj={result.fun:.6f}  calls={_call[0]}", flush=True)
 print(f"Elapsed:   {t_opt:.2f} s for {_call[0]} iters "
       f"({1e3*t_opt/max(_call[0],1):.1f} ms/iter, {n_e} design variables)", flush=True)
 
-q_opt = result.x
-xyz_full = np.zeros((n_v, 3), dtype=float)
-for i, v in enumerate(fixed):
-    xyz_full[v] = xyz_fixed[i]
-xyz_final = inflate(xyz_full, q_opt, PRESSURE)
+q_opt = np.exp(result.x)
+xyz_final = equilibrium(q_opt)
 
 mesh_out = mesh_target.copy()
 for v in mesh_out.vertices():
@@ -213,19 +247,29 @@ X_free_final = np.array([xyz_final[v] for v in free])
 dev  = np.linalg.norm(X_free_final - S_free, axis=1)
 rmse = float(np.sqrt(np.mean(dev ** 2)))
 print(f"Final RMSE: {rmse:.5f} m  ({100*rmse/span:.2f}% of span), max dev {dev.max()*1000:.1f} mm", flush=True)
-print(f"q range: {q_opt.min():.4f} .. {q_opt.max():.4f}", flush=True)
+dxy = np.linalg.norm((X_free_final - S_free)[:, :2], axis=1)
+dz  = np.abs((X_free_final - S_free)[:, 2])
+r_final = np.linalg.norm(C.dot(xyz_final), axis=1) / L0
+print(f"  in-plane dev mean {dxy.mean()*1e3:.1f} / max {dxy.max()*1e3:.1f} mm, "
+      f"vertical dev mean {dz.mean()*1e3:.1f} / max {dz.max()*1e3:.1f} mm", flush=True)
+print(f"  edge length L/L0: p1 {np.percentile(r_final, 1):.3f}  p50 {np.median(r_final):.3f}  "
+      f"p99 {np.percentile(r_final, 99):.3f}  min {r_final.min():.3f}  max {r_final.max():.3f}  "
+      f"({int(np.sum((r_final > R_MAX + 0.01) | (r_final < R_MIN - 0.01)))} edges outside band by > 0.01)", flush=True)
+print(f"q range: {q_opt.min():.4f} .. {q_opt.max():.4f}  (median {np.median(q_opt):.3f}, "
+      f"{int(np.sum(q_opt <= Q_MIN * 1.01))} edges at Q_MIN)", flush=True)
 
 # ── Save ──────────────────────────────────────────────────────────────────────
+sfx = f"_{TAG}" if TAG else ""
 ts  = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-out = os.path.join(DATA, f"mesh_out_pattern_smooth_{ts}.json")
+out = os.path.join(DATA, f"mesh_out_pattern_smooth{sfx}_{ts}.json")
 mesh_out.to_json(out)
-mesh_out.to_json(os.path.join(DATA, "mesh_out_pattern_smooth_latest.json"))
+mesh_out.to_json(os.path.join(DATA, f"mesh_out_pattern_smooth{sfx}_latest.json"))
 write_off(mesh_target, os.path.join(DATA, "pattern_smooth_tri_m.off"))
-write_off(mesh_out, os.path.join(DATA, "pattern_smooth_fdm.off"))
+write_off(mesh_out, os.path.join(DATA, f"pattern_smooth_fdm{sfx}.off"))
 print(f"Saved: {out}", flush=True)
-print(f"Saved: {os.path.join(DATA, 'mesh_out_pattern_smooth_latest.json')}", flush=True)
+print(f"Saved: {os.path.join(DATA, f'mesh_out_pattern_smooth{sfx}_latest.json')}", flush=True)
 print(f"Saved: {os.path.join(DATA, 'pattern_smooth_tri_m.off')}  (scaled trimesh target)", flush=True)
-print(f"Saved: {os.path.join(DATA, 'pattern_smooth_fdm.off')}    (FDM surface)", flush=True)
+print(f"Saved: {os.path.join(DATA, f'pattern_smooth_fdm{sfx}.off')}    (FDM surface)", flush=True)
 
 # ── Figure ────────────────────────────────────────────────────────────────────
 vkeys = list(mesh_out.vertices())
@@ -234,9 +278,9 @@ V_out = np.array([mesh_out.vertex_coordinates(v) for v in vkeys])
 V_tgt = np.array([target_xyz[v] for v in vkeys])
 faces = [[v_idx[v] for v in mesh_out.face_vertices(f)] for f in mesh_out.faces()]
 
-fig = plt.figure(figsize=(18, 5))
+fig = plt.figure(figsize=(24, 5))
 
-ax1 = fig.add_subplot(141, projection="3d")
+ax1 = fig.add_subplot(151, projection="3d")
 ax1.add_collection3d(Poly3DCollection([V_out[f] for f in faces], alpha=0.25,
                                       facecolor="tomato", edgecolor="k", linewidths=0.1))
 ax1.set_box_aspect([1, 1, 0.55]); ax1.view_init(elev=30, azim=-60)
@@ -244,7 +288,7 @@ ax1.set_xlim(V_tgt[:,0].min(), V_tgt[:,0].max()); ax1.set_ylim(V_tgt[:,1].min(),
 ax1.set_zlim(0, V_tgt[:,2].max())
 ax1.set_title("FDM result", fontsize=9)
 
-ax2 = fig.add_subplot(142, projection="3d")
+ax2 = fig.add_subplot(152, projection="3d")
 ax2.add_collection3d(Poly3DCollection([V_tgt[f] for f in faces], alpha=0.25,
                                       facecolor="steelblue", edgecolor="k", linewidths=0.1))
 ax2.set_box_aspect([1, 1, 0.55]); ax2.view_init(elev=30, azim=-60)
@@ -252,32 +296,42 @@ ax2.set_xlim(V_tgt[:,0].min(), V_tgt[:,0].max()); ax2.set_ylim(V_tgt[:,1].min(),
 ax2.set_zlim(0, V_tgt[:,2].max())
 ax2.set_title("Target (pattern smooth, Ø1.2 m)", fontsize=9)
 
-ax3 = fig.add_subplot(143)
-q_max = q_opt.max()
-for idx, e in enumerate(mesh_out.edges()):
-    p1 = mesh_out.vertex_coordinates(e[0]); p2 = mesh_out.vertex_coordinates(e[1])
-    ax3.plot([p1[0], p2[0]], [p1[1], p2[1]],
-             color=plt.cm.plasma(float(q_opt[idx]) / q_max), linewidth=0.6, alpha=0.8)
-ax3.set_aspect("equal"); ax3.set_title("Force densities q (top view)", fontsize=9)
+# q spans orders of magnitude, so colour it on a log scale
+ax3 = fig.add_subplot(153)
+seg = [[V_out[e[0], :2], V_out[e[1], :2]] for e in mesh_out.edges()]
+q_norm = LogNorm(vmin=max(q_opt.min(), Q_MIN), vmax=q_opt.max())
+lc = LineCollection(seg, cmap="plasma", norm=q_norm, linewidths=0.7)
+lc.set_array(q_opt)
+ax3.add_collection(lc); ax3.autoscale()
+ax3.set_aspect("equal"); ax3.set_title("Force densities q (top view, log scale)", fontsize=9)
 ax3.set_xlabel("x (m)"); ax3.set_ylabel("y (m)")
-sm = plt.cm.ScalarMappable(cmap="plasma", norm=plt.Normalize(vmin=q_opt.min(), vmax=q_max))
-sm.set_array([])
-fig.colorbar(sm, ax=ax3, label="q", shrink=0.8)
+fig.colorbar(lc, ax=ax3, label="q", shrink=0.8)
 
-ax4 = fig.add_subplot(144)
+ax4 = fig.add_subplot(154)
+r_lo = min(0.8, R_MIN) if R_MIN > 0 else 0.8
+r_hi = max(1.2, R_MAX) if np.isfinite(R_MAX) else 1.2
+lr = LineCollection(seg, cmap="RdBu_r", norm=TwoSlopeNorm(vcenter=1.0, vmin=r_lo, vmax=r_hi),
+                    linewidths=0.7)
+lr.set_array(np.clip(r_final, r_lo, r_hi))
+ax4.add_collection(lr); ax4.autoscale()
+ax4.set_aspect("equal"); ax4.set_title("Edge length L / L0 (top view)", fontsize=9)
+ax4.set_xlabel("x (m)"); ax4.set_ylabel("y (m)")
+fig.colorbar(lr, ax=ax4, label="L / L0 (clipped)", shrink=0.8)
+
+ax5 = fig.add_subplot(155)
 dev_all = np.linalg.norm(V_out - V_tgt, axis=1) * 1000.0
-sc = ax4.tripcolor(V_tgt[:, 0], V_tgt[:, 1],
+sc = ax5.tripcolor(V_tgt[:, 0], V_tgt[:, 1],
                    [f for f in faces if len(f) == 3], dev_all,
                    shading="gouraud", cmap="viridis")
-ax4.set_aspect("equal"); ax4.set_title("Deviation from target (mm)", fontsize=9)
-ax4.set_xlabel("x (m)"); ax4.set_ylabel("y (m)")
-fig.colorbar(sc, ax=ax4, label="mm", shrink=0.8)
+ax5.set_aspect("equal"); ax5.set_title("Deviation from target (mm)", fontsize=9)
+ax5.set_xlabel("x (m)"); ax5.set_ylabel("y (m)")
+fig.colorbar(sc, ax=ax5, label="mm", shrink=0.8)
 
-fig.suptitle(f"pattern smooth FDM best-fit — RMSE={rmse*1000:.1f} mm, max={dev.max()*1000:.1f} mm, "
+fig.suptitle(f"pattern smooth FDM best-fit (λ_L={LAMBDA_L:g}, L/L0 in [{R_MIN:g}, {R_MAX:g}]) — RMSE={rmse*1000:.1f} mm, max={dev.max()*1000:.1f} mm, "
              f"span={span:.2f} m, {n_v}v / {mesh_out.number_of_faces()}f",
              fontsize=10, y=1.02)
 fig.tight_layout()
-png_out = os.path.join(DATA, "pattern_smooth_fdm_result.png")
+png_out = os.path.join(DATA, f"pattern_smooth_fdm{sfx}_result.png")
 fig.savefig(png_out, dpi=150, bbox_inches="tight")
 plt.close(fig)
 print(f"Saved: {png_out}", flush=True)
