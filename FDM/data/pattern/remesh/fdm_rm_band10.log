@@ -1,0 +1,42 @@
+Input: FDM/data/pattern/remesh/pattern_smooth_rm.obj
+  1237 vertices, 2330 triangles
+  native diameter 1.2000 -> scaled by 1.000000 to 1.2 m
+  anchors: 23 vertices at z = 0
+
+pattern smooth FDM: 1214 free, 23 anchors, 3566 edges
+Target span=1.200 m  height=0.269 m  pressure=1.0  mean edge 27.7 mm  LAMBDA_L=1.0  L/L0 band [0.9, 1.1]
+Solver: L-BFGS-B on log q (max 1000 iters)
+
+  iter   50  J_x=1.64004  J_L=0.00740  L/L0 0.618..1.382  RMSE=35.49 mm
+  iter  100  J_x=0.27787  J_L=0.00482  L/L0 0.701..1.278  RMSE=14.61 mm
+  iter  150  J_x=0.07463  J_L=0.00395  L/L0 0.838..1.200  RMSE=7.57 mm
+  iter  200  J_x=0.03655  J_L=0.00360  L/L0 0.835..1.196  RMSE=5.30 mm
+  iter  250  J_x=0.02521  J_L=0.00302  L/L0 0.829..1.188  RMSE=4.40 mm
+  iter  300  J_x=0.02109  J_L=0.00236  L/L0 0.824..1.166  RMSE=4.02 mm
+  iter  350  J_x=0.01890  J_L=0.00216  L/L0 0.824..1.166  RMSE=3.81 mm
+  iter  400  J_x=0.01691  J_L=0.00201  L/L0 0.823..1.164  RMSE=3.60 mm
+  iter  450  J_x=0.01535  J_L=0.00177  L/L0 0.824..1.166  RMSE=3.43 mm
+  iter  500  J_x=0.01403  J_L=0.00159  L/L0 0.824..1.165  RMSE=3.28 mm
+  iter  550  J_x=0.01301  J_L=0.00145  L/L0 0.822..1.164  RMSE=3.16 mm
+  iter  600  J_x=0.01248  J_L=0.00136  L/L0 0.824..1.165  RMSE=3.10 mm
+  iter  650  J_x=0.01202  J_L=0.00129  L/L0 0.825..1.167  RMSE=3.04 mm
+  iter  700  J_x=0.01165  J_L=0.00122  L/L0 0.823..1.165  RMSE=2.99 mm
+  iter  750  J_x=0.01132  J_L=0.00118  L/L0 0.824..1.165  RMSE=2.95 mm
+  iter  800  J_x=0.01100  J_L=0.00114  L/L0 0.823..1.165  RMSE=2.91 mm
+  iter  850  J_x=0.01073  J_L=0.00111  L/L0 0.823..1.164  RMSE=2.87 mm
+  iter  900  J_x=0.01052  J_L=0.00107  L/L0 0.824..1.165  RMSE=2.84 mm
+  iter  950  J_x=0.01034  J_L=0.00107  L/L0 0.824..1.165  RMSE=2.82 mm
+  iter 1000  J_x=0.01014  J_L=0.00107  L/L0 0.824..1.165  RMSE=2.79 mm
+
+Converged: False  |  STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT
+obj=0.015857  calls=1038
+Elapsed:   701.99 s for 1038 iters (676.3 ms/iter, 3566 design variables)
+Final RMSE: 0.00278 m  (0.23% of span), max dev 11.6 mm
+  in-plane dev mean 1.2 / max 9.6 mm, vertical dev mean 1.5 / max 11.6 mm
+  edge length L/L0: p1 0.900  p50 1.000  p99 1.099  min 0.824  max 1.165  (5 edges outside band by > 0.01)
+q range: 0.0100 .. 43.0464  (median 0.109, 398 edges at Q_MIN)
+Saved: FDM/data/pattern/remesh/mesh_out_pattern_smooth_rm_band10_20260930100431.json
+Saved: FDM/data/pattern/remesh/mesh_out_pattern_smooth_rm_band10_latest.json
+Saved: FDM/data/pattern/remesh/pattern_smooth_tri_m.off  (scaled trimesh target)
+Saved: FDM/data/pattern/remesh/pattern_smooth_fdm_rm_band10.off    (FDM surface)
+Saved: FDM/data/pattern/remesh/pattern_smooth_fdm_rm_band10_result.png

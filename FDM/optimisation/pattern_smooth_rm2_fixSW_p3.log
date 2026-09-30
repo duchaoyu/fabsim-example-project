@@ -1,0 +1,797 @@
+Fixed edges: ['E01'] -> 47 fixed vertices
+Mesh    : 1232 verts, 2320 faces, 47 supports, 1185 free (fitted)
+Target  : crown 0.2697 m, span 1.2000 m  (rest == target)
+Regions : 4, faces [611, 506, 320, 883]; knit per face, region means [91.7, 93.6, 68.1, 62.5] deg — FIXED
+Cables  : ['C00', 'C01', 'C02', 'E00', 'E02', 'E03']  EA 157000
+Material: E1 5000  E2 12507  nu 0.198   pressure 1000 Pa
+Log     : optimisation/pattern_smooth_rm2_fixSW_p3_calls.jsonl
+  [    4] FEM INVALID: min interior z -0.0174 — folded
+  [    5] FEM INVALID: min interior z -0.0172 — folded
+  [   10] FEM INVALID: solver line_search_failed
+  [    8] FEM INVALID: solver line_search_failed
+  [   14] FEM INVALID: min interior z -0.0150 — folded
+  gen   1  calls    16  best   48.062 mm  gen best   48.062  invalid 5/16  sigma 0.972
+  [   30] FEM INVALID: solver line_search_failed
+  [   23] FEM INVALID: solver line_search_failed
+  [   22] FEM INVALID: solver line_search_failed
+  gen   2  calls    32  best   48.062 mm  gen best   48.063  invalid 3/16  sigma 1.024
+  [   47] FEM INVALID: solver line_search_failed
+  [   45] FEM INVALID: solver line_search_failed
+  [   41] FEM INVALID: solver line_search_failed
+  [   46] FEM INVALID: solver line_search_failed
+  gen   3  calls    48  best   45.200 mm  gen best   45.200  invalid 4/16  sigma 1.158
+  [   63] FEM INVALID: solver line_search_failed
+  [   57] FEM INVALID: solver line_search_failed
+  gen   4  calls    64  best   45.200 mm  gen best   45.920  invalid 2/16  sigma 1.266
+  [   80] FEM INVALID: solver line_search_failed
+  [   73] FEM INVALID: solver line_search_failed
+  [   66] FEM INVALID: solver line_search_failed
+  [   79] FEM INVALID: solver line_search_failed
+  gen   5  calls    80  best   44.055 mm  gen best   44.055  invalid 4/16  sigma 1.412
+  gen   6  calls    96  best   42.889 mm  gen best   42.889  invalid 0/16  sigma 1.588
+  [   97] FEM INVALID: solver line_search_failed
+  [   98] FEM INVALID: solver line_search_failed
+  [  109] FEM INVALID: solver line_search_failed
+  [  100] FEM INVALID: timeout
+  gen   7  calls   112  best   41.703 mm  gen best   41.703  invalid 4/16  sigma 1.876
+  gen   8  calls   128  best   41.069 mm  gen best   41.069  invalid 0/16  sigma 2.159
+  [  132] FEM INVALID: solver line_search_failed
+  [  131] FEM INVALID: solver line_search_failed
+  [  143] FEM INVALID: solver line_search_failed
+  [  138] FEM INVALID: solver line_search_failed
+  [  135] FEM INVALID: solver line_search_failed
+  [  140] FEM INVALID: solver line_search_failed
+  [  139] FEM INVALID: timeout
+  gen   9  calls   144  best   40.078 mm  gen best   40.078  invalid 7/16  sigma 2.369
+  [  145] FEM INVALID: solver line_search_failed
+  [  150] FEM INVALID: solver line_search_failed
+  [  153] FEM INVALID: solver line_search_failed
+  gen  10  calls   160  best   40.078 mm  gen best   40.359  invalid 3/16  sigma 2.617
+  [  169] FEM INVALID: solver line_search_failed
+  [  164] FEM INVALID: solver line_search_failed
+  [  173] FEM INVALID: solver line_search_failed
+  [  172] FEM INVALID: solver line_search_failed
+  [  170] FEM INVALID: solver line_search_failed
+  [  165] FEM INVALID: solver line_search_failed
+  gen  11  calls   176  best   40.078 mm  gen best   40.375  invalid 6/16  sigma 2.805
+  [  192] FEM INVALID: min interior z -0.0139 — folded
+  [  180] FEM INVALID: solver line_search_failed
+  [  187] FEM INVALID: solver line_search_failed
+  [  191] FEM INVALID: solver line_search_failed
+  [  185] FEM INVALID: timeout
+  gen  12  calls   192  best   39.538 mm  gen best   39.538  invalid 5/16  sigma 2.696
+  [  208] FEM INVALID: solver line_search_failed
+  [  194] FEM INVALID: timeout
+  [  197] FEM INVALID: timeout
+  [  203] FEM INVALID: timeout
+  gen  13  calls   208  best   39.082 mm  gen best   39.082  invalid 4/16  sigma 2.599
+  [  215] FEM INVALID: solver line_search_failed
+  [  224] FEM INVALID: solver line_search_failed
+  [  210] FEM INVALID: solver line_search_failed
+  [  209] FEM INVALID: solver line_search_failed
+  [  214] FEM INVALID: solver line_search_failed
+  [  213] FEM INVALID: solver line_search_failed
+  [  217] FEM INVALID: min interior z -0.0161 — folded
+  gen  14  calls   224  best   39.082 mm  gen best   40.010  invalid 7/16  sigma 2.495
+  [  226] FEM INVALID: solver line_search_failed
+  [  225] FEM INVALID: solver line_search_failed
+  [  236] FEM INVALID: solver line_search_failed
+  [  234] FEM INVALID: solver line_search_failed
+  gen  15  calls   240  best   39.082 mm  gen best   40.440  invalid 4/16  sigma 2.540
+  [  249] FEM INVALID: solver line_search_failed
+  gen  16  calls   256  best   38.426 mm  gen best   38.426  invalid 1/16  sigma 2.620
+  [  261] FEM INVALID: solver line_search_failed
+  [  262] FEM INVALID: solver line_search_failed
+  [  258] FEM INVALID: solver line_search_failed
+  gen  17  calls   272  best   38.426 mm  gen best   39.792  invalid 3/16  sigma 2.563
+  [  288] FEM INVALID: solver line_search_failed
+  [  284] FEM INVALID: solver line_search_failed
+  [  277] FEM INVALID: solver line_search_failed
+  [  278] FEM INVALID: solver line_search_failed
+  [  285] FEM INVALID: solver line_search_failed
+  [  279] FEM INVALID: solver line_search_failed
+  [  274] FEM INVALID: solver line_search_failed
+  [  286] FEM INVALID: solver line_search_failed
+  gen  18  calls   288  best   38.426 mm  gen best   40.992  invalid 8/16  sigma 2.624
+  [  300] FEM INVALID: solver line_search_failed
+  [  293] FEM INVALID: solver line_search_failed
+  [  298] FEM INVALID: solver line_search_failed
+  [  294] FEM INVALID: solver line_search_failed
+  [  299] FEM INVALID: solver line_search_failed
+  gen  19  calls   304  best   38.426 mm  gen best   39.180  invalid 5/16  sigma 2.480
+  [  317] FEM INVALID: solver line_search_failed
+  [  310] FEM INVALID: solver line_search_failed
+  [  311] FEM INVALID: solver line_search_failed
+  [  315] FEM INVALID: solver line_search_failed
+  [  320] FEM INVALID: solver line_search_failed
+  [  308] FEM INVALID: solver line_search_failed
+  [  314] FEM INVALID: min interior z -0.0180 — folded
+  [  316] FEM INVALID: solver line_search_failed
+  [  309] FEM INVALID: solver line_search_failed
+  gen  20  calls   320  best   38.426 mm  gen best   40.941  invalid 9/16  sigma 2.497
+  [  326] FEM INVALID: solver line_search_failed
+  [  330] FEM INVALID: solver line_search_failed
+  [  325] FEM INVALID: solver line_search_failed
+  gen  21  calls   336  best   38.426 mm  gen best   41.069  invalid 3/16  sigma 2.534
+  [  350] FEM INVALID: solver line_search_failed
+  [  338] FEM INVALID: solver line_search_failed
+  [  342] FEM INVALID: solver line_search_failed
+  [  343] FEM INVALID: min interior z -0.0222 — folded
+  [  341] FEM INVALID: solver line_search_failed
+  [  352] FEM INVALID: solver line_search_failed
+  gen  22  calls   352  best   38.426 mm  gen best   39.961  invalid 6/16  sigma 2.410
+  [  359] FEM INVALID: solver line_search_failed
+  [  358] FEM INVALID: solver line_search_failed
+  [  363] FEM INVALID: solver line_search_failed
+  [  362] FEM INVALID: solver line_search_failed
+  [  356] FEM INVALID: solver line_search_failed
+  [  361] FEM INVALID: solver line_search_failed
+  gen  23  calls   368  best   38.426 mm  gen best   40.206  invalid 6/16  sigma 2.481
+  [  373] FEM INVALID: solver line_search_failed
+  [  377] FEM INVALID: solver line_search_failed
+  gen  24  calls   384  best   38.426 mm  gen best   40.677  invalid 2/16  sigma 2.535
+  [  399] FEM INVALID: solver line_search_failed
+  [  398] FEM INVALID: solver line_search_failed
+  [  390] FEM INVALID: solver line_search_failed
+  [  389] FEM INVALID: solver line_search_failed
+  [  392] FEM INVALID: solver line_search_failed
+  gen  25  calls   400  best   38.426 mm  gen best   40.371  invalid 5/16  sigma 2.485
+  [  408] FEM INVALID: solver line_search_failed
+  [  401] FEM INVALID: solver line_search_failed
+  [  415] FEM INVALID: solver line_search_failed
+  [  410] FEM INVALID: solver line_search_failed
+  [  407] FEM INVALID: solver line_search_failed
+  gen  26  calls   416  best   38.426 mm  gen best   39.811  invalid 5/16  sigma 2.393
+  [  418] FEM INVALID: solver line_search_failed
+  [  423] FEM INVALID: solver line_search_failed
+  [  422] FEM INVALID: solver line_search_failed
+  [  430] FEM INVALID: solver line_search_failed
+  [  431] FEM INVALID: timeout
+  gen  27  calls   432  best   38.426 mm  gen best   39.103  invalid 5/16  sigma 2.341
+  [  436] FEM INVALID: solver line_search_failed
+  [  444] FEM INVALID: solver line_search_failed
+  [  447] FEM INVALID: solver line_search_failed
+  gen  28  calls   448  best   38.426 mm  gen best   39.249  invalid 3/16  sigma 2.223
+  [  463] FEM INVALID: solver line_search_failed
+  [  461] FEM INVALID: solver line_search_failed
+  [  464] FEM INVALID: solver line_search_failed
+  [  450] FEM INVALID: solver line_search_failed
+  [  459] FEM INVALID: solver line_search_failed
+  gen  29  calls   464  best   38.426 mm  gen best   38.909  invalid 5/16  sigma 2.149
+  [  479] FEM INVALID: solver line_search_failed
+  [  477] FEM INVALID: solver line_search_failed
+  [  466] FEM INVALID: solver line_search_failed
+  [  467] FEM INVALID: solver line_search_failed
+  [  476] FEM INVALID: solver line_search_failed
+  gen  30  calls   480  best   38.426 mm  gen best   39.257  invalid 5/16  sigma 2.047
+  [  483] FEM INVALID: solver line_search_failed
+  [  484] FEM INVALID: solver line_search_failed
+  [  481] FEM INVALID: solver line_search_failed
+  [  496] FEM INVALID: solver line_search_failed
+  [  482] FEM INVALID: timeout
+  gen  31  calls   496  best   38.426 mm  gen best   38.633  invalid 5/16  sigma 1.838
+  [  506] FEM INVALID: solver line_search_failed
+  [  505] FEM INVALID: solver line_search_failed
+  [  502] FEM INVALID: solver line_search_failed
+  [  504] FEM INVALID: solver line_search_failed
+  gen  32  calls   512  best   38.421 mm  gen best   38.421  invalid 4/16  sigma 1.793
+  [  525] FEM INVALID: solver line_search_failed
+  [  517] FEM INVALID: solver line_search_failed
+  [  526] FEM INVALID: solver line_search_failed
+  [  519] FEM INVALID: timeout
+  gen  33  calls   528  best   38.421 mm  gen best   39.123  invalid 4/16  sigma 1.741
+  [  533] FEM INVALID: solver line_search_failed
+  [  544] FEM INVALID: solver line_search_failed
+  [  540] FEM INVALID: solver line_search_failed
+  [  542] FEM INVALID: solver line_search_failed
+  gen  34  calls   544  best   38.421 mm  gen best   38.866  invalid 4/16  sigma 1.615
+  [  551] FEM INVALID: solver line_search_failed
+  [  552] FEM INVALID: solver line_search_failed
+  [  555] FEM INVALID: solver line_search_failed
+  [  549] FEM INVALID: solver line_search_failed
+  [  546] FEM INVALID: timeout
+  gen  35  calls   560  best   38.329 mm  gen best   38.329  invalid 5/16  sigma 1.626
+  [  570] FEM INVALID: solver line_search_failed
+  [  572] FEM INVALID: solver line_search_failed
+  [  563] FEM INVALID: solver line_search_failed
+  [  565] FEM INVALID: solver line_search_failed
+  [  575] FEM INVALID: solver line_search_failed
+  [  568] FEM INVALID: solver line_search_failed
+  [  576] FEM INVALID: solver line_search_failed
+  [  562] FEM INVALID: timeout
+  gen  36  calls   576  best   38.129 mm  gen best   38.129  invalid 8/16  sigma 1.562
+  [  586] FEM INVALID: solver line_search_failed
+  [  580] FEM INVALID: solver line_search_failed
+  [  587] FEM INVALID: solver line_search_failed
+  [  592] FEM INVALID: timeout
+  gen  37  calls   592  best   38.129 mm  gen best   38.311  invalid 4/16  sigma 1.551
+  [  593] FEM INVALID: solver line_search_failed
+  [  602] FEM INVALID: solver line_search_failed
+  [  599] FEM INVALID: solver line_search_failed
+  [  594] FEM INVALID: solver line_search_failed
+  gen  38  calls   608  best   38.129 mm  gen best   38.160  invalid 4/16  sigma 1.507
+  [  614] FEM INVALID: solver line_search_failed
+  [  611] FEM INVALID: solver line_search_failed
+  [  619] FEM INVALID: solver line_search_failed
+  gen  39  calls   624  best   38.129 mm  gen best   39.037  invalid 3/16  sigma 1.498
+  [  637] FEM INVALID: solver line_search_failed
+  [  627] FEM INVALID: solver line_search_failed
+  [  625] FEM INVALID: solver line_search_failed
+  gen  40  calls   640  best   38.129 mm  gen best   38.207  invalid 3/16  sigma 1.449
+  [  648] FEM INVALID: solver line_search_failed
+  [  647] FEM INVALID: solver line_search_failed
+  [  649] FEM INVALID: solver line_search_failed
+  [  655] FEM INVALID: solver line_search_failed
+  gen  41  calls   656  best   38.129 mm  gen best   38.349  invalid 4/16  sigma 1.392
+  [  664] FEM INVALID: solver line_search_failed
+  [  670] FEM INVALID: solver line_search_failed
+  [  668] FEM INVALID: solver line_search_failed
+  [  662] FEM INVALID: solver line_search_failed
+  gen  42  calls   672  best   37.811 mm  gen best   37.811  invalid 4/16  sigma 1.397
+  [  674] FEM INVALID: solver line_search_failed
+  [  678] FEM INVALID: solver line_search_failed
+  [  682] FEM INVALID: solver line_search_failed
+  gen  43  calls   688  best   37.680 mm  gen best   37.680  invalid 3/16  sigma 1.316
+  [  689] FEM INVALID: solver line_search_failed
+  [  697] FEM INVALID: solver line_search_failed
+  [  698] FEM INVALID: solver line_search_failed
+  [  700] FEM INVALID: solver line_search_failed
+  gen  44  calls   704  best   37.680 mm  gen best   37.768  invalid 4/16  sigma 1.237
+  [  716] FEM INVALID: solver line_search_failed
+  [  720] FEM INVALID: solver line_search_failed
+  [  711] FEM INVALID: solver line_search_failed
+  [  713] FEM INVALID: solver line_search_failed
+  [  717] FEM INVALID: solver line_search_failed
+  [  712] FEM INVALID: solver line_search_failed
+  [  706] FEM INVALID: solver line_search_failed
+  [  715] FEM INVALID: solver line_search_failed
+  [  709] FEM INVALID: solver line_search_failed
+  [  719] FEM INVALID: timeout
+  gen  45  calls   720  best   37.643 mm  gen best   37.643  invalid 10/16  sigma 1.229
+  [  724] FEM INVALID: solver line_search_failed
+  [  730] FEM INVALID: solver line_search_failed
+  [  721] FEM INVALID: solver line_search_failed
+  [  736] FEM INVALID: solver line_search_failed
+  [  734] FEM INVALID: solver line_search_failed
+  [  722] FEM INVALID: solver line_search_failed
+  gen  46  calls   736  best   37.362 mm  gen best   37.362  invalid 6/16  sigma 1.223
+  [  748] FEM INVALID: solver line_search_failed
+  [  739] FEM INVALID: solver line_search_failed
+  [  738] FEM INVALID: solver line_search_failed
+  [  744] FEM INVALID: solver line_search_failed
+  [  737] FEM INVALID: timeout
+  gen  47  calls   752  best   37.253 mm  gen best   37.253  invalid 5/16  sigma 1.231
+  [  755] FEM INVALID: solver line_search_failed
+  [  768] FEM INVALID: solver line_search_failed
+  gen  48  calls   768  best   36.827 mm  gen best   36.827  invalid 2/16  sigma 1.233
+  [  778] FEM INVALID: solver line_search_failed
+  [  784] FEM INVALID: solver line_search_failed
+  [  775] FEM INVALID: solver line_search_failed
+  [  773] FEM INVALID: solver line_search_failed
+  [  770] FEM INVALID: solver line_search_failed
+  [  769] FEM INVALID: solver line_search_failed
+  gen  49  calls   784  best   36.630 mm  gen best   36.630  invalid 6/16  sigma 1.345
+  [  791] FEM INVALID: solver line_search_failed
+  [  786] FEM INVALID: solver line_search_failed
+  [  793] FEM INVALID: solver line_search_failed
+  [  799] FEM INVALID: solver line_search_failed
+  [  798] FEM INVALID: solver line_search_failed
+  [  790] FEM INVALID: solver line_search_failed
+  [  795] FEM INVALID: solver line_search_failed
+  [  794] FEM INVALID: solver line_search_failed
+  gen  50  calls   800  best   36.630 mm  gen best   37.220  invalid 8/16  sigma 1.449
+  [  812] FEM INVALID: solver line_search_failed
+  [  813] FEM INVALID: solver line_search_failed
+  [  802] FEM INVALID: solver line_search_failed
+  [  809] FEM INVALID: solver line_search_failed
+  [  801] FEM INVALID: solver line_search_failed
+  gen  51  calls   816  best   36.630 mm  gen best   36.772  invalid 5/16  sigma 1.535
+  [  822] FEM INVALID: solver line_search_failed
+  [  820] FEM INVALID: solver line_search_failed
+  [  828] FEM INVALID: solver line_search_failed
+  [  818] FEM INVALID: solver line_search_failed
+  [  829] FEM INVALID: solver line_search_failed
+  gen  52  calls   832  best   36.630 mm  gen best   36.848  invalid 5/16  sigma 1.438
+  [  836] FEM INVALID: solver line_search_failed
+  [  841] FEM INVALID: solver line_search_failed
+  [  842] FEM INVALID: solver line_search_failed
+  [  845] FEM INVALID: solver line_search_failed
+  [  834] FEM INVALID: solver line_search_failed
+  [  837] FEM INVALID: solver line_search_failed
+  [  847] FEM INVALID: solver line_search_failed
+  gen  53  calls   848  best   36.630 mm  gen best   37.264  invalid 7/16  sigma 1.431
+  [  854] FEM INVALID: solver line_search_failed
+  [  849] FEM INVALID: solver line_search_failed
+  [  856] FEM INVALID: solver line_search_failed
+  [  863] FEM INVALID: solver line_search_failed
+  [  861] FEM INVALID: solver line_search_failed
+  [  864] FEM INVALID: solver line_search_failed
+  gen  54  calls   864  best   36.630 mm  gen best   37.552  invalid 6/16  sigma 1.394
+  [  874] FEM INVALID: solver line_search_failed
+  [  867] FEM INVALID: solver line_search_failed
+  [  879] FEM INVALID: solver line_search_failed
+  [  876] FEM INVALID: solver line_search_failed
+  gen  55  calls   880  best   36.630 mm  gen best   36.954  invalid 4/16  sigma 1.397
+  [  889] FEM INVALID: solver line_search_failed
+  [  886] FEM INVALID: solver line_search_failed
+  [  881] FEM INVALID: solver line_search_failed
+  [  896] FEM INVALID: solver line_search_failed
+  [  893] FEM INVALID: solver line_search_failed
+  [  890] FEM INVALID: solver line_search_failed
+  gen  56  calls   896  best   36.623 mm  gen best   36.623  invalid 6/16  sigma 1.343
+  [  912] FEM INVALID: solver line_search_failed
+  [  911] FEM INVALID: solver line_search_failed
+  gen  57  calls   912  best   36.623 mm  gen best   36.728  invalid 2/16  sigma 1.260
+  [  921] FEM INVALID: solver line_search_failed
+  [  917] FEM INVALID: solver line_search_failed
+  [  927] FEM INVALID: solver line_search_failed
+  [  925] FEM INVALID: solver line_search_failed
+  gen  58  calls   928  best   36.286 mm  gen best   36.286  invalid 4/16  sigma 1.203
+  [  940] FEM INVALID: solver line_search_failed
+  [  941] FEM INVALID: solver line_search_failed
+  [  930] FEM INVALID: solver line_search_failed
+  [  942] FEM INVALID: solver line_search_failed
+  [  934] FEM INVALID: solver line_search_failed
+  gen  59  calls   944  best   36.286 mm  gen best   37.182  invalid 5/16  sigma 1.150
+  [  948] FEM INVALID: solver line_search_failed
+  [  956] FEM INVALID: solver line_search_failed
+  [  947] FEM INVALID: solver line_search_failed
+  [  946] FEM INVALID: solver line_search_failed
+  [  958] FEM INVALID: solver line_search_failed
+  [  957] FEM INVALID: solver line_search_failed
+  [  959] FEM INVALID: solver line_search_failed
+  [  951] FEM INVALID: timeout
+  gen  60  calls   960  best   36.286 mm  gen best   36.752  invalid 8/16  sigma 1.191
+  [  968] FEM INVALID: solver line_search_failed
+  [  966] FEM INVALID: solver line_search_failed
+  [  965] FEM INVALID: solver line_search_failed
+  [  972] FEM INVALID: solver line_search_failed
+  gen  61  calls   976  best   36.286 mm  gen best   36.974  invalid 4/16  sigma 1.114
+  [  979] FEM INVALID: solver line_search_failed
+  [  992] FEM INVALID: solver line_search_failed
+  [  989] FEM INVALID: solver line_search_failed
+  [  987] FEM INVALID: solver line_search_failed
+  [  988] FEM INVALID: solver line_search_failed
+  [  980] FEM INVALID: solver line_search_failed
+  [  984] FEM INVALID: solver line_search_failed
+  [  978] FEM INVALID: solver line_search_failed
+  [  985] FEM INVALID: solver line_search_failed
+  gen  62  calls   992  best   36.286 mm  gen best   36.878  invalid 9/16  sigma 1.003
+  [  998] FEM INVALID: solver line_search_failed
+  [ 1001] FEM INVALID: solver line_search_failed
+  [  997] FEM INVALID: solver line_search_failed
+  [ 1004] FEM INVALID: solver line_search_failed
+  [ 1000] FEM INVALID: solver line_search_failed
+  [  999] FEM INVALID: solver line_search_failed
+  [ 1007] FEM INVALID: solver line_search_failed
+  gen  63  calls  1008  best   36.286 mm  gen best   36.872  invalid 7/16  sigma 0.930
+  [ 1010] FEM INVALID: solver line_search_failed
+  [ 1024] FEM INVALID: solver line_search_failed
+  [ 1015] FEM INVALID: solver line_search_failed
+  [ 1020] FEM INVALID: solver line_search_failed
+  gen  64  calls  1024  best   36.286 mm  gen best   36.578  invalid 4/16  sigma 0.895
+  [ 1034] FEM INVALID: solver line_search_failed
+  [ 1033] FEM INVALID: solver line_search_failed
+  gen  65  calls  1040  best   36.286 mm  gen best   36.499  invalid 2/16  sigma 0.884
+  [ 1047] FEM INVALID: solver line_search_failed
+  [ 1042] FEM INVALID: solver line_search_failed
+  [ 1041] FEM INVALID: solver line_search_failed
+  [ 1055] FEM INVALID: solver line_search_failed
+  [ 1048] FEM INVALID: solver line_search_failed
+  gen  66  calls  1056  best   36.286 mm  gen best   36.521  invalid 5/16  sigma 0.849
+  [ 1064] FEM INVALID: solver line_search_failed
+  [ 1070] FEM INVALID: solver line_search_failed
+  [ 1067] FEM INVALID: solver line_search_failed
+  [ 1069] FEM INVALID: solver line_search_failed
+  [ 1066] FEM INVALID: timeout
+  gen  67  calls  1072  best   36.286 mm  gen best   36.444  invalid 5/16  sigma 0.940
+  [ 1084] FEM INVALID: solver line_search_failed
+  [ 1076] FEM INVALID: solver line_search_failed
+  [ 1081] FEM INVALID: solver line_search_failed
+  gen  68  calls  1088  best   36.280 mm  gen best   36.280  invalid 3/16  sigma 1.035
+  [ 1102] FEM INVALID: solver line_search_failed
+  [ 1089] FEM INVALID: solver line_search_failed
+  [ 1092] FEM INVALID: solver line_search_failed
+  [ 1100] FEM INVALID: solver line_search_failed
+  [ 1094] FEM INVALID: solver line_search_failed
+  gen  69  calls  1104  best   36.157 mm  gen best   36.157  invalid 5/16  sigma 1.085
+  [ 1117] FEM INVALID: solver line_search_failed
+  [ 1107] FEM INVALID: solver line_search_failed
+  [ 1112] FEM INVALID: solver line_search_failed
+  [ 1111] FEM INVALID: solver line_search_failed
+  [ 1108] FEM INVALID: solver line_search_failed
+  gen  70  calls  1120  best   36.157 mm  gen best   36.435  invalid 5/16  sigma 1.113
+  [ 1123] FEM INVALID: solver line_search_failed
+  [ 1129] FEM INVALID: solver line_search_failed
+  [ 1125] FEM INVALID: solver line_search_failed
+  [ 1132] FEM INVALID: solver line_search_failed
+  [ 1131] FEM INVALID: solver line_search_failed
+  [ 1122] FEM INVALID: solver line_search_failed
+  [ 1124] FEM INVALID: solver line_search_failed
+  gen  71  calls  1136  best   36.157 mm  gen best   36.224  invalid 7/16  sigma 1.165
+  [ 1144] FEM INVALID: solver line_search_failed
+  [ 1145] FEM INVALID: solver line_search_failed
+  [ 1152] FEM INVALID: solver line_search_failed
+  [ 1143] FEM INVALID: solver line_search_failed
+  [ 1142] FEM INVALID: solver line_search_failed
+  [ 1139] FEM INVALID: solver line_search_failed
+  [ 1148] FEM INVALID: solver line_search_failed
+  gen  72  calls  1152  best   36.157 mm  gen best   36.243  invalid 7/16  sigma 1.141
+  [ 1158] FEM INVALID: solver line_search_failed
+  [ 1161] FEM INVALID: solver line_search_failed
+  [ 1160] FEM INVALID: solver line_search_failed
+  [ 1159] FEM INVALID: solver line_search_failed
+  [ 1156] FEM INVALID: solver line_search_failed
+  gen  73  calls  1168  best   36.157 mm  gen best   36.414  invalid 5/16  sigma 1.072
+  [ 1171] FEM INVALID: solver line_search_failed
+  [ 1176] FEM INVALID: solver line_search_failed
+  [ 1175] FEM INVALID: solver line_search_failed
+  [ 1182] FEM INVALID: solver line_search_failed
+  [ 1174] FEM INVALID: solver line_search_failed
+  [ 1172] FEM INVALID: solver line_search_failed
+  [ 1180] FEM INVALID: solver line_search_failed
+  gen  74  calls  1184  best   36.157 mm  gen best   36.413  invalid 7/16  sigma 1.017
+  [ 1191] FEM INVALID: solver line_search_failed
+  [ 1199] FEM INVALID: solver line_search_failed
+  [ 1190] FEM INVALID: solver line_search_failed
+  [ 1194] FEM INVALID: solver line_search_failed
+  [ 1197] FEM INVALID: solver line_search_failed
+  [ 1187] FEM INVALID: solver line_search_failed
+  gen  75  calls  1200  best   36.157 mm  gen best   36.228  invalid 6/16  sigma 0.961
+  [ 1203] FEM INVALID: solver line_search_failed
+  [ 1212] FEM INVALID: solver line_search_failed
+  [ 1209] FEM INVALID: solver line_search_failed
+  [ 1207] FEM INVALID: solver line_search_failed
+  gen  76  calls  1216  best   36.092 mm  gen best   36.092  invalid 4/16  sigma 0.927
+  [ 1220] FEM INVALID: solver line_search_failed
+  [ 1225] FEM INVALID: solver line_search_failed
+  [ 1231] FEM INVALID: solver line_search_failed
+  gen  77  calls  1232  best   36.011 mm  gen best   36.011  invalid 3/16  sigma 0.894
+  [ 1245] FEM INVALID: solver line_search_failed
+  [ 1244] FEM INVALID: solver line_search_failed
+  [ 1238] FEM INVALID: solver line_search_failed
+  [ 1248] FEM INVALID: solver line_search_failed
+  gen  78  calls  1248  best   36.011 mm  gen best   36.161  invalid 4/16  sigma 0.896
+  [ 1263] FEM INVALID: solver line_search_failed
+  [ 1254] FEM INVALID: solver line_search_failed
+  [ 1260] FEM INVALID: solver line_search_failed
+  [ 1257] FEM INVALID: solver line_search_failed
+  [ 1249] FEM INVALID: solver line_search_failed
+  [ 1253] FEM INVALID: solver line_search_failed
+  [ 1259] FEM INVALID: timeout
+  gen  79  calls  1264  best   36.011 mm  gen best   36.044  invalid 7/16  sigma 0.834
+  [ 1274] FEM INVALID: solver line_search_failed
+  [ 1266] FEM INVALID: solver line_search_failed
+  [ 1268] FEM INVALID: solver line_search_failed
+  [ 1278] FEM INVALID: solver line_search_failed
+  [ 1280] FEM INVALID: solver line_search_failed
+  gen  80  calls  1280  best   36.011 mm  gen best   36.210  invalid 5/16  sigma 0.834
+  [ 1295] FEM INVALID: solver line_search_failed
+  [ 1290] FEM INVALID: solver line_search_failed
+  [ 1288] FEM INVALID: solver line_search_failed
+  gen  81  calls  1296  best   35.978 mm  gen best   35.978  invalid 3/16  sigma 0.783
+  [ 1309] FEM INVALID: solver line_search_failed
+  [ 1301] FEM INVALID: solver line_search_failed
+  gen  82  calls  1312  best   35.841 mm  gen best   35.841  invalid 2/16  sigma 0.726
+  [ 1322] FEM INVALID: solver line_search_failed
+  [ 1317] FEM INVALID: solver line_search_failed
+  [ 1318] FEM INVALID: solver line_search_failed
+  [ 1321] FEM INVALID: solver line_search_failed
+  [ 1316] FEM INVALID: solver line_search_failed
+  [ 1313] FEM INVALID: solver line_search_failed
+  gen  83  calls  1328  best   35.841 mm  gen best   35.944  invalid 6/16  sigma 0.672
+  [ 1332] FEM INVALID: solver line_search_failed
+  [ 1337] FEM INVALID: solver line_search_failed
+  [ 1331] FEM INVALID: solver line_search_failed
+  [ 1338] FEM INVALID: solver line_search_failed
+  [ 1330] FEM INVALID: solver line_search_failed
+  gen  84  calls  1344  best   35.799 mm  gen best   35.799  invalid 5/16  sigma 0.680
+  [ 1357] FEM INVALID: solver line_search_failed
+  [ 1355] FEM INVALID: solver line_search_failed
+  [ 1352] FEM INVALID: solver line_search_failed
+  [ 1360] FEM INVALID: solver line_search_failed
+  [ 1356] FEM INVALID: solver line_search_failed
+  [ 1358] FEM INVALID: solver line_search_failed
+  gen  85  calls  1360  best   35.749 mm  gen best   35.749  invalid 6/16  sigma 0.677
+  [ 1369] FEM INVALID: solver line_search_failed
+  [ 1362] FEM INVALID: solver line_search_failed
+  [ 1371] FEM INVALID: solver line_search_failed
+  [ 1363] FEM INVALID: solver line_search_failed
+  [ 1365] FEM INVALID: solver line_search_failed
+  [ 1368] FEM INVALID: solver line_search_failed
+  [ 1374] FEM INVALID: timeout
+  gen  86  calls  1376  best   35.708 mm  gen best   35.708  invalid 7/16  sigma 0.676
+  [ 1384] FEM INVALID: solver line_search_failed
+  [ 1382] FEM INVALID: solver line_search_failed
+  [ 1378] FEM INVALID: solver line_search_failed
+  [ 1386] FEM INVALID: solver line_search_failed
+  [ 1383] FEM INVALID: solver line_search_failed
+  [ 1380] FEM INVALID: solver line_search_failed
+  [ 1387] FEM INVALID: solver line_search_failed
+  gen  87  calls  1392  best   35.708 mm  gen best   35.930  invalid 7/16  sigma 0.687
+  [ 1394] FEM INVALID: solver line_search_failed
+  [ 1408] FEM INVALID: solver line_search_failed
+  [ 1397] FEM INVALID: solver line_search_failed
+  gen  88  calls  1408  best   35.708 mm  gen best   35.890  invalid 3/16  sigma 0.674
+  [ 1421] FEM INVALID: solver line_search_failed
+  [ 1422] FEM INVALID: solver line_search_failed
+  [ 1416] FEM INVALID: solver line_search_failed
+  [ 1413] FEM INVALID: solver line_search_failed
+  [ 1423] FEM INVALID: solver line_search_failed
+  [ 1410] FEM INVALID: solver line_search_failed
+  [ 1420] FEM INVALID: solver line_search_failed
+  [ 1414] FEM INVALID: solver line_search_failed
+  [ 1415] FEM INVALID: solver line_search_failed
+  gen  89  calls  1424  best   35.708 mm  gen best   35.901  invalid 9/16  sigma 0.668
+  [ 1437] FEM INVALID: solver line_search_failed
+  [ 1428] FEM INVALID: solver line_search_failed
+  [ 1433] FEM INVALID: solver line_search_failed
+  [ 1438] FEM INVALID: solver line_search_failed
+  [ 1440] FEM INVALID: solver line_search_failed
+  [ 1427] FEM INVALID: solver line_search_failed
+  [ 1429] FEM INVALID: solver line_search_failed
+  [ 1426] FEM INVALID: solver line_search_failed
+  gen  90  calls  1440  best   35.708 mm  gen best   35.770  invalid 8/16  sigma 0.660
+  [ 1453] FEM INVALID: solver line_search_failed
+  [ 1451] FEM INVALID: solver line_search_failed
+  [ 1442] FEM INVALID: solver line_search_failed
+  [ 1454] FEM INVALID: solver line_search_failed
+  [ 1455] FEM INVALID: solver line_search_failed
+  gen  91  calls  1456  best   35.610 mm  gen best   35.610  invalid 5/16  sigma 0.617
+  [ 1468] FEM INVALID: solver line_search_failed
+  [ 1464] FEM INVALID: solver line_search_failed
+  [ 1470] FEM INVALID: solver line_search_failed
+  [ 1469] FEM INVALID: solver line_search_failed
+  [ 1463] FEM INVALID: solver line_search_failed
+  [ 1465] FEM INVALID: solver line_search_failed
+  gen  92  calls  1472  best   35.610 mm  gen best   35.830  invalid 6/16  sigma 0.563
+  [ 1478] FEM INVALID: solver line_search_failed
+  [ 1487] FEM INVALID: solver line_search_failed
+  [ 1474] FEM INVALID: solver line_search_failed
+  gen  93  calls  1488  best   35.610 mm  gen best   35.851  invalid 3/16  sigma 0.515
+  [ 1502] FEM INVALID: solver line_search_failed
+  [ 1492] FEM INVALID: solver line_search_failed
+  [ 1504] FEM INVALID: solver line_search_failed
+  [ 1490] FEM INVALID: solver line_search_failed
+  [ 1500] FEM INVALID: solver line_search_failed
+  [ 1503] FEM INVALID: solver line_search_failed
+  [ 1495] FEM INVALID: solver line_search_failed
+  gen  94  calls  1504  best   35.610 mm  gen best   35.779  invalid 7/16  sigma 0.493
+  [ 1510] FEM INVALID: solver line_search_failed
+  [ 1506] FEM INVALID: solver line_search_failed
+  [ 1516] FEM INVALID: solver line_search_failed
+  gen  95  calls  1520  best   35.610 mm  gen best   35.727  invalid 3/16  sigma 0.466
+  [ 1523] FEM INVALID: solver line_search_failed
+  [ 1528] FEM INVALID: solver line_search_failed
+  [ 1524] FEM INVALID: solver line_search_failed
+  gen  96  calls  1536  best   35.610 mm  gen best   35.755  invalid 3/16  sigma 0.463
+  [ 1541] FEM INVALID: solver line_search_failed
+  [ 1551] FEM INVALID: solver line_search_failed
+  [ 1538] FEM INVALID: solver line_search_failed
+  [ 1550] FEM INVALID: solver line_search_failed
+  gen  97  calls  1552  best   35.610 mm  gen best   35.804  invalid 4/16  sigma 0.454
+  [ 1562] FEM INVALID: solver line_search_failed
+  [ 1553] FEM INVALID: timeout
+  gen  98  calls  1568  best   35.610 mm  gen best   35.803  invalid 2/16  sigma 0.422
+  [ 1572] FEM INVALID: solver line_search_failed
+  [ 1577] FEM INVALID: solver line_search_failed
+  [ 1580] FEM INVALID: timeout
+  gen  99  calls  1584  best   35.536 mm  gen best   35.536  invalid 3/16  sigma 0.409
+  [ 1597] FEM INVALID: solver line_search_failed
+  [ 1600] FEM INVALID: solver line_search_failed
+  [ 1595] FEM INVALID: solver line_search_failed
+  [ 1585] FEM INVALID: solver line_search_failed
+  gen 100  calls  1600  best   35.536 mm  gen best   35.591  invalid 4/16  sigma 0.393
+  [ 1610] FEM INVALID: solver line_search_failed
+  [ 1608] FEM INVALID: solver line_search_failed
+  [ 1614] FEM INVALID: solver line_search_failed
+  gen 101  calls  1616  best   35.536 mm  gen best   35.584  invalid 3/16  sigma 0.375
+  [ 1620] FEM INVALID: solver line_search_failed
+  [ 1627] FEM INVALID: solver line_search_failed
+  [ 1628] FEM INVALID: solver line_search_failed
+  gen 102  calls  1632  best   35.536 mm  gen best   35.713  invalid 3/16  sigma 0.384
+  [ 1643] FEM INVALID: solver line_search_failed
+  [ 1645] FEM INVALID: solver line_search_failed
+  [ 1640] FEM INVALID: solver line_search_failed
+  gen 103  calls  1648  best   35.536 mm  gen best   35.610  invalid 3/16  sigma 0.398
+  [ 1663] FEM INVALID: solver line_search_failed
+  [ 1661] FEM INVALID: solver line_search_failed
+  gen 104  calls  1664  best   35.536 mm  gen best   35.598  invalid 2/16  sigma 0.404
+  [ 1669] FEM INVALID: solver line_search_failed
+  [ 1666] FEM INVALID: solver line_search_failed
+  gen 105  calls  1680  best   35.536 mm  gen best   35.646  invalid 2/16  sigma 0.409
+  [ 1689] FEM INVALID: solver line_search_failed
+  [ 1693] FEM INVALID: solver line_search_failed
+  [ 1692] FEM INVALID: timeout
+  gen 106  calls  1696  best   35.536 mm  gen best   35.774  invalid 3/16  sigma 0.398
+  [ 1701] FEM INVALID: solver line_search_failed
+  [ 1705] FEM INVALID: solver line_search_failed
+  gen 107  calls  1712  best   35.536 mm  gen best   35.684  invalid 2/16  sigma 0.408
+  gen 108  calls  1728  best   35.536 mm  gen best   35.686  invalid 0/16  sigma 0.419
+  [ 1730] FEM INVALID: solver line_search_failed
+  [ 1743] FEM INVALID: solver line_search_failed
+  [ 1737] FEM INVALID: solver line_search_failed
+  [ 1744] FEM INVALID: timeout
+  [ 1742] FEM INVALID: timeout
+  gen 109  calls  1744  best   35.536 mm  gen best   35.589  invalid 5/16  sigma 0.457
+  [ 1745] FEM INVALID: solver line_search_failed
+  [ 1760] FEM INVALID: solver line_search_failed
+  [ 1754] FEM INVALID: solver line_search_failed
+  [ 1749] FEM INVALID: solver line_search_failed
+  [ 1759] FEM INVALID: timeout
+  gen 110  calls  1760  best   35.536 mm  gen best   35.750  invalid 5/16  sigma 0.438
+  [ 1765] FEM INVALID: solver line_search_failed
+  gen 111  calls  1776  best   35.531 mm  gen best   35.531  invalid 1/16  sigma 0.415
+  [ 1783] FEM INVALID: solver line_search_failed
+  [ 1790] FEM INVALID: solver line_search_failed
+  [ 1785] FEM INVALID: solver line_search_failed
+  gen 112  calls  1792  best   35.531 mm  gen best   35.655  invalid 3/16  sigma 0.400
+  [ 1800] FEM INVALID: solver line_search_failed
+  [ 1802] FEM INVALID: solver line_search_failed
+  [ 1796] FEM INVALID: solver line_search_failed
+  [ 1803] FEM INVALID: solver line_search_failed
+  gen 113  calls  1808  best   35.531 mm  gen best   35.617  invalid 4/16  sigma 0.384
+  [ 1814] FEM INVALID: solver line_search_failed
+  [ 1812] FEM INVALID: solver line_search_failed
+  gen 114  calls  1824  best   35.531 mm  gen best   35.579  invalid 2/16  sigma 0.363
+  [ 1840] FEM INVALID: solver line_search_failed
+  [ 1827] FEM INVALID: solver line_search_failed
+  [ 1838] FEM INVALID: solver line_search_failed
+  [ 1836] FEM INVALID: solver line_search_failed
+  [ 1833] FEM INVALID: solver line_search_failed
+  gen 115  calls  1840  best   35.531 mm  gen best   35.599  invalid 5/16  sigma 0.346
+  [ 1855] FEM INVALID: solver line_search_failed
+  [ 1850] FEM INVALID: solver line_search_failed
+  [ 1848] FEM INVALID: solver line_search_failed
+  gen 116  calls  1856  best   35.531 mm  gen best   35.568  invalid 3/16  sigma 0.309
+  [ 1858] FEM INVALID: solver line_search_failed
+  [ 1869] FEM INVALID: solver line_search_failed
+  gen 117  calls  1872  best   35.509 mm  gen best   35.509  invalid 2/16  sigma 0.294
+  [ 1875] FEM INVALID: solver line_search_failed
+  [ 1877] FEM INVALID: solver line_search_failed
+  [ 1880] FEM INVALID: solver line_search_failed
+  [ 1885] FEM INVALID: solver line_search_failed
+  gen 118  calls  1888  best   35.509 mm  gen best   35.614  invalid 4/16  sigma 0.311
+  [ 1904] FEM INVALID: solver line_search_failed
+  [ 1894] FEM INVALID: solver line_search_failed
+  [ 1893] FEM INVALID: solver line_search_failed
+  [ 1899] FEM INVALID: solver line_search_failed
+  gen 119  calls  1904  best   35.509 mm  gen best   35.529  invalid 4/16  sigma 0.312
+  [ 1909] FEM INVALID: solver line_search_failed
+  [ 1919] FEM INVALID: solver line_search_failed
+  [ 1916] FEM INVALID: solver line_search_failed
+  [ 1917] FEM INVALID: solver line_search_failed
+  [ 1920] FEM INVALID: solver line_search_failed
+  gen 120  calls  1920  best   35.509 mm  gen best   35.627  invalid 5/16  sigma 0.305
+  [ 1929] FEM INVALID: solver line_search_failed
+  [ 1933] FEM INVALID: solver line_search_failed
+  [ 1935] FEM INVALID: solver line_search_failed
+  [ 1931] FEM INVALID: solver line_search_failed
+  gen 121  calls  1936  best   35.509 mm  gen best   35.555  invalid 4/16  sigma 0.296
+  [ 1952] FEM INVALID: solver line_search_failed
+  [ 1951] FEM INVALID: solver line_search_failed
+  [ 1937] FEM INVALID: solver line_search_failed
+  gen 122  calls  1952  best   35.492 mm  gen best   35.492  invalid 3/16  sigma 0.290
+  [ 1964] FEM INVALID: solver line_search_failed
+  [ 1962] FEM INVALID: solver line_search_failed
+  [ 1963] FEM INVALID: solver line_search_failed
+  [ 1965] FEM INVALID: solver line_search_failed
+  gen 123  calls  1968  best   35.492 mm  gen best   35.507  invalid 4/16  sigma 0.275
+  [ 1980] FEM INVALID: solver line_search_failed
+  [ 1977] FEM INVALID: solver line_search_failed
+  [ 1982] FEM INVALID: solver line_search_failed
+  gen 124  calls  1984  best   35.492 mm  gen best   35.525  invalid 3/16  sigma 0.235
+  [ 1994] FEM INVALID: solver line_search_failed
+  [ 1986] FEM INVALID: solver line_search_failed
+  gen 125  calls  2000  best   35.471 mm  gen best   35.471  invalid 2/16  sigma 0.246
+  [ 2016] FEM INVALID: solver line_search_failed
+  [ 2015] FEM INVALID: solver line_search_failed
+  [ 2010] FEM INVALID: solver line_search_failed
+  [ 2012] FEM INVALID: solver line_search_failed
+  [ 2006] FEM INVALID: solver line_search_failed
+  gen 126  calls  2016  best   35.471 mm  gen best   35.523  invalid 5/16  sigma 0.231
+  [ 2028] FEM INVALID: solver line_search_failed
+  [ 2017] FEM INVALID: solver line_search_failed
+  gen 127  calls  2032  best   35.471 mm  gen best   35.508  invalid 2/16  sigma 0.216
+  [ 2043] FEM INVALID: solver line_search_failed
+  [ 2035] FEM INVALID: solver line_search_failed
+  [ 2047] FEM INVALID: solver line_search_failed
+  [ 2036] FEM INVALID: solver line_search_failed
+  [ 2044] FEM INVALID: solver line_search_failed
+  [ 2040] FEM INVALID: solver line_search_failed
+  gen 128  calls  2048  best   35.471 mm  gen best   35.501  invalid 6/16  sigma 0.207
+  [ 2051] FEM INVALID: solver line_search_failed
+  [ 2052] FEM INVALID: solver line_search_failed
+  [ 2049] FEM INVALID: solver line_search_failed
+  [ 2062] FEM INVALID: solver line_search_failed
+  [ 2057] FEM INVALID: solver line_search_failed
+  [ 2053] FEM INVALID: solver line_search_failed
+  gen 129  calls  2064  best   35.471 mm  gen best   35.530  invalid 6/16  sigma 0.211
+  [ 2076] FEM INVALID: solver line_search_failed
+  [ 2066] FEM INVALID: solver line_search_failed
+  [ 2075] FEM INVALID: solver line_search_failed
+  [ 2078] FEM INVALID: solver line_search_failed
+  [ 2073] FEM INVALID: solver line_search_failed
+  [ 2070] FEM INVALID: solver line_search_failed
+  gen 130  calls  2080  best   35.471 mm  gen best   35.526  invalid 6/16  sigma 0.215
+  gen 131  calls  2096  best   35.471 mm  gen best   35.520  invalid 0/16  sigma 0.209
+  [ 2099] FEM INVALID: solver line_search_failed
+  [ 2100] FEM INVALID: solver line_search_failed
+  [ 2105] FEM INVALID: solver line_search_failed
+  [ 2109] FEM INVALID: solver line_search_failed
+  [ 2108] FEM INVALID: timeout
+  gen 132  calls  2112  best   35.471 mm  gen best   35.525  invalid 5/16  sigma 0.201
+  [ 2126] FEM INVALID: solver line_search_failed
+  [ 2114] FEM INVALID: solver line_search_failed
+  gen 133  calls  2128  best   35.471 mm  gen best   35.505  invalid 2/16  sigma 0.191
+  [ 2142] FEM INVALID: solver line_search_failed
+  [ 2144] FEM INVALID: solver line_search_failed
+  [ 2132] FEM INVALID: solver line_search_failed
+  [ 2137] FEM INVALID: solver line_search_failed
+  [ 2143] FEM INVALID: solver line_search_failed
+  gen 134  calls  2144  best   35.471 mm  gen best   35.519  invalid 5/16  sigma 0.194
+  [ 2146] FEM INVALID: solver line_search_failed
+  [ 2148] FEM INVALID: solver line_search_failed
+  [ 2149] FEM INVALID: solver line_search_failed
+  gen 135  calls  2160  best   35.471 mm  gen best   35.512  invalid 3/16  sigma 0.179
+  [ 2175] FEM INVALID: solver line_search_failed
+  [ 2165] FEM INVALID: solver line_search_failed
+  [ 2161] FEM INVALID: solver line_search_failed
+  gen 136  calls  2176  best   35.471 mm  gen best   35.499  invalid 3/16  sigma 0.168
+  [ 2188] FEM INVALID: solver line_search_failed
+  [ 2182] FEM INVALID: solver line_search_failed
+  [ 2180] FEM INVALID: solver line_search_failed
+  gen 137  calls  2192  best   35.471 mm  gen best   35.512  invalid 3/16  sigma 0.158
+  [ 2194] FEM INVALID: solver line_search_failed
+  [ 2196] FEM INVALID: solver line_search_failed
+  [ 2205] FEM INVALID: solver line_search_failed
+  gen 138  calls  2208  best   35.471 mm  gen best   35.487  invalid 3/16  sigma 0.159
+  [ 2220] FEM INVALID: solver line_search_failed
+  [ 2212] FEM INVALID: solver line_search_failed
+  [ 2221] FEM INVALID: solver line_search_failed
+  [ 2214] FEM INVALID: solver line_search_failed
+  [ 2217] FEM INVALID: solver line_search_failed
+  [ 2218] FEM INVALID: solver line_search_failed
+  gen 139  calls  2224  best   35.471 mm  gen best   35.476  invalid 6/16  sigma 0.167
+  [ 2234] FEM INVALID: solver line_search_failed
+  [ 2237] FEM INVALID: solver line_search_failed
+  [ 2233] FEM INVALID: solver line_search_failed
+  gen 140  calls  2240  best   35.471 mm  gen best   35.486  invalid 3/16  sigma 0.167
+  [ 2254] FEM INVALID: solver line_search_failed
+  [ 2251] FEM INVALID: solver line_search_failed
+  gen 141  calls  2256  best   35.471 mm  gen best   35.497  invalid 2/16  sigma 0.162
+  [ 2271] FEM INVALID: solver line_search_failed
+  [ 2261] FEM INVALID: timeout
+  gen 142  calls  2272  best   35.461 mm  gen best   35.461  invalid 2/16  sigma 0.166
+  [ 2280] FEM INVALID: solver line_search_failed
+  [ 2284] FEM INVALID: solver line_search_failed
+  gen 143  calls  2288  best   35.461 mm  gen best   35.461  invalid 2/16  sigma 0.182
+  [ 2289] FEM INVALID: solver line_search_failed
+  [ 2293] FEM INVALID: solver line_search_failed
+  [ 2294] FEM INVALID: solver line_search_failed
+  gen 144  calls  2304  best   35.461 mm  gen best   35.477  invalid 3/16  sigma 0.184
+  [ 2318] FEM INVALID: solver line_search_failed
+  [ 2308] FEM INVALID: solver line_search_failed
+  gen 145  calls  2320  best   35.461 mm  gen best   35.488  invalid 2/16  sigma 0.190
+  [ 2331] FEM INVALID: solver line_search_failed
+  [ 2325] FEM INVALID: solver line_search_failed
+  [ 2335] FEM INVALID: solver line_search_failed
+  [ 2323] FEM INVALID: solver line_search_failed
+  gen 146  calls  2336  best   35.461 mm  gen best   35.508  invalid 4/16  sigma 0.193
+  [ 2349] FEM INVALID: solver line_search_failed
+  gen 147  calls  2352  best   35.453 mm  gen best   35.453  invalid 1/16  sigma 0.200
+  [ 2364] FEM INVALID: solver line_search_failed
+  [ 2358] FEM INVALID: solver line_search_failed
+  [ 2362] FEM INVALID: solver line_search_failed
+  gen 148  calls  2368  best   35.453 mm  gen best   35.459  invalid 3/16  sigma 0.208
+  [ 2372] FEM INVALID: solver line_search_failed
+  [ 2371] FEM INVALID: solver line_search_failed
+  [ 2381] FEM INVALID: solver line_search_failed
+  gen 149  calls  2384  best   35.453 mm  gen best   35.484  invalid 3/16  sigma 0.218
+  [ 2388] FEM INVALID: solver line_search_failed
+  gen 150  calls  2400  best   35.453 mm  gen best   35.461  invalid 1/16  sigma 0.214
+
+CMA-ES stop: {'maxiter': 150}
+Best RMSE 35.4528 mm after 2400 FEM calls, 28.1 min
+  re-evaluated RMSE 35.4528 mm (2.95 % of span)  max dev 103.04 mm  crown 0.2503 (target 0.2697)  max disp 103.04 mm
+Saved optimisation/pattern_smooth_rm2_fixSW_p3_result.json
