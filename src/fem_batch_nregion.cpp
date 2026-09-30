@@ -13,6 +13,7 @@
 //                      "motif": 1,
 //                      "cable_ea": 157000.0,
 //                      "cable_paths": [[v0,v1,...], [v0,v1,...], ...],
+//                      "fixed_vertices": [v0, v1, ...],   (optional; default = whole boundary)
 //                      "regions": [
 //                        {"sf_wale": 1.0, "sf_course": 1.0, "knit_dir_deg": 90.0},
 //                        ...
@@ -119,6 +120,7 @@ struct MultiCableModel {
 fsim::Mat3<double>           V0;
 fsim::Mat3<int>              F;
 std::vector<int>             bdrs;
+std::vector<int>             fixed_vs;   // Newton-fixed vertices; = bdrs unless "fixed_vertices" is given
 std::vector<Eigen::Vector3d> face_dirs;
 
 // ── Mesh utilities ─────────────────────────────────────────────────────────────
@@ -311,7 +313,7 @@ static VectorXd newtonSolve(Model& model, const VectorXd& x0)
     solver.options.display         = optim::SolverDisplay::quiet;
     solver.options.threshold       = 1e-6;
     solver.options.iteration_limit = 10000;
-    for (int b : bdrs) {
+    for (int b : fixed_vs) {
         solver.options.fixed_dofs.push_back(b*3);
         solver.options.fixed_dofs.push_back(b*3+1);
         solver.options.fixed_dofs.push_back(b*3+2);
@@ -461,6 +463,17 @@ int main(int argc, char* argv[])
     std::vector<std::vector<int>> cable_paths = parseCablePaths(ps);
     std::vector<double> cable_rest_scales = jsonDoubleArray(ps, "cable_rest_scales");
 
+    // Optional explicit supports.  Without it every topological boundary vertex
+    // is fixed; with it only these are, so the rest of the boundary is a free
+    // edge (the rest-shape construction still uses the topological boundary).
+    fixed_vs = jsonIntArray(ps, "fixed_vertices");
+    if (fixed_vs.empty()) fixed_vs = bdrs;
+    for (int v : fixed_vs)
+        if (v < 0 || v >= V0.rows()) {
+            std::cerr << "fixed_vertices has out-of-range index " << v << "\n";
+            return 1;
+        }
+
     if (regions.empty()) {
         std::cerr << "No regions found in params JSON\n";
         return 1;
@@ -525,7 +538,7 @@ int main(int argc, char* argv[])
     }
 
     std::cerr << "Mesh: " << V0.rows() << "v  " << F.rows() << "f  "
-              << bdrs.size() << " boundary  "
+              << bdrs.size() << " boundary  " << fixed_vs.size() << " fixed  "
               << cables.cables.size() << " cables\n";
 
     // Run simulation

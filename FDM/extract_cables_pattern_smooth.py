@@ -37,8 +37,9 @@ Q_THRESHOLD = 2.0 sits inside it.
 
 What comes out: the crease (C00, q up to 12) from the south-tip support to the
 north edge cable, and two weaker ties routed through q ~ 1 - 2 edges — one
-from the NE line support diagonally into the crease (C01 + its 3-edge stub
-C03), one parallel to the crease on its west side (C02).
+from the NE line support diagonally into the crease (C01), one parallel to the
+crease on its west side (C02).  Together they cut the surface into the four
+regions of field_regions_pattern_smooth.py.
 
     python3 FDM/extract_cables_pattern_smooth.py            # extract + write + plot
     python3 FDM/extract_cables_pattern_smooth.py --scan     # the q / lambda scan
@@ -214,6 +215,15 @@ def main():
     inner = fce.trace_cables(V, res["edges"], q_of, res["hi_edges"],
                              res["tip_routes"])
     inner = [c for c in inner if c["edges"] >= MIN_CABLE_EDGES]
+    # trace_cables can return a chain that its own route extension already
+    # covers (the NE 2-edge chain reappears inside the diagonal tie): drop any
+    # cable whose edges all lie on a longer one
+    esets = [{frozenset(p) for p in zip(c["path"][:-1], c["path"][1:])}
+             for c in inner]
+    inner = [c for i, c in enumerate(inner)
+             if not any(j != i and esets[i] <= esets[j] and
+                        (len(esets[j]) > len(esets[i]) or j < i)
+                        for j in range(len(inner)))]
 
     def describe(path):
         qs = [q_of[frozenset((a, b))] for a, b in zip(path[:-1], path[1:])]
