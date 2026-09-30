@@ -243,6 +243,9 @@ def main():
     ap.add_argument("--region-map", type=str, default=None,
                     help="region map JSON (face_regions + face_knit_dirs_deg); the "
                          "number of regions is read from it")
+    ap.add_argument("--cable-file", type=str, default=None,
+                    help="cable paths JSON to use instead of the variant's (e.g. the "
+                         "boundary cables only)")
     ap.add_argument("--lambda-smooth", type=float, default=0.0,
                     help="Laplacian penalty on the stretch factors, as in "
                          "optimise_D5_laplacian.py: score = RMSE [m] + lambda * sum over "
@@ -268,6 +271,10 @@ def main():
             os.path.join(HERE, args.region_map) if not os.path.exists(args.region_map) \
             else os.path.abspath(args.region_map)
     N_REGIONS = int(max(json.load(open(REGION_MAP))["face_regions"])) + 1
+    global CABLE_FILE
+    if args.cable_file:
+        CABLE_FILE = args.cable_file if os.path.exists(args.cable_file) else \
+            os.path.join(HERE, args.cable_file)
     _reg_max[0] = args.newton_reg_max
 
     prefix = args.out_prefix or f"pattern_smooth_p{args.phase}"

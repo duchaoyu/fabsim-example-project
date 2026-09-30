@@ -55,6 +55,8 @@ def main():
         ops.set_variant(r["variant"])
     if r.get("region_map"):
         ops.REGION_MAP = os.path.join(HERE, r["region_map"])
+    if r.get("cable_file"):
+        ops.CABLE_FILE = os.path.join(HERE, r["cable_file"])
     n_reg = len(r["sf_wale"])
     V, F = ops.o2.load_off(ops.MESH_PATH)
     cab = json.load(open(ops.CABLE_FILE))
