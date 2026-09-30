@@ -93,7 +93,7 @@ def main():
     rmse = float(np.sqrt(np.mean(dn[free] ** 2)))
     region = np.array(json.load(open(ops.REGION_MAP))["face_regions"])
 
-    fig = plt.figure(figsize=(19, 10.5))
+    fig = plt.figure(figsize=(25, 10.5))
     fig.suptitle(f"pattern_smooth FEM inverse — RMSE {rmse*1e3:.1f} mm "
                  f"({100*rmse/np.ptp(V[:, 0]):.1f} % of span), max {dn[free].max()*1e3:.0f} mm, "
                  f"crown {X[:, 2].max():.3f} m (target {V[:, 2].max():.3f})   [{note}]",
@@ -101,7 +101,7 @@ def main():
 
     # 3D: FEM over target
     for k, (elev, azim) in enumerate([(24, -62), (24, 118)]):
-        ax = fig.add_subplot(2, 3, 1 + 3 * k, projection="3d", computed_zorder=False)
+        ax = fig.add_subplot(2, 4, 1 + 4 * k, projection="3d", computed_zorder=False)
         ax.add_collection3d(Poly3DCollection([V[f] for f in F], facecolors="#9fb9d6",
                                              alpha=0.25, edgecolors="none"))
         ax.add_collection3d(Poly3DCollection([X[f] for f in F], facecolors="#e8a38c",
@@ -127,13 +127,47 @@ def main():
         ax.plot(*V[fixed][:, :2].T, "o", color="#2a78d6", ms=3, ls="none")
         ax.set_aspect("equal"); ax.set_axis_off(); ax.set_title(title, fontsize=10)
 
-    plan(fig.add_subplot(2, 3, 2), dn * 1e3, "|deviation| from target", "viridis")
-    plan(fig.add_subplot(2, 3, 3), d[:, 2] * 1e3,
+    plan(fig.add_subplot(2, 4, 2), dn * 1e3, "|deviation| from target", "viridis")
+    plan(fig.add_subplot(2, 4, 3), d[:, 2] * 1e3,
          "vertical deviation (FEM − target)", "RdBu_r", sym=True)
-    plan(fig.add_subplot(2, 3, 5), np.linalg.norm(d[:, :2], axis=1) * 1e3,
+    plan(fig.add_subplot(2, 4, 6), np.linalg.norm(d[:, :2], axis=1) * 1e3,
          "in-plane deviation", "viridis")
 
-    ax = fig.add_subplot(2, 3, 6); ax.set_axis_off()
+    # the regions, coloured, each labelled with its stretch factors
+    from matplotlib.collections import PolyCollection
+    ax = fig.add_subplot(2, 4, 4)
+    cmap = plt.get_cmap("tab10" if n_reg <= 10 else "tab20")
+    ax.add_collection(PolyCollection([V[f][:, :2] for f in F],
+                                     facecolors=[cmap(g % cmap.N) for g in region],
+                                     edgecolors="white", linewidths=0.1, alpha=0.75))
+    for n in names:
+        ax.plot(*V[cab[n]][:, :2].T, "k-", lw=1.0)
+    ax.plot(*V[fixed][:, :2].T, "o", color="#2a78d6", ms=3, ls="none")
+    cen = V[F].mean(1)
+    for i in range(n_reg):
+        m = region == i
+        # stagger alternate labels up / down so narrow strips do not overlap
+        dy = (0.12 if i % 2 else -0.12) if n_reg > 6 else 0.0
+        ax.text(cen[m, 0].mean(), cen[m, 1].mean() + dy,
+                f"R{i}\nw {r['sf_wale'][i]:.3f}\nc {r['sf_course'][i]:.3f}",
+                ha="center", va="center", fontsize=7 if n_reg > 6 else 9,
+                bbox=dict(fc="white", ec="none", alpha=0.75, pad=1))
+    ax.set_aspect("equal"); ax.autoscale(); ax.set_axis_off()
+    ax.set_title(f"{n_reg} regions: stretch factors (w = wale, c = course)", fontsize=10)
+
+    # stretch factors per region, as a profile
+    ax = fig.add_subplot(2, 4, 7)
+    xs = np.arange(n_reg)
+    ax.plot(xs, r["sf_wale"], "o-", color="#b3261e", label="sf_wale")
+    ax.plot(xs, r["sf_course"], "s-", color="#2a78d6", label="sf_course")
+    ax.axhline(1.0, color="0.6", lw=0.8, ls="--")
+    ax.set_xticks(xs); ax.set_xticklabels([f"R{i}" for i in xs], fontsize=8)
+    ax.set_ylabel("stretch factor"); ax.legend(fontsize=8, frameon=False)
+    ax.set_title("stretch factor per region (< 1 = slack rest shape)", fontsize=10)
+    for sp in ("top", "right"):
+        ax.spines[sp].set_visible(False)
+
+    ax = fig.add_subplot(2, 4, 8); ax.set_axis_off()
     rows = [f"R{i}  ({(region == i).sum():3d} faces)   sf_wale {r['sf_wale'][i]:.4f}   "
             f"sf_course {r['sf_course'][i]:.4f}" for i in range(n_reg)]
     rows += [""] + [f"{n}  rest scale {s:.4f}" for n, s in zip(names, r["cable_rest_scales"])]
