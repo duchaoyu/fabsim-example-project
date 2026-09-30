@@ -77,6 +77,12 @@ def set_variant(name):
         CABLE_FILE = os.path.join(RM, "cable_paths_pattern_smooth_rm.json")
         CABLE_META = os.path.join(RM, "cable_paths_pattern_smooth_rm.meta.json")
         REGION_MAP = os.path.join(OUT_DIR, "pattern_smooth_rm_4region_map.json")
+    elif name == "rm2":
+        RM = os.path.join(DATA, "remesh2")
+        MESH_PATH = TARGET_OFF = os.path.join(RM, "pattern_smooth_rm2_tri_m.off")
+        CABLE_FILE = os.path.join(RM, "cable_paths_pattern_smooth_rm2.json")
+        CABLE_META = os.path.join(RM, "cable_paths_pattern_smooth_rm2.meta.json")
+        REGION_MAP = os.path.join(OUT_DIR, "pattern_smooth_rm2_4region_map.json")
     elif name:
         raise ValueError(f"unknown variant {name!r}")
 
@@ -231,8 +237,8 @@ def main():
                     help="cap on the Newton diagonal regularisation (binary default "
                          "1e4). A compressed StVK region can need more; 1e6 rescued "
                          "10 of 12 regularization_failed calls on the sketch remesh")
-    ap.add_argument("--variant", default="", choices=["", "rm"],
-                    help="rm: the hand-drawn cables on the sketch remesh")
+    ap.add_argument("--variant", default="", choices=["", "rm", "rm2"],
+                    help="rm / rm2: the first / second hand-drawn cable layout, remeshed")
     ap.add_argument("--fix-edges", type=str, default="",
                     help="comma-separated edge cables (e.g. E00) whose vertices are "
                          "fixed as supports; the cable itself is then dropped")

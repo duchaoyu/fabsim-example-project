@@ -41,7 +41,7 @@ from compas.matrices import connectivity_matrix
 
 HERE  = os.path.dirname(os.path.abspath(__file__))
 ROOT  = os.path.abspath(os.path.join(HERE, ".."))
-DATA  = os.path.join(HERE, "data", "pattern")
+DATA  = os.environ.get("FDM_OUT_DIR", os.path.join(HERE, "data", "pattern"))
 INPUT = sys.argv[1] if len(sys.argv) > 1 else os.path.join(HERE, "data", "pattern_smooth.obj")
 REF_TRI = ""   # no reference trimesh for this geometry
 

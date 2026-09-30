@@ -64,19 +64,32 @@ VARIANTS = {
            os.path.join(DATA, "remesh", "directional_field_pattern_smooth_rm.json"),
            os.path.join(HERE, "optimisation", "pattern_smooth_rm_4region_map.json"),
            os.path.join(DATA, "remesh", "pattern_smooth_rm_field_regions.png")),
+    "rm2": (os.path.join(DATA, "remesh2", "pattern_smooth_rm2_tri_m.off"),
+            os.path.join(DATA, "remesh2", "cable_paths_pattern_smooth_rm2.json"),
+            os.path.join(DATA, "remesh2", "directional_field_pattern_smooth_rm2.json"),
+            os.path.join(HERE, "optimisation", "pattern_smooth_rm2_4region_map.json"),
+            os.path.join(DATA, "remesh2", "pattern_smooth_rm2_field_regions.png")),
 }
+# What the field is held to.  "all": every cable, the free-edge cables E*
+# included (the original construction).  "drawn": only the hand-drawn interior
+# cables C*, so the field follows them and the free edges do not steer it.
+DEFAULT_GUIDE = {"": "all", "rm": "all", "rm2": "drawn"}
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--variant", default="", choices=sorted(VARIANTS))
-    OFF_PATH, CABLE_JSON, OUT_FIELD, OUT_MAP, OUT_PNG = VARIANTS[
-        ap.parse_args().variant]
+    ap.add_argument("--guide", choices=["all", "drawn"], default=None)
+    args = ap.parse_args()
+    OFF_PATH, CABLE_JSON, OUT_FIELD, OUT_MAP, OUT_PNG = VARIANTS[args.variant]
+    guide = args.guide or DEFAULT_GUIDE[args.variant]
     V, F = load_off(OFF_PATH)
     n_f = len(F)
     cab = json.load(open(CABLE_JSON))
     cables = [cab[k] for k in sorted(cab)]
     interior = [cab[k] for k in sorted(cab) if k.startswith("C")]
+    guides = interior if guide == "drawn" else cables
+    print(f"Field guided by: {guide} ({len(guides)} polylines)")
     print(f"Mesh: {len(V)} verts, {n_f} faces;  cables {sorted(cab)}")
 
     centroids = V[F].mean(axis=1)
@@ -90,7 +103,7 @@ def main():
 
     # ── the field ─────────────────────────────────────────────────────────────
     p0, p1 = [], []
-    for path in cables:
+    for path in guides:
         for a, b in zip(path[:-1], path[1:]):
             p0.append(V[a]); p1.append(V[b])
     p0, p1 = np.array(p0), np.array(p1)
@@ -100,7 +113,7 @@ def main():
     d1_init = tan[nearest] - (tan[nearest] * normals).sum(1, keepdims=True) * normals
     d1_init /= np.linalg.norm(d1_init, axis=1, keepdims=True)
 
-    cable_verts = {v for c in cables for v in c}
+    cable_verts = {v for c in guides for v in c}
     fixed_mask = np.array([len(set(f.tolist()) & cable_verts) >= 2 for f in F])
     print(f"Cable-adjacent (constrained) faces: {fixed_mask.sum()}")
 
@@ -141,6 +154,19 @@ def main():
     d2 = np.cross(normals, d1)
     d2 /= np.maximum(np.linalg.norm(d2, axis=1, keepdims=True), 1e-10)
     knit_face = np.degrees(np.arctan2(d1[:, 1], d1[:, 0])) % 180.0
+
+    # alignment with the drawn (interior) cables: angle between d1 and the
+    # tangent of the nearest interior-cable segment, as a line field (mod 180)
+    q0 = np.array([V[a] for p in interior for a, b in zip(p[:-1], p[1:])])
+    q1 = np.array([V[b] for p in interior for a, b in zip(p[:-1], p[1:])])
+    qt = (q1 - q0) / np.linalg.norm(q1 - q0, axis=1, keepdims=True)
+    dq = np.linalg.norm(centroids[:, None] - (0.5 * (q0 + q1))[None], axis=2)
+    jn, dist = dq.argmin(1), dq.min(1)
+    dev = np.degrees(np.arccos(np.clip(np.abs((d1 * qt[jn]).sum(1)), 0, 1)))
+    print("  angle d1 vs nearest drawn cable:  " + "   ".join(
+        f"<{int(r * 1e3)} mm: {np.median(dev[(dist >= lo) & (dist < r)]):4.1f} deg median"
+        for lo, r in ((0, 0.03), (0.03, 0.06), (0.06, 0.12), (0.12, 0.25))
+        if ((dist >= lo) & (dist < r)).any()))
 
     # ── the regions: flood fill, cable edges are walls ────────────────────────
     walls = {frozenset(e) for p in interior for e in zip(p[:-1], p[1:])}

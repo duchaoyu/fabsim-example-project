@@ -1,0 +1,29 @@
+Fixed edges: ['E01'] -> 47 fixed vertices
+Mesh    : 1237 verts, 2330 faces, 47 supports, 1190 free (fitted)
+Target  : crown 0.2693 m, span 1.2000 m  (rest == target)
+Regions : 4, faces [727, 449, 298, 856]; knit per face, region means [114.9, 122.2, 65.5, 46.2] deg — FIXED
+Cables  : ['C00', 'C01', 'C02', 'E00', 'E02', 'E03']  EA 157000
+Material: E1 5000  E2 12507  nu 0.198   pressure 1000 Pa
+Log     : optimisation/pattern_smooth_rm_fixSW_p3_calls.jsonl
+  [   14] FEM INVALID: solver line_search_failed
+  [    1] FEM INVALID: solver line_search_failed
+  [    4] FEM INVALID: solver line_search_failed
+  [    2] FEM INVALID: solver line_search_failed
+  [   11] FEM INVALID: solver line_search_failed
+  [   12] FEM INVALID: solver line_search_failed
+  [   16] FEM INVALID: solver line_search_failed
+  [   15] FEM INVALID: solver line_search_failed
+  [    6] FEM INVALID: min interior z -0.0307 — folded
+  [    5] FEM INVALID: solver line_search_failed
+  [   10] FEM INVALID: min interior z -0.0273 — folded
+  [   13] FEM INVALID: solver line_search_failed
+  [    9] FEM INVALID: solver line_search_failed
+  [    8] FEM INVALID: solver line_search_failed
+  [    3] FEM INVALID: solver line_search_failed
+  [    7] FEM INVALID: solver line_search_failed
+  gen   1  calls    16  best 1000000.000 mm  gen best 1000000.000  invalid 16/16  sigma 0.934
+
+CMA-ES stop: {'tolfun': 1e-07}
+Best RMSE 1000000.0000 mm after 16 FEM calls, 0.2 min
+  [   17] FEM INVALID: solver line_search_failed
+WARNING: the best point does not re-evaluate as valid
