@@ -253,6 +253,20 @@ def main():
     cab = {"C00": C00, "C01": C01, "C02": C02}
     for k in ("E00", "E01", "E02", "E03"):
         cab[k] = [new_of[v] for v in old[k]]
+    # The top free-edge cable is three cables, not one: it is cut where the
+    # west and middle cables meet it, so each section between anchor points
+    # carries its own rest length.  E03a: NW corner -> C00, E03b: C00 -> C01,
+    # E03c: C01 -> NE corner (the order along E03 is checked, not assumed).
+    top = cab.pop("E03")
+    cuts = sorted(top.index(p[0]) for p in (C00, C01) if p[0] in top)
+    if len(cuts) != 2:
+        raise SystemExit("C00 / C01 do not both start on the top edge cable E03")
+    if V3[top[0]][0] > V3[top[-1]][0]:         # run W -> E so a/b/c read left to right
+        top = top[::-1]
+        cuts = sorted(len(top) - 1 - c for c in cuts)
+    for name, (i, j) in zip(("E03a", "E03b", "E03c"),
+                            ((0, cuts[0]), (cuts[0], cuts[1]), (cuts[1], len(top) - 1))):
+        cab[name] = top[i:j + 1]
     cab = {k: [int(v) for v in p] for k, p in cab.items()}
     os.makedirs(OUT, exist_ok=True)
     off = os.path.join(OUT, f"pattern_smooth_{TAG}_tri_m.off")
