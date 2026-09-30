@@ -53,6 +53,9 @@ def main():
     r, note = best_params(os.path.join(HERE, src) if not os.path.isabs(src) else src)
     if r.get("variant"):
         ops.set_variant(r["variant"])
+    if r.get("region_map"):
+        ops.REGION_MAP = os.path.join(HERE, r["region_map"])
+    n_reg = len(r["sf_wale"])
     V, F = ops.o2.load_off(ops.MESH_PATH)
     cab = json.load(open(ops.CABLE_FILE))
     fix_edges = r.get("fixed_edges") or [e for e in (sys.argv[2] if len(sys.argv) > 2
@@ -65,7 +68,7 @@ def main():
               **ops.MATERIAL, "cable_paths": [cab[k] for k in names],
               "fixed_vertices": fixed,
               "regions": [{"sf_wale": r["sf_wale"][i], "sf_course": r["sf_course"][i],
-                           "knit_dir_deg": 0.0} for i in range(4)],
+                           "knit_dir_deg": 0.0} for i in range(n_reg)],
               "cable_rest_scales": r["cable_rest_scales"]}
     # the solver cap the run used: a calls-log record does not carry it, so
     # fall back to the --reg-max argument, then to the result JSON's value
@@ -130,14 +133,14 @@ def main():
 
     ax = fig.add_subplot(2, 3, 6); ax.set_axis_off()
     rows = [f"R{i}  ({(region == i).sum():3d} faces)   sf_wale {r['sf_wale'][i]:.4f}   "
-            f"sf_course {r['sf_course'][i]:.4f}" for i in range(4)]
+            f"sf_course {r['sf_course'][i]:.4f}" for i in range(n_reg)]
     rows += [""] + [f"{n}  rest scale {s:.4f}" for n, s in zip(names, r["cable_rest_scales"])]
     rows += ["", f"E1 {ops.MATERIAL['E1']:g}  E2 {ops.MATERIAL['E2']:g}  nu {ops.MATERIAL['nu']}"
                  f"   p {params['pressure']:g} Pa   EA {ops.CABLE_EA:g}",
              f"{len(fixed)} fixed vertices (blue)"
              + (f", incl. edge(s) {','.join(fix_edges)}" if fix_edges else "")
              + "; knit fixed from the field"]
-    ax.text(0.0, 1.0, "\n".join(rows), va="top", family="monospace", fontsize=10)
+    ax.text(0.0, 1.0, "\n".join(rows), va="top", family="monospace", fontsize=10 if len(rows) < 20 else 7.5)
 
     out = (sys.argv[3] if len(sys.argv) > 3 else
            os.path.join(ops.OUT_DIR, "pattern_smooth_fit.png"))

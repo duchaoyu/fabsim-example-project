@@ -179,7 +179,7 @@ def run_fem(sw, sc, knit, pressure, cable_paths, cscales, fixed, V_rest, t_crown
     return out, rec
 
 
-def run_cma(args, p0, bnds, expand, evaluate, track):
+def run_cma(args, p0, bnds, expand, evaluate, track, penalty=lambda sw, sc: 0.0):
     """Phase 3: CMA-ES over the 15 parameters, one generation = --popsize FEM
     calls run --workers at a time.  L-BFGS-B with finite differences does not
     survive this problem: about a quarter of the calls near the start fail in
@@ -188,7 +188,8 @@ def run_cma(args, p0, bnds, expand, evaluate, track):
     the worst sample.  Variables are scaled so sigma = 1 is --sigma-sf on a
     stretch factor and --sigma-cable on a cable scale."""
     import cma
-    scale = np.array([args.sigma_sf] * 8 + [args.sigma_cable] * (len(p0) - 8))
+    n_sf = 2 * N_REGIONS
+    scale = np.array([args.sigma_sf] * n_sf + [args.sigma_cable] * (len(p0) - n_sf))
     lo = (np.array([b[0] for b in bnds]) - p0) / scale
     hi = (np.array([b[1] for b in bnds]) - p0) / scale
     es = cma.CMAEvolutionStrategy(np.zeros(len(p0)), 1.0,
@@ -200,7 +201,9 @@ def run_cma(args, p0, bnds, expand, evaluate, track):
     def one(z):
         p = p0 + scale * np.asarray(z)
         sw, sc, cs = expand(p)
-        return evaluate(sw, sc, cs, "p3")[1], p
+        l = evaluate(sw, sc, cs, "p3")[1]
+        # the score CMA ranks: RMSE plus the Laplacian penalty (invalid stays 1e3)
+        return (l if l >= 1e3 else l + penalty(sw, sc)), p
 
     gen = 0
     with ThreadPoolExecutor(args.workers) as ex:
@@ -237,6 +240,13 @@ def main():
                     help="cap on the Newton diagonal regularisation (binary default "
                          "1e4). A compressed StVK region can need more; 1e6 rescued "
                          "10 of 12 regularization_failed calls on the sketch remesh")
+    ap.add_argument("--region-map", type=str, default=None,
+                    help="region map JSON (face_regions + face_knit_dirs_deg); the "
+                         "number of regions is read from it")
+    ap.add_argument("--lambda-smooth", type=float, default=0.0,
+                    help="Laplacian penalty on the stretch factors, as in "
+                         "optimise_D5_laplacian.py: score = RMSE [m] + lambda * sum over "
+                         "adjacent regions of (dsf_wale^2 + dsf_course^2)")
     ap.add_argument("--variant", default="", choices=["", "rm", "rm2"],
                     help="rm / rm2: the first / second hand-drawn cable layout, remeshed")
     ap.add_argument("--fix-edges", type=str, default="",
@@ -252,6 +262,12 @@ def main():
                     help="phase 2/3 start: rest scale of the edge cables E*")
     args = ap.parse_args()
     set_variant(args.variant)
+    global REGION_MAP, N_REGIONS
+    if args.region_map:
+        REGION_MAP = args.region_map if os.path.isabs(args.region_map) else \
+            os.path.join(HERE, args.region_map) if not os.path.exists(args.region_map) \
+            else os.path.abspath(args.region_map)
+    N_REGIONS = int(max(json.load(open(REGION_MAP))["face_regions"])) + 1
     _reg_max[0] = args.newton_reg_max
 
     prefix = args.out_prefix or f"pattern_smooth_p{args.phase}"
@@ -272,6 +288,18 @@ def main():
     rm = json.load(open(REGION_MAP))
     face_region = np.array(rm["face_regions"])
     pf = np.asarray(rm["face_knit_dirs_deg"], float)
+    # region adjacency: two regions are neighbours when a mesh edge separates them
+    e2f = {}
+    for fi, t in enumerate(F):
+        for k in range(3):
+            e2f.setdefault(tuple(sorted((int(t[k]), int(t[(k + 1) % 3])))), []).append(fi)
+    adj_pairs = sorted({tuple(sorted((int(face_region[a]), int(face_region[b]))))
+                        for fl in e2f.values() if len(fl) == 2
+                        for a, b in [fl] if face_region[a] != face_region[b]})
+    lam = args.lambda_smooth
+
+    def lap(sw, sc):
+        return float(sum((sw[i] - sw[j]) ** 2 + (sc[i] - sc[j]) ** 2 for i, j in adj_pairs))
     knit = np.array([np.degrees(np.angle(np.exp(2j * np.radians(pf[face_region == r]))
                                          .mean())) / 2 % 180 for r in range(N_REGIONS)])
     cab = json.load(open(CABLE_FILE))
@@ -294,6 +322,7 @@ def main():
     print(f"Target  : crown {t_crown:.4f} m, span {span:.4f} m  (rest == target)")
     print(f"Regions : {N_REGIONS}, faces {np.bincount(face_region).tolist()}; knit per "
           f"face, region means {[round(float(k), 1) for k in knit]} deg — FIXED")
+    print(f"Adjacent: {adj_pairs}   lambda_smooth {lam:g}")
     print(f"Cables  : {cable_names}  EA {CABLE_EA:g}")
     print(f"Material: E1 {MATERIAL['E1']:g}  E2 {MATERIAL['E2']:g}  nu {MATERIAL['nu']}"
           f"   pressure {args.pressure:g} Pa")
@@ -319,7 +348,8 @@ def main():
     if args.phase == 0:
         for v in [float(s) for s in args.sweep_sf.split(",")]:
             t = time.time()
-            out, l = evaluate([v] * 4, [v] * 4, [args.cable0] * n_c, f"sweep {v}")
+            out, l = evaluate([v] * N_REGIONS, [v] * N_REGIONS, [args.cable0] * n_c,
+                              f"sweep {v}")
             print(f"  sf={v:.3f}  " + ("INVALID" if out is None else
                   f"RMSE {l*1e3:8.3f} mm  crown {out['crown']:.4f}  "
                   f"({time.time()-t:.1f} s)"), flush=True)
@@ -331,25 +361,39 @@ def main():
         bnds = [(0.80, 1.50), (0.80, 1.50), (0.80, 1.05)]
 
         def expand(p):
-            return [p[0]] * 4, [p[1]] * 4, [p[2]] * n_c
+            return [p[0]] * N_REGIONS, [p[1]] * N_REGIONS, [p[2]] * n_c
     else:
         if seed:
             sn = seed.get("cable_names", sorted(cab))
             cs0 = dict(zip(sn, seed["cable_rest_scales"]))
-            p0 = np.array(list(seed["sf_wale"]) + list(seed["sf_course"]) +
+            sw0, sc0 = np.asarray(seed["sf_wale"]), np.asarray(seed["sf_course"])
+            if len(sw0) != N_REGIONS:
+                # the seed is on a different region layout: each new region
+                # starts at the face-weighted mean of the seed over its faces
+                src = seed.get("region_map")
+                if not src:
+                    sys.exit("seed has a different region count and no region_map")
+                fr0 = np.array(json.load(open(os.path.join(HERE, src)))["face_regions"])
+                sw0 = np.array([sw0[fr0[face_region == r]].mean() for r in range(N_REGIONS)])
+                sc0 = np.array([sc0[fr0[face_region == r]].mean() for r in range(N_REGIONS)])
+                print(f"Seed    : remapped from {len(seed['sf_wale'])} regions ({src})")
+            p0 = np.array(list(sw0) + list(sc0) +
                           [cs0.get(k, args.cable0) for k in cable_names])
         else:
             ce = args.cable0 if args.cable0_edge is None else args.cable0_edge
-            p0 = np.array([args.sf0] * 8 +
+            p0 = np.array([args.sf0] * (2 * N_REGIONS) +
                           [ce if k.startswith("E") else args.cable0 for k in cable_names])
-        bnds = [(0.80, 1.50)] * 8 + [(0.80, 1.05)] * n_c
+        bnds = [(0.80, 1.50)] * (2 * N_REGIONS) + [(0.80, 1.05)] * n_c
 
         def expand(p):
-            return p[:4], p[4:8], p[8:8 + n_c]
+            N = N_REGIONS
+            return p[:N], p[N:2 * N], p[2 * N:2 * N + n_c]
 
     def obj(p):
         sw, sc, cs = expand(p)
         _, l = evaluate(sw, sc, cs, f"p{args.phase}")
+        if l < 1e3:
+            l = l + lam * lap(sw, sc)
         if _best[0] is None or l < _best[0][0] or _call[0] % 10 == 0:
             print(f"  [{_call[0]:5d}] RMSE {l*1e3:9.4f} mm  "
                   f"p=[{','.join(f'{v:.4f}' for v in p)}]", flush=True)
@@ -358,7 +402,8 @@ def main():
     _t0[0] = time.time()
     msg = ""
     if args.phase == 3:
-        msg = run_cma(args, p0, bnds, expand, evaluate, track)
+        msg = run_cma(args, p0, bnds, expand, evaluate, track,
+                      penalty=lambda sw, sc: lam * lap(sw, sc))
     else:
       try:
         res = minimize(obj, p0, method="L-BFGS-B", bounds=bnds,
@@ -369,7 +414,7 @@ def main():
         msg = f"stopped at time limit ({_time_limit[0]:.0f} s)"
     best_l, best_p = _best[0]
     elapsed = time.time() - _t0[0]
-    print(f"\n{msg}\nBest RMSE {best_l*1e3:.4f} mm after {_call[0]} FEM calls, "
+    print(f"\n{msg}\nBest score {best_l*1e3:.4f} mm-equivalent (RMSE + penalty) after {_call[0]} FEM calls, "
           f"{elapsed/60:.1f} min")
 
     sw, sc, cs = expand(best_p)
@@ -391,6 +436,8 @@ def main():
          "fixed_edges": fix_edges,
          "pressure": args.pressure, "material": MATERIAL, "cable_ea": CABLE_EA,
          "newton_reg_max": args.newton_reg_max,
+         "n_regions": N_REGIONS, "lambda_smooth": lam,
+         "laplacian": lap(sw, sc), "adjacent_regions": adj_pairs,
          "rmse_mm": l * 1e3, "max_dev_mm": float(dev[free_idx].max()) * 1e3,
          "crown_m": out["crown"], "target_crown_m": t_crown,
          "max_disp_mm": out["max_disp"] * 1e3, "max_stress": out.get("max_stress"),
