@@ -1,0 +1,316 @@
+Fixed edges: ['E00'] -> 51 fixed vertices
+Mesh    : 1237 verts, 2330 faces, 51 supports, 1186 free (fitted)
+Target  : crown 0.2693 m, span 1.2000 m  (rest == target)
+Regions : 4, faces [727, 449, 298, 856]; knit per face, region means [114.9, 122.2, 65.5, 46.2] deg — FIXED
+Cables  : ['C00', 'C01', 'C02', 'E01', 'E02', 'E03']  EA 157000
+Material: E1 5000  E2 12507  nu 0.198   pressure 1000 Pa
+Log     : optimisation/pattern_smooth_rm_fixSE_p3_calls.jsonl
+  [    7] FEM INVALID: solver regularization_failed
+  [    9] FEM INVALID: solver regularization_failed
+  [   12] FEM INVALID: solver regularization_failed
+  [   15] FEM INVALID: solver regularization_failed
+  [    4] FEM INVALID: solver regularization_failed
+  [   16] FEM INVALID: solver regularization_failed
+  [   14] FEM INVALID: solver regularization_failed
+  [   10] FEM INVALID: solver regularization_failed
+  [    5] FEM INVALID: solver regularization_failed
+  [    1] FEM INVALID: solver regularization_failed
+  [    2] FEM INVALID: solver regularization_failed
+  [   13] FEM INVALID: solver regularization_failed
+  [    3] FEM INVALID: solver line_search_failed
+  gen   1  calls    16  best   38.250 mm  gen best   38.250  invalid 13/16  sigma 0.905
+  [   31] FEM INVALID: solver regularization_failed
+  [   24] FEM INVALID: solver regularization_failed
+  [   25] FEM INVALID: solver regularization_failed
+  [   18] FEM INVALID: solver regularization_failed
+  [   30] FEM INVALID: solver regularization_failed
+  [   21] FEM INVALID: solver regularization_failed
+  [   17] FEM INVALID: solver regularization_failed
+  [   22] FEM INVALID: solver regularization_failed
+  [   29] FEM INVALID: min interior z -0.0170 — folded
+  [   23] FEM INVALID: solver line_search_failed
+  gen   2  calls    32  best   37.826 mm  gen best   37.826  invalid 10/16  sigma 0.887
+  [   34] FEM INVALID: solver regularization_failed
+  [   42] FEM INVALID: solver regularization_failed
+  [   46] FEM INVALID: solver regularization_failed
+  [   39] FEM INVALID: solver regularization_failed
+  [   38] FEM INVALID: solver regularization_failed
+  [   47] FEM INVALID: solver regularization_failed
+  [   43] FEM INVALID: solver regularization_failed
+  [   40] FEM INVALID: min interior z -0.0141 — folded
+  [   41] FEM INVALID: solver regularization_failed
+  [   37] FEM INVALID: solver line_search_failed
+  [   44] FEM INVALID: solver line_search_failed
+  [   45] FEM INVALID: solver line_search_failed
+  gen   3  calls    48  best   37.826 mm  gen best   38.267  invalid 12/16  sigma 0.860
+  [   57] FEM INVALID: solver regularization_failed
+  [   59] FEM INVALID: solver regularization_failed
+  [   55] FEM INVALID: solver regularization_failed
+  [   61] FEM INVALID: solver regularization_failed
+  [   51] FEM INVALID: solver regularization_failed
+  [   63] FEM INVALID: solver regularization_failed
+  [   64] FEM INVALID: solver regularization_failed
+  [   62] FEM INVALID: solver regularization_failed
+  [   54] FEM INVALID: solver regularization_failed
+  [   49] FEM INVALID: min interior z -0.0158 — folded
+  [   58] FEM INVALID: solver line_search_failed
+  [   50] FEM INVALID: solver line_search_failed
+  gen   4  calls    64  best   37.697 mm  gen best   37.697  invalid 12/16  sigma 0.835
+  [   76] FEM INVALID: solver regularization_failed
+  [   73] FEM INVALID: solver regularization_failed
+  [   80] FEM INVALID: solver regularization_failed
+  [   78] FEM INVALID: solver regularization_failed
+  [   77] FEM INVALID: solver regularization_failed
+  [   65] FEM INVALID: solver regularization_failed
+  [   71] FEM INVALID: solver regularization_failed
+  [   68] FEM INVALID: solver line_search_failed
+  [   70] FEM INVALID: solver regularization_failed
+  [   67] FEM INVALID: solver line_search_failed
+  [   66] FEM INVALID: timeout
+  gen   5  calls    80  best   37.463 mm  gen best   37.463  invalid 11/16  sigma 0.870
+  [   88] FEM INVALID: solver regularization_failed
+  [   93] FEM INVALID: solver regularization_failed
+  [   85] FEM INVALID: solver regularization_failed
+  [   95] FEM INVALID: solver regularization_failed
+  [   87] FEM INVALID: solver regularization_failed
+  [   83] FEM INVALID: solver regularization_failed
+  [   90] FEM INVALID: solver regularization_failed
+  [   84] FEM INVALID: solver regularization_failed
+  [   91] FEM INVALID: timeout
+  gen   6  calls    96  best   37.288 mm  gen best   37.288  invalid 9/16  sigma 0.904
+  [  101] FEM INVALID: solver regularization_failed
+  [  105] FEM INVALID: solver regularization_failed
+  [   99] FEM INVALID: solver regularization_failed
+  [  106] FEM INVALID: solver regularization_failed
+  [   97] FEM INVALID: solver regularization_failed
+  [  100] FEM INVALID: solver regularization_failed
+  [  103] FEM INVALID: solver regularization_failed
+  [  112] FEM INVALID: solver regularization_failed
+  [  107] FEM INVALID: solver line_search_failed
+  [  102] FEM INVALID: solver line_search_failed
+  [  104] FEM INVALID: solver line_search_failed
+  gen   7  calls   112  best   36.467 mm  gen best   36.467  invalid 11/16  sigma 0.889
+  [  113] FEM INVALID: solver regularization_failed
+  [  119] FEM INVALID: solver regularization_failed
+  [  123] FEM INVALID: solver regularization_failed
+  [  127] FEM INVALID: solver regularization_failed
+  [  128] FEM INVALID: solver regularization_failed
+  [  120] FEM INVALID: solver regularization_failed
+  [  126] FEM INVALID: solver regularization_failed
+  [  116] FEM INVALID: solver regularization_failed
+  [  118] FEM INVALID: solver line_search_failed
+  [  125] FEM INVALID: solver regularization_failed
+  gen   8  calls   128  best   36.009 mm  gen best   36.009  invalid 10/16  sigma 0.860
+  [  137] FEM INVALID: solver regularization_failed
+  [  136] FEM INVALID: solver regularization_failed
+  [  138] FEM INVALID: solver regularization_failed
+  [  129] FEM INVALID: solver regularization_failed
+  [  141] FEM INVALID: solver regularization_failed
+  [  131] FEM INVALID: solver regularization_failed
+  [  135] FEM INVALID: solver regularization_failed
+  [  139] FEM INVALID: solver regularization_failed
+  [  142] FEM INVALID: solver regularization_failed
+  [  133] FEM INVALID: solver regularization_failed
+  [  144] FEM INVALID: solver line_search_failed
+  [  130] FEM INVALID: timeout
+  gen   9  calls   144  best   36.009 mm  gen best   36.525  invalid 12/16  sigma 0.812
+  [  154] FEM INVALID: solver regularization_failed
+  [  156] FEM INVALID: solver regularization_failed
+  [  145] FEM INVALID: solver regularization_failed
+  [  149] FEM INVALID: solver regularization_failed
+  [  151] FEM INVALID: solver regularization_failed
+  [  146] FEM INVALID: solver regularization_failed
+  [  160] FEM INVALID: timeout
+  [  153] FEM INVALID: timeout
+  gen  10  calls   160  best   35.850 mm  gen best   35.850  invalid 8/16  sigma 0.826
+  [  175] FEM INVALID: solver regularization_failed
+  [  168] FEM INVALID: solver regularization_failed
+  [  174] FEM INVALID: solver regularization_failed
+  [  162] FEM INVALID: solver regularization_failed
+  [  167] FEM INVALID: solver regularization_failed
+  [  170] FEM INVALID: solver regularization_failed
+  [  163] FEM INVALID: solver regularization_failed
+  [  176] FEM INVALID: solver regularization_failed
+  [  161] FEM INVALID: solver line_search_failed
+  [  166] FEM INVALID: solver line_search_failed
+  [  172] FEM INVALID: timeout
+  gen  11  calls   176  best   35.649 mm  gen best   35.649  invalid 11/16  sigma 0.834
+  [  187] FEM INVALID: solver regularization_failed
+  [  190] FEM INVALID: solver regularization_failed
+  [  188] FEM INVALID: solver regularization_failed
+  [  189] FEM INVALID: solver regularization_failed
+  [  184] FEM INVALID: solver regularization_failed
+  [  178] FEM INVALID: solver regularization_failed
+  [  180] FEM INVALID: solver regularization_failed
+  [  179] FEM INVALID: solver line_search_failed
+  [  177] FEM INVALID: solver line_search_failed
+  [  185] FEM INVALID: solver line_search_failed
+  gen  12  calls   192  best   35.649 mm  gen best   36.162  invalid 10/16  sigma 0.834
+  [  205] FEM INVALID: solver regularization_failed
+  [  202] FEM INVALID: solver regularization_failed
+  [  194] FEM INVALID: solver regularization_failed
+  [  201] FEM INVALID: solver regularization_failed
+  [  197] FEM INVALID: solver regularization_failed
+  [  199] FEM INVALID: timeout
+  [  204] FEM INVALID: timeout
+  gen  13  calls   208  best   35.649 mm  gen best   35.933  invalid 7/16  sigma 0.806
+  [  224] FEM INVALID: solver regularization_failed
+  [  218] FEM INVALID: solver regularization_failed
+  [  220] FEM INVALID: solver regularization_failed
+  [  212] FEM INVALID: solver regularization_failed
+  [  213] FEM INVALID: solver regularization_failed
+  [  214] FEM INVALID: solver regularization_failed
+  [  210] FEM INVALID: solver line_search_failed
+  [  219] FEM INVALID: solver regularization_failed
+  [  222] FEM INVALID: solver line_search_failed
+  [  215] FEM INVALID: solver regularization_failed
+  [  209] FEM INVALID: solver line_search_failed
+  [  217] FEM INVALID: solver line_search_failed
+  [  221] FEM INVALID: solver line_search_failed
+  [  216] FEM INVALID: timeout
+  gen  14  calls   224  best   35.649 mm  gen best   36.110  invalid 14/16  sigma 0.800
+  [  238] FEM INVALID: solver regularization_failed
+  [  240] FEM INVALID: solver line_search_failed
+  [  234] FEM INVALID: solver line_search_failed
+  [  227] FEM INVALID: solver regularization_failed
+  [  236] FEM INVALID: solver regularization_failed
+  [  230] FEM INVALID: solver line_search_failed
+  gen  15  calls   240  best   35.649 mm  gen best   35.871  invalid 6/16  sigma 0.801
+  [  250] FEM INVALID: solver regularization_failed
+  [  251] FEM INVALID: solver regularization_failed
+  [  242] FEM INVALID: solver regularization_failed
+  [  241] FEM INVALID: solver regularization_failed
+  [  255] FEM INVALID: solver regularization_failed
+  [  254] FEM INVALID: solver line_search_failed
+  [  252] FEM INVALID: solver regularization_failed
+  [  244] FEM INVALID: solver regularization_failed
+  [  256] FEM INVALID: solver regularization_failed
+  [  246] FEM INVALID: solver line_search_failed
+  [  248] FEM INVALID: solver line_search_failed
+  gen  16  calls   256  best   35.523 mm  gen best   35.523  invalid 11/16  sigma 0.830
+  [  269] FEM INVALID: solver regularization_failed
+  [  272] FEM INVALID: solver regularization_failed
+  [  268] FEM INVALID: solver regularization_failed
+  [  266] FEM INVALID: solver regularization_failed
+  [  265] FEM INVALID: solver regularization_failed
+  [  258] FEM INVALID: solver line_search_failed
+  [  267] FEM INVALID: solver regularization_failed
+  [  257] FEM INVALID: solver regularization_failed
+  [  263] FEM INVALID: solver regularization_failed
+  [  264] FEM INVALID: solver regularization_failed
+  [  261] FEM INVALID: solver regularization_failed
+  [  262] FEM INVALID: solver line_search_failed
+  [  260] FEM INVALID: solver regularization_failed
+  [  271] FEM INVALID: solver regularization_failed
+  [  259] FEM INVALID: solver line_search_failed
+  gen  17  calls   272  best   35.245 mm  gen best   35.245  invalid 15/16  sigma 0.840
+  [  276] FEM INVALID: solver regularization_failed
+  [  274] FEM INVALID: solver regularization_failed
+  [  275] FEM INVALID: solver regularization_failed
+  [  280] FEM INVALID: solver regularization_failed
+  [  285] FEM INVALID: solver regularization_failed
+  [  279] FEM INVALID: solver regularization_failed
+  [  278] FEM INVALID: solver regularization_failed
+  [  282] FEM INVALID: solver regularization_failed
+  [  283] FEM INVALID: solver regularization_failed
+  [  284] FEM INVALID: solver line_search_failed
+  [  281] FEM INVALID: solver line_search_failed
+  [  287] FEM INVALID: solver regularization_failed
+  gen  18  calls   288  best   34.983 mm  gen best   34.983  invalid 12/16  sigma 0.835
+  [  296] FEM INVALID: solver regularization_failed
+  [  304] FEM INVALID: solver regularization_failed
+  [  292] FEM INVALID: solver line_search_failed
+  [  299] FEM INVALID: solver regularization_failed
+  [  301] FEM INVALID: solver regularization_failed
+  [  293] FEM INVALID: solver line_search_failed
+  [  290] FEM INVALID: solver regularization_failed
+  [  303] FEM INVALID: solver line_search_failed
+  gen  19  calls   304  best   34.796 mm  gen best   34.796  invalid 8/16  sigma 0.908
+  [  312] FEM INVALID: solver regularization_failed
+  [  305] FEM INVALID: solver regularization_failed
+  [  315] FEM INVALID: solver regularization_failed
+  [  308] FEM INVALID: solver regularization_failed
+  [  316] FEM INVALID: solver regularization_failed
+  [  314] FEM INVALID: solver regularization_failed
+  [  311] FEM INVALID: solver regularization_failed
+  [  319] FEM INVALID: solver regularization_failed
+  [  307] FEM INVALID: solver regularization_failed
+  [  320] FEM INVALID: timeout
+  gen  20  calls   320  best   34.681 mm  gen best   34.681  invalid 10/16  sigma 1.008
+  [  328] FEM INVALID: solver regularization_failed
+  [  323] FEM INVALID: solver regularization_failed
+  [  336] FEM INVALID: solver regularization_failed
+  [  330] FEM INVALID: solver regularization_failed
+  [  329] FEM INVALID: solver regularization_failed
+  [  334] FEM INVALID: solver regularization_failed
+  gen  21  calls   336  best   34.653 mm  gen best   34.653  invalid 6/16  sigma 1.089
+  [  337] FEM INVALID: solver regularization_failed
+  [  347] FEM INVALID: solver regularization_failed
+  [  351] FEM INVALID: solver regularization_failed
+  [  350] FEM INVALID: solver regularization_failed
+  [  339] FEM INVALID: solver regularization_failed
+  [  341] FEM INVALID: solver regularization_failed
+  [  338] FEM INVALID: solver regularization_failed
+  [  343] FEM INVALID: solver regularization_failed
+  [  340] FEM INVALID: solver line_search_failed
+  [  344] FEM INVALID: solver regularization_failed
+  [  346] FEM INVALID: solver regularization_failed
+  gen  22  calls   352  best   34.653 mm  gen best   34.724  invalid 11/16  sigma 1.099
+  [  356] FEM INVALID: solver regularization_failed
+  [  360] FEM INVALID: solver regularization_failed
+  [  355] FEM INVALID: solver regularization_failed
+  [  357] FEM INVALID: solver regularization_failed
+  [  366] FEM INVALID: timeout
+  gen  23  calls   368  best   34.568 mm  gen best   34.568  invalid 5/16  sigma 1.159
+  [  380] FEM INVALID: solver regularization_failed
+  [  369] FEM INVALID: solver regularization_failed
+  [  382] FEM INVALID: solver regularization_failed
+  [  381] FEM INVALID: solver regularization_failed
+  [  370] FEM INVALID: solver line_search_failed
+  gen  24  calls   384  best   34.380 mm  gen best   34.380  invalid 5/16  sigma 1.181
+  [  398] FEM INVALID: solver regularization_failed
+  [  389] FEM INVALID: solver regularization_failed
+  [  386] FEM INVALID: solver regularization_failed
+  [  395] FEM INVALID: solver regularization_failed
+  [  399] FEM INVALID: solver line_search_failed
+  [  397] FEM INVALID: solver line_search_failed
+  [  385] FEM INVALID: solver line_search_failed
+  [  391] FEM INVALID: solver line_search_failed
+  gen  25  calls   400  best   34.204 mm  gen best   34.204  invalid 8/16  sigma 1.260
+  [  401] FEM INVALID: solver regularization_failed
+  [  403] FEM INVALID: solver regularization_failed
+  [  406] FEM INVALID: solver regularization_failed
+  [  414] FEM INVALID: solver regularization_failed
+  [  416] FEM INVALID: solver line_search_failed
+  [  413] FEM INVALID: solver regularization_failed
+  [  404] FEM INVALID: solver regularization_failed
+  [  405] FEM INVALID: solver line_search_failed
+  gen  26  calls   416  best   34.204 mm  gen best   34.411  invalid 8/16  sigma 1.250
+  [  432] FEM INVALID: solver regularization_failed
+  [  417] FEM INVALID: solver line_search_failed
+  [  428] FEM INVALID: solver line_search_failed
+  [  431] FEM INVALID: solver line_search_failed
+  gen  27  calls   432  best   34.099 mm  gen best   34.099  invalid 4/16  sigma 1.203
+  [  436] FEM INVALID: solver regularization_failed
+  [  439] FEM INVALID: solver regularization_failed
+  [  446] FEM INVALID: solver regularization_failed
+  [  448] FEM INVALID: solver line_search_failed
+  gen  28  calls   448  best   33.964 mm  gen best   33.964  invalid 4/16  sigma 1.155
+  [  464] FEM INVALID: solver regularization_failed
+  [  463] FEM INVALID: solver regularization_failed
+  [  455] FEM INVALID: solver regularization_failed
+  [  460] FEM INVALID: solver line_search_failed
+  [  453] FEM INVALID: solver line_search_failed
+  [  454] FEM INVALID: solver regularization_failed
+  [  458] FEM INVALID: solver line_search_failed
+  [  452] FEM INVALID: timeout
+  gen  29  calls   464  best   33.964 mm  gen best   34.217  invalid 8/16  sigma 1.116
+  [  476] FEM INVALID: solver regularization_failed
+  [  473] FEM INVALID: solver regularization_failed
+  [  477] FEM INVALID: solver regularization_failed
+  [  474] FEM INVALID: solver regularization_failed
+  [  478] FEM INVALID: solver regularization_failed
+  [  472] FEM INVALID: solver regularization_failed
+  [  468] FEM INVALID: solver regularization_failed
+  [  480] FEM INVALID: solver regularization_failed
+  [  469] FEM INVALID: solver line_search_failed

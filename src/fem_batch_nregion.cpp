@@ -35,6 +35,7 @@
 
 #include <Eigen/Dense>
 #include <cmath>
+#include <cstdlib>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -304,6 +305,8 @@ static std::vector<std::vector<int>> parseCablePaths(const std::string& s)
 }
 
 std::string g_solver_status = "unrun";
+int g_load_steps = 0;   // 0 = the original 1 / 10 / 50 / 100 % sequence
+double g_reg_max = 0.0; // 0 = optim's default cap on the Newton regularisation (1e4)
 
 // ── Newton solve ──────────────────────────────────────────────────────────────
 template <class Model>
@@ -313,6 +316,10 @@ static VectorXd newtonSolve(Model& model, const VectorXd& x0)
     solver.options.display         = optim::SolverDisplay::quiet;
     solver.options.threshold       = 1e-6;
     solver.options.iteration_limit = 10000;
+    // The default cap is an absolute 1e4 on the diagonal shift; a compressed
+    // StVK region can need more.  A larger cap only makes the step more
+    // gradient-like; convergence is still judged on the residual.
+    if (g_reg_max > 0.0) solver.options.newton.max = g_reg_max;
     for (int b : fixed_vs) {
         solver.options.fixed_dofs.push_back(b*3);
         solver.options.fixed_dofs.push_back(b*3+1);
@@ -361,9 +368,32 @@ static VectorXd simulate(const std::vector<RegionParams>& regions,
     fsim::Mat3<double> V0_mod =
         computeAnisotropicRestShape(V0, F, bdrs, face_dirs, s1v, s2v);
 
+    if (std::getenv("FEM_DEBUG_REST")) {
+        // rest-shape sanity: area ratio and normal flip of every face
+        int flipped = 0; double rmin = 1e30; int fmin = -1;
+        for (int f = 0; f < nF; ++f) {
+            Vector3d a0 = V0.row(F(f,1)) - V0.row(F(f,0)), b0 = V0.row(F(f,2)) - V0.row(F(f,0));
+            Vector3d a1 = V0_mod.row(F(f,1)) - V0_mod.row(F(f,0)), b1 = V0_mod.row(F(f,2)) - V0_mod.row(F(f,0));
+            Vector3d n0 = a0.cross(b0), n1 = a1.cross(b1);
+            if (n0.dot(n1) <= 0) ++flipped;
+            double r = n1.norm() / n0.norm();
+            if (r < rmin) { rmin = r; fmin = f; }
+        }
+        std::cerr << "REST flipped=" << flipped << " min_area_ratio=" << rmin
+                  << " at face " << fmin << "\n";
+    }
+
     VectorXd x = Map<const VectorXd>(V0.data(), V0.size());
 
-    for (double p : { pressure*0.01, pressure*0.1, pressure*0.5, pressure }) {
+    // Optional finer load stepping: g_load_steps pressures geometric from
+    // 1 % to 100 %.  Without it the original four steps are used unchanged.
+    std::vector<double> steps = { pressure*0.01, pressure*0.1, pressure*0.5, pressure };
+    if (g_load_steps >= 2) {
+        steps.clear();
+        for (int k = 0; k < g_load_steps; ++k)
+            steps.push_back(pressure * std::pow(0.01, 1.0 - double(k) / (g_load_steps - 1)));
+    }
+    for (double p : steps) {
         fsim::OrthotropicStVKMembrane membrane(
             V0_mod, F, ths, E1s, E2s, nus, face_dirs, mp.mass, p);
 
@@ -466,6 +496,8 @@ int main(int argc, char* argv[])
     // Optional explicit supports.  Without it every topological boundary vertex
     // is fixed; with it only these are, so the rest of the boundary is a free
     // edge (the rest-shape construction still uses the topological boundary).
+    g_load_steps = jsonInt(ps, "load_steps", 0);
+    g_reg_max = jsonDouble(ps, "newton_reg_max", 0.0);
     fixed_vs = jsonIntArray(ps, "fixed_vertices");
     if (fixed_vs.empty()) fixed_vs = bdrs;
     for (int v : fixed_vs)

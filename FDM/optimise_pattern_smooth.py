@@ -101,6 +101,9 @@ class _TimeUp(Exception):
     pass
 
 
+_reg_max = [0.0]       # --newton-reg-max, passed to the binary when > 0
+
+
 def run_fem(sw, sc, knit, pressure, cable_paths, cscales, fixed, V_rest, t_crown,
             min_disp, tag=""):
     with _lock:
@@ -112,6 +115,8 @@ def run_fem(sw, sc, knit, pressure, cable_paths, cscales, fixed, V_rest, t_crown
               "regions": [{"sf_wale": float(sw[r]), "sf_course": float(sc[r]),
                            "knit_dir_deg": float(knit[r])} for r in range(N_REGIONS)],
               "cable_rest_scales": [float(s) for s in cscales]}
+    if _reg_max[0] > 0:
+        params["newton_reg_max"] = _reg_max[0]
     with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False,
                                      dir=OUT_DIR) as pf:
         json.dump(params, pf)
@@ -222,6 +227,10 @@ def main():
     ap.add_argument("--cable0", type=float, default=0.98)
     ap.add_argument("--time-limit", type=float, default=0.0)
     ap.add_argument("--out-prefix", type=str, default=None)
+    ap.add_argument("--newton-reg-max", type=float, default=0.0,
+                    help="cap on the Newton diagonal regularisation (binary default "
+                         "1e4). A compressed StVK region can need more; 1e6 rescued "
+                         "10 of 12 regularization_failed calls on the sketch remesh")
     ap.add_argument("--variant", default="", choices=["", "rm"],
                     help="rm: the hand-drawn cables on the sketch remesh")
     ap.add_argument("--fix-edges", type=str, default="",
@@ -237,6 +246,7 @@ def main():
                     help="phase 2/3 start: rest scale of the edge cables E*")
     args = ap.parse_args()
     set_variant(args.variant)
+    _reg_max[0] = args.newton_reg_max
 
     prefix = args.out_prefix or f"pattern_smooth_p{args.phase}"
     _prefix[0] = prefix
@@ -374,6 +384,7 @@ def main():
          "cable_names": cable_names, "fixed_vertices": fixed,
          "fixed_edges": fix_edges,
          "pressure": args.pressure, "material": MATERIAL, "cable_ea": CABLE_EA,
+         "newton_reg_max": args.newton_reg_max,
          "rmse_mm": l * 1e3, "max_dev_mm": float(dev[free_idx].max()) * 1e3,
          "crown_m": out["crown"], "target_crown_m": t_crown,
          "max_disp_mm": out["max_disp"] * 1e3, "max_stress": out.get("max_stress"),
