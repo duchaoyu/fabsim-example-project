@@ -1,0 +1,19 @@
+** clamped flat disc under follower pressure, thin S3 shell as a membrane
+*INCLUDE, INPUT=disc_mesh.inp
+*NSET, NSET=CENTRE
+796,
+*MATERIAL, NAME=FAB
+*ELASTIC
+5.0E6, 0.3
+*SHELL SECTION, ELSET=EALL, MATERIAL=FAB
+0.001
+*BOUNDARY
+RIM, 1, 3, 0.0
+*STEP, NLGEOM, INC=2000
+*STATIC
+0.005, 1.0, 1.0E-8, 0.05
+*DLOAD
+EPRES, P, -100.
+*NODE PRINT, NSET=CENTRE
+U
+*END STEP
