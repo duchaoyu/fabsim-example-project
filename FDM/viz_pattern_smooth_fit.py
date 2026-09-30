@@ -37,7 +37,14 @@ def best_params(path):
     return d, f"final result, {d['n_calls']} calls"
 
 
+REG_MAX = [0.0]
+
+
 def main():
+    if "--reg-max" in sys.argv:
+        i = sys.argv.index("--reg-max")
+        REG_MAX[0] = float(sys.argv[i + 1])
+        del sys.argv[i:i + 2]
     if "--variant" in sys.argv:
         i = sys.argv.index("--variant")
         ops.set_variant(sys.argv[i + 1])
@@ -60,11 +67,20 @@ def main():
               "regions": [{"sf_wale": r["sf_wale"][i], "sf_course": r["sf_course"][i],
                            "knit_dir_deg": 0.0} for i in range(4)],
               "cable_rest_scales": r["cable_rest_scales"]}
+    # the solver cap the run used: a calls-log record does not carry it, so
+    # fall back to the --reg-max argument, then to the result JSON's value
+    reg = r.get("newton_reg_max") or REG_MAX[0]
+    if reg:
+        params["newton_reg_max"] = float(reg)
     tmp = tempfile.mkdtemp()
     pj = os.path.join(tmp, "p.json")
     json.dump(params, open(pj, "w"))
-    subprocess.run([ops.BINARY, ops.MESH_PATH, ops.REGION_MAP, pj, os.path.join(tmp, "o")],
-                   capture_output=True, check=True)
+    res = subprocess.run([ops.BINARY, ops.MESH_PATH, ops.REGION_MAP, pj,
+                          os.path.join(tmp, "o")], capture_output=True, text=True, check=True)
+    status = [l.split()[1] for l in res.stderr.splitlines() if l.startswith("SOLVER_STATUS")]
+    if not status or status[-1] != "success":
+        sys.exit(f"FEM re-solve did not converge ({status[-1] if status else 'no status'}); "
+                 f"not plotting a non-equilibrium shape. Pass --reg-max if the run used one.")
     X = np.loadtxt(os.path.join(tmp, "o_verts.csv"), delimiter=",", skiprows=1)[:, 1:]
     free = np.array(sorted(set(range(len(V))) - set(fixed)))
     d = X - V
