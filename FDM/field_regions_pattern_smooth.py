@@ -23,7 +23,9 @@ faces are flood-filled across every interior edge except a cable edge.  C00
 (the crease) splits west from east; C02 splits the west side, C01 the east.
 
     python3 FDM/field_regions_pattern_smooth.py
+    python3 FDM/field_regions_pattern_smooth.py --variant rm     # the sketch remesh
 """
+import argparse
 import json
 import os
 from collections import defaultdict
@@ -55,7 +57,21 @@ def load_off(path):
     return V, F
 
 
+VARIANTS = {
+    "": (OFF_PATH, CABLE_JSON, OUT_FIELD, OUT_MAP, OUT_PNG),
+    "rm": (os.path.join(DATA, "remesh", "pattern_smooth_rm_tri_m.off"),
+           os.path.join(DATA, "remesh", "cable_paths_pattern_smooth_rm.json"),
+           os.path.join(DATA, "remesh", "directional_field_pattern_smooth_rm.json"),
+           os.path.join(HERE, "optimisation", "pattern_smooth_rm_4region_map.json"),
+           os.path.join(DATA, "remesh", "pattern_smooth_rm_field_regions.png")),
+}
+
+
 def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--variant", default="", choices=sorted(VARIANTS))
+    OFF_PATH, CABLE_JSON, OUT_FIELD, OUT_MAP, OUT_PNG = VARIANTS[
+        ap.parse_args().variant]
     V, F = load_off(OFF_PATH)
     n_f = len(F)
     cab = json.load(open(CABLE_JSON))

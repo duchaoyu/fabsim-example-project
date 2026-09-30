@@ -1,0 +1,86 @@
+{
+ "geometry": "pattern_smooth",
+ "phase": 1,
+ "message": "ABNORMAL: ",
+ "n_calls": 105,
+ "elapsed_s": 365.54535150527954,
+ "mesh": "data/pattern/pattern_smooth_tri_m.off",
+ "region_map": "optimisation/pattern_smooth_4region_map.json",
+ "cable_file": "data/pattern/cable_paths_pattern_smooth.json",
+ "cable_names": [
+  "C00",
+  "C01",
+  "C02",
+  "E00",
+  "E01",
+  "E02",
+  "E03"
+ ],
+ "fixed_vertices": [
+  0,
+  1,
+  2,
+  4,
+  7,
+  10,
+  13,
+  16,
+  18,
+  20,
+  21,
+  153,
+  329,
+  332,
+  469,
+  471,
+  577,
+  592,
+  645,
+  655,
+  761,
+  914,
+  917
+ ],
+ "pressure": 1000.0,
+ "material": {
+  "E1": 5000.0,
+  "E2": 12507.0,
+  "nu": 0.198
+ },
+ "cable_ea": 157000.0,
+ "rmse_mm": 63.504038549519095,
+ "max_dev_mm": 157.21114402298997,
+ "crown_m": 0.2113206,
+ "target_crown_m": 0.27143437,
+ "max_disp_mm": 157.21114402298997,
+ "max_stress": 5708.01851044,
+ "knit_dir_deg_region_means": [
+  110.6933015834358,
+  91.06020790831063,
+  66.72024459340325,
+  42.60527925841408
+ ],
+ "knit_is_fixed": true,
+ "sf_wale": [
+  1.0300001111183168,
+  1.0300001111183168,
+  1.0300001111183168,
+  1.0300001111183168
+ ],
+ "sf_course": [
+  1.0299993750815482,
+  1.0299993750815482,
+  1.0299993750815482,
+  1.0299993750815482
+ ],
+ "cable_rest_scales": [
+  0.9820002196910668,
+  0.9820002196910668,
+  0.9820002196910668,
+  0.9820002196910668,
+  0.9820002196910668,
+  0.9820002196910668,
+  0.9820002196910668
+ ],
+ "call_log": "optimisation/pattern_smooth_p1_calls.jsonl"
+}

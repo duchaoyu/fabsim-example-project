@@ -1,0 +1,23 @@
+Fixed edges: ['E00'] -> 51 fixed vertices
+Mesh    : 932 verts, 1720 faces, 51 supports, 881 free (fitted)
+Target  : crown 0.2714 m, span 1.2000 m  (rest == target)
+Regions : 4, faces [667, 57, 193, 803]; knit per face, region means [110.7, 91.1, 66.7, 42.6] deg — FIXED
+Cables  : ['C00', 'C01', 'C02', 'E01', 'E02', 'E03']  EA 157000
+Material: E1 5000  E2 12507  nu 0.198   pressure 1000 Pa
+Log     : optimisation/pattern_smooth_fixSE_p3_calls.jsonl
+  [    8] FEM INVALID: solver line_search_failed
+  [    9] FEM INVALID: solver iteration_overflow
+  gen   1  calls    16  best   38.863 mm  gen best   38.863  invalid 2/16  sigma 0.976
+  [   30] FEM INVALID: solver line_search_failed
+  [   29] FEM INVALID: solver line_search_failed
+  [   24] FEM INVALID: solver line_search_failed
+  [   26] FEM INVALID: solver line_search_failed
+  [   31] FEM INVALID: solver iteration_overflow
+  gen   2  calls    32  best   37.779 mm  gen best   37.779  invalid 5/16  sigma 1.028
+  [   41] FEM INVALID: solver line_search_failed
+  [   38] FEM INVALID: solver line_search_failed
+  [   42] FEM INVALID: solver iteration_overflow
+  [   36] FEM INVALID: solver iteration_overflow
+  [   35] FEM INVALID: solver iteration_overflow
+  gen   3  calls    48  best   36.226 mm  gen best   36.226  invalid 5/16  sigma 1.109
+  [   60] FEM INVALID: solver line_search_failed

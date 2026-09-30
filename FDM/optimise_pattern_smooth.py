@@ -21,9 +21,9 @@ Adapted from optimise_2part.py.  What differs:
   * Cables.  7 polylines from extract_cables_pattern_smooth.py, each with its
     own rest-length scale: 3 interior + 4 edge.
 
-  * Material.  Stitch structure 1 as MEASURED (E1 10300, E2 13400 N/m, nu 0.58),
-    passed explicitly as E1/E2/nu — the binary's motif 1 table still holds the
-    pre-2026-09-19 estimates.
+  * Material.  Motif 1 as in the binary's table, E1 5000, E2 12507 N/m,
+    nu 0.198 (the estimates, not the measured stitch structure 1), passed
+    explicitly as E1/E2/nu so the choice is visible in every params file.
 
   * Loss.  RMSE over every non-support vertex, free edge included: where the
     free edge ends up is part of the shape.
@@ -44,7 +44,9 @@ import os
 import subprocess
 import sys
 import tempfile
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
 from scipy.optimize import minimize
@@ -63,9 +65,27 @@ REGION_MAP = os.path.join(OUT_DIR, "pattern_smooth_4region_map.json")
 BINARY = os.environ.get(
     "FEM_BINARY_NREGION", os.path.join(HERE, "..", "build-linux", "fem_batch_nregion"))
 
+
+
+def set_variant(name):
+    """'' = the FDM-extracted cables on the original mesh; 'rm' = the three
+    hand-drawn cables on the sketch remesh (remesh_pattern_smooth_sketch.py)."""
+    global MESH_PATH, TARGET_OFF, CABLE_FILE, CABLE_META, REGION_MAP
+    if name == "rm":
+        RM = os.path.join(DATA, "remesh")
+        MESH_PATH = TARGET_OFF = os.path.join(RM, "pattern_smooth_rm_tri_m.off")
+        CABLE_FILE = os.path.join(RM, "cable_paths_pattern_smooth_rm.json")
+        CABLE_META = os.path.join(RM, "cable_paths_pattern_smooth_rm.meta.json")
+        REGION_MAP = os.path.join(OUT_DIR, "pattern_smooth_rm_4region_map.json")
+    elif name:
+        raise ValueError(f"unknown variant {name!r}")
+
+
 N_REGIONS = 4
 CABLE_EA = 157000.0
-MATERIAL = {"E1": 10300.0, "E2": 13400.0, "nu": 0.58}    # stitch structure 1, measured
+# motif 1 as the binary's table has it (the pre-2026-09-19 estimates), at the
+# user's request; the measured stitch structure 1 is E1 10300, E2 13400, nu 0.58
+MATERIAL = {"E1": 5000.0, "E2": 12507.0, "nu": 0.198}
 
 _call = [0]
 _prefix = ["pattern_smooth"]
@@ -74,6 +94,7 @@ _best = [None]
 _t0 = [None]
 _time_limit = [0.0]
 _interior = [None]      # non-boundary vertices, for the fold check
+_lock = threading.Lock()   # phase 3 runs FEM calls in parallel
 
 
 class _TimeUp(Exception):
@@ -82,8 +103,9 @@ class _TimeUp(Exception):
 
 def run_fem(sw, sc, knit, pressure, cable_paths, cscales, fixed, V_rest, t_crown,
             min_disp, tag=""):
-    _call[0] += 1
-    n = _call[0]
+    with _lock:
+        _call[0] += 1
+        n = _call[0]
     params = {"pressure": float(pressure), "motif": 1, "cable_ea": CABLE_EA,
               **MATERIAL,
               "cable_paths": cable_paths, "fixed_vertices": fixed,
@@ -146,9 +168,51 @@ def run_fem(sw, sc, knit, pressure, cable_paths, cscales, fixed, V_rest, t_crown
     return out, rec
 
 
+def run_cma(args, p0, bnds, expand, evaluate, track):
+    """Phase 3: CMA-ES over the 15 parameters, one generation = --popsize FEM
+    calls run --workers at a time.  L-BFGS-B with finite differences does not
+    survive this problem: about a quarter of the calls near the start fail in
+    the Newton solve, and a 1e3 penalty inside a finite difference is a garbage
+    gradient.  CMA-ES only ranks the population, so a failed call is simply
+    the worst sample.  Variables are scaled so sigma = 1 is --sigma-sf on a
+    stretch factor and --sigma-cable on a cable scale."""
+    import cma
+    scale = np.array([args.sigma_sf] * 8 + [args.sigma_cable] * (len(p0) - 8))
+    lo = (np.array([b[0] for b in bnds]) - p0) / scale
+    hi = (np.array([b[1] for b in bnds]) - p0) / scale
+    es = cma.CMAEvolutionStrategy(np.zeros(len(p0)), 1.0,
+                                  {"bounds": [lo.tolist(), hi.tolist()],
+                                   "popsize": args.popsize, "seed": 1,
+                                   "maxiter": args.maxiter, "verbose": -9,
+                                   "tolfun": 1e-7, "tolx": 1e-4})
+
+    def one(z):
+        p = p0 + scale * np.asarray(z)
+        sw, sc, cs = expand(p)
+        return evaluate(sw, sc, cs, "p3")[1], p
+
+    gen = 0
+    with ThreadPoolExecutor(args.workers) as ex:
+        try:
+            while not es.stop():
+                Z = es.ask()
+                res = list(ex.map(one, Z))
+                es.tell(Z, [r[0] for r in res])
+                gen += 1
+                for l, p in res:
+                    track(l, p)
+                n_bad = sum(r[0] >= 1e3 for r in res)
+                print(f"  gen {gen:3d}  calls {_call[0]:5d}  best {_best[0][0]*1e3:8.3f} mm  "
+                      f"gen best {min(r[0] for r in res)*1e3:8.3f}  "
+                      f"invalid {n_bad}/{len(res)}  sigma {es.sigma:.3f}", flush=True)
+        except _TimeUp:
+            return f"stopped at time limit ({_time_limit[0]:.0f} s)"
+    return f"CMA-ES stop: {dict(es.stop())}"
+
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--phase", type=int, default=1, choices=[0, 1, 2])
+    ap.add_argument("--phase", type=int, default=1, choices=[0, 1, 2, 3])
     ap.add_argument("--pressure", type=float, default=1000.0)
     ap.add_argument("--maxiter", type=int, default=200)
     ap.add_argument("--min-disp-mm", type=float, default=5.0)
@@ -158,7 +222,21 @@ def main():
     ap.add_argument("--cable0", type=float, default=0.98)
     ap.add_argument("--time-limit", type=float, default=0.0)
     ap.add_argument("--out-prefix", type=str, default=None)
+    ap.add_argument("--variant", default="", choices=["", "rm"],
+                    help="rm: the hand-drawn cables on the sketch remesh")
+    ap.add_argument("--fix-edges", type=str, default="",
+                    help="comma-separated edge cables (e.g. E00) whose vertices are "
+                         "fixed as supports; the cable itself is then dropped")
+    ap.add_argument("--workers", type=int, default=16, help="phase 3: parallel FEM calls")
+    ap.add_argument("--popsize", type=int, default=16)
+    ap.add_argument("--sigma-sf", type=float, default=0.01,
+                    help="phase 3: initial step on the stretch factors")
+    ap.add_argument("--sigma-cable", type=float, default=0.005,
+                    help="phase 3: initial step on the cable rest scales")
+    ap.add_argument("--cable0-edge", type=float, default=None,
+                    help="phase 2/3 start: rest scale of the edge cables E*")
     args = ap.parse_args()
+    set_variant(args.variant)
 
     prefix = args.out_prefix or f"pattern_smooth_p{args.phase}"
     _prefix[0] = prefix
@@ -181,8 +259,19 @@ def main():
     knit = np.array([np.degrees(np.angle(np.exp(2j * np.radians(pf[face_region == r]))
                                          .mean())) / 2 % 180 for r in range(N_REGIONS)])
     cab = json.load(open(CABLE_FILE))
-    cable_names = sorted(cab)
+    # --fix-edges: those free edges become supports; their cable then lies on
+    # fixed vertices, does nothing, and is dropped along with its parameter
+    fix_edges = [e for e in args.fix_edges.split(",") if e]
+    for e in fix_edges:
+        if e not in cab or not e.startswith("E"):
+            sys.exit(f"--fix-edges: {e} is not an edge cable of {sorted(cab)}")
+        fixed = sorted(set(fixed) | set(cab[e]))
+    free_idx = np.array(sorted(set(range(len(V))) - set(fixed)))
+    cable_names = [k for k in sorted(cab) if k not in fix_edges]
     cable_paths = [cab[k] for k in cable_names]
+    n_c = len(cable_names)
+    if fix_edges:
+        print(f"Fixed edges: {fix_edges} -> {len(fixed)} fixed vertices")
 
     print(f"Mesh    : {len(V)} verts, {len(F)} faces, {len(fixed)} supports, "
           f"{len(free_idx)} free (fitted)")
@@ -200,7 +289,7 @@ def main():
         l = 1e3 if out is None else float(np.sqrt(np.mean(np.sum(
             (out["verts"][free_idx] - V_target[free_idx]) ** 2, axis=1))))
         rec["rmse_mm"] = None if out is None else l * 1e3
-        with open(_log[0], "a") as f:
+        with _lock, open(_log[0], "a") as f:
             f.write(json.dumps(rec) + "\n")
         return out, l
 
@@ -214,7 +303,7 @@ def main():
     if args.phase == 0:
         for v in [float(s) for s in args.sweep_sf.split(",")]:
             t = time.time()
-            out, l = evaluate([v] * 4, [v] * 4, [args.cable0] * 7, f"sweep {v}")
+            out, l = evaluate([v] * 4, [v] * 4, [args.cable0] * n_c, f"sweep {v}")
             print(f"  sf={v:.3f}  " + ("INVALID" if out is None else
                   f"RMSE {l*1e3:8.3f} mm  crown {out['crown']:.4f}  "
                   f"({time.time()-t:.1f} s)"), flush=True)
@@ -226,17 +315,21 @@ def main():
         bnds = [(0.80, 1.50), (0.80, 1.50), (0.80, 1.05)]
 
         def expand(p):
-            return [p[0]] * 4, [p[1]] * 4, [p[2]] * 7
+            return [p[0]] * 4, [p[1]] * 4, [p[2]] * n_c
     else:
         if seed:
+            sn = seed.get("cable_names", sorted(cab))
+            cs0 = dict(zip(sn, seed["cable_rest_scales"]))
             p0 = np.array(list(seed["sf_wale"]) + list(seed["sf_course"]) +
-                          list(seed["cable_rest_scales"]))
+                          [cs0.get(k, args.cable0) for k in cable_names])
         else:
-            p0 = np.array([args.sf0] * 8 + [args.cable0] * 7)
-        bnds = [(0.80, 1.50)] * 8 + [(0.80, 1.05)] * 7
+            ce = args.cable0 if args.cable0_edge is None else args.cable0_edge
+            p0 = np.array([args.sf0] * 8 +
+                          [ce if k.startswith("E") else args.cable0 for k in cable_names])
+        bnds = [(0.80, 1.50)] * 8 + [(0.80, 1.05)] * n_c
 
         def expand(p):
-            return p[:4], p[4:8], p[8:15]
+            return p[:4], p[4:8], p[8:8 + n_c]
 
     def obj(p):
         sw, sc, cs = expand(p)
@@ -248,12 +341,15 @@ def main():
 
     _t0[0] = time.time()
     msg = ""
-    try:
+    if args.phase == 3:
+        msg = run_cma(args, p0, bnds, expand, evaluate, track)
+    else:
+      try:
         res = minimize(obj, p0, method="L-BFGS-B", bounds=bnds,
                        options={"maxiter": args.maxiter, "ftol": 1e-10,
                                 "gtol": 1e-6, "eps": 0.002})
         msg = str(res.message)
-    except _TimeUp:
+      except _TimeUp:
         msg = f"stopped at time limit ({_time_limit[0]:.0f} s)"
     best_l, best_p = _best[0]
     elapsed = time.time() - _t0[0]
@@ -269,12 +365,14 @@ def main():
     print(f"  re-evaluated RMSE {l*1e3:.4f} mm ({100*l/span:.2f} % of span)  "
           f"max dev {dev[free_idx].max()*1e3:.2f} mm  crown {out['crown']:.4f} "
           f"(target {t_crown:.4f})  max disp {out['max_disp']*1e3:.2f} mm")
-    d = {"geometry": "pattern_smooth", "phase": args.phase, "message": msg,
+    d = {"geometry": "pattern_smooth", "variant": args.variant,
+         "phase": args.phase, "message": msg,
          "n_calls": _call[0], "elapsed_s": elapsed,
          "mesh": os.path.relpath(MESH_PATH, HERE),
          "region_map": os.path.relpath(REGION_MAP, HERE),
          "cable_file": os.path.relpath(CABLE_FILE, HERE),
          "cable_names": cable_names, "fixed_vertices": fixed,
+         "fixed_edges": fix_edges,
          "pressure": args.pressure, "material": MATERIAL, "cable_ea": CABLE_EA,
          "rmse_mm": l * 1e3, "max_dev_mm": float(dev[free_idx].max()) * 1e3,
          "crown_m": out["crown"], "target_crown_m": t_crown,

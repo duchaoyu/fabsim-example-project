@@ -1,0 +1,43 @@
+{
+ "call": 1298,
+ "tag": "p3",
+ "valid": true,
+ "reason": "ok",
+ "sf_wale": [
+  1.052133,
+  1.033718,
+  1.072219,
+  1.076044
+ ],
+ "sf_course": [
+  1.019291,
+  0.972755,
+  1.110822,
+  1.0176
+ ],
+ "cable_rest_scales": [
+  1.049944,
+  1.009186,
+  0.995681,
+  0.923369,
+  0.929145,
+  1.000474,
+  1.009258
+ ],
+ "pressure": 1000.0,
+ "crown": 0.22340057,
+ "max_stress": 3575.36346838,
+ "max_disp_mm": 130.68114768215574,
+ "rmse_mm": 51.3941626548339,
+ "cable_names": [
+  "C00",
+  "C01",
+  "C02",
+  "E00",
+  "E01",
+  "E02",
+  "E03"
+ ],
+ "source": "best of pattern_smooth_p3_calls.jsonl (run stopped at convergence)",
+ "n_calls": 1311
+}

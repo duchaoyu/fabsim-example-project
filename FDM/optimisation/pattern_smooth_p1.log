@@ -1,0 +1,52 @@
+Mesh    : 932 verts, 1720 faces, 23 supports, 909 free (fitted)
+Target  : crown 0.2714 m, span 1.2000 m  (rest == target)
+Regions : 4, faces [667, 57, 193, 803]; knit per face, region means [110.7, 91.1, 66.7, 42.6] deg — FIXED
+Cables  : ['C00', 'C01', 'C02', 'E00', 'E01', 'E02', 'E03']  EA 157000
+Material: E1 5000  E2 12507  nu 0.198   pressure 1000 Pa
+Log     : optimisation/pattern_smooth_p1_calls.jsonl
+  [    1] RMSE   64.3710 mm  p=[1.0300,1.0300,0.9800]
+  [    2] RMSE   64.0791 mm  p=[1.0320,1.0300,0.9800]
+  [    4] FEM INVALID: solver line_search_failed
+  [    5] FEM INVALID: solver line_search_failed
+  [    6] FEM INVALID: solver regularization_failed
+  [    7] FEM INVALID: solver line_search_failed
+  [    8] FEM INVALID: solver line_search_failed
+  [    9] FEM INVALID: solver line_search_failed
+  [   10] FEM INVALID: solver line_search_failed
+  [   10] RMSE 1000000.0000 mm  p=[1.0796,1.0011,0.9213]
+  [   11] FEM INVALID: solver line_search_failed
+  [   12] FEM INVALID: solver line_search_failed
+  [   20] RMSE   65.2339 mm  p=[1.0350,1.0270,0.9759]
+  [   21] FEM INVALID: solver line_search_failed
+  [   24] RMSE   64.0193 mm  p=[1.0317,1.0290,0.9800]
+  [   28] RMSE   63.7509 mm  p=[1.0302,1.0299,0.9817]
+  [   29] FEM INVALID: solver line_search_failed
+  [   30] RMSE   64.1031 mm  p=[1.0321,1.0300,0.9799]
+  [   32] RMSE   63.5254 mm  p=[1.0301,1.0300,0.9819]
+  [   36] RMSE   63.5043 mm  p=[1.0300,1.0300,0.9820]
+  [   37] FEM INVALID: solver line_search_failed
+  [   40] RMSE   63.6858 mm  p=[1.0300,1.0300,0.9820]
+  [   45] FEM INVALID: solver regularization_failed
+  [   46] FEM INVALID: solver regularization_failed
+  [   47] FEM INVALID: solver regularization_failed
+  [   48] FEM INVALID: solver regularization_failed
+  [   50] FEM INVALID: solver line_search_failed
+  [   50] RMSE 1000000.0000 mm  p=[1.0320,1.0300,0.9800]
+  [   53] FEM INVALID: solver line_search_failed
+  [   54] FEM INVALID: solver line_search_failed
+  [   56] RMSE   63.5040 mm  p=[1.0300,1.0300,0.9820]
+  [   60] RMSE   63.7070 mm  p=[1.0300,1.0300,0.9820]
+  [   61] FEM INVALID: solver line_search_failed
+  [   69] FEM INVALID: solver line_search_failed
+  [   70] RMSE   64.2698 mm  p=[1.0320,1.0300,0.9800]
+  [   71] FEM INVALID: solver line_search_failed
+  [   80] RMSE   63.5041 mm  p=[1.0300,1.0300,0.9820]
+  [   82] FEM INVALID: solver line_search_failed
+  [   90] FEM INVALID: solver line_search_failed
+  [   90] RMSE 1000000.0000 mm  p=[1.0320,1.0300,0.9800]
+  [  100] RMSE   63.7070 mm  p=[1.0300,1.0300,0.9820]
+
+ABNORMAL: 
+Best RMSE 63.5040 mm after 104 FEM calls, 6.1 min
+  re-evaluated RMSE 63.5040 mm (5.29 % of span)  max dev 157.21 mm  crown 0.2113 (target 0.2714)  max disp 157.21 mm
+Saved optimisation/pattern_smooth_p1_result.json

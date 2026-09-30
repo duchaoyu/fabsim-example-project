@@ -1,0 +1,30 @@
+Mesh    : 932 verts, 1720 faces, 23 supports, 909 free (fitted)
+Target  : crown 0.2714 m, span 1.2000 m  (rest == target)
+Regions : 4, faces [667, 57, 193, 803]; knit per face, region means [110.7, 91.1, 66.7, 42.6] deg — FIXED
+Cables  : ['C00', 'C01', 'C02', 'E00', 'E01', 'E02', 'E03']  EA 157000
+Material: E1 10300  E2 13400  nu 0.58   pressure 1000 Pa
+Log     : optimisation/pattern_smooth_p1_calls.jsonl
+  [    1] RMSE   61.5124 mm  p=[1.0000,1.0000,0.9800]
+  [    4] RMSE   61.0824 mm  p=[1.0000,1.0000,0.9820]
+  [    5] FEM INVALID: solver regularization_failed
+  [    6] FEM INVALID: solver regularization_failed
+  [    7] FEM INVALID: solver regularization_failed
+  [    8] FEM INVALID: solver regularization_failed
+  [   10] RMSE   61.6523 mm  p=[1.0020,1.0000,0.9800]
+  [   12] FEM INVALID: solver line_search_failed
+  [   15] FEM INVALID: solver line_search_failed
+  [   19] FEM INVALID: solver line_search_failed
+  [   20] RMSE   61.0470 mm  p=[1.0000,1.0000,0.9820]
+  [   21] FEM INVALID: solver line_search_failed
+  [   22] FEM INVALID: solver line_search_failed
+  [   28] RMSE   60.9309 mm  p=[1.0000,1.0000,0.9820]
+  [   30] RMSE   61.6524 mm  p=[1.0020,1.0000,0.9800]
+  [   31] FEM INVALID: solver line_search_failed
+  [   40] RMSE   60.9309 mm  p=[1.0000,1.0000,0.9820]
+  [   41] FEM INVALID: solver regularization_failed
+  [   42] FEM INVALID: solver regularization_failed
+  [   43] FEM INVALID: solver regularization_failed
+  [   44] FEM INVALID: solver regularization_failed
+  [   48] FEM INVALID: solver line_search_failed
+  [   50] RMSE   61.6523 mm  p=[1.0020,1.0000,0.9800]
+  [   52] RMSE   60.7348 mm  p=[1.0000,1.0000,0.9820]
