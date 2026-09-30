@@ -341,6 +341,14 @@ static VectorXd newtonSolve(Model& model, const VectorXd& x0)
     }
     g_solver_status = st;
     std::cerr << "SOLVER_STATUS " << st << "\n";
+
+    // Force residual on the free dofs at the returned state.  A line search
+    // that stops on a flat energy can leave a genuine equilibrium behind; this
+    // is what tells that apart from a solve that is still far off.
+    VectorXd g = model.gradient(solver.var());
+    for (int b : fixed_vs) g.segment<3>(3 * b).setZero();
+    std::cerr << "SOLVER_RESIDUAL max=" << g.cwiseAbs().maxCoeff()
+              << " norm=" << g.norm() << "\n";
     return solver.var();
 }
 

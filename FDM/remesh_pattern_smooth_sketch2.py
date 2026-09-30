@@ -250,7 +250,9 @@ def main():
                       for i in worst))
 
     new_of = {v: i for i, v in enumerate(loop)}
-    cab = {"C00": C00, "C01": C01, "C02": C02}
+    # The middle cable is two cables, cut at the junction J where C02 meets it,
+    # so the part above J and the trunk below it carry their own rest lengths.
+    cab = {"C00": C00, "C01a": up, "C01b": tr, "C02": C02}
     for k in ("E00", "E01", "E02", "E03"):
         cab[k] = [new_of[v] for v in old[k]]
     # The top free-edge cable is three cables, not one: it is cut where the
