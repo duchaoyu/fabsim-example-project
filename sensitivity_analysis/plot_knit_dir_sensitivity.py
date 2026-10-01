@@ -75,7 +75,7 @@ _REST_VERTS, _FACES = read_off(MESH_PATH)
 
 GROUPS = ["motif1_nocable", "motif2_nocable"]
 COLORS = {"motif1_nocable": "#2E8B57", "motif2_nocable": "#20B2AA"}
-LABELS = {"motif1_nocable": "Motif 1", "motif2_nocable": "Motif 2"}
+LABELS = {"motif1_nocable": "Stitch structure I", "motif2_nocable": "Stitch structure II"}
 
 THETA_RANGE = (0.0, 90.0)
 
@@ -230,13 +230,11 @@ def plot_sweep(save=True):
     ax_c.set_ylabel(r"$\bar{H}$  (m$^{-1}$)")
     ax_c.set_title(r"Section curvature  $\bar{H}$")
 
-    ax_s.set_ylabel("Mean stress  (Pa)")
+    ax_s.set_ylabel("Mean stress  (N/m)")
     ax_s.set_title("Section stress")
 
-    ax_a.set_ylabel(r"$(\kappa_y - \kappa_x)\,/\,(|\kappa_y| + |\kappa_x|)$")
-    ax_a.set_title(r"Curvature anisotropy index  $\Delta H$  (crown tensor)")
+    ax_a.set_title(r"Curvature anisotropy index  $\Delta H$")
     ax_a.axhline(0, color="0.75", lw=0.8, ls=":")
-    ax_a.legend(fontsize=8)
     ax_a.set_xlabel(r"Knitting direction  $\theta_{knit}$  (°)")
 
     for ax in axes:
@@ -253,23 +251,6 @@ def plot_sweep(save=True):
         for g in GROUPS
     ]
     ax_c.legend(handles=motif_handles + plane_handles, fontsize=7.5, loc="best")
-    ax_s.legend(handles=plane_handles, fontsize=7.5, loc="best")
-
-    n_runs = len(df)
-    fig.suptitle(
-        r"Effect of knitting direction $\theta_{knit}$"
-        "\n"
-        rf"(direct FEA sweep, {n_runs} runs;  "
-        r"$s_{wale}=s_{course}=1.0$,  $p=1000$ Pa)",
-        fontsize=10, y=1.02,
-    )
-    fig.text(0.5, -0.005,
-             "curves are symmetrised: each is the mean of the two estimates the "
-             r"identity $X_{x=0}(\theta)=X_{y=0}(90^\circ\!-\theta)$ forces to "
-             "agree,\nso the $x=0$ and $y=0$ curves are exact mirror images and "
-             r"the anisotropy index is exactly antisymmetric about $45^\circ$"
-             "\n" + "\n".join(notes),
-             ha="center", va="top", fontsize=6.5, color="0.35")
 
     if save:
         path = os.path.join(FIG_DIR, "figM_knit_dir_sweep.pdf")

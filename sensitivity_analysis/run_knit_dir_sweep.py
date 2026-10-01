@@ -33,10 +33,14 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from config import DATA_DIR
+from config import DATA_DIR, MESH_PATH, structure_override
+from curvature import read_off
+from apex_curvature import apex_curvature
 from fea_interface import run_fea
 from run_uniform_sf_sweep import _section_metrics_from_files
 from plot_section_sensitivity import ROUGHNESS_THRESHOLD, CROWN_MIN_M
+
+_V0, _ = read_off(MESH_PATH)
 
 SWEEP_CSV = os.path.join(DATA_DIR, "knit_dir_sweep.csv")
 SWEEP_DIR = os.path.join(DATA_DIR, "knit_dir_sweep")
@@ -59,7 +63,9 @@ def run_sweep(step=1.0, sf=SF, pressure=PRESSURE, motifs=MOTIFS):
         for i, th in enumerate(thetas):
             prefix = os.path.join(SWEEP_DIR, f"m{motif}_th{th:06.2f}")
             try:
-                res = run_fea(sf, sf, th, pressure, motif, prefix, timeout=600)
+                # Figure 7.6 materials (stitch structures I and II)
+                res = run_fea(sf, sf, th, pressure, motif, prefix, timeout=600,
+                              **structure_override(motif))
             except Exception as exc:
                 print(f"  motif{motif} theta={th:5.1f}  FAILED: {exc}")
                 rows.append({"motif": motif, "knit_dir": th, "sim_failed": True})
@@ -73,6 +79,11 @@ def run_sweep(step=1.0, sf=SF, pressure=PRESSURE, motifs=MOTIFS):
                    "stress_path":  res["stress_path"]}
             row.update(_section_metrics_from_files(res["verts_path"],
                                                    res["stress_path"]))
+            # crown curvature tensor, for the Delta H panel
+            V = pd.read_csv(res["verts_path"]).sort_values("vid")[["x", "y", "z"]].values
+            ap = apex_curvature(V, th, ref_verts=_V0)
+            if ap:
+                row.update({f"apex_{k}": v for k, v in ap.items()})
             r_max = np.nanmax([row["r_x0"], row["r_y0"]])
             row["sim_failed"] = bool(
                 not np.isfinite(row["crown_height"])
