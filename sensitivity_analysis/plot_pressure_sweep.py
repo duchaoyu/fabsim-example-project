@@ -139,7 +139,7 @@ def main():
                             ha="center", va="bottom", fontsize=7, color=INK if r.at_limit else INK2,
                             bbox=dict(boxstyle="square,pad=0.1", fc="white", ec="none"))
         bx.axhline(0, color=INK2, lw=0.8)
-        bx.set_aspect("equal")
+        bx.set_aspect("equal", anchor="N" if st == "I" else "S")   # (b) top level with (a), titles on one line
         bx.set_xlim(-640, 640)
         bx.set_ylim(-10, ztop)
         bx.set_ylabel("z  (mm)")
