@@ -170,7 +170,8 @@ def plot_sf_surface(save=True):
             for c, m in enumerate(motifs):
                 ax = axes[r, c]
                 sub = data[m]
-                w, cc, z = (sub["sf_wale"].values, sub["sf_course"].values,
+                # x = s_course, y = s_wale
+                w, cc, z = (sub["sf_course"].values, sub["sf_wale"].values,
                             sub[key].values)
                 ok = np.isfinite(z)
                 tri = Triangulation(w[ok], cc[ok])
@@ -199,8 +200,8 @@ def plot_sf_surface(save=True):
                 ax.set_xlim(*SF_RANGE)
                 ax.set_ylim(*SF_RANGE)
                 ax.set_aspect("equal")
-                ax.set_xlabel(r"$s_{wale}$", labelpad=2)
-                ax.set_ylabel(r"$s_{course}$", labelpad=2)
+                ax.set_xlabel(r"$s_{course}$", labelpad=2)
+                ax.set_ylabel(r"$s_{wale}$", labelpad=2)
                 ax.tick_params(labelsize=7)
                 ax.set_title(f"{COL_TITLES[m]}  —  {label}", pad=6,
                              fontsize=8.5)
