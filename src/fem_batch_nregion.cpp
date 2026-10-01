@@ -393,6 +393,25 @@ static VectorXd simulate(const std::vector<RegionParams>& regions,
 
     VectorXd x = Map<const VectorXd>(V0.data(), V0.size());
 
+    // Optional dome start, FEM_INIT_DOME=<height in m>: lift the interior by
+    // h (1 - (d/dmax)^2), d = in-plane distance from the boundary centroid.
+    // A slack rest shape (sf < 1) is in compression when started flat and the
+    // Newton regularisation fails; started on a dome it is in tension.
+    if (const char* s = std::getenv("FEM_INIT_DOME")) {
+        const double h = std::atof(s);
+        std::set<int> bset(bdrs.begin(), bdrs.end());
+        Vector3d c = Vector3d::Zero();
+        for (int b : bdrs) c += V0.row(b).transpose();
+        c /= double(bdrs.size());
+        double dmax = 0.0;
+        for (int b : bdrs) dmax = std::max(dmax, (V0.row(b).transpose() - c).head<2>().norm());
+        for (int i = 0; i < V0.rows(); ++i) {
+            if (bset.count(i)) continue;
+            const double d = (V0.row(i).transpose() - c).head<2>().norm() / dmax;
+            x[i*3 + 2] += h * std::max(0.0, 1.0 - d*d);
+        }
+    }
+
     // Optional finer load stepping: g_load_steps pressures geometric from
     // 1 % to 100 %.  Without it the original four steps are used unchanged.
     std::vector<double> steps = { pressure*0.01, pressure*0.1, pressure*0.5, pressure };
