@@ -56,8 +56,15 @@ plt.rcParams.update({
 PANELS = [
     ("crown_height", "Crown height",                 "viridis", 1000.0, "mm",  False),
     ("mean_stress",  "Mean stress",                  "plasma",  1.0,    "N/m", False),
-    ("dH_apex",      r"$\Delta H$  (crown tensor)",  "RdBu_r",  1.0,    "",    True),
+    ("dH_apex",      r"$\Delta H$",                  "RdBu_r",  1.0,    "",    True),
 ]
+
+# Figure 7.10 (figT) colour bars on round numbers: (vmin, vmax, ticks)
+ROUND_SCALES_T = {
+    "crown_height": (20.0, 90.0,     np.arange(20, 91, 10)),
+    "mean_stress":  (1000.0, 5000.0, np.arange(1000, 5001, 500)),
+    "dH_apex":      (-0.005, 0.005,  np.linspace(-0.005, 0.005, 5)),
+}
 
 SEC_COLS = ["sample_id", "H_mean_x0", "H_mean_y0", "apex_k_x", "apex_k_y"]
 
@@ -253,6 +260,10 @@ def plot_figT(save=True):
 
         x_fine, y_fine, Z_fine = _smooth(mat, nu_r, e2r_vals)
         vmin, vmax, half = _vlims(valid, diverging)
+        ticks = None
+        if key in ROUND_SCALES_T:          # round colour-bar limits (Figure 7.10)
+            vmin, vmax, ticks = ROUND_SCALES_T[key]
+            half = None
         panel_cmap = _half_diverging(cmap, half) if half else cmap
 
         pcm = ax.pcolormesh(x_fine, y_fine, Z_fine,
@@ -280,6 +291,8 @@ def plot_figT(save=True):
                           fraction=0.05)
         if unit:
             cb.set_label(unit, fontsize=7)
+        if ticks is not None:
+            cb.set_ticks(ticks)
         cb.ax.tick_params(labelsize=7)
 
     for idx in range(n_panels, nrows * ncols):
@@ -287,13 +300,6 @@ def plot_figT(save=True):
 
     n_total   = len(df)
     n_invalid = int((df["crown_height"].isna() | (df["crown_height"] <= QUALITY_CROWN_MIN)).sum())
-    fig.suptitle(
-        rf"Fig T — $E_2/E_1$ × $\nu_{{12}}$ response surfaces  ($E_1 = {E1_FIXED:.0f}$ N/m)"
-        "\n"
-        r"$s_f{=}1.1$,  $p{=}1000\,\mathrm{Pa}$,  $\theta_\mathrm{knit}{=}0°$"
-        f"   ({n_total - n_invalid}/{n_total} valid)",
-        fontsize=10,
-    )
     if save:
         path = os.path.join(FIG_DIR, "figT_nu_e2r_surface.pdf")
         fig.savefig(path, bbox_inches="tight")

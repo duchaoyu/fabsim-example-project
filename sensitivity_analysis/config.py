@@ -92,6 +92,14 @@ STRUCTURE_PARAMS = {
 STRUCTURE_NAMES = {1: "stitch structure I", 2: "stitch structure II"}
 
 
+def wale_stiff_override(E_less, e2_over_e1, nu):
+    """run_fea kwargs that put the STIFFER modulus along the wale, as in the
+    Section 7.2 stitch structures.  Grids are parameterised by E_less (the less
+    stiff modulus, plotted as E1) and E2/E1 >= 1; the binary takes the wale
+    modulus as E1 and E2 = E1/r, so wale = E_less*E2/E1, course = E_less."""
+    return {"E1": E_less * e2_over_e1, "r": e2_over_e1, "nu": nu}
+
+
 def structure_override(motif):
     """run_fea keyword arguments for a Section 7.2 stitch structure."""
     m = STRUCTURE_PARAMS[motif]

@@ -19,6 +19,12 @@ Outputs:
 
 Usage (on server):
   python sensitivity_analysis/run_e1r_grid.py [--jobs 8]
+
+Orientation (2026-10-01): E1 here is the LESS stiff modulus, but it is applied
+along the COURSE.  The stiffer E2 goes along the wale, as in stitch structures
+I and II (config.wale_stiff_override), so Figures 7.9/7.10 match 7.6-7.8.
+Older runs (IDs 6100-6179, 8200-8503) had E1 along the wale and predate the
+3x pressure fix (740f0189a).
 """
 
 import argparse
@@ -31,7 +37,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from config import DATA_DIR, MESH_PATH, QUALITY_CROWN_MIN
+from config import DATA_DIR, MESH_PATH, QUALITY_CROWN_MIN, wale_stiff_override
 from curvature import read_off
 from fea_interface import run_fea, check_binary
 from plot_material_section_sobol import _section_metrics
@@ -57,7 +63,7 @@ MOTIF = 1
 
 # IDs 6000-6079 hold the old E2/E1 <= 1 grid.  _run_one caches by sample_id, so
 # reusing those IDs would silently return the wrong-regime results.
-START_ID = 6100
+START_ID = 6200   # 6100-6179: course-stiff grid, pre pressure fix
 
 
 def _build_samples():
@@ -106,9 +112,8 @@ def _run_one(sample):
             pressure     = sample["pressure"],
             motif        = sample["motif"],
             output_prefix= prefix,
-            E1           = sample["E1"],
-            r            = sample["r"],
-            nu           = sample["nu"],
+            # stiffer modulus along the wale, as stitch structures I and II
+            **wale_stiff_override(sample["E1"], sample["e2_over_e1"], sample["nu"]),
         )
         return {**sample, **result}, True, "ok"
     except Exception as e:

@@ -18,6 +18,12 @@ Fixed: sf=1.1, knit_dir=0°, pressure=1000 Pa, motif=1.
 
 Usage:
   python sensitivity_analysis/run_nu_grid.py [--jobs 8]
+
+Orientation (2026-10-01): E1 here is the LESS stiff modulus, but it is applied
+along the COURSE.  The stiffer E2 goes along the wale, as in stitch structures
+I and II (config.wale_stiff_override), so Figures 7.9/7.10 match 7.6-7.8.
+Older runs (IDs 6100-6179, 8200-8503) had E1 along the wale and predate the
+3x pressure fix (740f0189a).
 """
 
 import argparse
@@ -30,7 +36,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from config import DATA_DIR, MESH_PATH, QUALITY_CROWN_MIN
+from config import DATA_DIR, MESH_PATH, QUALITY_CROWN_MIN, wale_stiff_override
 from curvature import read_off
 from fea_interface import run_fea, check_binary
 from plot_material_section_sobol import _section_metrics
@@ -69,8 +75,8 @@ MOTIF = 1
 # _run_one caches by sample_id, so each re-parameterisation needs fresh IDs:
 # 7000-7303 = old E2/E1 <= 1 grids;  7400-7703 = E2/E1 >= 1 at nu 0.05-0.40;
 # 7800-8103 = same at nu 0.10-0.90.
-START_ID_A = 8200   # 240 runs → 8200-8439
-START_ID_B = 8440   # 64 runs  → 8440-8503
+START_ID_A = 6600   # 240 runs → 6600-6839 (8200-8439: course-stiff, pre pressure fix)
+START_ID_B = 6840   # 64 runs  → 6840-6903 (8440-8503: course-stiff, pre pressure fix)
 
 
 def _build_samples_A():
@@ -123,7 +129,8 @@ def _run_one(sample):
             sf_wale=sample["sf_wale"], sf_course=sample["sf_course"],
             knit_dir_deg=sample["knit_dir"], pressure=sample["pressure"],
             motif=sample["motif"], output_prefix=prefix,
-            E1=sample["E1"], r=sample["r"], nu=sample["nu"],
+            # stiffer modulus along the wale, as stitch structures I and II
+            **wale_stiff_override(sample["E1"], sample["e2_over_e1"], sample["nu"]),
         )
         return {**sample, **result}, True, "ok"
     except Exception as e:

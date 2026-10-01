@@ -70,8 +70,15 @@ plt.rcParams.update({
 PANELS = [
     ("crown_height", "Crown height",                    "viridis", 1000.0, "mm",  False),
     ("mean_stress",  "Mean stress",                     "plasma",  1.0,    "N/m", False),
-    ("dH_apex",      r"$\Delta H$  (crown tensor)",     "RdBu_r",  1.0,    "",    True),
+    ("dH_apex",      r"$\Delta H$",                     "RdBu_r",  1.0,    "",    True),
 ]
+
+# Figure 7.9 colour bars on round numbers: (vmin, vmax, ticks)
+ROUND_SCALES = {
+    "crown_height": (0.0, 300.0,    np.arange(0, 301, 50)),
+    "mean_stress":  (0.0, 8000.0,   np.arange(0, 8001, 1000)),
+    "dH_apex":      (-0.08, 0.08,   np.linspace(-0.08, 0.08, 5)),
+}
 
 # The sweep variable is E2/E1 itself now, ascending from isotropic.
 E2_OVER_E1 = E2R_VALUES              # [1.0, 1.25, 1.67, 2.0, 2.5, 3.0, 4.0, 5.0]
@@ -266,6 +273,10 @@ def plot_surface(save=True):
         # Colour limits are pooled with figS so a colour means the same number
         # in both figures (see shared_vlims).
         vmin, vmax, half = vlims[key]
+        ticks = None
+        if key in ROUND_SCALES:            # round colour-bar limits (Figure 7.9)
+            vmin, vmax, ticks = ROUND_SCALES[key]
+            half = None
         panel_cmap = _half_diverging(cmap, half) if half else cmap
 
         pcm = ax.pcolormesh(e1_fine / 1000, r2_fine, Z_fine,
@@ -299,6 +310,8 @@ def plot_surface(save=True):
         cbar = fig.colorbar(pcm, ax=ax, orientation="horizontal",
                             location="bottom", pad=0.06, aspect=30,
                             fraction=0.05)
+        if ticks is not None:
+            cbar.set_ticks(ticks)
         cbar.ax.tick_params(labelsize=7)
         if unit:
             cbar.set_label(unit, fontsize=7)
@@ -308,14 +321,6 @@ def plot_surface(save=True):
 
     n_total   = grids["crown_height"].size
     n_invalid = int(np.sum(~np.isfinite(grids["crown_height"])))
-    fig.suptitle(
-        r"$E_1$ (wale) × $E_2/E_1$ response surfaces  "
-        f"({n_total - n_invalid}/{n_total} valid runs)"
-        "\n"
-        r"$s_f{=}1.1$,  $p{=}1000\,\mathrm{Pa}$,  "
-        r"$\theta_{knit}{=}0°$,  $\nu_{12}{=}0.195$",
-        fontsize=10,
-    )
 
     if save:
         path = os.path.join(FIG_DIR, "figR_e1r_surface.pdf")
