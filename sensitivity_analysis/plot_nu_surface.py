@@ -61,12 +61,9 @@ PANELS = [
     ("dH_apex",      r"$\Delta H$",                  "RdBu_r",  1.0,    "",    True),
 ]
 
-# Figure 7.10 (figT) colour bars on round numbers: (vmin, vmax, ticks)
-ROUND_SCALES_T = {
-    "crown_height": (20.0, 100.0,    np.arange(20, 101, 10)),
-    "mean_stress":  (500.0, 5500.0,  np.arange(500, 5501, 1000)),
-    "dH_apex":      (-0.005, 0.005,  np.linspace(-0.005, 0.005, 5)),
-}
+# Figure 7.10 (figT) uses Figure 7.9's colour scales, so a colour means the
+# same number in both figures
+from plot_e1r_surface import ROUND_SCALES as ROUND_SCALES_T
 
 SEC_COLS = ["sample_id", "H_mean_x0", "H_mean_y0", "apex_k_x", "apex_k_y"]
 
