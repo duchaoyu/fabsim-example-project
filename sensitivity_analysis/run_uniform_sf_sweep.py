@@ -24,7 +24,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from config import DATA_DIR
+from config import DATA_DIR, structure_override
 from curvature import compute_curvatures
 from fea_interface import run_fea
 from plot_section_profiles import _slice_plane
@@ -32,7 +32,7 @@ from plot_section_profiles import _slice_plane
 # the sweep is directly comparable to the scatter of Sobol samples.
 from plot_section_sensitivity import (
     _FACES, _SECTION_TOL, _profile_curvature, _profile_roughness,
-    ROUGHNESS_THRESHOLD, CROWN_MIN_M,
+    ROUGHNESS_THRESHOLD,
 )
 
 SWEEP_CSV = os.path.join(DATA_DIR, "uniform_sf_sweep.csv")
@@ -41,6 +41,9 @@ SWEEP_DIR = os.path.join(DATA_DIR, "uniform_sf_sweep")
 SF_LO, SF_HI = 0.8, 1.4
 KNIT_DIR     = 0.0
 PRESSURE     = 1000.0
+# A failed Newton solve returns the flat disc.  Not plot_section_sensitivity's
+# 20 mm CROWN_MIN_M: structure I is still a valid dome below that at high s.
+UNSOLVED_M   = 1e-3
 MOTIFS       = (1, 2)
 
 
@@ -88,7 +91,7 @@ def run_sweep(step=0.01, knit_dir=KNIT_DIR, pressure=PRESSURE, motifs=MOTIFS):
             prefix = os.path.join(SWEEP_DIR, f"m{motif}_sf{sf:.3f}")
             try:
                 res = run_fea(sf, sf, knit_dir, pressure, motif, prefix,
-                              timeout=600)
+                              timeout=600, **structure_override(motif))
             except Exception as exc:
                 print(f"  motif{motif} sf={sf:.3f}  FAILED: {exc}")
                 rows.append({"motif": motif, "sf": sf, "sim_failed": True})
@@ -105,7 +108,7 @@ def run_sweep(step=0.01, knit_dir=KNIT_DIR, pressure=PRESSURE, motifs=MOTIFS):
             r_max = np.nanmax([row["r_x0"], row["r_y0"]])
             row["sim_failed"] = bool(
                 not np.isfinite(row["crown_height"])
-                or row["crown_height"] < CROWN_MIN_M
+                or row["crown_height"] < UNSOLVED_M
                 or (np.isfinite(r_max) and r_max > ROUGHNESS_THRESHOLD)
             )
             rows.append(row)

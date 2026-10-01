@@ -80,6 +80,24 @@ MOTIF_PARAMS = {
     2: {"E1":  7700.0, "E2":  7600.0, "nu": 0.65},
 }
 
+# ── Section 7.2 stitch structures (Figures 7.6-7.8) ───────────────────────────
+# The calibrated materials Figure 7.6 uses (run_pressure_sweep.py STRUCTURES),
+# passed to the binary as an E1/r/nu override.  E1 is the WALE modulus (along
+# knit_dir), E2 the course; both structures are wale-stiff.  Keyed by the motif
+# number the sweep scripts already carry: 1 = stitch structure I, 2 = II.
+STRUCTURE_PARAMS = {
+    1: {"E1": 12500.0, "E2": 5000.0, "nu": 0.198},
+    2: {"E1":  8000.0, "E2": 5100.0, "nu": 0.195},
+}
+STRUCTURE_NAMES = {1: "stitch structure I", 2: "stitch structure II"}
+
+
+def structure_override(motif):
+    """run_fea keyword arguments for a Section 7.2 stitch structure."""
+    m = STRUCTURE_PARAMS[motif]
+    return {"E1": m["E1"], "r": m["E1"] / m["E2"], "nu": m["nu"]}   # binary: E2 = E1 / r
+
+
 # ── Cable ─────────────────────────────────────────────────────────────────────
 # EA in N.  At E = 200 GPa this is A = EA / E, so 800 kN is A = 4.0 mm2 (~2.3 mm
 # diameter).  It was 150 kN (A = 0.75 mm2), at which the tensions the study

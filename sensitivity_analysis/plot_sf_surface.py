@@ -51,7 +51,7 @@ import matplotlib.pyplot as plt
 from matplotlib.tri import Triangulation
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from config import DATA_DIR
+from config import DATA_DIR, STRUCTURE_PARAMS
 
 FIG_DIR = os.path.join(os.path.dirname(__file__), "figures")
 os.makedirs(FIG_DIR, exist_ok=True)
@@ -70,7 +70,9 @@ plt.rcParams.update({
 GRID_CSV   = os.path.join(DATA_DIR, "sf_grid.csv")
 SF_RANGE   = (0.9, 1.4)
 MOTIFS     = (1, 2)
-COL_TITLES = {1: "Motif 1  ($E_2/E_1=2.50$)", 2: "Motif 2  ($E_2/E_1=1.60$)"}
+# r = E_wale / E_course, as Figure 7.8 labels it
+COL_TITLES = {m: f"Stitch structure {n}  ($r$ = {STRUCTURE_PARAMS[m]['E1'] / STRUCTURE_PARAMS[m]['E2']:.2f})"
+              for m, n in ((1, "I"), (2, "II"))}
 N_LEVELS   = 20
 
 
@@ -84,10 +86,12 @@ def _dH(a, b):
 # single colourbar, so a colour means the same number across those rows as well
 # as across the motif columns.  The two section-stress rows are only comparable
 # to each other if they are on the same scale.
+COMPRESSED_FRAC = 0.01   # > 1% of faces with a compressive minor principal stress
+
 ROWS = [
     ("crown_height", "Crown height",              "mm", "viridis", False, "crown"),
-    ("von_mises_x0", r"Section stress  $x{=}0$",  "Pa", "plasma",  False, "stress"),
-    ("von_mises_y0", r"Section stress  $y{=}0$",  "Pa", "plasma",  False, "stress"),
+    ("von_mises_x0", r"Section stress  $x{=}0$",  "N/m", "plasma",  False, "stress"),
+    ("von_mises_y0", r"Section stress  $y{=}0$",  "N/m", "plasma",  False, "stress"),
     ("dH_apex",      r"$\Delta H$",               "",   "RdBu_r",  True,  "dH"),
 ]
 
@@ -96,6 +100,7 @@ def _derive(sub):
     """Add the two dH columns and scale crown height to mm."""
     sub = sub.copy()
     sub["crown_height"] = sub["crown_height"] * 1000.0
+    sub["compressed"] = sub["frac_compressed"].values > COMPRESSED_FRAC
     sub["dH_section"] = _dH(sub["H_fit_x0"].values, sub["H_fit_y0"].values)
     if "apex_k_x" in sub and "apex_k_y" in sub:
         # x=0 section measures kappa_y, so pair apex_k_y with H_fit_x0
@@ -110,7 +115,9 @@ def _load():
         raise FileNotFoundError(
             f"{GRID_CSV} not found — run:  python3 run_sf_grid.py")
     df = pd.read_csv(GRID_CSV)
-    df = df[~df["sim_failed"].astype(bool)]
+    # keep every solved run: the roughness-flagged ones all sit inside the
+    # compressed zone, which is hatched rather than left blank
+    df = df[df["crown_height"] > 1e-3]
     df = df[df["sf_wale"].between(*SF_RANGE) &
             df["sf_course"].between(*SF_RANGE)]
     return {m: _derive(s) for m, s in df.groupby("motif")}
@@ -134,7 +141,11 @@ def plot_sf_surface(save=True):
             groups.append((row[5], [r]))
 
     for _, row_idx in groups:
-        vals = np.concatenate([data[m][ROWS[r][0]].values
+        # diverging (dH) scale from the runs in full tension only: in the
+        # compressed zone the crown curvature reflects wrinkling, not the dome
+        vals = np.concatenate([data[m][ROWS[r][0]].values[
+                                   ~data[m]["compressed"].values
+                                   if ROWS[r][4] else slice(None)]
                                for r in row_idx for m in motifs])
         vals = vals[np.isfinite(vals)]
         if len(vals) == 0:
@@ -159,13 +170,25 @@ def plot_sf_surface(save=True):
                             sub[key].values)
                 ok = np.isfinite(z)
                 tri = Triangulation(w[ok], cc[ok])
-                cs = ax.tricontourf(tri, z[ok], levels=levels, cmap=cmap,
+                ftri = tri
+                if diverging:
+                    # dH is not drawn where the membrane is in compression:
+                    # mask every triangle touching a compressed run
+                    ax.set_facecolor("0.88")
+                    comp = sub["compressed"].values[ok]
+                    ftri = Triangulation(w[ok], cc[ok])
+                    ftri.set_mask(comp[ftri.triangles].any(axis=1))
+                cs = ax.tricontourf(ftri, z[ok], levels=levels, cmap=cmap,
                                     extend="both")
-                ax.tricontour(tri, z[ok], levels=levels[::2], colors="white",
+                ax.tricontour(ftri, z[ok], levels=levels[::2], colors="white",
                               linewidths=0.4, alpha=0.5)
                 if diverging:
-                    ax.tricontour(tri, z[ok], levels=[0.0], colors="black",
+                    ax.tricontour(ftri, z[ok], levels=[0.0], colors="black",
                                   linewidths=1.0, linestyles="-")
+                ax.tricontourf(tri, sub["compressed"].values[ok].astype(float),
+                               levels=[0.5, 1.5], colors="none", hatches=["////"])
+                ax.tricontour(tri, sub["compressed"].values[ok].astype(float),
+                              levels=[0.5], colors="0.25", linewidths=0.8)
                 ax.plot(SF_RANGE, SF_RANGE, color="white", lw=1.0, ls="--",
                         alpha=0.8)
                 ax.set_xlim(*SF_RANGE)
@@ -183,15 +206,10 @@ def plot_sf_surface(save=True):
         cb.set_label(ROWS[row_idx[0]][2], fontsize=8)
         cb.ax.tick_params(labelsize=7)
 
-    n_pts = sum(len(data[m]) for m in motifs)
-    fig.suptitle(
-        r"Response surfaces over $s_{wale}\times s_{course}$   "
-        r"($\theta_{knit}=0°$,  $p=1000$ Pa)"
-        "\n"
-        rf"direct FEA grid, {n_pts} runs;  each row shares one colour scale "
-        r"across motifs;  dashed = uniform $s_f$,  black = $\Delta H = 0$",
-        fontsize=9.5,
-    )
+    from matplotlib.patches import Patch
+    axes[-1, -1].legend(handles=[Patch(fc="white", ec="0.25", hatch="////",
+                                       label="membrane in compression")],
+                        loc="upper right", fontsize=7, framealpha=0.9)
 
     if save:
         path = os.path.join(FIG_DIR, "figL_sf_surface.pdf")

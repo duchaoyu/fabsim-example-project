@@ -26,7 +26,8 @@ That panel is drawn as a Savitzky-Golay trend through the per-run values.
 Plotted from sf = 0.9: below that the Newton solve stops converging (it returns
 the undeformed state, which the sweep flags as failed).
 
-No-cable groups only; motif 1 vs motif 2 overlaid.
+No-cable groups only; stitch structures I and II overlaid, on the Figure 7.6
+materials (config.STRUCTURE_PARAMS).
 """
 
 import os
@@ -61,7 +62,7 @@ plt.rcParams.update({
 
 # ── seagreen palette ──────────────────────────────────────────────────────────
 COLORS = {1: "#2E8B57", 2: "#20B2AA"}   # seagreen / lightseagreen
-LABELS = {1: "Motif 1", 2: "Motif 2"}
+LABELS = {1: "Stitch structure I", 2: "Stitch structure II"}
 
 SF_RANGE   = (0.9, 1.4)   # below 0.9 the Newton solve stops converging
 SMOOTH_WIN = 9       # Savitzky-Golay window (points) for the curvature trend
@@ -128,14 +129,14 @@ def plot_uniform_sf(save=True):
     ax_h.legend(fontsize=8, loc="upper right")
     ax_h.yaxis.set_major_formatter(ticker.FormatStrFormatter("%.0f"))
 
-    ax_s.set_ylabel(r"Mean stress  (Pa)")
+    ax_s.set_ylabel(r"Mean stress  (N/m)")
     ax_s.set_title(r"Mean stress  vs uniform $s_f$")
     ax_s.legend(fontsize=8, loc="upper left")
 
     ax_c.set_ylabel(r"Mean curvature  $\bar{H}$  (m$^{-1}$)")
     ax_c.set_title(r"Section curvature  vs uniform $s_f$"
                    "\n(Savitzky-Golay trend through one FEA run per $s_f$)")
-    ax_c.legend(fontsize=7.5, loc="lower left", ncol=2)
+    ax_c.legend(fontsize=7.5, loc="upper right")
     ax_c.set_xlabel(r"Uniform stretch factor  $s_f$  ($s_{wale} = s_{course}$)")
     ax_c.set_ylim(0, None)
 

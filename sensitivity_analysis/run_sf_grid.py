@@ -42,12 +42,12 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from config import DATA_DIR, MESH_PATH
+from config import DATA_DIR, MESH_PATH, structure_override
 from curvature import read_off, compute_curvatures
 from fea_interface import run_fea, check_binary
 from plot_section_profiles import _slice_plane
 from plot_section_sensitivity import (_profile_roughness, _SECTION_TOL,
-                                     ROUGHNESS_THRESHOLD, CROWN_MIN_M)
+                                     ROUGHNESS_THRESHOLD)
 from section_curvature import profile_curvature_fit, profile_curvature_binned
 from apex_curvature import apex_curvature
 
@@ -58,6 +58,9 @@ SF_LO, SF_HI = 0.9, 1.4
 N_DEFAULT    = 26
 KNIT_DIR     = 0.0
 PRESSURE     = 1000.0
+# A failed Newton solve returns the flat disc.  Not plot_section_sensitivity's
+# 20 mm CROWN_MIN_M: structure I is still a valid dome below that at high s.
+UNSOLVED_M   = 1e-3
 MOTIFS       = (1, 2)
 
 _V0, _FACES = read_off(MESH_PATH)
@@ -83,6 +86,9 @@ def _metrics(verts_path, stress_path, knit_dir_deg):
         out.update({f"apex_{k}": v for k, v in ap.items()})
 
     sdf = pd.read_csv(stress_path).sort_values("face")
+    # faces whose minor principal stress is compressive: a knit wrinkles there,
+    # which the membrane model does not represent
+    out["frac_compressed"] = float((sdf["principal_2"].values < 0).mean())
     cen = V[_FACES[sdf["face"].values.astype(int)]].mean(axis=1)
     for key, axis in (("x0", 0), ("y0", 1)):
         m = np.abs(cen[:, axis]) < _SECTION_TOL
@@ -111,7 +117,7 @@ def run_grid(n=N_DEFAULT, lo=SF_LO, hi=SF_HI, motifs=MOTIFS):
                 done += 1
                 try:
                     res = run_fea(w, c, KNIT_DIR, PRESSURE, motif, prefix,
-                                  timeout=600)
+                                  timeout=600, **structure_override(motif))
                 except Exception as exc:
                     print(f"  m{motif} w={w:.3f} c={c:.3f}  FAILED: {exc}")
                     rows.append({"motif": motif, "sf_wale": w, "sf_course": c,
@@ -130,7 +136,7 @@ def run_grid(n=N_DEFAULT, lo=SF_LO, hi=SF_HI, motifs=MOTIFS):
                                    row.get("r_y0", np.nan)])
                 row["sim_failed"] = bool(
                     not np.isfinite(row["crown_height"])
-                    or row["crown_height"] < CROWN_MIN_M
+                    or row["crown_height"] < UNSOLVED_M
                     or (np.isfinite(r_max) and r_max > ROUGHNESS_THRESHOLD))
                 rows.append(row)
                 if done % 100 == 0:
