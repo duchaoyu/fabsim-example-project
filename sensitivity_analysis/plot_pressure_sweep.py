@@ -4,8 +4,8 @@ Figure 7.6: crown height against inflation pressure, from run_pressure_sweep.py.
 (a) crown height of structures I and II at the stated pre-strain, solid from
     500 Pa up to the structure's stress limit (I 3.5, II 4.0 kN/m) and dashed
     outside it, the limit point marked; rise-to-span labelled every 1000 Pa.
-(b) section profiles of structure I through the crown (plane y = 0, along the
-    wale) at every 1000 Pa and at the limit.
+(b), (c) section profiles of stitch structures I and II through the crown
+    (plane y = 0, along the wale) at every 1000 Pa and at the limit.
 
 Usage:
     python3 plot_pressure_sweep.py [--prestrain reference]
@@ -68,7 +68,10 @@ def main():
 
     plt.rcParams.update({"font.size": 9, "axes.edgecolor": INK2, "axes.labelcolor": INK,
                          "xtick.color": INK2, "ytick.color": INK2, "font.family": "sans-serif"})
-    fig, (ax, bx) = plt.subplots(1, 2, figsize=(10.5, 4.0), gridspec_kw={"width_ratios": [1.15, 1]})
+    fig = plt.figure(figsize=(10.5, 5.0))
+    gs = fig.add_gridspec(2, 2, width_ratios=[1.15, 1], hspace=0.45, wspace=0.18)
+    ax = fig.add_subplot(gs[:, 0])
+    sec_axes = {"I": fig.add_subplot(gs[0, 1]), "II": fig.add_subplot(gs[1, 1])}
 
     # ── (a) crown height vs pressure ────────────────────────────────────────
     for s, g in df.groupby("structure"):
@@ -90,7 +93,7 @@ def main():
             ax.plot(p[k:j + 2], h[k:j + 2], ls="-" if seg_ok[k] else (0, (5, 3)), color=COL[s], lw=1.6,
                     solid_capstyle="butt", zorder=3)
             k = j + 1
-        ax.plot([], [], "-", color=COL[s], lw=1.6, label=f"structure {s}")
+        ax.plot([], [], "-", color=COL[s], lw=1.6, label=f"stitch structure {s}")
         end = g[g.at_limit].iloc[0]
         ax.plot(end.pressure, end.crown_mm, "o", ms=8, mfc="white", mec=COL[s], mew=2, zorder=4)
         below = s == "I"          # structure I's end sits under the structure II curve
@@ -105,13 +108,13 @@ def main():
                 ax.annotate(f"{r.crown_mm / SPAN_MM:.2f}", (r.pressure, r.crown_mm), xytext=(4, -12),
                             textcoords="offset points", fontsize=7.5, color=INK2)
         last = g.iloc[-1]          # direct label: the two greens are close
-        ax.annotate(f"structure {s}", (last.pressure, last.crown_mm), xytext=(4, 0),
+        ax.annotate(f"stitch structure {s}", (last.pressure, last.crown_mm), xytext=(4, 0),
                     textcoords="offset points", ha="left", va="center", fontsize=8, color=INK)
-    ax.plot([], [], ls=(0, (5, 3)), color=INK2, lw=1.6,
-            label="p < 500 Pa, or max stress above\nthe limit (I 3.5, II 4.0 kN/m)")
+    ax.plot([], [], ls=(0, (5, 3)), color=INK2, lw=1.6, label="outside working range")
     ax.set_xlabel("inflation pressure  p  (Pa)")
     ax.set_ylabel("crown height  (mm)")
-    ax.set_xlim(0, df.pressure.max() * 1.13)
+    ax.set_xlim(0, df.pressure.max() * 1.22)          # room for the direct labels
+    ax.set_xticks(np.arange(0, df.pressure.max() + 1, 2000))
     ax.set_ylim(0, df.crown_mm.max() * 1.15)
     ax.grid(True, color=GRID, lw=0.6)
     ax.set_axisbelow(True)
@@ -121,34 +124,38 @@ def main():
     ax.set_title(f"(a)  crown height against pressure,  "
                  f"$s_{{wale}}$ = {s_w:g}, $s_{{course}}$ = {s_c:g}",
                  loc="left", fontsize=9, color=INK)
-    ax.text(0.02, 0.97, "labels: rise-to-span (structure I)   ○ max von Mises at the limit",
+    ax.text(0.02, 0.97, "labels: rise-to-span (stitch structure I)\n○ max von Mises at the limit (I 3.5, II 4.0 kN/m)",
             transform=ax.transAxes, fontsize=7.5, color=INK2, va="top")
 
-    # ── (b) section profiles, structure I ──────────────────────────────────
-    gI = df[(df.structure == "I") & (df.max_vm <= df.stress_limit + 1e-6)].sort_values("pressure")
-    show = list(gI[gI.pressure % 1000 == 0].itertuples()) + list(gI[gI.at_limit].itertuples())
-    greys = np.linspace(0.78, 0.25, len(show))
-    for (r, gv) in zip(show, greys):
-        tag = f"I_{a.prestrain}_p{r.pressure:.0f}"
-        x, z = section(os.path.join(DATA, "pressure_sweep", tag + "_verts.csv"), F)
-        c = COL["I"] if r.at_limit else str(gv)
-        bx.plot(x, z, color=c, lw=2 if r.at_limit else 1.2)
-        if r.at_limit or r.pressure in (1000, 3000, 5000):
-            k = np.argmax(z)                     # four labelled crowns sit >= 40 mm apart
-            bx.annotate(f"{r.pressure:.0f} Pa", (x[k], z[k]), xytext=(0, 2), textcoords="offset points",
-                        ha="center", va="bottom", fontsize=7, color=INK if r.at_limit else INK2,
-                        bbox=dict(boxstyle="square,pad=0.1", fc="white", ec="none"))
-    bx.axhline(0, color=INK2, lw=0.8)
-    bx.set_aspect("equal")
-    bx.set_xlim(-640, 640)
-    bx.set_ylim(-10, max(z) * 1.18)
-    bx.set_xlabel("x  (mm), section y = 0 along the wale")
-    bx.set_ylabel("z  (mm)")
-    for sp in ("top", "right"):
-        bx.spines[sp].set_visible(False)
-    bx.set_title("(b)  structure I, section through the crown", loc="left", fontsize=9, color=INK)
+    # ── (b), (c) section profiles through the crown, one panel per structure ──
+    ztop = df[df.max_vm <= df.stress_limit + 1e-6].crown_mm.max() * 1.22
+    LABELLED = {"I": (1000, 3000, 5000), "II": (1000, 3000, 5000, 7000)}   # crowns >= 40 mm apart
+    for letter, (st, bx) in zip("bc", sec_axes.items()):
+        g = df[(df.structure == st) & (df.max_vm <= df.stress_limit + 1e-6)].sort_values("pressure")
+        show = list(g[g.pressure % 1000 == 0].itertuples()) + list(g[g.at_limit].itertuples())
+        greys = np.linspace(0.78, 0.25, len(show))
+        for (r, gv) in zip(show, greys):
+            tag = f"{st}_{a.prestrain}_p{r.pressure:.0f}"
+            x, z = section(os.path.join(DATA, "pressure_sweep", tag + "_verts.csv"), F)
+            bx.plot(x, z, color=COL[st] if r.at_limit else str(gv), lw=2 if r.at_limit else 1.2)
+            if r.at_limit or r.pressure in LABELLED[st]:
+                k = np.argmax(z)
+                bx.annotate(f"{r.pressure:.0f} Pa", (x[k], z[k]), xytext=(0, 2), textcoords="offset points",
+                            ha="center", va="bottom", fontsize=7, color=INK if r.at_limit else INK2,
+                            bbox=dict(boxstyle="square,pad=0.1", fc="white", ec="none"))
+        bx.axhline(0, color=INK2, lw=0.8)
+        bx.set_aspect("equal")
+        bx.set_xlim(-640, 640)
+        bx.set_ylim(-10, ztop)
+        bx.set_ylabel("z  (mm)")
+        for sp in ("top", "right"):
+            bx.spines[sp].set_visible(False)
+        bx.set_title(f"({letter})  stitch structure {st}, section through the crown",
+                     loc="left", fontsize=9, color=INK)
+    sec_axes["II"].set_xlabel("x  (mm), section y = 0 along the wale")
+    sec_axes["I"].tick_params(labelbottom=False)
 
-    fig.tight_layout()
+    fig.subplots_adjust(left=0.06, right=0.99, top=0.93, bottom=0.10)
     os.makedirs(FIG, exist_ok=True)
     stem = os.path.join(FIG, f"fig_pressure_sweep_{a.prestrain}")
     fig.savefig(stem + ".pdf")
