@@ -1,9 +1,9 @@
 """
 Figure 7.6: crown height against inflation pressure, from run_pressure_sweep.py.
 
-(a) crown height of structures I and II at the stated pre-strain, solid from
-    500 Pa up to the structure's stress limit (I 3.5, II 4.0 kN/m) and dashed
-    outside it, the limit point marked; rise-to-span labelled every 1000 Pa.
+(a) crown height of structures I and II at the stated pre-strain, solid up
+    to the structure's stress limit (I 3.5, II 4.0 kN/m) and dashed above it,
+    the limit point marked; rise-to-span labelled every 1000 Pa.
 (b), (c) section profiles of stitch structures I and II through the crown
     (plane y = 0, along the wale) at every 1000 Pa and at the limit.
 
@@ -27,7 +27,6 @@ SPAN_MM = 1200.0
 
 INK, INK2, GRID = "#0b0b0b", "#52514e", "#e4e3df"
 COL = {"I": "#2E8B57", "II": "#20B2AA"}          # seagreen / lightseagreen, as the other 7.2 figures
-P_LO = 500.0                                     # below this pressure the curve is dashed, Pa
 
 
 def faces():
@@ -80,8 +79,9 @@ def main():
         h = np.r_[0.0, g.crown_mm.to_numpy()]
         lim = g.stress_limit.iloc[0]
         vm = np.r_[g.max_vm.iloc[0], g.max_vm.to_numpy()]     # p -> 0 carries the pre-strain stress
-        # solid for p >= 500 Pa up to the structure's stress limit (I 3.5, II 4.0 kN/m)
-        inside = (p >= P_LO - 1e-6) & (vm <= lim + 1e-6)
+        # solid up to the structure's stress limit (I 3.5, II 4.0 kN/m); the biaxial
+        # first regime of the knit is far below the uniaxial one, so no lower cut
+        inside = vm <= lim + 1e-6
         # solid inside the stress range, dashed outside.  Each run of equal status is
         # one polyline (a 100 Pa piece is shorter than a dash), sharing its end points.
         seg_ok = inside[:-1] & inside[1:]
