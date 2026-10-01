@@ -3,7 +3,7 @@ Figure 7.6: crown height against inflation pressure, from run_pressure_sweep.py.
 
 (a) crown height of structures I and II at the stated pre-strain, solid up
     to the structure's stress limit (I 3.5, II 4.0 kN/m) and dashed above it,
-    the limit point marked; rise-to-span labelled every 1000 Pa.
+    the limit point marked, dots every 1000 Pa.
 (b), (c) section profiles of stitch structures I and II through the crown
     (plane y = 0, along the wale) at every 1000 Pa and at the limit.
 
@@ -23,7 +23,6 @@ ROOT = os.path.dirname(HERE)
 DATA = os.path.join(HERE, "data")
 FIG = os.path.join(HERE, "figures")
 MESH = os.path.join(ROOT, "data", "circular_flat.off")
-SPAN_MM = 1200.0
 
 INK, INK2, GRID = "#0b0b0b", "#52514e", "#e4e3df"
 COL = {"I": "#2E8B57", "II": "#20B2AA"}          # seagreen / lightseagreen, as the other 7.2 figures
@@ -103,10 +102,6 @@ def main():
                     fontsize=7.5, color=INK)
         marks = g[(g.pressure % 1000 == 0) & (g.max_vm <= lim)]
         ax.plot(marks.pressure, marks.crown_mm, "o", ms=8, color=COL[s], mec="white", mew=1.5, zorder=4)
-        if s == "I":
-            for _, r in marks.iterrows():
-                ax.annotate(f"{r.crown_mm / SPAN_MM:.2f}", (r.pressure, r.crown_mm), xytext=(4, -12),
-                            textcoords="offset points", fontsize=7.5, color=INK2)
     ax.plot([], [], ls=(0, (5, 3)), color=INK2, lw=1.6, label="outside working range")
     ax.set_xlabel("inflation pressure  p  (Pa)")
     ax.set_ylabel("crown height  (mm)")
