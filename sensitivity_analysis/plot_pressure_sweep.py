@@ -107,9 +107,6 @@ def main():
             for _, r in marks.iterrows():
                 ax.annotate(f"{r.crown_mm / SPAN_MM:.2f}", (r.pressure, r.crown_mm), xytext=(4, -12),
                             textcoords="offset points", fontsize=7.5, color=INK2)
-        last = g.iloc[-1]          # direct label: the two greens are close
-        ax.annotate(f"stitch structure {s}", (last.pressure, last.crown_mm), xytext=(4, 0),
-                    textcoords="offset points", ha="left", va="center", fontsize=8, color=INK)
     ax.plot([], [], ls=(0, (5, 3)), color=INK2, lw=1.6, label="outside working range")
     ax.set_xlabel("inflation pressure  p  (Pa)")
     ax.set_ylabel("crown height  (mm)")
@@ -124,8 +121,6 @@ def main():
     ax.set_title(f"(a)  crown height against pressure,  "
                  f"$s_{{wale}}$ = {s_w:g}, $s_{{course}}$ = {s_c:g}",
                  loc="left", fontsize=9, color=INK)
-    ax.text(0.02, 0.97, "labels: rise-to-span (stitch structure I)\n○ max von Mises at the limit (I 3.5, II 4.0 kN/m)",
-            transform=ax.transAxes, fontsize=7.5, color=INK2, va="top")
 
     # ── (b), (c) section profiles through the crown, one panel per structure ──
     ztop = df[df.max_vm <= df.stress_limit + 1e-6].crown_mm.max() * 1.22
