@@ -1,9 +1,9 @@
 """
 Figure 7.6: crown height against inflation pressure, from run_pressure_sweep.py.
 
-(a) crown height of structures I and II at the stated pre-strain, each curve
-    ending where the max membrane stress reaches the limit; rise-to-span labelled
-    every 1000 Pa.
+(a) crown height of structures I and II at the stated pre-strain, solid where
+    the max membrane stress is within 0.5-3.5 kN/m and dashed outside it, the
+    3.5 kN/m point marked; rise-to-span labelled every 1000 Pa.
 (b) section profiles of structure I through the crown (plane y = 0, along the
     wale) at every 1000 Pa and at the limit.
 
@@ -26,8 +26,8 @@ MESH = os.path.join(ROOT, "data", "circular_flat.off")
 SPAN_MM = 1200.0
 
 INK, INK2, GRID = "#0b0b0b", "#52514e", "#e4e3df"
-COL = {"I": "#2a78d6", "II": "#eb6834"}          # categorical slots 1, 2
-LS = {"I": "-", "II": "--"}
+COL = {"I": "#2E8B57", "II": "#20B2AA"}          # seagreen / lightseagreen, as the other 7.2 figures
+S_LO, S_HI = 500.0, 3500.0                       # admissible max membrane stress, N/m
 
 
 def faces():
@@ -75,7 +75,20 @@ def main():
         g = g.sort_values("pressure")
         p = np.r_[0.0, g.pressure.to_numpy()]
         h = np.r_[0.0, g.crown_mm.to_numpy()]
-        ax.plot(p, h, LS[s], color=COL[s], lw=2, label=f"structure {s}", zorder=3)
+        vm = np.r_[g.max_vm.iloc[0], g.max_vm.to_numpy()]     # p -> 0 carries the pre-strain stress
+        inside = (vm >= S_LO - 1e-6) & (vm <= S_HI + 1e-6)
+        # solid inside the stress range, dashed outside.  Each run of equal status is
+        # one polyline (a 100 Pa piece is shorter than a dash), sharing its end points.
+        seg_ok = inside[:-1] & inside[1:]
+        k = 0
+        while k < len(seg_ok):
+            j = k
+            while j + 1 < len(seg_ok) and seg_ok[j + 1] == seg_ok[k]:
+                j += 1
+            ax.plot(p[k:j + 2], h[k:j + 2], ls="-" if seg_ok[k] else (0, (5, 3)), color=COL[s], lw=1.6,
+                    solid_capstyle="butt", zorder=3)
+            k = j + 1
+        ax.plot([], [], "-", color=COL[s], lw=1.6, label=f"structure {s}")
         end = g[g.at_limit].iloc[0]
         ax.plot(end.pressure, end.crown_mm, "o", ms=8, mfc="white", mec=COL[s], mew=2, zorder=4)
         below = s == "I"          # structure I's end sits under the structure II curve
@@ -83,29 +96,33 @@ def main():
                     xytext=(8, -10) if below else (-6, 8), textcoords="offset points",
                     ha="left" if below else "right", va="top" if below else "bottom",
                     fontsize=7.5, color=INK)
-        marks = g[(g.pressure % 1000 == 0)]
+        marks = g[(g.pressure % 1000 == 0) & (g.max_vm <= S_HI)]
         ax.plot(marks.pressure, marks.crown_mm, "o", ms=8, color=COL[s], mec="white", mew=1.5, zorder=4)
         if s == "I":
             for _, r in marks.iterrows():
                 ax.annotate(f"{r.crown_mm / SPAN_MM:.2f}", (r.pressure, r.crown_mm), xytext=(4, -12),
                             textcoords="offset points", fontsize=7.5, color=INK2)
+        last = g.iloc[-1]          # direct label: the two greens are close
+        ax.annotate(f"structure {s}", (last.pressure, last.crown_mm), xytext=(4, 0),
+                    textcoords="offset points", ha="left", va="center", fontsize=8, color=INK)
+    ax.plot([], [], ls=(0, (5, 3)), color=INK2, lw=1.6, label="max stress outside 0.5–3.5 kN/m")
     ax.set_xlabel("inflation pressure  p  (Pa)")
     ax.set_ylabel("crown height  (mm)")
-    ax.set_xlim(0, df.pressure.max() * 1.04)
+    ax.set_xlim(0, df.pressure.max() * 1.13)
     ax.set_ylim(0, df.crown_mm.max() * 1.15)
     ax.grid(True, color=GRID, lw=0.6)
     ax.set_axisbelow(True)
     for sp in ("top", "right"):
         ax.spines[sp].set_visible(False)
     ax.legend(frameon=False, loc="lower right", fontsize=8)
-    ax.set_title(f"(a)  crown height to the 3.5 kN/m stress limit,  "
+    ax.set_title(f"(a)  crown height against pressure,  "
                  f"$s_{{wale}}$ = {s_w:g}, $s_{{course}}$ = {s_c:g}",
                  loc="left", fontsize=9, color=INK)
     ax.text(0.02, 0.97, "labels: rise-to-span (structure I)   ○ max von Mises = 3.5 kN/m",
             transform=ax.transAxes, fontsize=7.5, color=INK2, va="top")
 
     # ── (b) section profiles, structure I ──────────────────────────────────
-    gI = df[df.structure == "I"].sort_values("pressure")
+    gI = df[(df.structure == "I") & (df.max_vm <= S_HI + 1e-6)].sort_values("pressure")
     show = list(gI[gI.pressure % 1000 == 0].itertuples()) + list(gI[gI.at_limit].itertuples())
     greys = np.linspace(0.78, 0.25, len(show))
     for (r, gv) in zip(show, greys):

@@ -15,16 +15,16 @@ Three pre-strain states per structure: nominal (s_wale = s_course = 1.0, the
 "untensioned" specimen), the calibration of Section 7.1.3 (s_wale = 0.960,
 s_course = 1.018), and the Section 7.2 reference (s_wale = s_course = 1.1).
 
-The sweep stops at the first pressure whose max von Mises stress (2nd Piola-
-Kirchhoff, N/m) exceeds STRESS_LIMIT; the crossing itself is then found by
-bisection to 1 Pa and stored as the last row (at_limit = True).
+The pressure where the max von Mises stress (2nd Piola-Kirchhoff, N/m) reaches
+the limit is found by bisection to 1 Pa and stored as the row at_limit = True.
+The sweep continues past it to --p-max so the out-of-range part can be drawn.
 
 Outputs:
     data/pressure_sweep.csv           one row per (structure, prestrain, pressure)
     data/pressure_sweep/<tag>_*.csv   per-run vertices, stress, scalars
 
 Usage:
-    python3 run_pressure_sweep.py [--jobs 16] [--limit 3500] [--step 100] [--prestrain reference]
+    python3 run_pressure_sweep.py [--jobs 16] [--limit 3500] [--step 100] [--prestrain reference] [--p-max 10000]
 """
 import argparse, json, os, subprocess
 from collections import Counter
@@ -90,29 +90,30 @@ def run_one(structure, prestrain, p, rim, mp):
                 converged=ok, at_limit=False)
 
 
-def sweep(structure, prestrain, rim, mp, jobs, limit, step):
+def sweep(structure, prestrain, rim, mp, jobs, limit, step, p_max):
+    """Steps up to the stress limit and on to p_max (rows past the limit kept,
+    so the figure can draw them as out of range)."""
     rows, p0 = [], step
     with ThreadPoolExecutor(jobs) as ex:
         while True:
             batch = [p0 + k * step for k in range(jobs)]
             res = list(ex.map(lambda p: run_one(structure, prestrain, p, rim, mp), batch))
             rows += res
-            over = [r for r in res if r["max_vm"] >= limit]
-            if over:
+            if any(r["max_vm"] >= limit for r in res) and batch[-1] >= p_max:
                 break
             p0 = batch[-1] + step
     rows.sort(key=lambda r: r["pressure"])
     first_over = next(r for r in rows if r["max_vm"] >= limit)
-    rows = [r for r in rows if r["pressure"] < first_over["pressure"]]
-    lo, hi = rows[-1]["pressure"] if rows else 0.0, first_over["pressure"]
+    below = [r for r in rows if r["pressure"] < first_over["pressure"]]
+    past = [r for r in rows if r["pressure"] >= first_over["pressure"] and r["pressure"] <= p_max]
+    lo, hi = below[-1]["pressure"] if below else 0.0, first_over["pressure"]
     while hi - lo > 1.0:                        # bisection on the stress limit
         mid = 0.5 * (lo + hi)
         if run_one(structure, prestrain, mid, rim, mp)["max_vm"] < limit: lo = mid
         else: hi = mid
     end = run_one(structure, prestrain, round(lo), rim, mp)
     end["at_limit"] = True
-    rows.append(end)
-    return rows
+    return below + [end] + past
 
 
 def main():
@@ -120,6 +121,8 @@ def main():
     ap.add_argument("--jobs", type=int, default=16)
     ap.add_argument("--limit", type=float, default=3500.0, help="max von Mises stress, N/m")
     ap.add_argument("--step", type=float, default=100.0, help="pressure step, Pa")
+    ap.add_argument("--p-max", type=float, default=10000.0,
+                    help="continue past the stress limit up to this pressure, Pa")
     ap.add_argument("--prestrain", default="reference",
                     help="comma list of " + ",".join(PRESTRAIN) + " (default: reference, s = 1.1)")
     a = ap.parse_args()
@@ -128,8 +131,8 @@ def main():
     rows = []
     for s in STRUCTURES:
         for ps in a.prestrain.split(","):
-            r = sweep(s, ps, rim, mp, a.jobs, a.limit, a.step)
-            end = r[-1]
+            r = sweep(s, ps, rim, mp, a.jobs, a.limit, a.step, a.p_max)
+            end = next(x for x in r if x["at_limit"])
             print(f"structure {s:2s} {ps:10s}: {len(r)} points, stops at {end['pressure']:.0f} Pa, "
                   f"crown {end['crown_mm']:.1f} mm, max vM {end['max_vm']:.0f} N/m, "
                   f"all converged {all(x['converged'] for x in r)}", flush=True)
