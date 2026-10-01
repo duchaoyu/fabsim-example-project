@@ -42,6 +42,7 @@ plt.rcParams.update({
 })
 
 _VERTS_REST, _FACES = read_off(MESH_PATH)
+ROMAN = {1: "I", 2: "II"}
 
 # Weight given to the two clamped-rim points when fitting a section profile.
 # They are a boundary condition (z = 0 exactly), not sample means, so they must
@@ -52,7 +53,7 @@ RIM_WEIGHT = 10.0
 # over the plotted cases, so anchoring at 0 left the lower half of the panel empty
 # and squeezed every curve into a band near the top.  Nothing is clipped: 287 Pa
 # of margin below, 130 Pa above.
-STRESS_YLIM = (1000.0, 2500.0)
+STRESS_YLIM = (800.0, 1700.0)   # data 930-1590 N/m after the 2026-10 rerun
 
 # Fixed y-range for the section-curvature row (row 3).  Top is exactly 0: kappa
 # <= 0 on physical grounds and, with the rim anchored in the fit, the least
@@ -549,12 +550,12 @@ def plot_lrest_sweep(save=True):
         ax0b.set_ylabel("Cable tension  (N)", color=TENSION_GREY)
         ax0b.tick_params(axis="y", colors=TENSION_GREY, labelsize=8)
         ax0.set_xlabel(r"$L_{rest}$  (m)")
-        ax0.set_title(f"Motif {motif} — crown height & cable tension")
+        ax0.set_title(f"Stitch structure {ROMAN[motif]} — crown height & cable tension")
         # Combined legend
         h1, l1 = ax0.get_legend_handles_labels()
         h2, l2 = ax0b.get_legend_handles_labels()
         ax0.legend(h1+h2, l1+l2, fontsize=7.5, loc="upper left")
-        ax0.set_xlim(l_vals.min()-0.05, l_vals.max()+0.05)
+        ax0.set_xlim(l_vals.min()-0.02, l_vals.max()+0.02)
 
         # ── Load section profiles for all cases ────────────────────────────────
         _set_len_colors(cable_rows["L_rest_m"].values)
@@ -589,7 +590,7 @@ def plot_lrest_sweep(save=True):
 
         ax1.set_xlabel("position along section  (mm)")
         ax1.set_ylabel("z  (mm)")
-        ax1.set_title(f"Motif {motif} — shape profiles  (solid=x=0, dashed=y=0)")
+        ax1.set_title(f"Stitch structure {ROMAN[motif]} — shape profiles  (solid=x=0, dashed=y=0)")
         ax1.autoscale(axis="y", tight=False)
         y0, y1 = ax1.get_ylim()
         pad = 0.08 * (y1 - y0)
@@ -648,7 +649,7 @@ def plot_lrest_sweep(save=True):
         ax2.axhline(0, color="0.55", lw=0.8, ls="-")   # developable: K = 0
         ax2.set_xlabel("position along section  (mm)")
         ax2.set_ylabel(r"Gaussian curvature  $K$  (m$^{-2}$)")
-        ax2.set_title(f"Motif {motif} — Gaussian curvature across the cable ($y{{=}}0$)")
+        ax2.set_title(f"Stitch structure {ROMAN[motif]} — Gaussian curvature across the cable ($y{{=}}0$)")
 
         # ── Row 3: von Mises stress — binned along sections ────────────────────
         ax3 = axes[3, col_idx]
@@ -671,8 +672,8 @@ def plot_lrest_sweep(save=True):
             ax3.plot(pts, vm_mean, color=color, lw=lw, alpha=alpha)
 
         ax3.set_xlabel("position along section  (mm)")
-        ax3.set_ylabel("Von Mises stress  (Pa)")
-        ax3.set_title(f"Motif {motif} — section stress  (y=0 plane)")
+        ax3.set_ylabel("Von Mises stress  (N/m)")
+        ax3.set_title(f"Stitch structure {ROMAN[motif]} — section stress  (y=0 plane)")
         ax3.set_ylim(bottom=0)
 
 
@@ -706,7 +707,8 @@ def plot_lrest_sweep(save=True):
     # Row 4: fixed stress window, same in both columns, so the curves fill the
     # panel instead of hugging the top of a range that starts at zero.
     for c in range(n_cols):
-        axes[3, c].set_ylim(STRESS_YLIM)
+        if STRESS_YLIM is not None:
+            axes[3, c].set_ylim(STRESS_YLIM)
 
     # Shared legend for the rest lengths.  This replaces the cable-tension
     # colourbar: colour now identifies a discrete L_rest, so a continuous scale
@@ -715,18 +717,9 @@ def plot_lrest_sweep(save=True):
     len_handles += [Line2D([0], [0], color=_len_color(L), lw=2.2,
                            label=f"{L:.2f} m")
                     for L in sorted(_LEN_COLORS)]
-    fig.legend(handles=len_handles, loc="center right", bbox_to_anchor=(1.0, 0.5),
+    fig.legend(handles=len_handles, loc="center left", bbox_to_anchor=(0.92, 0.5),
                fontsize=8, title=r"$L_{rest}$", title_fontsize=8.5,
                framealpha=0.9, borderpad=0.7, labelspacing=0.6)
-
-    fig.suptitle(
-        # conditions taken from run_lrest_sweep, not typed in — the caption said
-        # s_f=1.0 for a while after the sweep moved to 1.1
-        rf"Frictionless sliding steel cable — rest-length sweep  "
-        rf"($s_f$={SWEEP_SF}, $\theta$={SWEEP_KNIT:.0f}°, $p$={SWEEP_P:.0f} Pa)"
-        "\n"
-        r"Colour = cable rest length $L_{rest}$ (viridis, short$\to$long; orange = no cable)",
-        fontsize=10, y=1.005)
 
     if save:
         path = os.path.join(FIG_DIR, "figQ_lrest_sweep.pdf")

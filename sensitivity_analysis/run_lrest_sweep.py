@@ -26,7 +26,7 @@ import json, os, subprocess, csv, sys
 import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from config import CABLE_EA
+from config import CABLE_EA, structure_override
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 from config import FEM_BINARY
@@ -45,12 +45,16 @@ KNIT_DIR    = 0.0
 PRESSURE    = 1000.0
 MOTIFS      = [1, 2]
 # L_flat for this cable path ≈ 1.325 m; sweep from strongly pre-stressed to slack
-L_REST_VALS = [None, 1.20, 1.25, 1.30, 1.35, 1.40, 1.45, 1.50]  # None = no cable
+# Taut range only.  With the corrected pressure and the Figure 7.6 materials the
+# dome rises 73 / 92 mm, so the cable is slack from ~1.34 m; below ~1.245 m the
+# solve never leaves the flat state (crown < 1 mm, cable stretched past its rest
+# length) because the cable's mesh path is 1.325 m long on the flat disc.
+L_REST_VALS = [None, 1.25, 1.27, 1.29, 1.31, 1.33, 1.35]  # None = no cable
 
 
 def _run(sf, knit_dir, pressure, motif, l_rest_m):
     """Run one simulation; return dict of scalar outputs or None on failure."""
-    tag = f"m{motif}_lr{'none' if l_rest_m is None else f'{l_rest_m:.2f}'}"
+    tag = f"m{motif}_lr{'none' if l_rest_m is None else f'{l_rest_m:.3f}'}"
     prefix = os.path.join(OUT_DIR, tag)
 
     scalars_path = prefix + "_scalars.csv"
@@ -78,6 +82,11 @@ def _run(sf, knit_dir, pressure, motif, l_rest_m):
     cmd = [FEM_BIN, CABLE_MESH,
            f"{sf:.4f}", f"{sf:.4f}", f"{knit_dir:.2f}", f"{pressure:.1f}",
            str(motif), cable_arg, "none", prefix]
+    # Figure 7.6 materials (stitch structures I and II), as an E1/r/nu override
+    mpath = prefix + "_material.json"
+    with open(mpath, "w") as f:
+        json.dump(structure_override(motif), f)
+    cmd += ["auto", mpath]          # fixed_vertices = auto, then the material
 
     r = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
     if r.returncode != 0:
