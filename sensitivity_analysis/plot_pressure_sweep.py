@@ -3,7 +3,7 @@ Figure 7.6: crown height against inflation pressure, from run_pressure_sweep.py.
 
 (a) crown height of structures I and II at the stated pre-strain, each curve
     ending where the max membrane stress reaches the limit; rise-to-span labelled
-    every 1000 Pa, the tested range 1000-1200 Pa shaded.
+    every 1000 Pa.
 (b) section profiles of structure I through the crown (plane y = 0, along the
     wale) at every 1000 Pa and at the limit.
 
@@ -71,8 +71,6 @@ def main():
     fig, (ax, bx) = plt.subplots(1, 2, figsize=(10.5, 4.0), gridspec_kw={"width_ratios": [1.15, 1]})
 
     # ── (a) crown height vs pressure ────────────────────────────────────────
-    ax.axvspan(1000, 1200, color=GRID, lw=0, zorder=0)
-    ax.text(1100, 4, "tested", ha="center", va="bottom", fontsize=7.5, color=INK2)
     for s, g in df.groupby("structure"):
         g = g.sort_values("pressure")
         p = np.r_[0.0, g.pressure.to_numpy()]
