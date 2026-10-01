@@ -61,8 +61,8 @@ PANELS = [
 
 # Figure 7.10 (figT) colour bars on round numbers: (vmin, vmax, ticks)
 ROUND_SCALES_T = {
-    "crown_height": (20.0, 90.0,     np.arange(20, 91, 10)),
-    "mean_stress":  (1000.0, 5000.0, np.arange(1000, 5001, 500)),
+    "crown_height": (20.0, 100.0,    np.arange(20, 101, 10)),
+    "mean_stress":  (500.0, 5500.0,  np.arange(500, 5501, 1000)),
     "dH_apex":      (-0.005, 0.005,  np.linspace(-0.005, 0.005, 5)),
 }
 
