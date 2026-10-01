@@ -76,7 +76,7 @@ PANELS = [
 # Figure 7.9 colour bars on round numbers: (vmin, vmax, ticks)
 ROUND_SCALES = {
     "crown_height": (0.0, 300.0,    np.arange(0, 301, 50)),
-    "mean_stress":  (0.0, 8000.0,   np.arange(0, 8001, 1000)),
+    "mean_stress":  (0.0, 12000.0,  np.arange(0, 12001, 2000)),
     "dH_apex":      (-0.08, 0.08,   np.linspace(-0.08, 0.08, 5)),
 }
 
@@ -302,7 +302,7 @@ def plot_surface(save=True):
         ax.set_xlim(e1_fine[0] / 1000, e1_fine[-1] / 1000)
         ax.set_ylim(r2_fine[0], r2_fine[-1])
         ax.set_xticks(e1_keys / 1000)
-        ax.set_xticklabels([f"{v:.0f}" for v in e1_keys / 1000],
+        ax.set_xticklabels([f"{v:g}" for v in e1_keys / 1000],   # 3.5, not "4"
                            fontsize=7, rotation=45)
         ax.set_yticks(r2_keys)
         ax.set_yticklabels([f"{v:.2f}" for v in r2_keys], fontsize=7)
