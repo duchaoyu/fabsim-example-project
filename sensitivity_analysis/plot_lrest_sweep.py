@@ -555,7 +555,10 @@ def plot_lrest_sweep(save=True):
         h1, l1 = ax0.get_legend_handles_labels()
         h2, l2 = ax0b.get_legend_handles_labels()
         ax0.legend(h1+h2, l1+l2, fontsize=7.5, loc="upper left")
-        ax0.set_xlim(l_vals.min()-0.02, l_vals.max()+0.02)
+        # ticks on the simulated rest lengths, half a step of margin either side
+        ax0.set_xticks(l_sorted)
+        ax0.set_xticklabels([f"{v:.2f}" for v in l_sorted])
+        ax0.set_xlim(l_sorted.min() - 0.5 * spacing, l_sorted.max() + 0.5 * spacing)
 
         # ── Load section profiles for all cases ────────────────────────────────
         _set_len_colors(cable_rows["L_rest_m"].values)
@@ -700,6 +703,12 @@ def plot_lrest_sweep(save=True):
     for r in range(n_rows):
         _match_row([axes[r, c] for c in range(n_cols)])
     _match_row(twin_axes)      # row 0's cable-tension scale
+    # headroom in row 0 so the legend clears the tallest bar and the no-cable line
+    for c in range(n_cols):
+        lo, hi = axes[0, c].get_ylim()
+        axes[0, c].set_ylim(lo, hi + 0.45 * (hi - lo))
+        tlo, thi = twin_axes[c].get_ylim()
+        twin_axes[c].set_ylim(tlo, thi + 0.45 * (thi - tlo))
 
     # Row 3 (Gaussian curvature) keeps the shared limits _match_row already gave
     # it: K is signed and both signs are meaningful, so it must not be clipped.
