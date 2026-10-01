@@ -16,7 +16,7 @@ Three pre-strain states per structure: nominal (s_wale = s_course = 1.0, the
 s_course = 1.018), and the Section 7.2 reference (s_wale = s_course = 1.1).
 
 The pressure where the max von Mises stress (2nd Piola-Kirchhoff, N/m) reaches
-the limit is found by bisection to 1 Pa and stored as the row at_limit = True.
+the structure's limit (I 3500, II 4000 N/m) is found by bisection to 1 Pa and stored as the row at_limit = True.
 The sweep continues past it to --p-max so the out-of-range part can be drawn.
 
 Outputs:
@@ -24,7 +24,7 @@ Outputs:
     data/pressure_sweep/<tag>_*.csv   per-run vertices, stress, scalars
 
 Usage:
-    python3 run_pressure_sweep.py [--jobs 16] [--limit 3500] [--step 100] [--prestrain reference] [--p-max 10000]
+    python3 run_pressure_sweep.py [--jobs 16] [--limit 3500] [--step 100] [--prestrain reference] [--p-max 12000]
 """
 import argparse, json, os, subprocess
 from collections import Counter
@@ -40,8 +40,8 @@ BIN = os.environ.get("FEM_NREGION_BINARY", os.path.join(ROOT, "build", "fem_batc
 OUT = os.path.join(HERE, "data", "pressure_sweep")
 CSV = os.path.join(HERE, "data", "pressure_sweep.csv")
 
-STRUCTURES = {"I": dict(E_wale=12500.0, E_course=5000.0, nu=0.198),
-              "II": dict(E_wale=8000.0, E_course=5100.0, nu=0.195)}
+STRUCTURES = {"I": dict(E_wale=12500.0, E_course=5000.0, nu=0.198, limit=3500.0),
+              "II": dict(E_wale=8000.0, E_course=5100.0, nu=0.195, limit=4000.0)}   # limit: max stress, N/m
 PRESTRAIN = {"nominal": (1.0, 1.0), "calibrated": (0.960, 1.018),     # (s_wale, s_course)
              "reference": (1.1, 1.1)}                               # Section 7.2 reference
 
@@ -83,7 +83,7 @@ def run_one(structure, prestrain, p, rim, mp):
     ok = "OK" in log and bool(resid) and (statuses[-1] == "success" or resid[-1] < 1e-5)
     v = open(pref + "_scalars.csv").read().split("\n")[1].split(",")
     st = pd.read_csv(pref + "_stress.csv")
-    return dict(structure=structure, prestrain=prestrain, s_wale=sw, s_course=sc, pressure=float(p),
+    return dict(structure=structure, prestrain=prestrain, stress_limit=m["limit"], s_wale=sw, s_course=sc, pressure=float(p),
                 crown_mm=1000 * float(v[0]), max_vm=float(v[1]), mean_vm=float(v[2]),
                 resid_max=resid[-1] if resid else np.nan,
                 min_principal=float(st.principal_2.min()), frac_compressed=float((st.principal_2 < 0).mean()),
@@ -119,9 +119,10 @@ def sweep(structure, prestrain, rim, mp, jobs, limit, step, p_max):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--jobs", type=int, default=16)
-    ap.add_argument("--limit", type=float, default=3500.0, help="max von Mises stress, N/m")
+    ap.add_argument("--limit", type=float, default=None,
+                    help="max von Mises stress, N/m (default: per structure, I 3500, II 4000)")
     ap.add_argument("--step", type=float, default=100.0, help="pressure step, Pa")
-    ap.add_argument("--p-max", type=float, default=10000.0,
+    ap.add_argument("--p-max", type=float, default=12000.0,
                     help="continue past the stress limit up to this pressure, Pa")
     ap.add_argument("--prestrain", default="reference",
                     help="comma list of " + ",".join(PRESTRAIN) + " (default: reference, s = 1.1)")
@@ -131,7 +132,8 @@ def main():
     rows = []
     for s in STRUCTURES:
         for ps in a.prestrain.split(","):
-            r = sweep(s, ps, rim, mp, a.jobs, a.limit, a.step, a.p_max)
+            lim = a.limit if a.limit is not None else STRUCTURES[s]["limit"]
+            r = sweep(s, ps, rim, mp, a.jobs, lim, a.step, a.p_max)
             end = next(x for x in r if x["at_limit"])
             print(f"structure {s:2s} {ps:10s}: {len(r)} points, stops at {end['pressure']:.0f} Pa, "
                   f"crown {end['crown_mm']:.1f} mm, max vM {end['max_vm']:.0f} N/m, "
