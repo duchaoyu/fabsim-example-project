@@ -68,7 +68,8 @@ plt.rcParams.update({
 })
 
 GRID_CSV   = os.path.join(DATA_DIR, "sf_grid.csv")
-SF_RANGE   = (0.9, 1.4)
+SF_RANGE   = (0.95, 1.4)
+SF_PAD     = 0.02   # one grid step: keep the node just below 0.95 so contours reach the frame
 MOTIFS     = (1, 2)
 # r = E_wale / E_course, as Figure 7.8 labels it
 COL_TITLES = {m: f"Stitch structure {n}  ($r$ = {STRUCTURE_PARAMS[m]['E1'] / STRUCTURE_PARAMS[m]['E2']:.2f})"
@@ -121,8 +122,8 @@ def _load():
     # keep every solved run: the roughness-flagged ones all sit inside the
     # compressed zone, which is hatched rather than left blank
     df = df[df["crown_height"] > 1e-3]
-    df = df[df["sf_wale"].between(*SF_RANGE) &
-            df["sf_course"].between(*SF_RANGE)]
+    lo, hi = SF_RANGE[0] - SF_PAD, SF_RANGE[1]
+    df = df[df["sf_wale"].between(lo, hi) & df["sf_course"].between(lo, hi)]
     return {m: _derive(s) for m, s in df.groupby("motif")}
 
 
