@@ -1,0 +1,25 @@
+# Test the library
+
+name: Test
+
+on: [push, pull_request]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Dependencies
+        run: sudo apt install libeigen3-dev coreutils lcov
+
+      - name: Configure
+        run:  cmake -B build -DCMAKE_BUILD_TYPE=Debug
+
+      - name: Build
+        run: cmake --build build -j $(nproc)
+
+      - name: Tests
+        working-directory: build/
+        run: ctest -C Debug -E "benchmarks|check_finite_differences" -j $(nproc) 

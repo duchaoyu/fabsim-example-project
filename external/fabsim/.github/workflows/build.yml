@@ -1,0 +1,50 @@
+# Try building on both Linux and macOS platforms
+
+name: Build
+
+on: [push, pull_request]
+
+jobs:
+  linux:
+    name: Linux Release
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler:
+          - { c: clang-7, cpp: clang++-7, package: clang-7 }
+          - { c: clang-8, cpp: clang++-8, package: clang-8 }
+          - { c: clang-9, cpp: clang++-9, package: clang-9 }
+          - { c: clang-10, cpp: clang++-10, package: clang-10 }
+          - { c: clang-11, cpp: clang++-11, package: clang-11 }
+          - { c: clang-12, cpp: clang++-12, package: clang-12 }
+          - { c: gcc-8, cpp: g++-8, package: g++-8 }
+          - { c: gcc-9, cpp: g++-9, package: g++-9}
+          - { c: gcc-10, cpp: g++-10, package: g++-10 }
+          - { c: gcc-11, cpp: g++-11, package: g++-11 }
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Dependencies
+        run: sudo apt install ${{ matrix.compiler.package }} libeigen3-dev coreutils
+
+      - name: Configure
+        run:  cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=/usr/bin/${{ matrix.compiler.c }} -DCMAKE_CXX_COMPILER=/usr/bin/${{ matrix.compiler.cpp }} -DFABSIM_BUILD_TESTS=OFF
+
+      - name: Build
+        run: cmake --build build --config Release -j $(nproc)
+  
+  macOS:
+    name: macOS Release
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Dependencies
+        run: brew install eigen coreutils
+
+      - name: Configure
+        run:  cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --config Release -j $(nproc)
