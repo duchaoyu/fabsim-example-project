@@ -46,7 +46,7 @@ SWEEP_CSV = os.path.join(DATA_DIR, "knit_dir_sweep.csv")
 SWEEP_DIR = os.path.join(DATA_DIR, "knit_dir_sweep")
 
 THETA_RANGE = (0.0, 90.0)
-SF          = 1.0
+SF          = 1.1   # reference pre-strain, as Figures 7.6, 7.9 and 7.10
 PRESSURE    = 1000.0
 MOTIFS      = (1, 2)
 
