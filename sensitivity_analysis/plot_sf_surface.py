@@ -87,7 +87,9 @@ def _dH(a, b):
 # as across the motif columns.  The two section-stress rows are only comparable
 # to each other if they are on the same scale.
 COMPRESSED_FRAC = 0.01   # > 1% of faces with a compressive minor principal stress
-HATCH_COMPRESSED = False # hatch that zone on every panel (dH is left blank there regardless)
+HATCH_COMPRESSED = False # hatch that zone on every panel
+MASK_COMPRESSED_DH = False  # leave dH blank (grey) in that zone; its scale is set by the
+                            # tension-only runs either way, so it saturates there when shown
 
 ROWS = [
     ("crown_height", "Crown height",              "mm", "viridis", False, "crown"),
@@ -172,7 +174,7 @@ def plot_sf_surface(save=True):
                 ok = np.isfinite(z)
                 tri = Triangulation(w[ok], cc[ok])
                 ftri = tri
-                if diverging:
+                if diverging and MASK_COMPRESSED_DH:
                     # dH is not drawn where the membrane is in compression:
                     # mask every triangle touching a compressed run
                     ax.set_facecolor("0.88")
