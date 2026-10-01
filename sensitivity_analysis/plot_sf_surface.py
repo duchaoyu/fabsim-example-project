@@ -87,6 +87,7 @@ def _dH(a, b):
 # as across the motif columns.  The two section-stress rows are only comparable
 # to each other if they are on the same scale.
 COMPRESSED_FRAC = 0.01   # > 1% of faces with a compressive minor principal stress
+HATCH_COMPRESSED = False # hatch that zone on every panel (dH is left blank there regardless)
 
 ROWS = [
     ("crown_height", "Crown height",              "mm", "viridis", False, "crown"),
@@ -185,10 +186,11 @@ def plot_sf_surface(save=True):
                 if diverging:
                     ax.tricontour(ftri, z[ok], levels=[0.0], colors="black",
                                   linewidths=1.0, linestyles="-")
-                ax.tricontourf(tri, sub["compressed"].values[ok].astype(float),
-                               levels=[0.5, 1.5], colors="none", hatches=["////"])
-                ax.tricontour(tri, sub["compressed"].values[ok].astype(float),
-                              levels=[0.5], colors="0.25", linewidths=0.8)
+                if HATCH_COMPRESSED:
+                    ax.tricontourf(tri, sub["compressed"].values[ok].astype(float),
+                                   levels=[0.5, 1.5], colors="none", hatches=["////"])
+                    ax.tricontour(tri, sub["compressed"].values[ok].astype(float),
+                                  levels=[0.5], colors="0.25", linewidths=0.8)
                 ax.plot(SF_RANGE, SF_RANGE, color="white", lw=1.0, ls="--",
                         alpha=0.8)
                 ax.set_xlim(*SF_RANGE)
@@ -207,9 +209,10 @@ def plot_sf_surface(save=True):
         cb.ax.tick_params(labelsize=7)
 
     from matplotlib.patches import Patch
-    axes[-1, -1].legend(handles=[Patch(fc="white", ec="0.25", hatch="////",
-                                       label="membrane in compression")],
-                        loc="upper right", fontsize=7, framealpha=0.9)
+    if HATCH_COMPRESSED:
+        axes[-1, -1].legend(handles=[Patch(fc="white", ec="0.25", hatch="////",
+                                           label="membrane in compression")],
+                            loc="upper right", fontsize=7, framealpha=0.9)
 
     if save:
         path = os.path.join(FIG_DIR, "figL_sf_surface.pdf")
