@@ -30,6 +30,7 @@
 #include <fsim/util/io.h>
 #include <optim/NewtonSolver.h>
 #include "anisotropic_rest_shape.h"
+#include "follower_pressure.h"
 #include "sliding_cable.h"
 #include "stress_analysis.h"
 
@@ -420,17 +421,63 @@ static VectorXd simulate(const std::vector<RegionParams>& regions,
         for (int k = 0; k < g_load_steps; ++k)
             steps.push_back(pressure * std::pow(0.01, 1.0 - double(k) / (g_load_steps - 1)));
     }
-    for (double p : steps) {
+    // Pressure model.  Default "volume": the elements' own volume-work pressure.
+    // It is exact when every boundary vertex is fixed, and wrong (origin
+    // dependent) at a free edge.  FEM_PRESSURE=follower solves the force balance
+    // with p·n·dA on the current surface instead (follower_pressure.h), which is
+    // what a bladder applies.  On a clamped disc the two agree to 0.0000 mm.
+    // It is opt-in because on pattern_smooth the follower balance does not
+    // converge: ~40-50% of faces are in compression there under either load, and
+    // a membrane without wrinkling or bending has no stable state in them.
+    const char* pm = std::getenv("FEM_PRESSURE");
+    const bool follower_mode = (pm && std::string(pm) == "follower");
+
+    auto conservative = [&](double p, const VectorXd& x_in) {
         fsim::OrthotropicStVKMembrane membrane(
             V0_mod, F, ths, E1s, E2s, nus, face_dirs, mp.mass, p);
+        if (cable_template.empty()) return newtonSolve(membrane, x_in);
+        fsim::CompositeModel composite(std::move(membrane),
+                                       MultiCableModel(cable_template));
+        return newtonSolve(composite, x_in);
+    };
+    auto followerStep = [&](double p, const VectorXd& x_in) {
+        fsim::OrthotropicStVKMembrane membrane(
+            V0_mod, F, ths, E1s, E2s, nus, face_dirs, mp.mass, 0.0);
+        if (cable_template.empty())
+            return follower::solve(membrane, F, p, x_in, fixed_vs);
+        fsim::CompositeModel composite(std::move(membrane),
+                                       MultiCableModel(cable_template));
+        return follower::solve(composite, F, p, x_in, fixed_vs);
+    };
 
-        if (cable_template.empty()) {
-            x = newtonSolve(membrane, x);
-        } else {
-            fsim::CompositeModel composite(std::move(membrane),
-                                           MultiCableModel(cable_template));
-            x = newtonSolve(composite, x);
+    for (double p : steps) {
+        if (!follower_mode) { x = conservative(p, x); continue; }
+        auto r = followerStep(p, x);
+        if (!r.converged) {
+            // Newton on the follower balance can stall from a poor start (the
+            // flat state); the volume-work solve is robust and lands close,
+            // so take it as the start and try again.
+            std::cerr << "FOLLOWER p=" << p << " stalled at max|r|=" << r.residual
+                      << " after " << r.iterations << " it; restarting from volume-work solve\n";
+            r = followerStep(p, conservative(p, x));
         }
+        std::cerr << "FOLLOWER p=" << p << (r.converged ? " converged" : " FAILED")
+                  << " it=" << r.iterations << " max|r|=" << r.residual << "\n";
+        if (!r.converged && std::getenv("FEM_DUMP_RESIDUAL")) {
+            // per-vertex out-of-balance force at the stalled state, for locating it
+            fsim::OrthotropicStVKMembrane m0(V0_mod, F, ths, E1s, E2s, nus, face_dirs, mp.mass, 0.0);
+            VectorXd g = cable_template.empty() ? VectorXd(m0.gradient(r.x))
+                       : VectorXd(fsim::CompositeModel(std::move(m0), MultiCableModel(cable_template)).gradient(r.x));
+            g -= follower::force(r.x, F, p);
+            for (int b : fixed_vs) g.segment<3>(3 * b).setZero();
+            std::ofstream o(std::getenv("FEM_DUMP_RESIDUAL"));
+            o << "vid,rx,ry,rz,rnorm\n";
+            for (int i = 0; i < V0.rows(); ++i)
+                o << i << "," << g[3*i] << "," << g[3*i+1] << "," << g[3*i+2] << "," << g.segment<3>(3*i).norm() << "\n";
+        }
+        g_solver_status = r.converged ? "follower_converged" : "follower_failed";
+        std::cerr << "SOLVER_STATUS " << g_solver_status << "\n";
+        x = r.x;
     }
     return x;
 }
