@@ -64,7 +64,7 @@ plt.rcParams.update({
 COLORS = {1: "#2E8B57", 2: "#20B2AA"}   # seagreen / lightseagreen
 LABELS = {1: "Stitch structure I", 2: "Stitch structure II"}
 
-SF_RANGE   = (0.9, 1.4)   # below 0.9 the Newton solve stops converging
+SF_RANGE   = (0.95, 1.4)  # as Figure 7.8; below ~0.98 the membrane carries compression
 SMOOTH_WIN = 9       # Savitzky-Golay window (points) for the curvature trend
 SMOOTH_ORD = 2
 
