@@ -25,6 +25,7 @@ import sys
 import numpy as np
 import pandas as pd
 import matplotlib
+import matplotlib.ticker
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from scipy.interpolate import RectBivariateSpline
@@ -32,7 +33,8 @@ from scipy.interpolate import RectBivariateSpline
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from config import DATA_DIR, QUALITY_CROWN_MIN
 from plot_e1r_surface import (_dH, _half_diverging, _vlims, shared_vlims,
-                              PANEL_IN, W_MARGIN_IN, H_MARGIN_IN)
+                              PANEL_IN, W_MARGIN_IN, H_MARGIN_IN,
+                              FIG_W, FIG_H, fixed_axes, TITLE_SIZE)
 from run_nu_grid import (
     E1_VALUES, E2_OVER_E1_SLICES, NU12_VALUES,
     E1_FIXED, E2R_VALUES_B,
@@ -236,11 +238,8 @@ def plot_figT(save=True):
     n_panels = len(PANELS)
     ncols = 3 if n_panels <= 3 else 2
     nrows = int(np.ceil(n_panels / ncols))
-    ROW_EXTRA = 1.25   # x tick labels + xlabel + colorbar + its label
-    fig, axes = plt.subplots(nrows, ncols,
-                             figsize=(ncols * PANEL_IN + W_MARGIN_IN,
-                                      nrows * (PANEL_IN + ROW_EXTRA) + H_MARGIN_IN),
-                             constrained_layout=True, squeeze=False)
+    fig = plt.figure(figsize=(FIG_W, FIG_H))      # same canvas as Figure 7.9
+    axes, caxes = fixed_axes(fig)
 
     for idx, (key, title, cmap, scale, unit, diverging) in enumerate(PANELS):
         row, col = divmod(idx, ncols)
@@ -278,7 +277,8 @@ def plot_figT(save=True):
         ax.set_box_aspect(1)          # keep the data panel square
         ax.set_xlabel(r"$\nu_{12}$", labelpad=3)
         ax.set_ylabel(r"$E_2/E_1$", labelpad=3)
-        ax.set_title(f"{title}  ({unit})" if unit else title, pad=5)
+        ax.set_title(f"{title}  ({unit})" if unit else title, pad=5,
+                     fontsize=TITLE_SIZE)
         ax.set_xlim(nu_r[0], nu_r[-1])
         ax.set_ylim(e2r_vals[0], e2r_vals[-1])
         ax.set_xticks(nu_r)
@@ -286,9 +286,8 @@ def plot_figT(save=True):
         ax.set_yticks(e2r_vals)
         ax.set_yticklabels([f"{v:.2f}" for v in e2r_vals], fontsize=7)
 
-        cb = fig.colorbar(pcm, ax=ax, orientation="horizontal",
-                          location="bottom", pad=0.06, aspect=30,
-                          fraction=0.05)
+        cb = fig.colorbar(pcm, cax=caxes[idx], orientation="horizontal")
+        cb.formatter = matplotlib.ticker.FuncFormatter(lambda v, _: f"{v:g}")
         if unit:
             cb.set_label(unit, fontsize=7)
         if ticks is not None:
@@ -302,8 +301,8 @@ def plot_figT(save=True):
     n_invalid = int((df["crown_height"].isna() | (df["crown_height"] <= QUALITY_CROWN_MIN)).sum())
     if save:
         path = os.path.join(FIG_DIR, "figT_nu_e2r_surface.pdf")
-        fig.savefig(path, bbox_inches="tight")
-        fig.savefig(path.replace(".pdf", ".png"), bbox_inches="tight", dpi=200)
+        fig.savefig(path)          # fixed canvas, no tight crop: matches Figure 7.9
+        fig.savefig(path.replace(".pdf", ".png"), dpi=200)
         print(f"Saved: {path}")
     return fig
 

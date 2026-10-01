@@ -35,6 +35,7 @@ import sys
 import numpy as np
 import pandas as pd
 import matplotlib
+import matplotlib.ticker
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
@@ -222,6 +223,26 @@ W_MARGIN_IN  = 1.3    # y tick labels + ylabel
 H_MARGIN_IN  = 0.75   # suptitle
 
 
+# Figures 7.9 and 7.10 share one canvas and identical panel / colour-bar
+# positions (inches), so the panels line up when the figures are stacked.
+FIG_W, FIG_H = 14.6, 5.9
+_PANEL, _LEFT, _GAP, _BOTTOM = 4.0, 0.75, 0.70, 1.45
+_CB_BOTTOM, _CB_H = 0.50, 0.14
+TITLE_SIZE = 10
+
+
+def fixed_axes(fig):
+    """Three square data panels and their horizontal colour-bar axes."""
+    axes, caxes = [], []
+    for k in range(3):
+        x0 = _LEFT + k * (_PANEL + _GAP)
+        axes.append(fig.add_axes([x0 / FIG_W, _BOTTOM / FIG_H,
+                                  _PANEL / FIG_W, _PANEL / FIG_H]))
+        caxes.append(fig.add_axes([x0 / FIG_W, _CB_BOTTOM / FIG_H,
+                                   _PANEL / FIG_W, _CB_H / FIG_H]))
+    return np.array(axes).reshape(1, 3), caxes
+
+
 def _smooth_grid(Z, e1_keys, r2_keys):
     """Bicubic-interpolate the 10×8 grid onto an N_FINE×N_FINE display grid."""
     # r2_keys ascends (1.0 → 5.0), which is what RectBivariateSpline wants
@@ -253,10 +274,8 @@ def plot_surface(save=True):
     # horizontal colorbar are given their own inches on top of that.  Sizing the
     # figure first and letting the colorbar steal from the axes is what left the
     # panels short and wide.
-    fig, axes = plt.subplots(nrows, ncols,
-                             figsize=(ncols * PANEL_IN + W_MARGIN_IN,
-                                      nrows * (PANEL_IN + ROW_EXTRA_IN) + H_MARGIN_IN),
-                             constrained_layout=True, squeeze=False)
+    fig = plt.figure(figsize=(FIG_W, FIG_H))
+    axes, caxes = fixed_axes(fig)
 
     for idx, (key, title, cmap, scale, unit, diverging) in enumerate(PANELS):
         row, col = divmod(idx, ncols)
@@ -298,7 +317,8 @@ def plot_surface(save=True):
         ax.set_box_aspect(1)          # keep the data panel square
         ax.set_xlabel(r"$E_1$ (kN/m)", labelpad=3)
         ax.set_ylabel(r"$E_2/E_1$", labelpad=3)
-        ax.set_title(f"{title}  ({unit})" if unit else title, pad=5)
+        ax.set_title(f"{title}  ({unit})" if unit else title, pad=5,
+                     fontsize=TITLE_SIZE)
         ax.set_xlim(e1_fine[0] / 1000, e1_fine[-1] / 1000)
         ax.set_ylim(r2_fine[0], r2_fine[-1])
         ax.set_xticks(e1_keys / 1000)
@@ -307,9 +327,8 @@ def plot_surface(save=True):
         ax.set_yticks(r2_keys)
         ax.set_yticklabels([f"{v:.2f}" for v in r2_keys], fontsize=7)
 
-        cbar = fig.colorbar(pcm, ax=ax, orientation="horizontal",
-                            location="bottom", pad=0.06, aspect=30,
-                            fraction=0.05)
+        cbar = fig.colorbar(pcm, cax=caxes[idx], orientation="horizontal")
+        cbar.formatter = matplotlib.ticker.FuncFormatter(lambda v, _: f"{v:g}")
         if ticks is not None:
             cbar.set_ticks(ticks)
         cbar.ax.tick_params(labelsize=7)
@@ -324,8 +343,8 @@ def plot_surface(save=True):
 
     if save:
         path = os.path.join(FIG_DIR, "figR_e1r_surface.pdf")
-        fig.savefig(path, bbox_inches="tight")
-        fig.savefig(path.replace(".pdf", ".png"), bbox_inches="tight", dpi=200)
+        fig.savefig(path)          # fixed canvas, no tight crop: matches Figure 7.10
+        fig.savefig(path.replace(".pdf", ".png"), dpi=200)
         print(f"Saved: {path}")
     return fig
 
