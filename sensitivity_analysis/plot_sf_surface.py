@@ -75,6 +75,12 @@ MOTIFS     = (1, 2)
 COL_TITLES = {m: f"Stitch structure {n}  ($r$ = {STRUCTURE_PARAMS[m]['E1'] / STRUCTURE_PARAMS[m]['E2']:.2f})"
               for m, n in ((1, "I"), (2, "II"))}
 N_LEVELS   = 20
+# fixed, round colour scales per row group: (contour levels, colour-bar ticks)
+SCALES = {
+    "crown":  (np.arange(0.0, 250.1, 12.5),   np.arange(0, 251, 50)),
+    "stress": (np.arange(0.0, 6500.1, 250.0), np.arange(0, 6501, 1000)),
+    "dH":     (np.linspace(-0.10, 0.10, 21),  np.linspace(-0.10, 0.10, 5)),
+}
 
 
 def _dH(a, b):
@@ -158,11 +164,14 @@ def plot_sf_surface(save=True):
                     axes[r, c].set_visible(False)
             continue
         diverging = ROWS[row_idx[0]][4]
-        if diverging:
+        group = ROWS[row_idx[0]][5]
+        if group in SCALES:
+            levels, ticks = SCALES[group]
+        elif diverging:
             lim = np.abs(vals).max()
-            levels = np.linspace(-lim, lim, N_LEVELS + 1)
+            levels, ticks = np.linspace(-lim, lim, N_LEVELS + 1), None
         else:
-            levels = np.linspace(vals.min(), vals.max(), N_LEVELS + 1)
+            levels, ticks = np.linspace(vals.min(), vals.max(), N_LEVELS + 1), None
 
         cs = None
         for r in row_idx:
@@ -210,6 +219,8 @@ def plot_sf_surface(save=True):
         cb_axes = [axes[r, c] for r in row_idx for c in range(len(motifs))]
         cb = fig.colorbar(cs, ax=cb_axes, fraction=0.030, pad=0.02)
         cb.set_label(ROWS[row_idx[0]][2], fontsize=8)
+        if ticks is not None:
+            cb.set_ticks(ticks)
         cb.ax.tick_params(labelsize=7)
 
     from matplotlib.patches import Patch
