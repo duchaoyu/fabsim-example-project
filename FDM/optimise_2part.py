@@ -70,6 +70,12 @@ BINARY = os.environ.get(
 N_REGIONS = 12
 CABLE_EA = 157000.0
 
+# Material passed to the binary as an explicit E1/E2/nu override, so the old
+# motif-1 estimate in fem_batch_nregion.cpp (5000/12507) is never used.
+# E1 is the WALE modulus (along the knit field), E2 the course.  Default:
+# stitch structure I as calibrated for Figure 7.6.
+_MATERIAL = {"E1": 12500.0, "E2": 5000.0, "nu": 0.198}
+
 # mirror-x pairs of regions, from field_regions_2part.py's layout
 #   region = band*4 + side*2 + yhalf,  side 0 = x<0, 1 = x>=0
 MIRROR_PAIRS = [(b * 4 + 0 * 2 + y, b * 4 + 1 * 2 + y)
@@ -192,6 +198,7 @@ def run_fem(sf_wale, sf_course, knit_dirs, pressure, motif,
         "pressure": float(pressure),
         "motif": int(motif),
         "cable_ea": CABLE_EA,
+        **_MATERIAL,
         "cable_paths": cable_paths,
         "regions": [{"sf_wale": float(sf_wale[r]),
                      "sf_course": float(sf_course[r]),
@@ -247,6 +254,8 @@ def run_fem(sf_wale, sf_course, knit_dirs, pressure, motif,
                "cable_rest_scales": [round(float(v), 6) for v in cable_rest_scales],
                "knit_dir_deg": [round(float(v), 4) for v in knit_dirs],
                "pressure": float(pressure), "motif": int(motif),
+               "E_wale": _MATERIAL["E1"], "E_course": _MATERIAL["E2"],
+               "nu": _MATERIAL["nu"],
                "n_cables": len(cable_paths)}
         if out is not None:
             rec.update(crown=out.get("crown_height"),
@@ -300,6 +309,11 @@ def main():
     ap.add_argument("--phase", type=int, default=2, choices=[0, 1, 2, 3])
     ap.add_argument("--pressure", type=float, default=1000.0)
     ap.add_argument("--motif", type=int, default=1)
+    ap.add_argument("--E-wale", type=float, default=_MATERIAL["E1"],
+                    help="wale modulus E1 (along the knit field), N/m")
+    ap.add_argument("--E-course", type=float, default=_MATERIAL["E2"],
+                    help="course modulus E2 (across the knit field), N/m")
+    ap.add_argument("--nu", type=float, default=_MATERIAL["nu"])
     ap.add_argument("--maxiter", type=int, default=300)
     ap.add_argument("--method", type=str, default="L-BFGS-B",
                     choices=["L-BFGS-B", "Powell", "Nelder-Mead"])
@@ -320,6 +334,7 @@ def main():
     ap.add_argument("--sf0-course", type=float, default=1.03)
     ap.add_argument("--cable0", type=float, default=0.98)
     args = ap.parse_args()
+    _MATERIAL.update(E1=args.E_wale, E2=args.E_course, nu=args.nu)
 
     prefix = args.out_prefix or f"2part_p{args.phase}"
     _out_prefix[0] = prefix
@@ -372,6 +387,8 @@ def main():
     print(f"Floor   : {args.min_disp_mm:.3f} mm max displacement "
           f"({args.min_disp_mm / (span * 1000) * 100:.4f} % of span)"
           if _min_disp[0] > 0 else "Floor   : DISABLED")
+    print(f"Material: E_wale (E1) {_MATERIAL['E1']:.0f}  E_course (E2) "
+          f"{_MATERIAL['E2']:.0f} N/m  nu {_MATERIAL['nu']}")
     print(f"Log     : {os.path.relpath(_log_path[0], HERE)}")
 
     loss_of = make_loss(V_target, interior_idx)
@@ -528,6 +545,8 @@ def save(args, res, prefix, knit_dirs, sfs, cscales, V, F, V_target,
          "cable_names": cable_names, "n_regions": N_REGIONS,
          "region_names": REGION_NAMES,
          "pressure": args.pressure, "motif": args.motif, "cable_ea": CABLE_EA,
+         "E_wale": _MATERIAL["E1"], "E_course": _MATERIAL["E2"],
+         "nu": _MATERIAL["nu"],
          "converged": bool(res.success), "message": str(res.message),
          "n_calls": _call_count[0],
          "rmse_interior_m": float(l),
@@ -557,6 +576,8 @@ def save(args, res, prefix, knit_dirs, sfs, cscales, V, F, V_target,
               f"(floor {floor_mm:.4f} mm, at_floor={at_floor})\n"
               f"pressure {args.pressure} Pa   motif {args.motif}   "
               f"cable_ea {CABLE_EA}\n"
+              f"E_wale {_MATERIAL['E1']:.0f}  E_course {_MATERIAL['E2']:.0f} N/m  "
+              f"nu {_MATERIAL['nu']}\n"
               f"knit direction fixed from the directional field, not optimised\n"
               f"params: {res_json}")
     np.savetxt(os.path.join(OUT_DIR, f"{prefix}_deviation_mm.csv"),

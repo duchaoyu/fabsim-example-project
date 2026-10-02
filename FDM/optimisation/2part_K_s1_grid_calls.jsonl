@@ -1,0 +1,605 @@
+{"call": 1, "sf_wale": 0.9, "sf_course": 0.9, "cable_scale": 0.88, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 2, "sf_wale": 0.9, "sf_course": 0.9, "cable_scale": 0.91, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 3, "sf_wale": 0.9, "sf_course": 0.9, "cable_scale": 0.94, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 4, "sf_wale": 0.9, "sf_course": 0.9, "cable_scale": 0.97, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 5, "sf_wale": 0.9, "sf_course": 0.9, "cable_scale": 1.0, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 6, "sf_wale": 0.9, "sf_course": 0.94, "cable_scale": 0.88, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 7, "sf_wale": 0.9, "sf_course": 0.94, "cable_scale": 0.91, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 8, "sf_wale": 0.9, "sf_course": 0.94, "cable_scale": 0.94, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 9, "sf_wale": 0.9, "sf_course": 0.94, "cable_scale": 0.97, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 10, "sf_wale": 0.9, "sf_course": 0.94, "cable_scale": 1.0, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 11, "sf_wale": 0.9, "sf_course": 0.98, "cable_scale": 0.88, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 12, "sf_wale": 0.9, "sf_course": 0.98, "cable_scale": 0.91, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 13, "sf_wale": 0.9, "sf_course": 0.98, "cable_scale": 0.94, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 14, "sf_wale": 0.9, "sf_course": 0.98, "cable_scale": 0.97, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 15, "sf_wale": 0.9, "sf_course": 0.98, "cable_scale": 1.0, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 16, "sf_wale": 0.9, "sf_course": 1.02, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 15.64090099332087, "crown": 0.27174029, "max_disp_mm": 76.55283325544131, "max_stress": 38025.9994514}
+{"call": 17, "sf_wale": 0.9, "sf_course": 1.02, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 11.342897668415986, "crown": 0.27177196, "max_disp_mm": 54.53104256174828, "max_stress": 18088.88365418}
+{"call": 18, "sf_wale": 0.9, "sf_course": 1.02, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 7.487355961699224, "crown": 0.27179164, "max_disp_mm": 34.27615643217456, "max_stress": 8901.6797517}
+{"call": 19, "sf_wale": 0.9, "sf_course": 1.02, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 28.46380743108875, "crown": 0.28363338, "max_disp_mm": 65.51823509624937, "max_stress": 7658.01324171}
+{"call": 20, "sf_wale": 0.9, "sf_course": 1.02, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 43.9817097218024, "crown": 0.30073313, "max_disp_mm": 96.27487521620844, "max_stress": 7693.5704131}
+{"call": 21, "sf_wale": 0.9, "sf_course": 1.06, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 13.43291982507459, "crown": 0.25865555, "max_disp_mm": 71.98920899024314, "max_stress": 37495.07371731}
+{"call": 22, "sf_wale": 0.9, "sf_course": 1.06, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 9.560973714587536, "crown": 0.25865013, "max_disp_mm": 51.83307574092146, "max_stress": 26960.48850123}
+{"call": 23, "sf_wale": 0.9, "sf_course": 1.06, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 6.010543370719762, "crown": 0.25864867, "max_disp_mm": 32.86906976928006, "max_stress": 26774.76082042}
+{"call": 24, "sf_wale": 0.9, "sf_course": 1.06, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 26.63913352141728, "crown": 0.2689661, "max_disp_mm": 58.32415362319544, "max_stress": 14840.33586472}
+{"call": 25, "sf_wale": 0.9, "sf_course": 1.06, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 35.74414204749179, "crown": 0.28257339, "max_disp_mm": 84.60804879888737, "max_stress": 14810.81148184}
+{"call": 26, "sf_wale": 0.9, "sf_course": 1.1, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 14.778040893188658, "crown": 0.25844996, "max_disp_mm": 74.18331133298176, "max_stress": 209519.42197766}
+{"call": 27, "sf_wale": 0.9, "sf_course": 1.1, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 10.582524034733142, "crown": 0.25843116, "max_disp_mm": 52.730278744943114, "max_stress": 209030.94318069}
+{"call": 28, "sf_wale": 0.9, "sf_course": 1.1, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 6.800732903149572, "crown": 0.25842568, "max_disp_mm": 33.10046373516995, "max_stress": 208545.02916932}
+{"call": 29, "sf_wale": 0.9, "sf_course": 1.1, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 29.618265068951384, "crown": 0.25347447, "max_disp_mm": 54.5080241024796, "max_stress": 25966.10988229}
+{"call": 30, "sf_wale": 0.9, "sf_course": 1.1, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 32.163006077698846, "crown": 0.26364601, "max_disp_mm": 74.02798675319289, "max_stress": 25823.76388275}
+{"call": 31, "sf_wale": 0.9, "sf_course": 1.14, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 14.383022262497192, "crown": 0.25722314, "max_disp_mm": 72.52338301288074, "max_stress": 228034.80576508}
+{"call": 32, "sf_wale": 0.9, "sf_course": 1.14, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 10.343496478286989, "crown": 0.25720617, "max_disp_mm": 51.515787381409595, "max_stress": 228506.43878266}
+{"call": 33, "sf_wale": 0.9, "sf_course": 1.14, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 6.753929693190069, "crown": 0.25720314, "max_disp_mm": 32.414131468904124, "max_stress": 228984.11375087}
+{"call": 34, "sf_wale": 0.9, "sf_course": 1.14, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 35.94866760523833, "crown": 0.23507505, "max_disp_mm": 78.093606258051, "max_stress": 20745.10045544}
+{"call": 35, "sf_wale": 0.9, "sf_course": 1.14, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 33.782701254288575, "crown": 0.24590429, "max_disp_mm": 67.53388869764866, "max_stress": 20628.37914155}
+{"call": 36, "sf_wale": 0.9, "sf_course": 1.18, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 16.778735539153292, "crown": 0.25529866, "max_disp_mm": 75.21696444369849, "max_stress": 40683.83302651}
+{"call": 37, "sf_wale": 0.9, "sf_course": 1.18, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 12.306222204224106, "crown": 0.25523254, "max_disp_mm": 52.798337481796736, "max_stress": 30147.32118028}
+{"call": 38, "sf_wale": 0.9, "sf_course": 1.18, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 8.44548435243578, "crown": 0.25521967, "max_disp_mm": 32.05210680537087, "max_stress": 30065.58150123}
+{"call": 39, "sf_wale": 0.9, "sf_course": 1.18, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 44.38416020002815, "crown": 0.2166599, "max_disp_mm": 96.41634769940882, "max_stress": 17122.75261547}
+{"call": 40, "sf_wale": 0.9, "sf_course": 1.18, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 39.06973132786401, "crown": 0.22812741, "max_disp_mm": 68.0788226746482, "max_stress": 16962.10826377}
+{"call": 41, "sf_wale": 0.9, "sf_course": 1.22, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 16.9665865414634, "crown": 0.25356765, "max_disp_mm": 73.24495943507377, "max_stress": 45876.95702709}
+{"call": 42, "sf_wale": 0.9, "sf_course": 1.22, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 12.684930547529605, "crown": 0.25350847, "max_disp_mm": 51.190809560389845, "max_stress": 29347.16968815}
+{"call": 43, "sf_wale": 0.9, "sf_course": 1.22, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 9.09136236781491, "crown": 0.25350912, "max_disp_mm": 31.006466851166728, "max_stress": 20733.85217476}
+{"call": 44, "sf_wale": 0.9, "sf_course": 1.22, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 54.790153853656335, "crown": 0.19734085, "max_disp_mm": 109.19167282807373, "max_stress": 14287.17411614}
+{"call": 45, "sf_wale": 0.9, "sf_course": 1.22, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 47.109190702978324, "crown": 0.20935043, "max_disp_mm": 77.77948946514691, "max_stress": 14089.19777997}
+{"call": 46, "sf_wale": 0.9, "sf_course": 1.26, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 17.316699432173877, "crown": 0.25221203, "max_disp_mm": 70.9761428051525, "max_stress": 48547.29274498}
+{"call": 47, "sf_wale": 0.9, "sf_course": 1.26, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 13.25990616121824, "crown": 0.25215126, "max_disp_mm": 49.38337515002597, "max_stress": 37567.42081859}
+{"call": 48, "sf_wale": 0.9, "sf_course": 1.26, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 63.12862345559677, "crown": 0.17318947, "max_disp_mm": 104.12299936351621, "max_stress": 17312.72517125}
+{"call": 49, "sf_wale": 0.9, "sf_course": 1.26, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 66.12318328739426, "crown": 0.17716746, "max_disp_mm": 124.34590954405134, "max_stress": 15360.52963105}
+{"call": 50, "sf_wale": 0.9, "sf_course": 1.26, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 56.68153808693234, "crown": 0.18972851, "max_disp_mm": 90.63421079731096, "max_stress": 14866.20571186}
+{"call": 51, "sf_wale": 0.9, "sf_course": 1.3, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 17.94854177247969, "crown": 0.25130184, "max_disp_mm": 68.6223157422292, "max_stress": 73096.96893809}
+{"call": 52, "sf_wale": 0.9, "sf_course": 1.3, "cable_scale": 0.91, "valid": false, "reason": "crown out of range / folded"}
+{"call": 53, "sf_wale": 0.9, "sf_course": 1.3, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 71.99306296513461, "crown": 0.16027951, "max_disp_mm": 115.9254805104486, "max_stress": 25336.11116157}
+{"call": 54, "sf_wale": 0.9, "sf_course": 1.3, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 77.53825880385088, "crown": 0.15666957, "max_disp_mm": 137.98843746006256, "max_stress": 22652.7466203}
+{"call": 55, "sf_wale": 0.9, "sf_course": 1.3, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 66.90921508862981, "crown": 0.16960809, "max_disp_mm": 104.45972440994997, "max_stress": 21887.84490754}
+{"call": 56, "sf_wale": 0.94, "sf_course": 0.9, "cable_scale": 0.88, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 57, "sf_wale": 0.94, "sf_course": 0.9, "cable_scale": 0.91, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 58, "sf_wale": 0.94, "sf_course": 0.9, "cable_scale": 0.94, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 59, "sf_wale": 0.94, "sf_course": 0.9, "cable_scale": 0.97, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 60, "sf_wale": 0.94, "sf_course": 0.9, "cable_scale": 1.0, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 61, "sf_wale": 0.94, "sf_course": 0.94, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 13.00654146033181, "crown": 0.25897052, "max_disp_mm": 72.983285927467, "max_stress": 44359.21890917}
+{"call": 62, "sf_wale": 0.94, "sf_course": 0.94, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 9.243868081397883, "crown": 0.25896927, "max_disp_mm": 52.905762254307426, "max_stress": 21382.65002754}
+{"call": 63, "sf_wale": 0.94, "sf_course": 0.94, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 5.749491891372053, "crown": 0.25896881, "max_disp_mm": 33.464976110354556, "max_stress": 7290.91853808}
+{"call": 64, "sf_wale": 0.94, "sf_course": 0.94, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 2.702929619469259, "crown": 0.25896929, "max_disp_mm": 15.003925801276155, "max_stress": 5995.60291315}
+{"call": 65, "sf_wale": 0.94, "sf_course": 0.94, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 59.521904877624344, "crown": 0.32624617, "max_disp_mm": 112.75053849765865, "max_stress": 3270.87594719}
+{"call": 66, "sf_wale": 0.94, "sf_course": 0.98, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 14.047013177912625, "crown": 0.25902507, "max_disp_mm": 74.03315068145352, "max_stress": 37510.99209998}
+{"call": 67, "sf_wale": 0.94, "sf_course": 0.98, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 9.980171361978716, "crown": 0.25901936, "max_disp_mm": 53.47312998352258, "max_stress": 17944.21654026}
+{"call": 68, "sf_wale": 0.94, "sf_course": 0.98, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 6.188195728032846, "crown": 0.25901673, "max_disp_mm": 33.85496455637934, "max_stress": 7212.07809671}
+{"call": 69, "sf_wale": 0.94, "sf_course": 0.98, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 31.153492724858896, "crown": 0.29396086, "max_disp_mm": 68.95413540169002, "max_stress": 3236.8738981}
+{"call": 70, "sf_wale": 0.94, "sf_course": 0.98, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 48.96671300135143, "crown": 0.30982251, "max_disp_mm": 101.306677792535, "max_stress": 2476.53870034}
+{"call": 71, "sf_wale": 0.94, "sf_course": 1.02, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 15.840498833451926, "crown": 0.25907815, "max_disp_mm": 77.27656183692571, "max_stress": 37600.20612465}
+{"call": 72, "sf_wale": 0.94, "sf_course": 1.02, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 11.269565243593217, "crown": 0.25905126, "max_disp_mm": 54.97971109932918, "max_stress": 17881.94562406}
+{"call": 73, "sf_wale": 0.94, "sf_course": 1.02, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 7.009271115122458, "crown": 0.2590383, "max_disp_mm": 34.44159914911182, "max_stress": 7700.5636288}
+{"call": 74, "sf_wale": 0.94, "sf_course": 1.02, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 26.734755616812198, "crown": 0.28394825, "max_disp_mm": 65.28709129428728, "max_stress": 3621.1032323}
+{"call": 75, "sf_wale": 0.94, "sf_course": 1.02, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 38.813315404875354, "crown": 0.29296348, "max_disp_mm": 90.29730956632265, "max_stress": 3637.68370458}
+{"call": 76, "sf_wale": 0.94, "sf_course": 1.06, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 16.63983160228538, "crown": 0.25781393, "max_disp_mm": 78.4703267756252, "max_stress": 36856.19277045}
+{"call": 77, "sf_wale": 0.94, "sf_course": 1.06, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 11.844917950475615, "crown": 0.25776009, "max_disp_mm": 55.62494931800118, "max_stress": 17404.43883622}
+{"call": 78, "sf_wale": 0.94, "sf_course": 1.06, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 7.394652408916789, "crown": 0.25773553, "max_disp_mm": 34.39608297633034, "max_stress": 8745.32068231}
+{"call": 79, "sf_wale": 0.94, "sf_course": 1.06, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 20.23150369843785, "crown": 0.26587127, "max_disp_mm": 55.217869436727646, "max_stress": 7876.13370306}
+{"call": 80, "sf_wale": 0.94, "sf_course": 1.06, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 30.21089365431983, "crown": 0.2750644, "max_disp_mm": 78.85987199710004, "max_stress": 7865.446056}
+{"call": 81, "sf_wale": 0.94, "sf_course": 1.1, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 16.924765326104758, "crown": 0.25605052, "max_disp_mm": 78.25608061419636, "max_stress": 36247.67748827}
+{"call": 82, "sf_wale": 0.94, "sf_course": 1.1, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 12.093644245548452, "crown": 0.25597884, "max_disp_mm": 55.300136983181154, "max_stress": 23526.75494889}
+{"call": 83, "sf_wale": 0.94, "sf_course": 1.1, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 7.658289084193515, "crown": 0.25594983, "max_disp_mm": 33.93122509093209, "max_stress": 23306.91572958}
+{"call": 84, "sf_wale": 0.94, "sf_course": 1.1, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 22.61120894759901, "crown": 0.24608248, "max_disp_mm": 45.48241588006182, "max_stress": 14871.15419986}
+{"call": 85, "sf_wale": 0.94, "sf_course": 1.1, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 26.247471726418524, "crown": 0.25595755, "max_disp_mm": 70.05394334181052, "max_stress": 14769.04318125}
+{"call": 86, "sf_wale": 0.94, "sf_course": 1.14, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 19.92709673176317, "crown": 0.25199312, "max_disp_mm": 81.91643197918779, "max_stress": 128689.58417205}
+{"call": 87, "sf_wale": 0.94, "sf_course": 1.14, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 14.5730622056996, "crown": 0.25181806, "max_disp_mm": 57.21191089158707, "max_stress": 128241.34173546}
+{"call": 88, "sf_wale": 0.94, "sf_course": 1.14, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 9.800653967819967, "crown": 0.25175008, "max_disp_mm": 34.276407429034926, "max_stress": 127780.21144787}
+{"call": 89, "sf_wale": 0.94, "sf_course": 1.14, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 33.1955179645189, "crown": 0.22520116, "max_disp_mm": 56.53852140906674, "max_stress": 26111.03996511}
+{"call": 90, "sf_wale": 0.94, "sf_course": 1.14, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 30.00612144114926, "crown": 0.23579409, "max_disp_mm": 63.35477325934094, "max_stress": 25918.68319117}
+{"call": 91, "sf_wale": 0.94, "sf_course": 1.18, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 20.105834992960226, "crown": 0.25019792, "max_disp_mm": 79.42286792081107, "max_stress": 411281.00647503}
+{"call": 92, "sf_wale": 0.94, "sf_course": 1.18, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 14.993757070897919, "crown": 0.25005272, "max_disp_mm": 55.14744337778589, "max_stress": 412353.5449235}
+{"call": 93, "sf_wale": 0.94, "sf_course": 1.18, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 65.46395624212279, "crown": 0.18162581, "max_disp_mm": 135.83145454688983, "max_stress": 23717.46165485}
+{"call": 94, "sf_wale": 0.94, "sf_course": 1.18, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 44.98561117015386, "crown": 0.20483414, "max_disp_mm": 79.97018630538447, "max_stress": 23402.97799586}
+{"call": 95, "sf_wale": 0.94, "sf_course": 1.18, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 38.39719784846296, "crown": 0.21599105, "max_disp_mm": 64.44883010605005, "max_stress": 23254.39165697}
+{"call": 96, "sf_wale": 0.94, "sf_course": 1.22, "cable_scale": 0.88, "valid": false, "reason": "crown out of range / folded"}
+{"call": 97, "sf_wale": 0.94, "sf_course": 1.22, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 19.68930953414642, "crown": 0.24141019, "max_disp_mm": 54.64150297790137, "max_stress": 50290.45080718}
+{"call": 98, "sf_wale": 0.94, "sf_course": 1.22, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 15.37448195450605, "crown": 0.2414733, "max_disp_mm": 30.88858680748278, "max_stress": 50254.44302001}
+{"call": 99, "sf_wale": 0.94, "sf_course": 1.22, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 55.66606353511154, "crown": 0.18549462, "max_disp_mm": 100.67962347119946, "max_stress": 20064.03708678}
+{"call": 100, "sf_wale": 0.94, "sf_course": 1.22, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 47.72357738907284, "crown": 0.1965836, "max_disp_mm": 74.1148154290517, "max_stress": 19869.73936693}
+{"call": 101, "sf_wale": 0.94, "sf_course": 1.26, "cable_scale": 0.88, "valid": false, "reason": "crown out of range / folded"}
+{"call": 102, "sf_wale": 0.94, "sf_course": 1.26, "cable_scale": 0.91, "valid": false, "reason": "crown out of range / folded"}
+{"call": 103, "sf_wale": 0.94, "sf_course": 1.26, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 82.35409858449245, "crown": 0.1576749, "max_disp_mm": 167.410849431323, "max_stress": 17198.9308606}
+{"call": 104, "sf_wale": 0.94, "sf_course": 1.26, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 66.93982102049259, "crown": 0.16530111, "max_disp_mm": 107.81266669313491, "max_stress": 16685.83550125}
+{"call": 105, "sf_wale": 0.94, "sf_course": 1.26, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 58.170776062216085, "crown": 0.17622247, "max_disp_mm": 92.80507109071033, "max_stress": 16441.4914083}
+{"call": 106, "sf_wale": 0.94, "sf_course": 1.3, "cable_scale": 0.88, "valid": false, "reason": "crown out of range / folded"}
+{"call": 107, "sf_wale": 0.94, "sf_course": 1.3, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 95.0390004023584, "crown": 0.11494158, "max_disp_mm": 154.45025516713918, "max_stress": 18055.20669046}
+{"call": 108, "sf_wale": 0.94, "sf_course": 1.3, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 96.75343380307447, "crown": 0.12482001, "max_disp_mm": 169.75470302541515, "max_stress": 15328.48858605}
+{"call": 109, "sf_wale": 0.94, "sf_course": 1.3, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 78.42867778680424, "crown": 0.14449117, "max_disp_mm": 127.60035249081486, "max_stress": 14417.08180751}
+{"call": 110, "sf_wale": 0.94, "sf_course": 1.3, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 69.0203627544418, "crown": 0.15557919, "max_disp_mm": 111.95434468490359, "max_stress": 14147.03620901}
+{"call": 111, "sf_wale": 0.98, "sf_course": 0.9, "cable_scale": 0.88, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 112, "sf_wale": 0.98, "sf_course": 0.9, "cable_scale": 0.91, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 113, "sf_wale": 0.98, "sf_course": 0.9, "cable_scale": 0.94, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 114, "sf_wale": 0.98, "sf_course": 0.9, "cable_scale": 0.97, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 115, "sf_wale": 0.98, "sf_course": 0.9, "cable_scale": 1.0, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 116, "sf_wale": 0.98, "sf_course": 0.94, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 13.264642305825484, "crown": 0.25809681, "max_disp_mm": 73.1150016644806, "max_stress": 42535.6546498}
+{"call": 117, "sf_wale": 0.98, "sf_course": 0.94, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 9.423022670630235, "crown": 0.25809468, "max_disp_mm": 52.9766983454528, "max_stress": 27482.91653473}
+{"call": 118, "sf_wale": 0.98, "sf_course": 0.94, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 5.836503782173827, "crown": 0.25809365, "max_disp_mm": 33.485679016321306, "max_stress": 17219.95404443}
+{"call": 119, "sf_wale": 0.98, "sf_course": 0.94, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 34.401135828201625, "crown": 0.30016279, "max_disp_mm": 68.64620602643748, "max_stress": 3295.64683933}
+{"call": 120, "sf_wale": 0.98, "sf_course": 0.94, "cable_scale": 1.0, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 121, "sf_wale": 0.98, "sf_course": 0.98, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 27.62875598890463, "crown": 0.2584426, "max_disp_mm": 79.24617443095785, "max_stress": 12527.88862653}
+{"call": 122, "sf_wale": 0.98, "sf_course": 0.98, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 19.293066442164477, "crown": 0.25855662, "max_disp_mm": 58.53756366063589, "max_stress": 6817.12988066}
+{"call": 123, "sf_wale": 0.98, "sf_course": 0.98, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 10.657601084994738, "crown": 0.2613138, "max_disp_mm": 36.51011317719106, "max_stress": 3521.83964633}
+{"call": 124, "sf_wale": 0.98, "sf_course": 0.98, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 31.091403160868623, "crown": 0.29251668, "max_disp_mm": 70.151443096585, "max_stress": 3380.90781794}
+{"call": 125, "sf_wale": 0.98, "sf_course": 0.98, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 42.776520079155155, "crown": 0.3006678, "max_disp_mm": 93.81702202927997, "max_stress": 1988.52063411}
+{"call": 126, "sf_wale": 0.98, "sf_course": 1.02, "cable_scale": 0.88, "valid": false, "reason": "crown out of range / folded"}
+{"call": 127, "sf_wale": 0.98, "sf_course": 1.02, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 17.182586375525496, "crown": 0.25681388, "max_disp_mm": 94.6934951652694, "max_stress": 32729.38752147}
+{"call": 128, "sf_wale": 0.98, "sf_course": 1.02, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 10.82196070538936, "crown": 0.25644537, "max_disp_mm": 59.12206427657023, "max_stress": 12811.29256309}
+{"call": 129, "sf_wale": 0.98, "sf_course": 1.02, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 20.88953268382211, "crown": 0.27513184, "max_disp_mm": 58.37666230865638, "max_stress": 2965.91669804}
+{"call": 130, "sf_wale": 0.98, "sf_course": 1.02, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 33.211085255158416, "crown": 0.28382284, "max_disp_mm": 83.72947279099459, "max_stress": 1700.23617058}
+{"call": 131, "sf_wale": 0.98, "sf_course": 1.06, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 16.044000442924833, "crown": 0.29431433, "max_disp_mm": 85.75438463564359, "max_stress": 74086.44140052}
+{"call": 132, "sf_wale": 0.98, "sf_course": 1.06, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 14.920611576073803, "crown": 0.26985409, "max_disp_mm": 59.3465903372974, "max_stress": 44669.58321211}
+{"call": 133, "sf_wale": 0.98, "sf_course": 1.06, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 32.69110591420583, "crown": 0.22906305, "max_disp_mm": 76.4017052482659, "max_stress": 3867.46457403}
+{"call": 134, "sf_wale": 0.98, "sf_course": 1.06, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 14.983972423032489, "crown": 0.25689682, "max_disp_mm": 47.26787635504797, "max_stress": 3817.23648133}
+{"call": 135, "sf_wale": 0.98, "sf_course": 1.06, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 25.36609483763767, "crown": 0.26581882, "max_disp_mm": 78.13504447675254, "max_stress": 3829.62966351}
+{"call": 136, "sf_wale": 0.98, "sf_course": 1.1, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 40.30766331657016, "crown": 0.22122901, "max_disp_mm": 99.12380303043766, "max_stress": 37213.40445944}
+{"call": 137, "sf_wale": 0.98, "sf_course": 1.1, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 32.913089817558365, "crown": 0.2206134, "max_disp_mm": 68.72536874201985, "max_stress": 19594.50718609}
+{"call": 138, "sf_wale": 0.98, "sf_course": 1.1, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 40.44612940258479, "crown": 0.21367984, "max_disp_mm": 87.56302317248588, "max_stress": 8091.80788458}
+{"call": 139, "sf_wale": 0.98, "sf_course": 1.1, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 19.59757456477992, "crown": 0.23739328, "max_disp_mm": 37.63958774995017, "max_stress": 8061.9548329}
+{"call": 140, "sf_wale": 0.98, "sf_course": 1.1, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 22.855939688426577, "crown": 0.24652917, "max_disp_mm": 71.4625463720724, "max_stress": 8039.37120523}
+{"call": 141, "sf_wale": 0.98, "sf_course": 1.14, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 43.01027856613652, "crown": 0.20898881, "max_disp_mm": 94.81232312737043, "max_stress": 30833.90729309}
+{"call": 142, "sf_wale": 0.98, "sf_course": 1.14, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 36.53189211408889, "crown": 0.2087402, "max_disp_mm": 65.00009789244707, "max_stress": 21138.79074078}
+{"call": 143, "sf_wale": 0.98, "sf_course": 1.14, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 31.17453518574173, "crown": 0.20883086, "max_disp_mm": 53.3971878335002, "max_stress": 20955.97210311}
+{"call": 144, "sf_wale": 0.98, "sf_course": 1.14, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 31.474485365342744, "crown": 0.21643285, "max_disp_mm": 54.26900760894934, "max_stress": 14862.14575443}
+{"call": 145, "sf_wale": 0.98, "sf_course": 1.14, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 28.386480978122187, "crown": 0.22599411, "max_disp_mm": 64.40649400164939, "max_stress": 14744.37498104}
+{"call": 146, "sf_wale": 0.98, "sf_course": 1.18, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 45.85764899791832, "crown": 0.19862399, "max_disp_mm": 90.36490944314447, "max_stress": 88573.63665914}
+{"call": 147, "sf_wale": 0.98, "sf_course": 1.18, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 40.025108545504075, "crown": 0.19871055, "max_disp_mm": 68.87868594581929, "max_stress": 88203.97534472}
+{"call": 148, "sf_wale": 0.98, "sf_course": 1.18, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 35.305172868097394, "crown": 0.19955415, "max_disp_mm": 60.842610293941206, "max_stress": 87809.97792249}
+{"call": 149, "sf_wale": 0.98, "sf_course": 1.18, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 45.72604277364089, "crown": 0.1942277, "max_disp_mm": 76.5452623489795, "max_stress": 25813.96370922}
+{"call": 150, "sf_wale": 0.98, "sf_course": 1.18, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 39.17391648627954, "crown": 0.20408338, "max_disp_mm": 64.72442393550058, "max_stress": 25573.98182215}
+{"call": 151, "sf_wale": 0.98, "sf_course": 1.22, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 48.84928836040149, "crown": 0.18957305, "max_disp_mm": 85.39866101632099, "max_stress": 449597.94354384}
+{"call": 152, "sf_wale": 0.98, "sf_course": 1.22, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 43.48211642382027, "crown": 0.18997818, "max_disp_mm": 75.2270137300139, "max_stress": 448748.25480264}
+{"call": 153, "sf_wale": 0.98, "sf_course": 1.22, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 86.67479173777657, "crown": 0.14351125, "max_disp_mm": 158.90210160910837, "max_stress": 28352.63419358}
+{"call": 154, "sf_wale": 0.98, "sf_course": 1.22, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 59.57635902773013, "crown": 0.17197647, "max_disp_mm": 98.4997511371364, "max_stress": 28008.66543642}
+{"call": 155, "sf_wale": 0.98, "sf_course": 1.22, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 51.54782595996628, "crown": 0.18173114, "max_disp_mm": 85.4668799591573, "max_stress": 27782.25600346}
+{"call": 156, "sf_wale": 0.98, "sf_course": 1.26, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 76.45379244438116, "crown": 0.1491535, "max_disp_mm": 125.58232884450466, "max_stress": 26211.83966676}
+{"call": 157, "sf_wale": 0.98, "sf_course": 1.26, "cable_scale": 0.91, "valid": false, "reason": "crown out of range / folded"}
+{"call": 158, "sf_wale": 0.98, "sf_course": 1.26, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 84.81366434363807, "crown": 0.13736702, "max_disp_mm": 147.7299894071464, "max_stress": 23771.18540808}
+{"call": 159, "sf_wale": 0.98, "sf_course": 1.26, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 70.7718161763207, "crown": 0.1515325, "max_disp_mm": 117.98610068692709, "max_stress": 23283.60687948}
+{"call": 160, "sf_wale": 0.98, "sf_course": 1.26, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 62.71727355322503, "crown": 0.16058825, "max_disp_mm": 105.19675966190023, "max_stress": 23039.48657278}
+{"call": 161, "sf_wale": 0.98, "sf_course": 1.3, "cable_scale": 0.88, "valid": false, "reason": "crown out of range / folded"}
+{"call": 162, "sf_wale": 0.98, "sf_course": 1.3, "cable_scale": 0.91, "valid": false, "reason": "crown out of range / folded"}
+{"call": 163, "sf_wale": 0.98, "sf_course": 1.3, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 114.72388211445224, "crown": 0.08751243, "max_disp_mm": 206.43817049783695, "max_stress": 19870.41638424}
+{"call": 164, "sf_wale": 0.98, "sf_course": 1.3, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 81.71452553849456, "crown": 0.13092015, "max_disp_mm": 137.7573763727362, "max_stress": 19383.65467987}
+{"call": 165, "sf_wale": 0.98, "sf_course": 1.3, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 74.03817498662679, "crown": 0.13967602, "max_disp_mm": 125.99454691979572, "max_stress": 19083.47799539}
+{"call": 166, "sf_wale": 1.02, "sf_course": 0.9, "cable_scale": 0.88, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 167, "sf_wale": 1.02, "sf_course": 0.9, "cable_scale": 0.91, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 168, "sf_wale": 1.02, "sf_course": 0.9, "cable_scale": 0.94, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 169, "sf_wale": 1.02, "sf_course": 0.9, "cable_scale": 0.97, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 170, "sf_wale": 1.02, "sf_course": 0.9, "cable_scale": 1.0, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 171, "sf_wale": 1.02, "sf_course": 0.94, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 13.202599031705194, "crown": 0.25724448, "max_disp_mm": 72.86555097555909, "max_stress": 58823.89443575}
+{"call": 172, "sf_wale": 1.02, "sf_course": 0.94, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 9.374456657377696, "crown": 0.25724198, "max_disp_mm": 52.767185231705334, "max_stress": 39228.73269364}
+{"call": 173, "sf_wale": 1.02, "sf_course": 0.94, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 5.790627776851585, "crown": 0.25724071, "max_disp_mm": 33.32161979566722, "max_stress": 22231.70968797}
+{"call": 174, "sf_wale": 1.02, "sf_course": 0.94, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 34.39589798572919, "crown": 0.29849235, "max_disp_mm": 69.79715599595734, "max_stress": 3606.952305}
+{"call": 175, "sf_wale": 1.02, "sf_course": 0.94, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 45.42641536132137, "crown": 0.30667504, "max_disp_mm": 93.61069369902194, "max_stress": 3349.40089903}
+{"call": 176, "sf_wale": 1.02, "sf_course": 0.98, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 14.46326459276378, "crown": 0.25666209, "max_disp_mm": 74.29006556241217, "max_stress": 37317.87940272}
+{"call": 177, "sf_wale": 1.02, "sf_course": 0.98, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 10.27424980989847, "crown": 0.25665151, "max_disp_mm": 53.590431563745604, "max_stress": 17945.49256628}
+{"call": 178, "sf_wale": 1.02, "sf_course": 0.98, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 6.345249995650715, "crown": 0.25664607, "max_disp_mm": 33.860289642721625, "max_stress": 7180.60654514}
+{"call": 179, "sf_wale": 1.02, "sf_course": 0.98, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 2.772935845826771, "crown": 0.25664678, "max_disp_mm": 15.201921160636271, "max_stress": 3129.31406292}
+{"call": 180, "sf_wale": 1.02, "sf_course": 0.98, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 36.2193975807182, "crown": 0.29064698, "max_disp_mm": 84.47260605361303, "max_stress": 2778.69593881}
+{"call": 181, "sf_wale": 1.02, "sf_course": 1.02, "cable_scale": 0.88, "valid": false, "reason": "crown out of range / folded"}
+{"call": 182, "sf_wale": 1.02, "sf_course": 1.02, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 30.086167946563894, "crown": 0.24186408, "max_disp_mm": 100.9807507491938, "max_stress": 39945.42119083}
+{"call": 183, "sf_wale": 1.02, "sf_course": 1.02, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 21.35905472048077, "crown": 0.24111579, "max_disp_mm": 63.844389608501224, "max_stress": 14815.83618039}
+{"call": 184, "sf_wale": 1.02, "sf_course": 1.02, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 15.770839279994703, "crown": 0.26489102, "max_disp_mm": 50.08400413684594, "max_stress": 2431.30028641}
+{"call": 185, "sf_wale": 1.02, "sf_course": 1.02, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 27.628128760482863, "crown": 0.27353486, "max_disp_mm": 79.8660188861984, "max_stress": 1772.04335967}
+{"call": 186, "sf_wale": 1.02, "sf_course": 1.06, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 40.50261549819682, "crown": 0.22725612, "max_disp_mm": 103.4943756970595, "max_stress": 45983.55604961}
+{"call": 187, "sf_wale": 1.02, "sf_course": 1.06, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 32.614105128087246, "crown": 0.22647412, "max_disp_mm": 74.58732543818623, "max_stress": 23667.33182894}
+{"call": 188, "sf_wale": 1.02, "sf_course": 1.06, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 25.607077723950095, "crown": 0.22609843, "max_disp_mm": 46.56780594585599, "max_stress": 9559.08175133}
+{"call": 189, "sf_wale": 1.02, "sf_course": 1.06, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 13.700664905427406, "crown": 0.24668755, "max_disp_mm": 42.716206250921914, "max_stress": 2135.69863193}
+{"call": 190, "sf_wale": 1.02, "sf_course": 1.06, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 22.017509151208433, "crown": 0.25521525, "max_disp_mm": 76.75245992045335, "max_stress": 1491.03816969}
+{"call": 191, "sf_wale": 1.02, "sf_course": 1.1, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 42.9539576507876, "crown": 0.2140986, "max_disp_mm": 99.35446868408738, "max_stress": 35910.98290905}
+{"call": 192, "sf_wale": 1.02, "sf_course": 1.1, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 36.019464771215745, "crown": 0.21370576, "max_disp_mm": 69.43626535868775, "max_stress": 18986.34496228}
+{"call": 193, "sf_wale": 1.02, "sf_course": 1.1, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 30.070602210953663, "crown": 0.2139022, "max_disp_mm": 48.54594035348888, "max_stress": 8209.99903569}
+{"call": 194, "sf_wale": 1.02, "sf_course": 1.1, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 21.621485324734135, "crown": 0.2271238, "max_disp_mm": 41.120681326001886, "max_stress": 4046.09542955}
+{"call": 195, "sf_wale": 1.02, "sf_course": 1.1, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 22.90113518040335, "crown": 0.23564, "max_disp_mm": 72.00325472421787, "max_stress": 4057.70441054}
+{"call": 196, "sf_wale": 1.02, "sf_course": 1.14, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 45.48975161400354, "crown": 0.20307852, "max_disp_mm": 95.47884375688261, "max_stress": 30967.77790516}
+{"call": 197, "sf_wale": 1.02, "sf_course": 1.14, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 39.27212968136041, "crown": 0.20302707, "max_disp_mm": 66.08215532209964, "max_stress": 16808.59524906}
+{"call": 198, "sf_wale": 1.02, "sf_course": 1.14, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 34.06458045861452, "crown": 0.204209, "max_disp_mm": 56.31331145732952, "max_stress": 8812.83820782}
+{"call": 199, "sf_wale": 1.02, "sf_course": 1.14, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 33.92420597112742, "crown": 0.20613543, "max_disp_mm": 61.71405594323875, "max_stress": 8258.14491501}
+{"call": 200, "sf_wale": 1.02, "sf_course": 1.14, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 30.435853851756193, "crown": 0.21449257, "max_disp_mm": 64.70206511708031, "max_stress": 8230.78806375}
+{"call": 201, "sf_wale": 1.02, "sf_course": 1.18, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 47.922511334340726, "crown": 0.19373545, "max_disp_mm": 91.42994689690684, "max_stress": 28379.0058034}
+{"call": 202, "sf_wale": 1.02, "sf_course": 1.18, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 42.25676705331221, "crown": 0.19403493, "max_disp_mm": 70.58880159127933, "max_stress": 19770.0223621}
+{"call": 203, "sf_wale": 1.02, "sf_course": 1.18, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 37.5940599792875, "crown": 0.19632272, "max_disp_mm": 63.551667088826214, "max_stress": 19585.46297089}
+{"call": 204, "sf_wale": 1.02, "sf_course": 1.18, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 47.80274180481223, "crown": 0.1838269, "max_disp_mm": 83.55233110993554, "max_stress": 14886.79686602}
+{"call": 205, "sf_wale": 1.02, "sf_course": 1.18, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 42.15160304848912, "crown": 0.191539, "max_disp_mm": 74.3689283277593, "max_stress": 14731.38235278}
+{"call": 206, "sf_wale": 1.02, "sf_course": 1.22, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 50.25064689959611, "crown": 0.18569763, "max_disp_mm": 87.28938003229375, "max_stress": 67258.9240298}
+{"call": 207, "sf_wale": 1.02, "sf_course": 1.22, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 45.010559383721485, "crown": 0.18629742, "max_disp_mm": 75.9953042254862, "max_stress": 66902.51307976}
+{"call": 208, "sf_wale": 1.02, "sf_course": 1.22, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 75.28087223166459, "crown": 0.14688678, "max_disp_mm": 126.28932005773646, "max_stress": 25969.00343677}
+{"call": 209, "sf_wale": 1.02, "sf_course": 1.22, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 62.19038025979512, "crown": 0.16053993, "max_disp_mm": 106.54503923410044, "max_stress": 25445.97751276}
+{"call": 210, "sf_wale": 1.02, "sf_course": 1.22, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 56.022839819904235, "crown": 0.167468, "max_disp_mm": 97.27392448624965, "max_stress": 25172.21140313}
+{"call": 211, "sf_wale": 1.02, "sf_course": 1.26, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 52.65871512798607, "crown": 0.17854692, "max_disp_mm": 88.64206525596977, "max_stress": 521616.57638588}
+{"call": 212, "sf_wale": 1.02, "sf_course": 1.26, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 112.11196527823884, "crown": 0.09269776, "max_disp_mm": 213.36049520255924, "max_stress": 38822.17120577}
+{"call": 213, "sf_wale": 1.02, "sf_course": 1.26, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 88.50214302218058, "crown": 0.12448891, "max_disp_mm": 149.5764656665777, "max_stress": 35633.74431304}
+{"call": 214, "sf_wale": 1.02, "sf_course": 1.26, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 75.92825083331454, "crown": 0.13722075, "max_disp_mm": 130.0451596433066, "max_stress": 35063.17727338}
+{"call": 215, "sf_wale": 1.02, "sf_course": 1.26, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 69.80209629001534, "crown": 0.14374291, "max_disp_mm": 121.00367520547546, "max_stress": 34832.21630472}
+{"call": 216, "sf_wale": 1.02, "sf_course": 1.3, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 110.55069272750946, "crown": 0.08256057, "max_disp_mm": 191.9300044235997, "max_stress": 29968.58183192}
+{"call": 217, "sf_wale": 1.02, "sf_course": 1.3, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 49.824696243519575, "crown": 0.17375408, "max_disp_mm": 86.03572963008392, "max_stress": 180982.40161407}
+{"call": 218, "sf_wale": 1.02, "sf_course": 1.3, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 98.0303294718896, "crown": 0.10411528, "max_disp_mm": 167.35670939493463, "max_stress": 27263.43114746}
+{"call": 219, "sf_wale": 1.02, "sf_course": 1.3, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 86.56426541846146, "crown": 0.11660965, "max_disp_mm": 149.88688062112809, "max_stress": 26700.67066554}
+{"call": 220, "sf_wale": 1.02, "sf_course": 1.3, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 81.32521800142382, "crown": 0.12239462, "max_disp_mm": 142.1595419962561, "max_stress": 26470.52108018}
+{"call": 221, "sf_wale": 1.06, "sf_course": 0.9, "cable_scale": 0.88, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 222, "sf_wale": 1.06, "sf_course": 0.9, "cable_scale": 0.91, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 223, "sf_wale": 1.06, "sf_course": 0.9, "cable_scale": 0.94, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 224, "sf_wale": 1.06, "sf_course": 0.9, "cable_scale": 0.97, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 225, "sf_wale": 1.06, "sf_course": 0.9, "cable_scale": 1.0, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 226, "sf_wale": 1.06, "sf_course": 0.94, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 12.144874599066446, "crown": 0.25654246, "max_disp_mm": 70.95665482919063, "max_stress": 37670.49573721}
+{"call": 227, "sf_wale": 1.06, "sf_course": 0.94, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 8.604521145269771, "crown": 0.25654129, "max_disp_mm": 51.330429240538216, "max_stress": 18427.78678952}
+{"call": 228, "sf_wale": 1.06, "sf_course": 0.94, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 5.298339396324526, "crown": 0.25654074, "max_disp_mm": 32.34387974640798, "max_stress": 8099.16525327}
+{"call": 229, "sf_wale": 1.06, "sf_course": 0.94, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 2.348494859326567, "crown": 0.25654092, "max_disp_mm": 14.404845733644636, "max_stress": 4328.52187694}
+{"call": 230, "sf_wale": 1.06, "sf_course": 0.94, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 37.6761291967769, "crown": 0.29553226, "max_disp_mm": 80.83696330476116, "max_stress": 4041.21747803}
+{"call": 231, "sf_wale": 1.06, "sf_course": 0.98, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 14.342368396918728, "crown": 0.25572068, "max_disp_mm": 73.72125258906215, "max_stress": 37326.58583984}
+{"call": 232, "sf_wale": 1.06, "sf_course": 0.98, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 10.205136538309347, "crown": 0.25571137, "max_disp_mm": 53.31442475781391, "max_stress": 18034.33202257}
+{"call": 233, "sf_wale": 1.06, "sf_course": 0.98, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 6.332278007598934, "crown": 0.25570887, "max_disp_mm": 33.655717958804566, "max_stress": 7586.95535047}
+{"call": 234, "sf_wale": 1.06, "sf_course": 0.98, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 2.8513126219159703, "crown": 0.2557098, "max_disp_mm": 15.091393377955551, "max_stress": 3904.95561611}
+{"call": 235, "sf_wale": 1.06, "sf_course": 0.98, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 29.529194724293, "crown": 0.27970756, "max_disp_mm": 73.88791389466277, "max_stress": 3696.03026635}
+{"call": 236, "sf_wale": 1.06, "sf_course": 1.02, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 41.39393135828471, "crown": 0.23473189, "max_disp_mm": 112.6139755097177, "max_stress": 78378.13176956}
+{"call": 237, "sf_wale": 1.06, "sf_course": 1.02, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 33.165772718928444, "crown": 0.23362273, "max_disp_mm": 81.66984544342668, "max_stress": 39056.76825881}
+{"call": 238, "sf_wale": 1.06, "sf_course": 1.02, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 25.765975644621474, "crown": 0.23320687, "max_disp_mm": 51.743685952051216, "max_stress": 14568.93037566}
+{"call": 239, "sf_wale": 1.06, "sf_course": 1.02, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 13.908789511503612, "crown": 0.25373362, "max_disp_mm": 43.22501119895055, "max_stress": 3102.00857934}
+{"call": 240, "sf_wale": 1.06, "sf_course": 1.02, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 22.98253530035108, "crown": 0.26229342, "max_disp_mm": 74.22471741605959, "max_stress": 3000.56277462}
+{"call": 241, "sf_wale": 1.06, "sf_course": 1.06, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 43.498619570165594, "crown": 0.22009828, "max_disp_mm": 102.18299354056674, "max_stress": 42443.04670026}
+{"call": 242, "sf_wale": 1.06, "sf_course": 1.06, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 36.25766647620619, "crown": 0.21956064, "max_disp_mm": 72.36617515959789, "max_stress": 21969.08832741}
+{"call": 243, "sf_wale": 1.06, "sf_course": 1.06, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 29.903739718509186, "crown": 0.21964798, "max_disp_mm": 48.169948740048476, "max_stress": 8958.04050705}
+{"call": 244, "sf_wale": 1.06, "sf_course": 1.06, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 17.413196485969635, "crown": 0.23532537, "max_disp_mm": 39.953792682605254, "max_stress": 2169.81259509}
+{"call": 245, "sf_wale": 1.06, "sf_course": 1.06, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 21.29716833986228, "crown": 0.24349161, "max_disp_mm": 73.99495146020301, "max_stress": 1979.67035869}
+{"call": 246, "sf_wale": 1.06, "sf_course": 1.1, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 45.94222898524948, "crown": 0.20818489, "max_disp_mm": 99.19641514149592, "max_stress": 35241.47760092}
+{"call": 247, "sf_wale": 1.06, "sf_course": 1.1, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 39.39532299094598, "crown": 0.20810751, "max_disp_mm": 69.81541966395461, "max_stress": 18658.91303136}
+{"call": 248, "sf_wale": 1.06, "sf_course": 1.1, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 33.76262016130543, "crown": 0.20876021, "max_disp_mm": 53.693097196030706, "max_stress": 8077.96629101}
+{"call": 249, "sf_wale": 1.06, "sf_course": 1.1, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 27.26120252454772, "crown": 0.21555204, "max_disp_mm": 51.24037525938115, "max_stress": 1853.2733796}
+{"call": 250, "sf_wale": 1.06, "sf_course": 1.1, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 25.87258479765981, "crown": 0.22283967, "max_disp_mm": 67.38521642970436, "max_stress": 1820.15857665}
+{"call": 251, "sf_wale": 1.06, "sf_course": 1.14, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 48.221715128289766, "crown": 0.19823407, "max_disp_mm": 95.86055925296179, "max_stress": 31183.49657931}
+{"call": 252, "sf_wale": 1.06, "sf_course": 1.14, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 42.226717897850286, "crown": 0.19853221, "max_disp_mm": 68.23438119570147, "max_stress": 16897.91125127}
+{"call": 253, "sf_wale": 1.06, "sf_course": 1.14, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 37.15004128179745, "crown": 0.20054667, "max_disp_mm": 60.4050633638224, "max_stress": 7743.7255233}
+{"call": 254, "sf_wale": 1.06, "sf_course": 1.14, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 39.33478129201914, "crown": 0.19445563, "max_disp_mm": 71.32566656936056, "max_stress": 4316.20588746}
+{"call": 255, "sf_wale": 1.06, "sf_course": 1.14, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 35.973879773095845, "crown": 0.19981591, "max_disp_mm": 65.45857122792478, "max_stress": 4301.37036789}
+{"call": 256, "sf_wale": 1.06, "sf_course": 1.18, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 50.29522032531756, "crown": 0.18973764, "max_disp_mm": 92.22735053151317, "max_stress": 28539.32700002}
+{"call": 257, "sf_wale": 1.06, "sf_course": 1.18, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 44.76020407482126, "crown": 0.19035312, "max_disp_mm": 73.59651520722772, "max_stress": 15856.03585932}
+{"call": 258, "sf_wale": 1.06, "sf_course": 1.18, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 40.137540499664695, "crown": 0.19336721, "max_disp_mm": 67.39662567619985, "max_stress": 8811.90575918}
+{"call": 259, "sf_wale": 1.06, "sf_course": 1.18, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 52.34747684364896, "crown": 0.17217438, "max_disp_mm": 92.45515061951984, "max_stress": 8480.91897742}
+{"call": 260, "sf_wale": 1.06, "sf_course": 1.18, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 49.186451673275855, "crown": 0.17597779, "max_disp_mm": 88.11919945846874, "max_stress": 8432.95079814}
+{"call": 261, "sf_wale": 1.06, "sf_course": 1.22, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 52.21501343871316, "crown": 0.18237123, "max_disp_mm": 88.41902849094475, "max_stress": 27906.50328223}
+{"call": 262, "sf_wale": 1.06, "sf_course": 1.22, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 47.063174520980944, "crown": 0.18345433, "max_disp_mm": 78.32911833687967, "max_stress": 18865.05030782}
+{"call": 263, "sf_wale": 1.06, "sf_course": 1.22, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 78.04131641986646, "crown": 0.13617563, "max_disp_mm": 131.62072435319828, "max_stress": 15208.70678628}
+{"call": 264, "sf_wale": 1.06, "sf_course": 1.22, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 65.78013648167457, "crown": 0.14898578, "max_disp_mm": 115.3576164653869, "max_stress": 14957.75888085}
+{"call": 265, "sf_wale": 1.06, "sf_course": 1.22, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 63.143979157948785, "crown": 0.15180508, "max_disp_mm": 111.77140429211312, "max_stress": 14853.78566787}
+{"call": 266, "sf_wale": 1.06, "sf_course": 1.26, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 54.038570041731354, "crown": 0.1758962, "max_disp_mm": 89.79548577398032, "max_stress": 54716.24366317}
+{"call": 267, "sf_wale": 1.06, "sf_course": 1.26, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 112.13609328992742, "crown": 0.08269363, "max_disp_mm": 195.3294381025423, "max_stress": 27179.34705606}
+{"call": 268, "sf_wale": 1.06, "sf_course": 1.26, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 90.82524507371774, "crown": 0.1129009, "max_disp_mm": 155.20377851271823, "max_stress": 25700.16842508}
+{"call": 269, "sf_wale": 1.06, "sf_course": 1.26, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 79.25378059002566, "crown": 0.12529651, "max_disp_mm": 139.25139802231536, "max_stress": 25117.60011243}
+{"call": 270, "sf_wale": 1.06, "sf_course": 1.26, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 76.55911288389227, "crown": 0.12813239, "max_disp_mm": 135.48710638256728, "max_stress": 24947.66226914}
+{"call": 271, "sf_wale": 1.06, "sf_course": 1.3, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 55.90540426025642, "crown": 0.17001605, "max_disp_mm": 93.5832837211203, "max_stress": 376994.56283863}
+{"call": 272, "sf_wale": 1.06, "sf_course": 1.3, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 51.32013642554191, "crown": 0.17216613, "max_disp_mm": 88.31905421934779, "max_stress": 376351.02111363}
+{"call": 273, "sf_wale": 1.06, "sf_course": 1.3, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 102.13633761377734, "crown": 0.09117502, "max_disp_mm": 177.01694066438304, "max_stress": 39343.75271793}
+{"call": 274, "sf_wale": 1.06, "sf_course": 1.3, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 91.51351002728825, "crown": 0.10305903, "max_disp_mm": 161.58724599464247, "max_stress": 38527.4613066}
+{"call": 275, "sf_wale": 1.06, "sf_course": 1.3, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 88.5428249096233, "crown": 0.10627022, "max_disp_mm": 157.21208629073845, "max_stress": 38315.63847699}
+{"call": 276, "sf_wale": 1.1, "sf_course": 0.9, "cable_scale": 0.88, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 277, "sf_wale": 1.1, "sf_course": 0.9, "cable_scale": 0.91, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 278, "sf_wale": 1.1, "sf_course": 0.9, "cable_scale": 0.94, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 279, "sf_wale": 1.1, "sf_course": 0.9, "cable_scale": 0.97, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 280, "sf_wale": 1.1, "sf_course": 0.9, "cable_scale": 1.0, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 281, "sf_wale": 1.1, "sf_course": 0.94, "cable_scale": 0.88, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 282, "sf_wale": 1.1, "sf_course": 0.94, "cable_scale": 0.91, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 283, "sf_wale": 1.1, "sf_course": 0.94, "cable_scale": 0.94, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 284, "sf_wale": 1.1, "sf_course": 0.94, "cable_scale": 0.97, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 285, "sf_wale": 1.1, "sf_course": 0.94, "cable_scale": 1.0, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 286, "sf_wale": 1.1, "sf_course": 0.98, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 41.13062372325261, "crown": 0.23057313, "max_disp_mm": 96.8678732847098, "max_stress": 11936.10869623}
+{"call": 287, "sf_wale": 1.1, "sf_course": 0.98, "cable_scale": 0.91, "valid": false, "reason": "crown out of range / folded"}
+{"call": 288, "sf_wale": 1.1, "sf_course": 0.98, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 6.687472792433738, "crown": 0.25500318, "max_disp_mm": 33.97651361949605, "max_stress": 8533.6693164}
+{"call": 289, "sf_wale": 1.1, "sf_course": 0.98, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 17.437386352684346, "crown": 0.25860817, "max_disp_mm": 43.458507987241106, "max_stress": 4639.59048207}
+{"call": 290, "sf_wale": 1.1, "sf_course": 0.98, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 23.10430185351181, "crown": 0.26721452, "max_disp_mm": 60.75723617121752, "max_stress": 4625.80284274}
+{"call": 291, "sf_wale": 1.1, "sf_course": 1.02, "cable_scale": 0.88, "valid": false, "reason": "crown out of range / folded"}
+{"call": 292, "sf_wale": 1.1, "sf_course": 1.02, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 18.605140052937312, "crown": 0.2416702, "max_disp_mm": 38.225892401535916, "max_stress": 51961.46710336}
+{"call": 293, "sf_wale": 1.1, "sf_course": 1.02, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 30.639287856698147, "crown": 0.22629649, "max_disp_mm": 50.52527337806397, "max_stress": 69267.77376784}
+{"call": 294, "sf_wale": 1.1, "sf_course": 1.02, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 17.287907116666904, "crown": 0.24161527, "max_disp_mm": 38.33072824220536, "max_stress": 4039.08802387}
+{"call": 295, "sf_wale": 1.1, "sf_course": 1.02, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 20.52505931153473, "crown": 0.24999513, "max_disp_mm": 63.99708125232353, "max_stress": 3984.19359818}
+{"call": 296, "sf_wale": 1.1, "sf_course": 1.06, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 46.69525196545665, "crown": 0.21403859, "max_disp_mm": 101.17078059615831, "max_stress": 40477.47515272}
+{"call": 297, "sf_wale": 1.1, "sf_course": 1.06, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 39.995380930453194, "crown": 0.21369072, "max_disp_mm": 71.95556014396247, "max_stress": 21010.10869787}
+{"call": 298, "sf_wale": 1.1, "sf_course": 1.06, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 34.158471927748636, "crown": 0.21388588, "max_disp_mm": 54.822475057813634, "max_stress": 8608.76130762}
+{"call": 299, "sf_wale": 1.1, "sf_course": 1.06, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 24.379647464620504, "crown": 0.22296043, "max_disp_mm": 44.31447863894825, "max_stress": 3372.42273323}
+{"call": 300, "sf_wale": 1.1, "sf_course": 1.06, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 23.089797235318148, "crown": 0.22920757, "max_disp_mm": 61.297354732186434, "max_stress": 3253.45771758}
+{"call": 301, "sf_wale": 1.1, "sf_course": 1.1, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 48.959649816548875, "crown": 0.20319758, "max_disp_mm": 98.68164822327098, "max_stress": 34860.82072774}
+{"call": 302, "sf_wale": 1.1, "sf_course": 1.1, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 42.7663897139159, "crown": 0.20325776, "max_disp_mm": 69.90177809120236, "max_stress": 18466.39065248}
+{"call": 303, "sf_wale": 1.1, "sf_course": 1.1, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 37.424725488115776, "crown": 0.20467078, "max_disp_mm": 59.34794379444077, "max_stress": 7996.29351998}
+{"call": 304, "sf_wale": 1.1, "sf_course": 1.1, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 34.83729994295833, "crown": 0.20287854, "max_disp_mm": 62.75715917003414, "max_stress": 2442.36716682}
+{"call": 305, "sf_wale": 1.1, "sf_course": 1.1, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 32.42214540791086, "crown": 0.20697351, "max_disp_mm": 58.378923616951, "max_stress": 2293.77401006}
+{"call": 306, "sf_wale": 1.1, "sf_course": 1.14, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 50.98530604568624, "crown": 0.19413987, "max_disp_mm": 95.87296359065732, "max_stress": 31410.49793444}
+{"call": 307, "sf_wale": 1.1, "sf_course": 1.14, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 45.210462913306884, "crown": 0.19453117, "max_disp_mm": 72.6140735231553, "max_stress": 16996.97164649}
+{"call": 308, "sf_wale": 1.1, "sf_course": 1.14, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 58.409570875618385, "crown": 0.16947372, "max_disp_mm": 97.18833568955895, "max_stress": 2989.70494226}
+{"call": 309, "sf_wale": 1.1, "sf_course": 1.14, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 46.503451393086976, "crown": 0.18161239, "max_disp_mm": 82.49743873834993, "max_stress": 2263.65443755}
+{"call": 310, "sf_wale": 1.1, "sf_course": 1.14, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 44.848138225147, "crown": 0.18380375, "max_disp_mm": 80.34305997591643, "max_stress": 2234.68503463}
+{"call": 311, "sf_wale": 1.1, "sf_course": 1.18, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 52.76780997331012, "crown": 0.18638213, "max_disp_mm": 92.7425126756926, "max_stress": 29042.37758222}
+{"call": 312, "sf_wale": 1.1, "sf_course": 1.18, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 47.35870144132008, "crown": 0.18719902, "max_disp_mm": 77.19242618901548, "max_stress": 16080.45226417}
+{"call": 313, "sf_wale": 1.1, "sf_course": 1.18, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 42.78458087035387, "crown": 0.19065642, "max_disp_mm": 71.20927954346189, "max_stress": 7740.54837548}
+{"call": 314, "sf_wale": 1.1, "sf_course": 1.18, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 58.9106658563884, "crown": 0.15915875, "max_disp_mm": 103.65914101062431, "max_stress": 4618.2714326}
+{"call": 315, "sf_wale": 1.1, "sf_course": 1.18, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 58.1853818457809, "crown": 0.16001519, "max_disp_mm": 102.79608218861942, "max_stress": 4604.00955937}
+{"call": 316, "sf_wale": 1.1, "sf_course": 1.22, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 54.3648355018623, "crown": 0.1796078, "max_disp_mm": 89.32470858661114, "max_stress": 27389.94445109}
+{"call": 317, "sf_wale": 1.1, "sf_course": 1.22, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 49.28435673302151, "crown": 0.18136794, "max_disp_mm": 81.26591884478388, "max_stress": 15512.55102727}
+{"call": 318, "sf_wale": 1.1, "sf_course": 1.22, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 82.43340728375215, "crown": 0.1246288, "max_disp_mm": 140.66703780455674, "max_stress": 8793.84508606}
+{"call": 319, "sf_wale": 1.1, "sf_course": 1.22, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 71.64048657346825, "crown": 0.13588569, "max_disp_mm": 126.99003235874106, "max_stress": 8703.50406505}
+{"call": 320, "sf_wale": 1.1, "sf_course": 1.22, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 71.33933279363967, "crown": 0.13620063, "max_disp_mm": 126.58775391104665, "max_stress": 8689.56397996}
+{"call": 321, "sf_wale": 1.1, "sf_course": 1.26, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 55.84542061512653, "crown": 0.17361952, "max_disp_mm": 92.0110053434289, "max_stress": 27697.80572041}
+{"call": 322, "sf_wale": 1.1, "sf_course": 1.26, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 114.69581482007214, "crown": 0.08078533, "max_disp_mm": 194.26684787139726, "max_stress": 15938.29754907}
+{"call": 323, "sf_wale": 1.1, "sf_course": 1.26, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 93.79871461286247, "crown": 0.1023879, "max_disp_mm": 162.81273022661927, "max_stress": 15341.54096001}
+{"call": 324, "sf_wale": 1.1, "sf_course": 1.26, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 83.82769702434366, "crown": 0.11310168, "max_disp_mm": 149.62541980895392, "max_stress": 15047.03277109}
+{"call": 325, "sf_wale": 1.1, "sf_course": 1.26, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 83.53673374312419, "crown": 0.11346714, "max_disp_mm": 149.30819129087192, "max_stress": 15022.35834419}
+{"call": 326, "sf_wale": 1.1, "sf_course": 1.3, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 57.263412312884306, "crown": 0.16827509, "max_disp_mm": 95.08927153258352, "max_stress": 46801.12956653}
+{"call": 327, "sf_wale": 1.1, "sf_course": 1.3, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 52.72215826261823, "crown": 0.17121182, "max_disp_mm": 90.2402413349571, "max_stress": 46459.18031513}
+{"call": 328, "sf_wale": 1.1, "sf_course": 1.3, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 103.90807004249537, "crown": 0.08226308, "max_disp_mm": 182.8537188218643, "max_stress": 25508.62047145}
+{"call": 329, "sf_wale": 1.1, "sf_course": 1.3, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 94.65736466622228, "crown": 0.09263619, "max_disp_mm": 169.89297124878385, "max_stress": 24880.13437864}
+{"call": 330, "sf_wale": 1.1, "sf_course": 1.3, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 94.18156161140978, "crown": 0.09325606, "max_disp_mm": 169.3326985021927, "max_stress": 24813.75412899}
+{"call": 331, "sf_wale": 1.14, "sf_course": 0.9, "cable_scale": 0.88, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 332, "sf_wale": 1.14, "sf_course": 0.9, "cable_scale": 0.91, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 333, "sf_wale": 1.14, "sf_course": 0.9, "cable_scale": 0.94, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 334, "sf_wale": 1.14, "sf_course": 0.9, "cable_scale": 0.97, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 335, "sf_wale": 1.14, "sf_course": 0.9, "cable_scale": 1.0, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 336, "sf_wale": 1.14, "sf_course": 0.94, "cable_scale": 0.88, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 337, "sf_wale": 1.14, "sf_course": 0.94, "cable_scale": 0.91, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 338, "sf_wale": 1.14, "sf_course": 0.94, "cable_scale": 0.94, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 339, "sf_wale": 1.14, "sf_course": 0.94, "cable_scale": 0.97, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 340, "sf_wale": 1.14, "sf_course": 0.94, "cable_scale": 1.0, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 341, "sf_wale": 1.14, "sf_course": 0.98, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 14.155020069945241, "crown": 0.25465357, "max_disp_mm": 73.00506547846256, "max_stress": 37752.83839802}
+{"call": 342, "sf_wale": 1.14, "sf_course": 0.98, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 10.147840548674864, "crown": 0.25464999, "max_disp_mm": 52.74528038474058, "max_stress": 18472.351621}
+{"call": 343, "sf_wale": 1.14, "sf_course": 0.98, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 6.443130595101814, "crown": 0.25464901, "max_disp_mm": 33.23367122833256, "max_stress": 9725.56977793}
+{"call": 344, "sf_wale": 1.14, "sf_course": 0.98, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 21.563816209070502, "crown": 0.24479417, "max_disp_mm": 52.538588816838235, "max_stress": 6842.49986482}
+{"call": 345, "sf_wale": 1.14, "sf_course": 0.98, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 20.253483146077414, "crown": 0.25104768, "max_disp_mm": 43.67931443634276, "max_stress": 6797.26350374}
+{"call": 346, "sf_wale": 1.14, "sf_course": 1.02, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 47.85611073408531, "crown": 0.22083988, "max_disp_mm": 101.720576630145, "max_stress": 138449.54462686}
+{"call": 347, "sf_wale": 1.14, "sf_course": 1.02, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 41.14851362562626, "crown": 0.22017654, "max_disp_mm": 72.7416268883079, "max_stress": 64838.78172184}
+{"call": 348, "sf_wale": 1.14, "sf_course": 1.02, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 35.336007858916666, "crown": 0.22004287, "max_disp_mm": 57.4443843699086, "max_stress": 21588.78266022}
+{"call": 349, "sf_wale": 1.14, "sf_course": 1.02, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 24.694737238195263, "crown": 0.22839297, "max_disp_mm": 44.850352529032605, "max_stress": 5241.20492469}
+{"call": 350, "sf_wale": 1.14, "sf_course": 1.02, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 22.176912109079108, "crown": 0.23316388, "max_disp_mm": 37.785213429354876, "max_stress": 5232.11576471}
+{"call": 351, "sf_wale": 1.14, "sf_course": 1.06, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 49.887643279954055, "crown": 0.20861682, "max_disp_mm": 99.94349728673048, "max_stress": 39251.48537391}
+{"call": 352, "sf_wale": 1.14, "sf_course": 1.06, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 43.64952216688384, "crown": 0.20841323, "max_disp_mm": 73.11517528310792, "max_stress": 20404.1258982}
+{"call": 353, "sf_wale": 1.14, "sf_course": 1.06, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 38.23779213303086, "crown": 0.20902466, "max_disp_mm": 61.210186952241855, "max_stress": 10064.17914551}
+{"call": 354, "sf_wale": 1.14, "sf_course": 1.06, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 32.948240817826154, "crown": 0.20972199, "max_disp_mm": 56.852609366439815, "max_stress": 4370.15781894}
+{"call": 355, "sf_wale": 1.14, "sf_course": 1.06, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 30.87685183896268, "crown": 0.21274387, "max_disp_mm": 53.372164978202825, "max_stress": 4323.65038837}
+{"call": 356, "sf_wale": 1.14, "sf_course": 1.1, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 51.913997934015505, "crown": 0.19870406, "max_disp_mm": 97.89693750413545, "max_stress": 34629.00376164}
+{"call": 357, "sf_wale": 1.14, "sf_course": 1.1, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 46.044206946926074, "crown": 0.19886626, "max_disp_mm": 75.27572849278178, "max_stress": 18346.7912315}
+{"call": 358, "sf_wale": 1.14, "sf_course": 1.1, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 40.97258639954724, "crown": 0.20092902, "max_disp_mm": 65.1213654523099, "max_stress": 9410.98281298}
+{"call": 359, "sf_wale": 1.14, "sf_course": 1.1, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 43.54416808103885, "crown": 0.18929155, "max_disp_mm": 75.36643537548397, "max_stress": 3701.34408575}
+{"call": 360, "sf_wale": 1.14, "sf_course": 1.1, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 42.645145524246395, "crown": 0.19043824, "max_disp_mm": 74.18790721293736, "max_stress": 3642.01307334}
+{"call": 361, "sf_wale": 1.14, "sf_course": 1.14, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 53.69408267126598, "crown": 0.19041338, "max_disp_mm": 95.55104994664006, "max_stress": 31620.81291685}
+{"call": 362, "sf_wale": 1.14, "sf_course": 1.14, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 48.13981932827788, "crown": 0.1908729, "max_disp_mm": 77.24914343147762, "max_stress": 17092.87032607}
+{"call": 363, "sf_wale": 1.14, "sf_course": 1.14, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 66.24630113530506, "crown": 0.15624358, "max_disp_mm": 109.16726115594822, "max_stress": 3476.30968554}
+{"call": 364, "sf_wale": 1.14, "sf_course": 1.14, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 55.43891383332375, "crown": 0.16722281, "max_disp_mm": 95.92698525415985, "max_stress": 2789.53642859}
+{"call": 365, "sf_wale": 1.14, "sf_course": 1.14, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 55.31796374488548, "crown": 0.16734699, "max_disp_mm": 95.7646444939812, "max_stress": 2776.3536973}
+{"call": 366, "sf_wale": 1.14, "sf_course": 1.18, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 55.23338576591362, "crown": 0.18330428, "max_disp_mm": 92.90308508587054, "max_stress": 29482.80342983}
+{"call": 367, "sf_wale": 1.14, "sf_course": 1.18, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 49.96333928942264, "crown": 0.18471199, "max_disp_mm": 81.11929787077608, "max_stress": 16284.17261335}
+{"call": 368, "sf_wale": 1.14, "sf_course": 1.18, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 77.20030380204885, "crown": 0.13444663, "max_disp_mm": 129.94319491340397, "max_stress": 2968.67456473}
+{"call": 369, "sf_wale": 1.14, "sf_course": 1.18, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 67.94088632298725, "crown": 0.1439505, "max_disp_mm": 118.6493778506592, "max_stress": 2716.27272985}
+{"call": 370, "sf_wale": 1.14, "sf_course": 1.18, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 67.94088632298725, "crown": 0.1439505, "max_disp_mm": 118.6493778506592, "max_stress": 2716.27272985}
+{"call": 371, "sf_wale": 1.14, "sf_course": 1.22, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 56.57810712714048, "crown": 0.17707738, "max_disp_mm": 91.78944931548725, "max_stress": 27892.41217155}
+{"call": 372, "sf_wale": 1.14, "sf_course": 1.22, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 51.574524528466824, "crown": 0.17938785, "max_disp_mm": 84.5606107832861, "max_stress": 15766.53860021}
+{"call": 373, "sf_wale": 1.14, "sf_course": 1.22, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 87.83130904421623, "crown": 0.11259278, "max_disp_mm": 151.19979545559247, "max_stress": 4995.87935347}
+{"call": 374, "sf_wale": 1.14, "sf_course": 1.22, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 79.85247786889045, "crown": 0.12101525, "max_disp_mm": 141.47561566506295, "max_stress": 4954.32941707}
+{"call": 375, "sf_wale": 1.14, "sf_course": 1.22, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 79.85247786889045, "crown": 0.12101525, "max_disp_mm": 141.47561566506295, "max_stress": 4954.32941707}
+{"call": 376, "sf_wale": 1.14, "sf_course": 1.26, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 57.78825445613879, "crown": 0.17153285, "max_disp_mm": 94.6416233382786, "max_stress": 27255.17810008}
+{"call": 377, "sf_wale": 1.14, "sf_course": 1.26, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 53.03791775177687, "crown": 0.17452249, "max_disp_mm": 88.54476852981549, "max_stress": 15466.05361413}
+{"call": 378, "sf_wale": 1.14, "sf_course": 1.26, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 97.64927236902976, "crown": 0.09197714, "max_disp_mm": 171.4446044849082, "max_stress": 9079.26545562}
+{"call": 379, "sf_wale": 1.14, "sf_course": 1.26, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 90.50558067315497, "crown": 0.0998378, "max_disp_mm": 162.41879919155727, "max_stress": 8977.51886273}
+{"call": 380, "sf_wale": 1.14, "sf_course": 1.26, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 90.50558067315497, "crown": 0.0998378, "max_disp_mm": 162.41879919155727, "max_stress": 8977.51886273}
+{"call": 381, "sf_wale": 1.14, "sf_course": 1.3, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 58.92245249429788, "crown": 0.16669015, "max_disp_mm": 97.26249835164117, "max_stress": 27616.71072747}
+{"call": 382, "sf_wale": 1.14, "sf_course": 1.3, "cable_scale": 0.91, "valid": false, "reason": "crown out of range / folded"}
+{"call": 383, "sf_wale": 1.14, "sf_course": 1.3, "cable_scale": 0.94, "valid": false, "reason": "crown out of range / folded"}
+{"call": 384, "sf_wale": 1.14, "sf_course": 1.3, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 99.52905037019264, "crown": 0.08191818, "max_disp_mm": 179.99273939193606, "max_stress": 15230.17355621}
+{"call": 385, "sf_wale": 1.14, "sf_course": 1.3, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 99.52905037019264, "crown": 0.08191818, "max_disp_mm": 179.99273939193606, "max_stress": 15230.17355621}
+{"call": 386, "sf_wale": 1.18, "sf_course": 0.9, "cable_scale": 0.88, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 387, "sf_wale": 1.18, "sf_course": 0.9, "cable_scale": 0.91, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 388, "sf_wale": 1.18, "sf_course": 0.9, "cable_scale": 0.94, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 389, "sf_wale": 1.18, "sf_course": 0.9, "cable_scale": 0.97, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 390, "sf_wale": 1.18, "sf_course": 0.9, "cable_scale": 1.0, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 391, "sf_wale": 1.18, "sf_course": 0.94, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 7.10102277717065, "crown": 0.25572647, "max_disp_mm": 41.03953994515169, "max_stress": 210677.32114027}
+{"call": 392, "sf_wale": 1.18, "sf_course": 0.94, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 5.1597741724509, "crown": 0.25572495, "max_disp_mm": 32.38729262740867, "max_stress": 126238.64910929}
+{"call": 393, "sf_wale": 1.18, "sf_course": 0.94, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 6.678629615549397, "crown": 0.25510111, "max_disp_mm": 45.463813619120195, "max_stress": 233800.79791419}
+{"call": 394, "sf_wale": 1.18, "sf_course": 0.94, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 31.509503305102687, "crown": 0.2432434, "max_disp_mm": 79.55739949012975, "max_stress": 11868.29278865}
+{"call": 395, "sf_wale": 1.18, "sf_course": 0.94, "cable_scale": 1.0, "valid": false, "reason": "crown out of range / folded"}
+{"call": 396, "sf_wale": 1.18, "sf_course": 0.98, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 14.101119970444175, "crown": 0.25411743, "max_disp_mm": 72.63892962123343, "max_stress": 38151.78889879}
+{"call": 397, "sf_wale": 1.18, "sf_course": 0.98, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 10.170409057742807, "crown": 0.2541146, "max_disp_mm": 52.44814916429846, "max_stress": 18810.59457917}
+{"call": 398, "sf_wale": 1.18, "sf_course": 0.98, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 6.574592682374715, "crown": 0.25411431, "max_disp_mm": 33.01122879661861, "max_stress": 10872.28588981}
+{"call": 399, "sf_wale": 1.18, "sf_course": 0.98, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 30.980758922345334, "crown": 0.22905859, "max_disp_mm": 67.70430744734783, "max_stress": 9429.91886015}
+{"call": 400, "sf_wale": 1.18, "sf_course": 0.98, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 28.546689861277596, "crown": 0.23167368, "max_disp_mm": 62.397210162130634, "max_stress": 9394.85777794}
+{"call": 401, "sf_wale": 1.18, "sf_course": 1.02, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 51.21546876848167, "crown": 0.21493418, "max_disp_mm": 99.91857711060842, "max_stress": 45594.4052398}
+{"call": 402, "sf_wale": 1.18, "sf_course": 1.02, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 45.10585145787901, "crown": 0.21443726, "max_disp_mm": 76.25436481210107, "max_stress": 23831.6239387}
+{"call": 403, "sf_wale": 1.18, "sf_course": 1.02, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 39.84694936247436, "crown": 0.21440804, "max_disp_mm": 64.17479179823566, "max_stress": 12035.04063771}
+{"call": 404, "sf_wale": 1.18, "sf_course": 1.02, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 34.58344557747295, "crown": 0.21367806, "max_disp_mm": 55.066090794799464, "max_stress": 7476.02528167}
+{"call": 405, "sf_wale": 1.18, "sf_course": 1.02, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 33.1390453201906, "crown": 0.21520475, "max_disp_mm": 52.75709110964517, "max_stress": 7463.29393958}
+{"call": 406, "sf_wale": 1.18, "sf_course": 1.06, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 52.995988697460504, "crown": 0.20373016, "max_disp_mm": 98.56536101662137, "max_stress": 38427.42995993}
+{"call": 407, "sf_wale": 1.18, "sf_course": 1.06, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 47.15713362829694, "crown": 0.20364264, "max_disp_mm": 78.66330289199402, "max_stress": 19992.82925789}
+{"call": 408, "sf_wale": 1.18, "sf_course": 1.06, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 42.10466439478838, "crown": 0.20498071, "max_disp_mm": 67.47002743964164, "max_stress": 11364.81162715}
+{"call": 409, "sf_wale": 1.18, "sf_course": 1.06, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 42.94787598994471, "crown": 0.19529644, "max_disp_mm": 70.72620920662582, "max_stress": 5844.83618345}
+{"call": 410, "sf_wale": 1.18, "sf_course": 1.06, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 42.5548229667324, "crown": 0.1956741, "max_disp_mm": 70.13067793541713, "max_stress": 5845.46074675}
+{"call": 411, "sf_wale": 1.18, "sf_course": 1.1, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 54.77221370705031, "crown": 0.19461925, "max_disp_mm": 96.9112864189693, "max_stress": 34483.62696674}
+{"call": 412, "sf_wale": 1.18, "sf_course": 1.1, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 49.19777151190158, "crown": 0.19486147, "max_disp_mm": 80.43226425182495, "max_stress": 18271.80450211}
+{"call": 413, "sf_wale": 1.18, "sf_course": 1.1, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 44.37608905550007, "crown": 0.19749034, "max_disp_mm": 70.82114927674502, "max_stress": 10969.86690882}
+{"call": 414, "sf_wale": 1.18, "sf_course": 1.1, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 54.21177585298703, "crown": 0.17364772, "max_disp_mm": 90.27469663539448, "max_stress": 4810.14419105}
+{"call": 415, "sf_wale": 1.18, "sf_course": 1.1, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 54.21177585298703, "crown": 0.17364772, "max_disp_mm": 90.27469663539448, "max_stress": 4810.14419105}
+{"call": 416, "sf_wale": 1.18, "sf_course": 1.14, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 56.31932656072942, "crown": 0.18698873, "max_disp_mm": 94.96903280805854, "max_stress": 31810.30997518}
+{"call": 417, "sf_wale": 1.18, "sf_course": 1.14, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 50.98135635775915, "crown": 0.18782426, "max_disp_mm": 82.03620313121883, "max_stress": 17183.41753279}
+{"call": 418, "sf_wale": 1.18, "sf_course": 1.14, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 74.46191820886372, "crown": 0.14252095, "max_disp_mm": 122.13652373547644, "max_stress": 4824.54887677}
+{"call": 419, "sf_wale": 1.18, "sf_course": 1.14, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 66.151163607937, "crown": 0.15087284, "max_disp_mm": 111.82452985114314, "max_stress": 4203.11188982}
+{"call": 420, "sf_wale": 1.18, "sf_course": 1.14, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 66.151163607937, "crown": 0.15087284, "max_disp_mm": 111.82452985114314, "max_stress": 4203.11188982}
+{"call": 421, "sf_wale": 1.18, "sf_course": 1.18, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 57.64429463263173, "crown": 0.18044057, "max_disp_mm": 92.95543757937186, "max_stress": 29862.85772584}
+{"call": 422, "sf_wale": 1.18, "sf_course": 1.18, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 52.52524181822818, "crown": 0.18234323, "max_disp_mm": 85.2086773576424, "max_stress": 16466.24627049}
+{"call": 423, "sf_wale": 1.18, "sf_course": 1.18, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 84.36317609839094, "crown": 0.1212001, "max_disp_mm": 142.37629353141944, "max_stress": 4045.39076193}
+{"call": 424, "sf_wale": 1.18, "sf_course": 1.18, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 77.61678121230256, "crown": 0.12815848, "max_disp_mm": 134.3320255994828, "max_stress": 3415.53986676}
+{"call": 425, "sf_wale": 1.18, "sf_course": 1.18, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 77.61678121230256, "crown": 0.12815848, "max_disp_mm": 134.3320255994828, "max_stress": 3415.53986676}
+{"call": 426, "sf_wale": 1.18, "sf_course": 1.22, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 58.783608297961656, "crown": 0.17470134, "max_disp_mm": 95.17956785143384, "max_stress": 28387.73215939}
+{"call": 427, "sf_wale": 1.18, "sf_course": 1.22, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 53.874930332069255, "crown": 0.17745908, "max_disp_mm": 88.08947784211746, "max_stress": 15999.16672593}
+{"call": 428, "sf_wale": 1.18, "sf_course": 1.22, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 93.66511710270969, "crown": 0.10051972, "max_disp_mm": 162.3922864390412, "max_stress": 3526.93709749}
+{"call": 429, "sf_wale": 1.18, "sf_course": 1.22, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 88.07771677667313, "crown": 0.10652649, "max_disp_mm": 155.78770939699348, "max_stress": 3265.99818165}
+{"call": 430, "sf_wale": 1.18, "sf_course": 1.22, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 88.07771670594205, "crown": 0.10652649, "max_disp_mm": 155.78770939699348, "max_stress": 3265.99818172}
+{"call": 431, "sf_wale": 1.18, "sf_course": 1.26, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 59.78270181580799, "crown": 0.16974348, "max_disp_mm": 97.54751817540976, "max_stress": 27252.42825931}
+{"call": 432, "sf_wale": 1.18, "sf_course": 1.26, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 55.08186575720458, "crown": 0.17300117, "max_disp_mm": 91.25221708754312, "max_stress": 15720.15148281}
+{"call": 433, "sf_wale": 1.18, "sf_course": 1.26, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 101.96164651205376, "crown": 0.0820235, "max_disp_mm": 180.39124563330256, "max_stress": 5409.34613884}
+{"call": 434, "sf_wale": 1.18, "sf_course": 1.26, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 97.1141221790043, "crown": 0.08748801, "max_disp_mm": 174.50450742580233, "max_stress": 5360.42465503}
+{"call": 435, "sf_wale": 1.18, "sf_course": 1.26, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 97.1141221790043, "crown": 0.08748801, "max_disp_mm": 174.50450742580233, "max_stress": 5360.42465503}
+{"call": 436, "sf_wale": 1.18, "sf_course": 1.3, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 60.691120739171325, "crown": 0.16559913, "max_disp_mm": 99.73051621005732, "max_stress": 27224.1437891}
+{"call": 437, "sf_wale": 1.18, "sf_course": 1.3, "cable_scale": 0.91, "valid": false, "reason": "crown out of range / folded"}
+{"call": 438, "sf_wale": 1.18, "sf_course": 1.3, "cable_scale": 0.94, "valid": false, "reason": "crown out of range / folded"}
+{"call": 439, "sf_wale": 1.18, "sf_course": 1.3, "cable_scale": 0.97, "valid": false, "reason": "crown out of range / folded"}
+{"call": 440, "sf_wale": 1.18, "sf_course": 1.3, "cable_scale": 1.0, "valid": false, "reason": "crown out of range / folded"}
+{"call": 441, "sf_wale": 1.22, "sf_course": 0.9, "cable_scale": 0.88, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 442, "sf_wale": 1.22, "sf_course": 0.9, "cable_scale": 0.91, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 443, "sf_wale": 1.22, "sf_course": 0.9, "cable_scale": 0.94, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 444, "sf_wale": 1.22, "sf_course": 0.9, "cable_scale": 0.97, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 445, "sf_wale": 1.22, "sf_course": 0.9, "cable_scale": 1.0, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 446, "sf_wale": 1.22, "sf_course": 0.94, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 13.028726681320025, "crown": 0.25480062, "max_disp_mm": 71.39609266304565, "max_stress": 125782.30691752}
+{"call": 447, "sf_wale": 1.22, "sf_course": 0.94, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 9.410270719605606, "crown": 0.25479997, "max_disp_mm": 51.56495448021554, "max_stress": 75325.31971711}
+{"call": 448, "sf_wale": 1.22, "sf_course": 0.94, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 6.114842940347737, "crown": 0.25479994, "max_disp_mm": 32.4207735454739, "max_stress": 34919.27101721}
+{"call": 449, "sf_wale": 1.22, "sf_course": 0.94, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 41.90686523398668, "crown": 0.22833055, "max_disp_mm": 100.58265917635156, "max_stress": 15540.58223243}
+{"call": 450, "sf_wale": 1.22, "sf_course": 0.94, "cable_scale": 1.0, "valid": false, "reason": "crown out of range / folded"}
+{"call": 451, "sf_wale": 1.22, "sf_course": 0.98, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 14.075616200567488, "crown": 0.25358627, "max_disp_mm": 72.26071884117748, "max_stress": 38672.1141031}
+{"call": 452, "sf_wale": 1.22, "sf_course": 0.98, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 10.230254832437488, "crown": 0.25358417, "max_disp_mm": 52.139540080570356, "max_stress": 19226.9934663}
+{"call": 453, "sf_wale": 1.22, "sf_course": 0.98, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 6.759548510462655, "crown": 0.25358457, "max_disp_mm": 32.77812982108193, "max_stress": 13005.98963691}
+{"call": 454, "sf_wale": 1.22, "sf_course": 0.98, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 43.00802651082224, "crown": 0.21210724, "max_disp_mm": 93.1898330044104, "max_stress": 12500.07765551}
+{"call": 455, "sf_wale": 1.22, "sf_course": 0.98, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 41.72014871098575, "crown": 0.2129677, "max_disp_mm": 87.88427454407187, "max_stress": 12477.31540472}
+{"call": 456, "sf_wale": 1.22, "sf_course": 1.02, "cable_scale": 0.88, "valid": false, "reason": "crown out of range / folded"}
+{"call": 457, "sf_wale": 1.22, "sf_course": 1.02, "cable_scale": 0.91, "valid": false, "reason": "crown out of range / folded"}
+{"call": 458, "sf_wale": 1.22, "sf_course": 1.02, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 56.86106469709263, "crown": 0.18916794, "max_disp_mm": 100.3631852286589, "max_stress": 10116.085384}
+{"call": 459, "sf_wale": 1.22, "sf_course": 1.02, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 46.7223623980257, "crown": 0.19717396, "max_disp_mm": 73.58934701301608, "max_stress": 10087.31577183}
+{"call": 460, "sf_wale": 1.22, "sf_course": 1.02, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 46.55254919163385, "crown": 0.19729184, "max_disp_mm": 72.97165910723626, "max_stress": 10087.77507722}
+{"call": 461, "sf_wale": 1.22, "sf_course": 1.06, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 55.98912296725128, "crown": 0.19930712, "max_disp_mm": 97.09473045860214, "max_stress": 37849.4470189}
+{"call": 462, "sf_wale": 1.22, "sf_course": 1.06, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 50.49777777721058, "crown": 0.19931541, "max_disp_mm": 83.89934854246901, "max_stress": 19702.90074559}
+{"call": 463, "sf_wale": 1.22, "sf_course": 1.06, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 45.753972400783354, "crown": 0.20129776, "max_disp_mm": 73.78444593144275, "max_stress": 12710.37232344}
+{"call": 464, "sf_wale": 1.22, "sf_course": 1.06, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 55.090172427568376, "crown": 0.1786477, "max_disp_mm": 86.77748738704123, "max_stress": 8126.02466359}
+{"call": 465, "sf_wale": 1.22, "sf_course": 1.06, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 55.090172427568376, "crown": 0.1786477, "max_disp_mm": 86.77748738704123, "max_stress": 8126.02466359}
+{"call": 466, "sf_wale": 1.22, "sf_course": 1.1, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 57.5207116634805, "crown": 0.19088705, "max_disp_mm": 96.63273142810772, "max_stress": 34394.95290625}
+{"call": 467, "sf_wale": 1.22, "sf_course": 1.1, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 52.21570741243178, "crown": 0.19119419, "max_disp_mm": 85.34086028426357, "max_stress": 18227.4473359}
+{"call": 468, "sf_wale": 1.22, "sf_course": 1.1, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 73.40642368629838, "crown": 0.1495348, "max_disp_mm": 116.93129399665298, "max_stress": 6478.90191752}
+{"call": 469, "sf_wale": 1.22, "sf_course": 1.1, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 65.75535636784437, "crown": 0.15714171, "max_disp_mm": 106.31071240676785, "max_stress": 6471.00446472}
+{"call": 470, "sf_wale": 1.22, "sf_course": 1.1, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 65.75535636784437, "crown": 0.15714171, "max_disp_mm": 106.31071240676785, "max_stress": 6471.00446472}
+{"call": 471, "sf_wale": 1.22, "sf_course": 1.14, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 58.85234629007951, "crown": 0.1838255, "max_disp_mm": 97.01086242017126, "max_stress": 31982.36052974}
+{"call": 472, "sf_wale": 1.22, "sf_course": 1.14, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 53.72270505787554, "crown": 0.18517517, "max_disp_mm": 86.92259432789668, "max_stress": 17551.78390847}
+{"call": 473, "sf_wale": 1.22, "sf_course": 1.14, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 82.62450361726589, "crown": 0.12871136, "max_disp_mm": 135.34075732773923, "max_stress": 6032.28736312}
+{"call": 474, "sf_wale": 1.22, "sf_course": 1.14, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 76.55503185195745, "crown": 0.13486203, "max_disp_mm": 127.87927398562051, "max_stress": 5476.9000919}
+{"call": 475, "sf_wale": 1.22, "sf_course": 1.14, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 76.55503185195745, "crown": 0.13486203, "max_disp_mm": 127.87927398562051, "max_stress": 5476.9000919}
+{"call": 476, "sf_wale": 1.22, "sf_course": 1.18, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 59.98446682887617, "crown": 0.17776212, "max_disp_mm": 97.22804851566339, "max_stress": 30193.27076919}
+{"call": 477, "sf_wale": 1.22, "sf_course": 1.18, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 55.02216934342287, "crown": 0.18008885, "max_disp_mm": 89.3460508202825, "max_stress": 16670.5454704}
+{"call": 478, "sf_wale": 1.22, "sf_course": 1.18, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 91.47775810243418, "crown": 0.10804954, "max_disp_mm": 154.99431757935224, "max_stress": 5486.96854173}
+{"call": 479, "sf_wale": 1.22, "sf_course": 1.18, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 86.67649850085049, "crown": 0.11307861, "max_disp_mm": 149.37213973983938, "max_stress": 4933.49110065}
+{"call": 480, "sf_wale": 1.22, "sf_course": 1.18, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 86.67649850085049, "crown": 0.11307861, "max_disp_mm": 149.37213973983938, "max_stress": 4933.49110065}
+{"call": 481, "sf_wale": 1.22, "sf_course": 1.22, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 60.94696420115619, "crown": 0.17244786, "max_disp_mm": 98.69533918459776, "max_stress": 28821.05015904}
+{"call": 482, "sf_wale": 1.22, "sf_course": 1.22, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 56.1489708185935, "crown": 0.17557519, "max_disp_mm": 91.74599503091622, "max_stress": 16210.61696839}
+{"call": 483, "sf_wale": 1.22, "sf_course": 1.22, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 99.49605361334568, "crown": 0.08890892, "max_disp_mm": 173.51109321923656, "max_stress": 4731.69121358}
+{"call": 484, "sf_wale": 1.22, "sf_course": 1.22, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 95.63752958900142, "crown": 0.09314667, "max_disp_mm": 169.07153178329756, "max_stress": 4194.12156338}
+{"call": 485, "sf_wale": 1.22, "sf_course": 1.22, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 95.63752958900142, "crown": 0.09314667, "max_disp_mm": 169.07153178329756, "max_stress": 4194.12156338}
+{"call": 486, "sf_wale": 1.22, "sf_course": 1.26, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 61.775156048789775, "crown": 0.16827148, "max_disp_mm": 100.6413237098092, "max_stress": 27752.61406168}
+{"call": 487, "sf_wale": 1.22, "sf_course": 1.26, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 57.142987506926566, "crown": 0.17147407, "max_disp_mm": 94.0119882036041, "max_stress": 15957.44955181}
+{"call": 488, "sf_wale": 1.22, "sf_course": 1.26, "cable_scale": 0.94, "valid": false, "reason": "crown out of range / folded"}
+{"call": 489, "sf_wale": 1.22, "sf_course": 1.26, "cable_scale": 0.97, "valid": false, "reason": "crown out of range / folded"}
+{"call": 490, "sf_wale": 1.22, "sf_course": 1.26, "cable_scale": 1.0, "valid": false, "reason": "crown out of range / folded"}
+{"call": 491, "sf_wale": 1.22, "sf_course": 1.3, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 62.50649080748834, "crown": 0.16447366, "max_disp_mm": 102.41809934391138, "max_stress": 26995.57494993}
+{"call": 492, "sf_wale": 1.22, "sf_course": 1.3, "cable_scale": 0.91, "valid": false, "reason": "crown out of range / folded"}
+{"call": 493, "sf_wale": 1.22, "sf_course": 1.3, "cable_scale": 0.94, "valid": false, "reason": "crown out of range / folded"}
+{"call": 494, "sf_wale": 1.22, "sf_course": 1.3, "cable_scale": 0.97, "valid": false, "reason": "crown out of range / folded"}
+{"call": 495, "sf_wale": 1.22, "sf_course": 1.3, "cable_scale": 1.0, "valid": false, "reason": "crown out of range / folded"}
+{"call": 496, "sf_wale": 1.26, "sf_course": 0.9, "cable_scale": 0.88, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 497, "sf_wale": 1.26, "sf_course": 0.9, "cable_scale": 0.91, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 498, "sf_wale": 1.26, "sf_course": 0.9, "cable_scale": 0.94, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 499, "sf_wale": 1.26, "sf_course": 0.9, "cable_scale": 0.97, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 500, "sf_wale": 1.26, "sf_course": 0.9, "cable_scale": 1.0, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 501, "sf_wale": 1.26, "sf_course": 0.94, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 12.719058413250883, "crown": 0.25451794, "max_disp_mm": 70.74590217522285, "max_stress": 70173.96513508}
+{"call": 502, "sf_wale": 1.26, "sf_course": 0.94, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 9.23786492255724, "crown": 0.25451755, "max_disp_mm": 51.06654912091575, "max_stress": 41088.82161081}
+{"call": 503, "sf_wale": 1.26, "sf_course": 0.94, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 6.120926338192927, "crown": 0.25451769, "max_disp_mm": 32.07643882815238, "max_stress": 22096.83093054}
+{"call": 504, "sf_wale": 1.26, "sf_course": 0.94, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 52.99793844769767, "crown": 0.21369291, "max_disp_mm": 118.65605860050721, "max_stress": 19942.47779486}
+{"call": 505, "sf_wale": 1.26, "sf_course": 0.94, "cable_scale": 1.0, "valid": false, "reason": "crown out of range / folded"}
+{"call": 506, "sf_wale": 1.26, "sf_course": 0.98, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 14.081550925308356, "crown": 0.25306237, "max_disp_mm": 71.86890401849818, "max_stress": 39315.24385883}
+{"call": 507, "sf_wale": 1.26, "sf_course": 0.98, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 10.331092073356027, "crown": 0.25306098, "max_disp_mm": 51.8181586965506, "max_stress": 19722.42011311}
+{"call": 508, "sf_wale": 1.26, "sf_course": 0.98, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 7.000548100922426, "crown": 0.25306205, "max_disp_mm": 32.53319887573462, "max_stress": 17160.96854929}
+{"call": 509, "sf_wale": 1.26, "sf_course": 0.98, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 55.19993626017537, "crown": 0.19700195, "max_disp_mm": 111.01503154768096, "max_stress": 16154.60097897}
+{"call": 510, "sf_wale": 1.26, "sf_course": 0.98, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 54.765914778941635, "crown": 0.19720651, "max_disp_mm": 109.05277053842558, "max_stress": 16142.81813144}
+{"call": 511, "sf_wale": 1.26, "sf_course": 1.02, "cable_scale": 0.88, "valid": false, "reason": "crown out of range / folded"}
+{"call": 512, "sf_wale": 1.26, "sf_course": 1.02, "cable_scale": 0.91, "valid": false, "reason": "crown out of range / folded"}
+{"call": 513, "sf_wale": 1.26, "sf_course": 1.02, "cable_scale": 0.94, "valid": false, "reason": "crown out of range / folded"}
+{"call": 514, "sf_wale": 1.26, "sf_course": 1.02, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 59.46633137438825, "crown": 0.18045972, "max_disp_mm": 94.23517276046877, "max_stress": 13181.22207885}
+{"call": 515, "sf_wale": 1.26, "sf_course": 1.02, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 59.46633137438825, "crown": 0.18045972, "max_disp_mm": 94.23517276046877, "max_stress": 13181.22207885}
+{"call": 516, "sf_wale": 1.26, "sf_course": 1.06, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 58.854132576589336, "crown": 0.19529416, "max_disp_mm": 100.29956096645937, "max_stress": 37438.32490267}
+{"call": 517, "sf_wale": 1.26, "sf_course": 1.06, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 53.66638651942483, "crown": 0.19538205, "max_disp_mm": 88.82373290661117, "max_stress": 19618.06554489}
+{"call": 518, "sf_wale": 1.26, "sf_course": 1.06, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 49.190857973729386, "crown": 0.19793861, "max_disp_mm": 80.09466442541353, "max_stress": 14011.71198934}
+{"call": 519, "sf_wale": 1.26, "sf_course": 1.06, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 67.00127229833825, "crown": 0.16240668, "max_disp_mm": 103.53839353374042, "max_stress": 10786.25687933}
+{"call": 520, "sf_wale": 1.26, "sf_course": 1.06, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 67.00127230679578, "crown": 0.16240668, "max_disp_mm": 103.53839353374042, "max_stress": 10786.25687926}
+{"call": 521, "sf_wale": 1.26, "sf_course": 1.1, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 60.15465632100101, "crown": 0.18746776, "max_disp_mm": 100.98885118255974, "max_stress": 34348.52305512}
+{"call": 522, "sf_wale": 1.26, "sf_course": 1.1, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 55.09517293715489, "crown": 0.18820692, "max_disp_mm": 90.34176465359802, "max_stress": 19355.13282353}
+{"call": 523, "sf_wale": 1.26, "sf_course": 1.1, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 82.01558248162806, "crown": 0.13605522, "max_disp_mm": 130.0494179858645, "max_stress": 8804.77810757}
+{"call": 524, "sf_wale": 1.26, "sf_course": 1.1, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 76.5113716472636, "crown": 0.14142248, "max_disp_mm": 122.31072718598847, "max_stress": 8790.45851864}
+{"call": 525, "sf_wale": 1.26, "sf_course": 1.1, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 76.5113716472636, "crown": 0.14142248, "max_disp_mm": 122.31072718598847, "max_stress": 8790.45851864}
+{"call": 526, "sf_wale": 1.26, "sf_course": 1.14, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 61.28996711227524, "crown": 0.18089624, "max_disp_mm": 101.20936777134119, "max_stress": 32142.28305668}
+{"call": 527, "sf_wale": 1.26, "sf_course": 1.14, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 56.35856871553701, "crown": 0.18270317, "max_disp_mm": 91.69017368517792, "max_stress": 19127.79227076}
+{"call": 528, "sf_wale": 1.26, "sf_course": 1.14, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 90.41002891383572, "crown": 0.1152156, "max_disp_mm": 148.38522574967797, "max_stress": 7147.67242743}
+{"call": 529, "sf_wale": 1.26, "sf_course": 1.14, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 86.06616138637571, "crown": 0.11972985, "max_disp_mm": 143.11253920208216, "max_stress": 7126.12908026}
+{"call": 530, "sf_wale": 1.26, "sf_course": 1.14, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 86.06616153772357, "crown": 0.11972985, "max_disp_mm": 143.11253920208216, "max_stress": 7126.12908014}
+{"call": 531, "sf_wale": 1.26, "sf_course": 1.18, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 62.24905863004665, "crown": 0.17525179, "max_disp_mm": 101.43908827424907, "max_stress": 30485.23442461}
+{"call": 532, "sf_wale": 1.26, "sf_course": 1.18, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 57.44424611132272, "crown": 0.17794916, "max_disp_mm": 93.45673856982759, "max_stress": 18640.41662615}
+{"call": 533, "sf_wale": 1.26, "sf_course": 1.18, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 98.22138662454661, "crown": 0.0954515, "max_disp_mm": 167.28227276538422, "max_stress": 6804.85142397}
+{"call": 534, "sf_wale": 1.26, "sf_course": 1.18, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 94.82767906966842, "crown": 0.09909274, "max_disp_mm": 163.4027854633005, "max_stress": 6315.43672678}
+{"call": 535, "sf_wale": 1.26, "sf_course": 1.18, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 94.82767906966842, "crown": 0.09909274, "max_disp_mm": 163.4027854633005, "max_stress": 6315.43672678}
+{"call": 536, "sf_wale": 1.26, "sf_course": 1.22, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 63.055261311085495, "crown": 0.1705848, "max_disp_mm": 102.253033641893, "max_stress": 29203.32100287}
+{"call": 537, "sf_wale": 1.26, "sf_course": 1.22, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 58.37772128716199, "crown": 0.17374635, "max_disp_mm": 95.44828640987278, "max_stress": 17737.27584727}
+{"call": 538, "sf_wale": 1.26, "sf_course": 1.22, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 105.02275198560572, "crown": 0.07821303, "max_disp_mm": 183.96821403145273, "max_stress": 6271.09466529}
+{"call": 539, "sf_wale": 1.26, "sf_course": 1.22, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 102.35231576336008, "crown": 0.08120713, "max_disp_mm": 180.987025210265, "max_stress": 5802.24619209}
+{"call": 540, "sf_wale": 1.26, "sf_course": 1.22, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 102.35231576336008, "crown": 0.08120713, "max_disp_mm": 180.987025210265, "max_stress": 5802.24619209}
+{"call": 541, "sf_wale": 1.26, "sf_course": 1.26, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 63.7376786880889, "crown": 0.16679574, "max_disp_mm": 103.84004403174337, "max_stress": 28197.84217713}
+{"call": 542, "sf_wale": 1.26, "sf_course": 1.26, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 59.19089997811834, "crown": 0.16994669, "max_disp_mm": 97.2109619375989, "max_stress": 16423.96765205}
+{"call": 543, "sf_wale": 1.26, "sf_course": 1.26, "cable_scale": 0.94, "valid": false, "reason": "crown out of range / folded"}
+{"call": 544, "sf_wale": 1.26, "sf_course": 1.26, "cable_scale": 0.97, "valid": false, "reason": "crown out of range / folded"}
+{"call": 545, "sf_wale": 1.26, "sf_course": 1.26, "cable_scale": 1.0, "valid": false, "reason": "crown out of range / folded"}
+{"call": 546, "sf_wale": 1.26, "sf_course": 1.3, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 64.32563957704629, "crown": 0.16329824, "max_disp_mm": 105.26428221948221, "max_stress": 27409.78771596}
+{"call": 547, "sf_wale": 1.26, "sf_course": 1.3, "cable_scale": 0.91, "valid": false, "reason": "crown out of range / folded"}
+{"call": 548, "sf_wale": 1.26, "sf_course": 1.3, "cable_scale": 0.94, "valid": false, "reason": "crown out of range / folded"}
+{"call": 549, "sf_wale": 1.26, "sf_course": 1.3, "cable_scale": 0.97, "valid": false, "reason": "crown out of range / folded"}
+{"call": 550, "sf_wale": 1.26, "sf_course": 1.3, "cable_scale": 1.0, "valid": false, "reason": "crown out of range / folded"}
+{"call": 551, "sf_wale": 1.3, "sf_course": 0.9, "cable_scale": 0.88, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 552, "sf_wale": 1.3, "sf_course": 0.9, "cable_scale": 0.91, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 553, "sf_wale": 1.3, "sf_course": 0.9, "cable_scale": 0.94, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 554, "sf_wale": 1.3, "sf_course": 0.9, "cable_scale": 0.97, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 555, "sf_wale": 1.3, "sf_course": 0.9, "cable_scale": 1.0, "valid": false, "reason": "max_disp 0.00 mm below floor"}
+{"call": 556, "sf_wale": 1.3, "sf_course": 0.94, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 12.546721655691142, "crown": 0.25424758, "max_disp_mm": 70.1605633584288, "max_stress": 48438.02140423}
+{"call": 557, "sf_wale": 1.3, "sf_course": 0.94, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 9.188628095003692, "crown": 0.25424739, "max_disp_mm": 50.61666560231324, "max_stress": 28919.9976429}
+{"call": 558, "sf_wale": 1.3, "sf_course": 0.94, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 6.237441505064827, "crown": 0.25424765, "max_disp_mm": 31.765937326102943, "max_stress": 28900.67961886}
+{"call": 559, "sf_wale": 1.3, "sf_course": 0.94, "cable_scale": 0.97, "valid": false, "reason": "crown out of range / folded"}
+{"call": 560, "sf_wale": 1.3, "sf_course": 0.94, "cable_scale": 1.0, "valid": false, "reason": "crown out of range / folded"}
+{"call": 561, "sf_wale": 1.3, "sf_course": 0.98, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 14.122969485884333, "crown": 0.25254668, "max_disp_mm": 71.46304461847818, "max_stress": 40083.25112059}
+{"call": 562, "sf_wale": 1.3, "sf_course": 0.98, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 10.477269863394822, "crown": 0.252546, "max_disp_mm": 51.48369640698016, "max_stress": 22333.36939274}
+{"call": 563, "sf_wale": 1.3, "sf_course": 0.98, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 7.299939131902497, "crown": 0.25254773, "max_disp_mm": 32.276149282891545, "max_stress": 22301.75361679}
+{"call": 564, "sf_wale": 1.3, "sf_course": 0.98, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 66.63533423039081, "crown": 0.18264045, "max_disp_mm": 125.95672470706911, "max_stress": 20511.77195753}
+{"call": 565, "sf_wale": 1.3, "sf_course": 0.98, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 66.51610566324389, "crown": 0.18266187, "max_disp_mm": 125.25661080563252, "max_stress": 20507.25091531}
+{"call": 566, "sf_wale": 1.3, "sf_course": 1.02, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 36.00303421291076, "crown": 0.2262002, "max_disp_mm": 89.7460734197959, "max_stress": 63213.36176818}
+{"call": 567, "sf_wale": 1.3, "sf_course": 1.02, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 25.085747284809123, "crown": 0.23242988, "max_disp_mm": 92.4747617777007, "max_stress": 197433.63931419}
+{"call": 568, "sf_wale": 1.3, "sf_course": 1.02, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 75.62578034165038, "crown": 0.16340758, "max_disp_mm": 121.36867479846892, "max_stress": 16910.10584645}
+{"call": 569, "sf_wale": 1.3, "sf_course": 1.02, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 71.00326650111836, "crown": 0.16592124, "max_disp_mm": 110.33670590766835, "max_stress": 16839.45703563}
+{"call": 570, "sf_wale": 1.3, "sf_course": 1.02, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 71.00326650111836, "crown": 0.16592124, "max_disp_mm": 110.33670590766835, "max_stress": 16839.45703565}
+{"call": 571, "sf_wale": 1.3, "sf_course": 1.06, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 61.5845025621667, "crown": 0.19164814, "max_disp_mm": 104.57544362257228, "max_stress": 37147.14571171}
+{"call": 572, "sf_wale": 1.3, "sf_course": 1.06, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 56.663743554966736, "crown": 0.19180203, "max_disp_mm": 93.76667477012342, "max_stress": 20906.10588698}
+{"call": 573, "sf_wale": 1.3, "sf_course": 1.06, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 52.42422790720374, "crown": 0.19487215, "max_disp_mm": 86.09437019182496, "max_stress": 15309.10751412}
+{"call": 574, "sf_wale": 1.3, "sf_course": 1.06, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 77.69619936772173, "crown": 0.14776808, "max_disp_mm": 119.78815037831164, "max_stress": 13900.59590458}
+{"call": 575, "sf_wale": 1.3, "sf_course": 1.06, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 77.69619936772173, "crown": 0.14776808, "max_disp_mm": 119.78815037831164, "max_stress": 13900.59590458}
+{"call": 576, "sf_wale": 1.3, "sf_course": 1.1, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 62.67294910186278, "crown": 0.18433124, "max_disp_mm": 105.10160595632826, "max_stress": 34336.68159715}
+{"call": 577, "sf_wale": 1.3, "sf_course": 1.1, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 57.83707083972197, "crown": 0.18558156, "max_disp_mm": 95.25281825117196, "max_stress": 20788.59106501}
+{"call": 578, "sf_wale": 1.3, "sf_course": 1.1, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 90.0524666800905, "crown": 0.1231698, "max_disp_mm": 143.13056897375523, "max_stress": 11506.63577357}
+{"call": 579, "sf_wale": 1.3, "sf_course": 1.1, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 86.13146275224209, "crown": 0.12708483, "max_disp_mm": 137.315612056528, "max_stress": 11483.8357286}
+{"call": 580, "sf_wale": 1.3, "sf_course": 1.1, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 86.13146275224209, "crown": 0.12708483, "max_disp_mm": 137.315612056528, "max_stress": 11483.8357286}
+{"call": 581, "sf_wale": 1.3, "sf_course": 1.14, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 63.63116448810016, "crown": 0.17818127, "max_disp_mm": 105.1945037774317, "max_stress": 32295.49473966}
+{"call": 582, "sf_wale": 1.3, "sf_course": 1.14, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 58.886866154528605, "crown": 0.18039776, "max_disp_mm": 96.3020739230438, "max_stress": 20511.58468576}
+{"call": 583, "sf_wale": 1.3, "sf_course": 1.14, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 97.5998081435202, "crown": 0.10256866, "max_disp_mm": 161.06429958296687, "max_stress": 9506.05376219}
+{"call": 584, "sf_wale": 1.3, "sf_course": 1.14, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 94.48675515321983, "crown": 0.10575219, "max_disp_mm": 157.28988570430107, "max_stress": 9482.78080255}
+{"call": 585, "sf_wale": 1.3, "sf_course": 1.14, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 94.48675515321983, "crown": 0.10575219, "max_disp_mm": 157.28988570430107, "max_stress": 9482.78080255}
+{"call": 586, "sf_wale": 1.3, "sf_course": 1.18, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 64.43590399728402, "crown": 0.17289828, "max_disp_mm": 105.54862547384687, "max_stress": 30748.47959083}
+{"call": 587, "sf_wale": 1.3, "sf_course": 1.18, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 59.785931378103015, "crown": 0.17592487, "max_disp_mm": 97.49187508333706, "max_stress": 20308.1635902}
+{"call": 588, "sf_wale": 1.3, "sf_course": 1.18, "cable_scale": 0.94, "valid": true, "reason": "OK", "rmse_mm": 104.3937219916279, "crown": 0.08380511, "max_disp_mm": 178.8157689891574, "max_stress": 8031.20640186}
+{"call": 589, "sf_wale": 1.3, "sf_course": 1.18, "cable_scale": 0.97, "valid": true, "reason": "OK", "rmse_mm": 101.96856053221852, "crown": 0.086484, "max_disp_mm": 176.15319258678312, "max_stress": 7811.50169247}
+{"call": 590, "sf_wale": 1.3, "sf_course": 1.18, "cable_scale": 1.0, "valid": true, "reason": "OK", "rmse_mm": 101.96856053221852, "crown": 0.086484, "max_disp_mm": 176.15319258678312, "max_stress": 7811.50169247}
+{"call": 591, "sf_wale": 1.3, "sf_course": 1.22, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 65.10359380897593, "crown": 0.16887149, "max_disp_mm": 105.79582585442682, "max_stress": 29545.11649982}
+{"call": 592, "sf_wale": 1.3, "sf_course": 1.22, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 60.55119821516479, "crown": 0.17198294, "max_disp_mm": 99.1383919781, "max_stress": 19785.47161011}
+{"call": 593, "sf_wale": 1.3, "sf_course": 1.22, "cable_scale": 0.94, "valid": false, "reason": "crown out of range / folded"}
+{"call": 594, "sf_wale": 1.3, "sf_course": 1.22, "cable_scale": 0.97, "valid": false, "reason": "crown out of range / folded"}
+{"call": 595, "sf_wale": 1.3, "sf_course": 1.22, "cable_scale": 1.0, "valid": false, "reason": "crown out of range / folded"}
+{"call": 596, "sf_wale": 1.3, "sf_course": 1.26, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 65.65832242547695, "crown": 0.16533497, "max_disp_mm": 107.07895341652207, "max_stress": 28597.08332523}
+{"call": 597, "sf_wale": 1.3, "sf_course": 1.26, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 61.20819279072987, "crown": 0.1684361, "max_disp_mm": 100.57013196275223, "max_stress": 18856.26720734}
+{"call": 598, "sf_wale": 1.3, "sf_course": 1.26, "cable_scale": 0.94, "valid": false, "reason": "crown out of range / folded"}
+{"call": 599, "sf_wale": 1.3, "sf_course": 1.26, "cable_scale": 0.97, "valid": false, "reason": "crown out of range / folded"}
+{"call": 600, "sf_wale": 1.3, "sf_course": 1.26, "cable_scale": 1.0, "valid": false, "reason": "crown out of range / folded"}
+{"call": 601, "sf_wale": 1.3, "sf_course": 1.3, "cable_scale": 0.88, "valid": true, "reason": "OK", "rmse_mm": 66.12459194540811, "crown": 0.16208981, "max_disp_mm": 108.20389316583486, "max_stress": 27850.26417686}
+{"call": 602, "sf_wale": 1.3, "sf_course": 1.3, "cable_scale": 0.91, "valid": true, "reason": "OK", "rmse_mm": 61.783252711402355, "crown": 0.16517882, "max_disp_mm": 101.85115058844895, "max_stress": 17523.65887536}
+{"call": 603, "sf_wale": 1.3, "sf_course": 1.3, "cable_scale": 0.94, "valid": false, "reason": "crown out of range / folded"}
+{"call": 604, "sf_wale": 1.3, "sf_course": 1.3, "cable_scale": 0.97, "valid": false, "reason": "crown out of range / folded"}
+{"call": 605, "sf_wale": 1.3, "sf_course": 1.3, "cable_scale": 1.0, "valid": false, "reason": "crown out of range / folded"}
