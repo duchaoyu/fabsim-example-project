@@ -1,0 +1,43 @@
+Mesh: 341 vertices, 634 faces
+Cable: 19 vertices, 18 segments, EA=549500 N
+Boundary vertices: 46
+
+--- Initial simulation (sf1=1.043, sf2=1.043) ---
+  [cold start] ramping pressure to 1000 Pa...
+Line search failed
+  [cold start] done.
+Initial mean vertex distance: 0.0509775 m
+Initial max  vertex distance: 0.104582 m
+
+  wrote FDM/optimisation/2part_span/D_4p2_initial.off
+--- L-BFGS optimisation ---
+[iter 0]  sf1=1.04300  sf2=1.04300  loss=0.050977  |grad|=0.772236  (total Newton solves: 4)
+LIMITED-MEMORY BFGS (LBFGS)
+Iter         Fval    Step size   Optimality
+[iter 1]  sf1=1.11361  sf2=1.11964  loss=0.043181  |grad|=0.814254  (total Newton solves: 12)
+   1    4.318e-02    1.250e-01    8.143e-01
+[iter 2]  sf1=1.07671  sf2=1.07970  loss=0.026393  |grad|=0.202277  (total Newton solves: 16)
+   2    2.639e-02    1.000e+00    2.023e-01
+[iter 3]  sf1=1.08507  sf2=1.08613  loss=0.025249  |grad|=0.048584  (total Newton solves: 20)
+   3    2.525e-02    1.000e+00    4.858e-02
+[iter 4]  sf1=1.08830  sf2=1.08519  loss=0.025120  |grad|=0.045478  (total Newton solves: 24)
+   4    2.512e-02    1.000e+00    4.548e-02
+[iter 5]  sf1=1.10272  sf2=1.07635  loss=0.024647  |grad|=0.083699  (total Newton solves: 28)
+   5    2.465e-02    1.000e+00    8.370e-02
+[iter 6]  sf1=1.12372  sf2=1.05905  loss=0.024085  |grad|=0.102821  (total Newton solves: 32)
+   6    2.409e-02    1.000e+00    1.028e-01
+[iter 7]  sf1=1.14113  sf2=1.04010  loss=0.023681  |grad|=0.036492  (total Newton solves: 36)
+   7    2.368e-02    1.000e+00    3.649e-02
+[iter 8]  sf1=1.14201  sf2=1.03743  loss=0.023654  |grad|=0.003067  (total Newton solves: 40)
+   8    2.365e-02    1.000e+00    3.067e-03
+[iter 9]  sf1=1.14163  sf2=1.03758  loss=0.023654  |grad|=0.000095  (total Newton solves: 44)
+   9    2.365e-02    1.000e+00    9.484e-05
+
+--- Optimal parameters ---
+  sf1 (wale)   = 1.141634
+  sf2 (course) = 1.037583
+  mean vertex distance: 0.023654 m  (was 0.050977 m, 53.60% improvement)
+  max  vertex distance: 0.071 m  (was 0.1 m)
+  wrote FDM/optimisation/2part_span/D_4p2_result.off
+
+Total Newton solves: 45

@@ -1,0 +1,15 @@
+{
+  "strategy": "D",
+  "scale": 1,
+  "span_m": 1.2,
+  "cable_EA": 157000,
+  "sf_wale": 1.041923885,
+  "sf_course": 1.012066722,
+  "mean_vertex_dist_m": 0.003715497598,
+  "max_vertex_dist_m": 0.01270736743,
+  "lbfgs_iterations": 7,
+  "gradient_norm": 0.0006032131798,
+  "converged": true,
+  "stalled": true,
+  "n_solves": 37
+}

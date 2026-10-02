@@ -36,6 +36,7 @@
 #include <array>
 #include <chrono>
 #include <cmath>
+#include <cstdlib>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -280,6 +281,21 @@ void takeScreenshot(const fsim::Mat3<double>& V, const std::string& label)
 
 // ── L-BFGS objective / gradient ───────────────────────────────────────────────
 int lbfgs_iter = 0;
+
+// ── Stall stop ────────────────────────────────────────────────────────────────
+// The finite-difference gradient has a noise floor (~5e-4 at 1.2 m) above the
+// L-BFGS threshold, so once at the optimum the line search keeps failing and the
+// solver spends its remaining iterations, some on Newton solves that run to their
+// iteration limit, without moving.  Stop when an iteration leaves every log
+// stretch factor unchanged to 1e-5; this is scale-free and counts as converged.
+struct Stalled { VectorXd phi; };
+VectorXd prev_phi;
+void checkStall(const VectorXd& phi)
+{
+  if (prev_phi.size() == phi.size() && (phi - prev_phi).cwiseAbs().maxCoeff() < 1e-5)
+    throw Stalled{phi};
+  prev_phi = phi;
+}
 std::chrono::steady_clock::time_point iter_start;
 
 // phi = (log_sf1_shared, log_sf2_shared, log_sf1_R2, log_sf2_R2)
@@ -300,6 +316,7 @@ double objective(const VectorXd& phi)
 
 VectorXd gradient(const VectorXd& phi)
 {
+  checkStall(phi);
   iter_start = std::chrono::steady_clock::now();
   const double eps = 1e-4;
   double f0 = fitLoss(simulateImpl(sf1FromPhi(phi), sf2FromPhi(phi), true));
@@ -412,13 +429,20 @@ int reassignBoundaryFaces(const std::array<double,3>& sf1,
 #include "save_mesh.h"
 
 // ── Main ──────────────────────────────────────────────────────────────────────
-int main()
+// Optional arguments, for the span study (Section 7.5.2):
+//   best_fit_stretch_factors_3region_adaptive_cable [scale] [out_prefix] [max_outer]
+// scale multiplies the geometry (span 1.2 m * scale) and the cable EA; pressure,
+// material, seeds and BFS radius (in hops, so scale-free) stay fixed.  out_prefix
+// defaults to out/sf_3region_adaptive_cable, and a <out_prefix>_result.json is
+// written.  No arguments reproduces the Section 7.4.1 run exactly.
+int main(int argc, char** argv)
 {
   // ── Configuration ──────────────────────────────────────────────────────────
   const std::string folder      = "data/2part/";
   const std::string mesh_ref    = folder + "2part_opt_simu_m.off";
   const std::string mesh_target = folder + "2part_opt_simu_m.off";
-  const std::string out_dir     = "out/";
+  const double      scale       = argc > 1 ? std::atof(argv[1]) : 1.0;
+  const std::string out_prefix  = argc > 2 ? argv[2] : "out/sf_3region_adaptive_cable";
 
   E1 = 12500.0; E2 = 5000.0; nu = 0.198; thickness = 1.0; mass = 0.001; pressure = 1000.0;  // E1 wale, E2 course: stitch structure I (Section 7.2)
 
@@ -430,13 +454,16 @@ int main()
   const int seed_face_0  = 68;
   const int seed_face_1  = 577;
   const int bfs_radius   = 10;
-  const int max_outer    = 6;       // max alternating iterations
+  const int max_outer    = argc > 3 ? std::atoi(argv[3]) : 6;   // max alternating iterations
 
   const double sf1_init = 1.04192, sf2_init = 1.01207;   // strategy D optimum (2026-10-01 rerun: pressure fix, structure I)
   // ───────────────────────────────────────────────────────────────────────────
 
   fsim::readOFF(mesh_ref,    V0,      F);
   fsim::readOFF(mesh_target, Vtarget, F);
+  V0 *= scale;
+  Vtarget *= scale;
+  cable_EA *= scale;   // as the B5 multiscale study: cable EA proportional to span
   if (V0.rows() != Vtarget.rows()) {
     std::cerr << "Error: mesh vertex count mismatch.\n"; return 1;
   }
@@ -453,7 +480,7 @@ int main()
   std::cout << "Computing initial 3-region BFS (seeds " << seed_face_0
             << ", " << seed_face_1 << ", radius=" << bfs_radius << ")...\n";
   face_region = computeRegions3BFS(F, seed_face_0, seed_face_1, bfs_radius);
-  saveRegions(out_dir + "sf_3region_adaptive_cable_faces.txt", face_region);
+  saveRegions(out_prefix + "_faces.txt", face_region);
 
   auto adj = buildFaceAdj(F);
 
@@ -466,10 +493,10 @@ int main()
   double max_init  = (Vsim_init - Vtarget).rowwise().norm().maxCoeff();
   std::cout << "Initial mean distance: " << loss_init << " m\n";
   std::cout << "Initial max  distance: " << max_init  << " m\n\n";
-  saveMesh(out_dir + "sf_3region_adaptive_cable_initial.off", Vsim_init, F);
+  saveMesh(out_prefix + "_initial.off", Vsim_init, F);
 
   // ── Polyscope init ─────────────────────────────────────────────────────────
-  screenshots_dir = out_dir + "sf_3region_adaptive_cable_screenshots/";
+  screenshots_dir = out_prefix + "_screenshots/";
   std::system(("mkdir -p \"" + screenshots_dir + "\"").c_str());
   polyscope::init(headless ? "openGL_mock" : "openGL3_glfw");
   polyscope::options::groundPlaneMode = polyscope::GroundPlaneMode::None;
@@ -487,6 +514,7 @@ int main()
 
   VectorXd phi_opt = phi;
   double loss_final = loss_init;
+  int n_outer_done = 0, last_swapped = -1;
 
   auto t_total = std::chrono::steady_clock::now();
 
@@ -503,7 +531,10 @@ int main()
     lbfgs.options.threshold       = 1e-3;
     lbfgs.options.iteration_limit = 10;
 
-    phi_opt = lbfgs.solve(objective, gradient, phi_opt);
+    prev_phi.resize(0);
+    try { phi_opt = lbfgs.solve(objective, gradient, phi_opt); }
+    catch (const Stalled& st) { phi_opt = st.phi;
+                                std::cout << "  -> inner L-BFGS stalled, stopping it.\n"; }
     std::array<double,3> sf1_opt = sf1FromPhi(phi_opt);
     std::array<double,3> sf2_opt = sf2FromPhi(phi_opt);
 
@@ -519,9 +550,11 @@ int main()
     // ── (B) Boundary face reassignment ──────────────────────────────────────
     std::cout << "--- (B) Boundary face reassignment ---\n";
     int n_swapped = reassignBoundaryFaces(sf1_opt, sf2_opt, adj);
+    n_outer_done = outer + 1;
+    last_swapped = n_swapped;
 
     // Save updated regions file
-    saveRegions(out_dir + "sf_3region_adaptive_cable_faces.txt", face_region);
+    saveRegions(out_prefix + "_faces.txt", face_region);
 
     // Update warm_start for new region assignment + current sf
     Vsim_cur = simulateImpl(sf1_opt, sf2_opt, true);
@@ -565,7 +598,27 @@ int main()
             << "\nTotal time: " << total_s << " s\n";
   std::cout << "Total Newton solves: " << sim_count << "\n";
 
-  saveMesh(out_dir + "sf_3region_adaptive_cable_result.off", Vsim_opt, F);
+  saveMesh(out_prefix + "_result.off", Vsim_opt, F);
+  {
+    std::ofstream js(out_prefix + "_result.json");
+    js << std::setprecision(10)
+       << "{\n  \"strategy\": \"E\",\n  \"scale\": " << scale
+       << ",\n  \"span_m\": " << 1.2 * scale
+       << ",\n  \"cable_EA\": " << cable_EA
+       << ",\n  \"sf_wale\": [" << sf1_opt[0] << ", " << sf1_opt[1] << ", " << sf1_opt[2] << "]"
+       << ",\n  \"sf_course\": [" << sf2_opt[0] << ", " << sf2_opt[1] << ", " << sf2_opt[2] << "]"
+       << ",\n  \"region_faces\": ["
+       << std::count(face_region.begin(), face_region.end(), 0) << ", "
+       << std::count(face_region.begin(), face_region.end(), 1) << ", "
+       << std::count(face_region.begin(), face_region.end(), 2) << "]"
+       << ",\n  \"mean_vertex_dist_m\": " << loss_opt
+       << ",\n  \"max_vertex_dist_m\": " << max_opt
+       << ",\n  \"outer_iterations\": " << n_outer_done
+       << ",\n  \"last_swapped\": " << last_swapped
+       << ",\n  \"converged\": " << (last_swapped == 0 ? "true" : "false")
+       << ",\n  \"wall_s\": " << total_s
+       << ",\n  \"n_solves\": " << sim_count << "\n}\n";
+  }
   takeScreenshot(Vsim_opt, "final");
   std::cout << "  screenshots saved to: " << screenshots_dir << "\n";
 

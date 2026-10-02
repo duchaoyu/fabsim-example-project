@@ -18,6 +18,7 @@
 
 #include <Eigen/Dense>
 #include <cmath>
+#include <cstdlib>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -142,6 +143,21 @@ double fitLoss(const fsim::Mat3<double>& Vsim)
 
 int lbfgs_iter = 0;
 
+// ── Stall stop ────────────────────────────────────────────────────────────────
+// The finite-difference gradient has a noise floor (~5e-4 at 1.2 m) above the
+// L-BFGS threshold, so once at the optimum the line search keeps failing and the
+// solver spends its remaining iterations, some on Newton solves that run to their
+// iteration limit, without moving.  Stop when an iteration leaves every log
+// stretch factor unchanged to 1e-5; this is scale-free and counts as converged.
+struct Stalled { VectorXd phi; };
+VectorXd prev_phi;
+void checkStall(const VectorXd& phi)
+{
+  if (prev_phi.size() == phi.size() && (phi - prev_phi).cwiseAbs().maxCoeff() < 1e-5)
+    throw Stalled{phi};
+  prev_phi = phi;
+}
+
 double objective(const VectorXd& phi)
 {
   return fitLoss(simulateImpl(std::exp(phi(0)), std::exp(phi(1)), /*update_warm=*/false));
@@ -149,6 +165,7 @@ double objective(const VectorXd& phi)
 
 VectorXd gradient(const VectorXd& phi)
 {
+  checkStall(phi);
   const double eps = 1e-4;
   double f0 = fitLoss(simulateImpl(std::exp(phi(0)), std::exp(phi(1)), /*update_warm=*/true));
 
@@ -171,13 +188,20 @@ VectorXd gradient(const VectorXd& phi)
 #include "save_mesh.h"
 
 // ── Main ──────────────────────────────────────────────────────────────────────
-int main()
+// Optional arguments, for the span study (Section 7.5.2):
+//   best_fit_stretch_factors_cable [scale] [out_prefix]
+// scale multiplies the geometry (span 1.2 m * scale) and the cable EA; pressure
+// and material stay fixed.  out_prefix defaults to out/sf_cable_opt, and a
+// <out_prefix>_result.json is written alongside the meshes.  No arguments
+// reproduces the Section 7.4.1 run exactly.
+int main(int argc, char** argv)
 {
   // ── Configuration ──────────────────────────────────────────────────────────
   const std::string folder      = "data/2part/";
   const std::string mesh_ref    = folder + "2part_opt_simu_m.off";
   const std::string mesh_target = folder + "2part_opt_simu_m.off";   // change to target!
-  const std::string out_dir     = "out/";
+  const double      scale       = argc > 1 ? std::atof(argv[1]) : 1.0;
+  const std::string out_prefix  = argc > 2 ? argv[2] : "out/sf_cable_opt";
 
   E1        = 12500.0;    // N/m, wale  (stitch structure I, as Section 7.2)
   E2        = 5000.0;   // N/m, course
@@ -198,6 +222,9 @@ int main()
 
   fsim::readOFF(mesh_ref,    V0,      F);
   fsim::readOFF(mesh_target, Vtarget, F);
+  V0 *= scale;
+  Vtarget *= scale;
+  cable_EA *= scale;   // as the B5 multiscale study: cable EA proportional to span
 
   if (V0.rows() != Vtarget.rows()) {
     std::cerr << "Error: reference and target meshes have different vertex counts.\n";
@@ -222,7 +249,7 @@ int main()
   double max_init  = (Vsim_init - Vtarget).rowwise().norm().maxCoeff();
   std::cout << "Initial mean vertex distance: " << loss_init << " m\n";
   std::cout << "Initial max  vertex distance: " << max_init  << " m\n\n";
-  saveMesh(out_dir + "sf_cable_opt_initial.off", Vsim_init, F);
+  saveMesh(out_prefix + "_initial.off", Vsim_init, F);
 
   // ── L-BFGS optimisation ────────────────────────────────────────────────────
   VectorXd phi(2);
@@ -234,7 +261,11 @@ int main()
   lbfgs.options.threshold       = 1e-4;
   lbfgs.options.iteration_limit = 30;
 
-  VectorXd phi_opt = lbfgs.solve(objective, gradient, phi);
+  VectorXd phi_opt;
+  bool stalled = false;
+  try { phi_opt = lbfgs.solve(objective, gradient, phi); }
+  catch (const Stalled& st) { phi_opt = st.phi; stalled = true;
+                              std::cout << "  -> stalled at the optimum, stopping.\n"; }
 
   double sf1_opt = std::exp(phi_opt(0));
   double sf2_opt = std::exp(phi_opt(1));
@@ -255,7 +286,24 @@ int main()
             << "  max  vertex distance: " << max_opt << " m"
             << "  (was " << max_init << " m)\n";
 
-  saveMesh(out_dir + "sf_cable_opt_result.off", Vsim_opt, F);
+  saveMesh(out_prefix + "_result.off", Vsim_opt, F);
+
+  {
+    std::ofstream js(out_prefix + "_result.json");
+    js << std::setprecision(10)
+       << "{\n  \"strategy\": \"D\",\n  \"scale\": " << scale
+       << ",\n  \"span_m\": " << 1.2 * scale
+       << ",\n  \"cable_EA\": " << cable_EA
+       << ",\n  \"sf_wale\": " << sf1_opt << ",\n  \"sf_course\": " << sf2_opt
+       << ",\n  \"mean_vertex_dist_m\": " << loss_opt
+       << ",\n  \"max_vertex_dist_m\": " << max_opt
+       << ",\n  \"lbfgs_iterations\": " << lbfgs.iteration_count()
+       << ",\n  \"gradient_norm\": " << lbfgs.gradient_norm()
+       << ",\n  \"converged\": "
+       << (stalled || lbfgs.iteration_count() < lbfgs.options.iteration_limit ? "true" : "false")
+       << ",\n  \"stalled\": " << (stalled ? "true" : "false")
+       << ",\n  \"n_solves\": " << sim_count << "\n}\n";
+  }
 
   std::cout << "\nTotal Newton solves: " << sim_count << "\n";
   return 0;

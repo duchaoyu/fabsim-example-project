@@ -1,0 +1,16 @@
+{
+  "strategy": "E",
+  "scale": 1,
+  "span_m": 1.2,
+  "cable_EA": 157000,
+  "sf_wale": [1.014496316, 1.014496316, 1.050976506],
+  "sf_course": [1.001869308, 1.001869308, 1.005675104],
+  "region_faces": [164, 64, 406],
+  "mean_vertex_dist_m": 0.003374342764,
+  "max_vertex_dist_m": 0.01430972579,
+  "outer_iterations": 11,
+  "last_swapped": 0,
+  "converged": true,
+  "wall_s": 549.0111661,
+  "n_solves": 596
+}

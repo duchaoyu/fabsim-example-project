@@ -1,0 +1,38 @@
+Mesh: 341 vertices, 634 faces
+Cable: 19 vertices, 18 segments, EA=157000 N
+Boundary vertices: 46
+
+--- Initial simulation (sf1=1.043, sf2=1.043) ---
+  [cold start] ramping pressure to 1000 Pa...
+  [cold start] done.
+Initial mean vertex distance: 0.00775607 m
+Initial max  vertex distance: 0.0191736 m
+
+  wrote FDM/optimisation/2part_span/D_1p2_initial.off
+--- L-BFGS optimisation ---
+[iter 0]  sf1=1.04300  sf2=1.04300  loss=0.007756  |grad|=0.281960  (total Newton solves: 4)
+LIMITED-MEMORY BFGS (LBFGS)
+Iter         Fval    Step size   Optimality
+Regularization failed
+[iter 1]  sf1=1.01789  sf2=1.01678  loss=0.004865  |grad|=0.139579  (total Newton solves: 12)
+   1    4.865e-03    1.250e-01    1.396e-01
+[iter 2]  sf1=1.02663  sf2=1.02484  loss=0.003900  |grad|=0.023383  (total Newton solves: 16)
+   2    3.900e-03    1.000e+00    2.338e-02
+[iter 3]  sf1=1.02914  sf2=1.02481  loss=0.003862  |grad|=0.017471  (total Newton solves: 20)
+   3    3.862e-03    1.000e+00    1.747e-02
+[iter 4]  sf1=1.03193  sf2=1.02297  loss=0.003821  |grad|=0.020291  (total Newton solves: 24)
+   4    3.821e-03    1.000e+00    2.029e-02
+[iter 5]  sf1=1.04121  sf2=1.01439  loss=0.003728  |grad|=0.018786  (total Newton solves: 28)
+   5    3.728e-03    1.000e+00    1.879e-02
+[iter 6]  sf1=1.04192  sf2=1.01207  loss=0.003715  |grad|=0.000603  (total Newton solves: 32)
+   6    3.715e-03    1.000e+00    6.032e-04
+  -> stalled at the optimum, stopping.
+
+--- Optimal parameters ---
+  sf1 (wale)   = 1.041924
+  sf2 (course) = 1.012067
+  mean vertex distance: 0.003715 m  (was 0.007756 m, 52.10% improvement)
+  max  vertex distance: 0.013 m  (was 0.019 m)
+  wrote FDM/optimisation/2part_span/D_1p2_result.off
+
+Total Newton solves: 37

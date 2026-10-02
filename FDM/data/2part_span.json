@@ -1,0 +1,495 @@
+{
+ "exponents": {
+  "D": {
+   "mean": 1.4355756970067821,
+   "max": 1.3410213604736354
+  },
+  "E": {
+   "mean": 1.42036322362496,
+   "max": 1.2025055252259331
+  }
+ },
+ "runs": {
+  "D": [
+   {
+    "strategy": "D",
+    "scale": 0.5,
+    "span_m": 0.6,
+    "cable_EA": 78500,
+    "sf_wale": 1.018822116,
+    "sf_course": 1.008397545,
+    "mean_vertex_dist_m": 0.001299780429,
+    "max_vertex_dist_m": 0.005411516041,
+    "lbfgs_iterations": 9,
+    "gradient_norm": 1.164473264e-05,
+    "converged": true,
+    "stalled": false,
+    "n_solves": 41,
+    "D": 0.6,
+    "mean_mm": 1.0463821396714554,
+    "max_mm": 4.822261533909079,
+    "mean_pct": 0.1743970232785759,
+    "max_pct": 0.8037102556515132
+   },
+   {
+    "strategy": "D",
+    "scale": 0.75,
+    "span_m": 0.9,
+    "cable_EA": 117750,
+    "sf_wale": 1.03038984,
+    "sf_course": 1.010270978,
+    "mean_vertex_dist_m": 0.002406576597,
+    "max_vertex_dist_m": 0.008982221853,
+    "lbfgs_iterations": 7,
+    "gradient_norm": 5.948991919e-05,
+    "converged": true,
+    "stalled": false,
+    "n_solves": 32,
+    "D": 0.9,
+    "mean_mm": 1.9183913734682891,
+    "max_mm": 7.996946085765405,
+    "mean_pct": 0.2131545970520321,
+    "max_pct": 0.888549565085045
+   },
+   {
+    "strategy": "D",
+    "scale": 1,
+    "span_m": 1.2,
+    "cable_EA": 157000,
+    "sf_wale": 1.041923885,
+    "sf_course": 1.012066722,
+    "mean_vertex_dist_m": 0.003715497598,
+    "max_vertex_dist_m": 0.01270736743,
+    "lbfgs_iterations": 7,
+    "gradient_norm": 0.0006032131798,
+    "converged": true,
+    "stalled": true,
+    "n_solves": 37,
+    "D": 1.2,
+    "mean_mm": 2.9306495651830766,
+    "max_mm": 11.29983325041663,
+    "mean_pct": 0.24422079709858974,
+    "max_pct": 0.9416527708680524
+   },
+   {
+    "strategy": "D",
+    "scale": 1.25,
+    "span_m": 1.5,
+    "cable_EA": 196250,
+    "sf_wale": 1.053256783,
+    "sf_course": 1.013828585,
+    "mean_vertex_dist_m": 0.005196146017,
+    "max_vertex_dist_m": 0.01652306014,
+    "lbfgs_iterations": 8,
+    "gradient_norm": 9.531472158e-05,
+    "converged": true,
+    "stalled": false,
+    "n_solves": 38,
+    "D": 1.5,
+    "mean_mm": 4.058988028186638,
+    "max_mm": 14.671397099664613,
+    "mean_pct": 0.2705992018791092,
+    "max_pct": 0.9780931399776408
+   },
+   {
+    "strategy": "D",
+    "scale": 1.5,
+    "span_m": 1.8,
+    "cable_EA": 235500,
+    "sf_wale": 1.064293364,
+    "sf_course": 1.015771111,
+    "mean_vertex_dist_m": 0.006826425539,
+    "max_vertex_dist_m": 0.02040029407,
+    "lbfgs_iterations": 6,
+    "gradient_norm": 2.359583102e-05,
+    "converged": true,
+    "stalled": false,
+    "n_solves": 30,
+    "D": 1.8,
+    "mean_mm": 5.285397190537916,
+    "max_mm": 18.083976180156426,
+    "mean_pct": 0.2936331772521064,
+    "max_pct": 1.0046653433420236
+   },
+   {
+    "strategy": "D",
+    "scale": 2,
+    "span_m": 2.4,
+    "cable_EA": 314000,
+    "sf_wale": 1.085486551,
+    "sf_course": 1.020137578,
+    "mean_vertex_dist_m": 0.01046928855,
+    "max_vertex_dist_m": 0.02977740081,
+    "lbfgs_iterations": 9,
+    "gradient_norm": 0.0001586401373,
+    "converged": true,
+    "stalled": true,
+    "n_solves": 58,
+    "D": 2.4,
+    "mean_mm": 7.98335520410889,
+    "max_mm": 26.960177291618745,
+    "mean_pct": 0.3326398001712038,
+    "max_pct": 1.1233407204841144
+   },
+   {
+    "strategy": "D",
+    "scale": 2.5,
+    "span_m": 3,
+    "cable_EA": 392500,
+    "sf_wale": 1.105389363,
+    "sf_course": 1.025249619,
+    "mean_vertex_dist_m": 0.01453700793,
+    "max_vertex_dist_m": 0.04229458428,
+    "lbfgs_iterations": 10,
+    "gradient_norm": 0.0001477683868,
+    "converged": true,
+    "stalled": true,
+    "n_solves": 64,
+    "D": 3,
+    "mean_mm": 10.950484082477939,
+    "max_mm": 38.080720181738734,
+    "mean_pct": 0.36501613608259803,
+    "max_pct": 1.2693573393912911
+   },
+   {
+    "strategy": "D",
+    "scale": 3.5,
+    "span_m": 4.2,
+    "cable_EA": 549500,
+    "sf_wale": 1.141633934,
+    "sf_course": 1.037583052,
+    "mean_vertex_dist_m": 0.0236542032,
+    "max_vertex_dist_m": 0.07072178449,
+    "lbfgs_iterations": 10,
+    "gradient_norm": 9.484103319e-05,
+    "converged": true,
+    "stalled": false,
+    "n_solves": 45,
+    "D": 4.2,
+    "mean_mm": 17.511492526705695,
+    "max_mm": 63.23485224725385,
+    "mean_pct": 0.4169402982548974,
+    "max_pct": 1.5055917201727107
+   },
+   {
+    "strategy": "D",
+    "scale": 5,
+    "span_m": 6,
+    "cable_EA": 785000,
+    "sf_wale": 1.188850704,
+    "sf_course": 1.06013643,
+    "mean_vertex_dist_m": 0.03907686341,
+    "max_vertex_dist_m": 0.1192721573,
+    "lbfgs_iterations": 10,
+    "gradient_norm": 9.936383732e-05,
+    "converged": true,
+    "stalled": false,
+    "n_solves": 45,
+    "D": 6,
+    "mean_mm": 28.511286254006674,
+    "max_mm": 106.11705174039915,
+    "mean_pct": 0.47518810423344454,
+    "max_pct": 1.7686175290066526
+   }
+  ],
+  "E": [
+   {
+    "strategy": "E",
+    "scale": 0.5,
+    "span_m": 0.6,
+    "cable_EA": 78500,
+    "sf_wale": [
+     0.9932369469,
+     0.9932369469,
+     1.025529956
+    ],
+    "sf_course": [
+     0.9961080583,
+     0.9961080583,
+     1.009165588
+    ],
+    "region_faces": [
+     232,
+     173,
+     229
+    ],
+    "mean_vertex_dist_m": 0.001100752793,
+    "max_vertex_dist_m": 0.005604595365,
+    "outer_iterations": 8,
+    "last_swapped": 0,
+    "converged": true,
+    "wall_s": 78.28858005,
+    "n_solves": 803,
+    "D": 0.6,
+    "mean_mm": 0.848457029275408,
+    "max_mm": 4.936658212645602,
+    "mean_pct": 0.14140950487923468,
+    "max_pct": 0.822776368774267
+   },
+   {
+    "strategy": "E",
+    "scale": 0.75,
+    "span_m": 0.9,
+    "cable_EA": 117750,
+    "sf_wale": [
+     1.001001971,
+     1.001001971,
+     1.036849193
+    ],
+    "sf_course": [
+     1.00690267,
+     1.00690267,
+     1.006045977
+    ],
+    "region_faces": [
+     94,
+     110,
+     430
+    ],
+    "mean_vertex_dist_m": 0.002127133154,
+    "max_vertex_dist_m": 0.009972596848,
+    "outer_iterations": 14,
+    "last_swapped": 0,
+    "converged": true,
+    "wall_s": 423.1381153,
+    "n_solves": 974,
+    "D": 0.9,
+    "mean_mm": 1.7779481237140637,
+    "max_mm": 8.286907846650365,
+    "mean_pct": 0.19754979152378485,
+    "max_pct": 0.9207675385167072
+   },
+   {
+    "strategy": "E",
+    "scale": 1,
+    "span_m": 1.2,
+    "cable_EA": 157000,
+    "sf_wale": [
+     1.014496316,
+     1.014496316,
+     1.050976506
+    ],
+    "sf_course": [
+     1.001869308,
+     1.001869308,
+     1.005675104
+    ],
+    "region_faces": [
+     164,
+     64,
+     406
+    ],
+    "mean_vertex_dist_m": 0.003374342764,
+    "max_vertex_dist_m": 0.01430972579,
+    "outer_iterations": 11,
+    "last_swapped": 0,
+    "converged": true,
+    "wall_s": 549.0111661,
+    "n_solves": 596,
+    "D": 1.2,
+    "mean_mm": 2.753368875733221,
+    "max_mm": 11.770984983879675,
+    "mean_pct": 0.22944740631110175,
+    "max_pct": 0.9809154153233063
+   },
+   {
+    "strategy": "E",
+    "scale": 1.25,
+    "span_m": 1.5,
+    "cable_EA": 196250,
+    "sf_wale": [
+     1.019983512,
+     1.019983512,
+     1.06455119
+    ],
+    "sf_course": [
+     1.001175164,
+     1.001175164,
+     1.005997044
+    ],
+    "region_faces": [
+     164,
+     64,
+     406
+    ],
+    "mean_vertex_dist_m": 0.004652110492,
+    "max_vertex_dist_m": 0.01905528829,
+    "outer_iterations": 11,
+    "last_swapped": 0,
+    "converged": true,
+    "wall_s": 249.9966095,
+    "n_solves": 654,
+    "D": 1.5,
+    "mean_mm": 3.7723293625714858,
+    "max_mm": 15.277408874858793,
+    "mean_pct": 0.2514886241714324,
+    "max_pct": 1.0184939249905862
+   },
+   {
+    "strategy": "E",
+    "scale": 1.5,
+    "span_m": 1.8,
+    "cable_EA": 235500,
+    "sf_wale": [
+     1.02749464,
+     1.02749464,
+     1.080056867
+    ],
+    "sf_course": [
+     0.9977517259,
+     0.9977517259,
+     1.005908521
+    ],
+    "region_faces": [
+     175,
+     112,
+     347
+    ],
+    "mean_vertex_dist_m": 0.005935398043,
+    "max_vertex_dist_m": 0.02465625878,
+    "outer_iterations": 3,
+    "last_swapped": 0,
+    "converged": true,
+    "wall_s": 110.9855764,
+    "n_solves": 327,
+    "D": 1.8,
+    "mean_mm": 4.752492482570835,
+    "max_mm": 18.9867587656839,
+    "mean_pct": 0.2640273601428242,
+    "max_pct": 1.0548199314268831
+   },
+   {
+    "strategy": "E",
+    "scale": 2,
+    "span_m": 2.4,
+    "cable_EA": 314000,
+    "sf_wale": [
+     1.039142405,
+     1.039142405,
+     1.106133982
+    ],
+    "sf_course": [
+     0.9988195298,
+     0.9988195298,
+     1.007044614
+    ],
+    "region_faces": [
+     163,
+     113,
+     358
+    ],
+    "mean_vertex_dist_m": 0.008898961282,
+    "max_vertex_dist_m": 0.0359172339,
+    "outer_iterations": 3,
+    "last_swapped": 0,
+    "converged": true,
+    "wall_s": 87.52647783,
+    "n_solves": 376,
+    "D": 2.4,
+    "mean_mm": 7.08709243405279,
+    "max_mm": 26.181474358961783,
+    "mean_pct": 0.2952955180855329,
+    "max_pct": 1.090894764956741
+   },
+   {
+    "strategy": "E",
+    "scale": 2.5,
+    "span_m": 3,
+    "cable_EA": 392500,
+    "sf_wale": [
+     1.054118196,
+     1.054118196,
+     1.129017672
+    ],
+    "sf_course": [
+     1.001150413,
+     1.001150413,
+     1.009186169
+    ],
+    "region_faces": [
+     164,
+     80,
+     390
+    ],
+    "mean_vertex_dist_m": 0.01248192198,
+    "max_vertex_dist_m": 0.04688186415,
+    "outer_iterations": 6,
+    "last_swapped": 0,
+    "converged": true,
+    "wall_s": 87.43021101,
+    "n_solves": 505,
+    "D": 3,
+    "mean_mm": 9.82603347740986,
+    "max_mm": 33.321130722873995,
+    "mean_pct": 0.3275344492469953,
+    "max_pct": 1.110704357429133
+   },
+   {
+    "strategy": "E",
+    "scale": 3.5,
+    "span_m": 4.2,
+    "cable_EA": 549500,
+    "sf_wale": [
+     1.076175735,
+     1.076175735,
+     1.17400051
+    ],
+    "sf_course": [
+     1.005478094,
+     1.005478094,
+     1.016116618
+    ],
+    "region_faces": [
+     164,
+     75,
+     395
+    ],
+    "mean_vertex_dist_m": 0.0199354217,
+    "max_vertex_dist_m": 0.07318866104,
+    "outer_iterations": 12,
+    "last_swapped": 0,
+    "converged": true,
+    "wall_s": 199.2315037,
+    "n_solves": 798,
+    "D": 4.2,
+    "mean_mm": 15.590921363873889,
+    "max_mm": 53.34123075836819,
+    "mean_pct": 0.37121241342556877,
+    "max_pct": 1.2700293037706711
+   },
+   {
+    "strategy": "E",
+    "scale": 5,
+    "span_m": 6,
+    "cable_EA": 785000,
+    "sf_wale": [
+     1.042960092,
+     1.042960092,
+     1.222812456
+    ],
+    "sf_course": [
+     1.044475004,
+     1.044475004,
+     1.051127754
+    ],
+    "region_faces": [
+     135,
+     135,
+     364
+    ],
+    "mean_vertex_dist_m": 0.02803753571,
+    "max_vertex_dist_m": 0.09003453672,
+    "outer_iterations": 20,
+    "last_swapped": 2,
+    "converged": false,
+    "wall_s": 1152.985139,
+    "n_solves": 2688,
+    "D": 6,
+    "mean_mm": 23.034093051422346,
+    "max_mm": 80.52334248553608,
+    "mean_pct": 0.3839015508570391,
+    "max_pct": 1.342055708092268
+   }
+  ]
+ }
+}

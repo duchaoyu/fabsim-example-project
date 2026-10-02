@@ -1,0 +1,358 @@
+Mesh: 341 vertices, 634 faces
+Boundary vertices: 46
+Cable: 19 vertices, 18 segments, EA=549500 N
+Computing initial 3-region BFS (seeds 68, 577, radius=10)...
+  Region 0 (seed 68, 10 hops): 164 faces
+  Region 1 (seed 577, 10 hops): 101 faces
+  Region 2 (rest): 369 faces
+  saved: FDM/optimisation/2part_span/E_4p2_faces.txt  (R0=164, R1=101, R2=369 faces)
+
+--- Initial simulation ---
+  [cold start] ramping pressure...
+Iteration limit reached
+  [cold start] done.
+Initial mean distance: 0.0697345 m
+Initial max  distance: 0.133975 m
+
+  wrote FDM/optimisation/2part_span/E_4p2_initial.off
+[polyscope] Backend: openGL_mock
+
+══════ Outer iteration 0 ══════  (regions: R0=164 R1=101 R2=369)
+--- (A) L-BFGS inner optimisation ---
+Line search failed
+[iter 0]  R0=R1: sf1=1.04192 sf2=1.01207  R2: sf1=1.04192 sf2=1.01207  loss=0.069734  |grad|=0.719851  cycle=1.9s  (solves:6)
+LIMITED-MEMORY BFGS (LBFGS)
+Iter         Fval    Step size   Optimality
+Iteration limit reached
+Line search failed
+Line search failed
+Line search failed
+Line search failed
+Line search failed
+[iter 1]  R0=R1: sf1=1.04796 sf2=1.02893  R2: sf1=1.10988 sf2=1.07640  loss=0.025178  |grad|=0.120855  cycle=1.8s  (solves:16)
+   1    2.518e-02    1.250e-01    1.209e-01
+Line search failed
+Line search failed
+[iter 2]  R0=R1: sf1=1.04938 sf2=1.03519  R2: sf1=1.11641 sf2=1.06557  loss=0.023747  |grad|=0.097809  cycle=0.4s  (solves:22)
+   2    2.375e-02    1.000e+00    9.781e-02
+Line search failed
+[iter 3]  R0=R1: sf1=1.05764 sf2=1.05603  R2: sf1=1.14656 sf2=1.03797  loss=0.021608  |grad|=0.079881  cycle=0.1s  (solves:29)
+   3    2.161e-02    5.000e-01    7.988e-02
+Line search failed
+Line search failed
+[iter 4]  R0=R1: sf1=1.06757 sf2=1.05264  R2: sf1=1.14179 sf2=1.03363  loss=0.021335  |grad|=0.073671  cycle=0.1s  (solves:35)
+   4    2.133e-02    1.000e+00    7.367e-02
+Line search failed
+Line search failed
+Line search failed
+[iter 5]  R0=R1: sf1=1.06981 sf2=1.05055  R2: sf1=1.14166 sf2=1.03717  loss=0.021198  |grad|=0.028962  cycle=0.2s  (solves:41)
+   5    2.120e-02    1.000e+00    2.896e-02
+[iter 6]  R0=R1: sf1=1.07624 sf2=1.05044  R2: sf1=1.14574 sf2=1.03546  loss=0.021095  |grad|=0.015183  cycle=0.1s  (solves:47)
+   6    2.109e-02    1.000e+00    1.518e-02
+Line search failed
+Line search failed
+[iter 7]  R0=R1: sf1=1.08315 sf2=1.04828  R2: sf1=1.14790 sf2=1.03367  loss=0.021047  |grad|=0.012999  cycle=0.2s  (solves:53)
+   7    2.105e-02    1.000e+00    1.300e-02
+Line search failed
+Line search failed
+[iter 8]  R0=R1: sf1=1.08637 sf2=1.03943  R2: sf1=1.15377 sf2=1.02970  loss=0.020951  |grad|=0.013531  cycle=0.7s  (solves:59)
+   8    2.095e-02    1.000e+00    1.353e-02
+Line search failed
+[iter 9]  R0=R1: sf1=1.09021 sf2=1.00525  R2: sf1=1.17177 sf2=1.01680  loss=0.020802  |grad|=0.019953  cycle=0.1s  (solves:65)
+   9    2.080e-02    1.000e+00    1.995e-02
+Iteration limit reached
+Iteration limit reached
+Line search failed
+[iter 10]  R0=R1: sf1=1.08754 sf2=1.00846  R2: sf1=1.17172 sf2=1.01775  loss=0.020786  |grad|=0.005608  cycle=35.0s  (solves:71)
+  10    2.079e-02    1.000e+00    5.608e-03
+Iteration limit reached
+Line search failed
+  After inner opt: mean=0.02 m
+--- (B) Boundary face reassignment ---
+Line search failed
+  [reassign] base loss = 0.02 m
+Line search failed
+Line search failed
+Line search failed
+Line search failed
+Line search failed
+Line search failed
+Line search failed
+Line search failed
+Line search failed
+Line search failed
+Line search failed
+Line search failed
+Line search failed
+Line search failed
+Line search failed
+Line search failed
+  [reassign] 32 face(s) swapped  → R0=164 R1=111 R2=359 faces
+  saved: FDM/optimisation/2part_span/E_4p2_faces.txt  (R0=164, R1=111, R2=359 faces)
+  After reassign: mean=0.02 m  max=0.07 m
+
+══════ Outer iteration 1 ══════  (regions: R0=164 R1=111 R2=359)
+--- (A) L-BFGS inner optimisation ---
+Line search failed
+[iter 11]  R0=R1: sf1=1.08754 sf2=1.00846  R2: sf1=1.17172 sf2=1.01775  loss=0.020108  |grad|=0.014660  cycle=0.3s  (solves:152)
+LIMITED-MEMORY BFGS (LBFGS)
+Iter         Fval    Step size   Optimality
+Line search failed
+Line search failed
+Line search failed
+[iter 12]  R0=R1: sf1=1.08644 sf2=1.00863  R2: sf1=1.17345 sf2=1.01811  loss=0.020104  |grad|=0.024732  cycle=11.7s  (solves:162)
+   1    2.010e-02    1.250e-01    2.473e-02
+Line search failed
+[iter 13]  R0=R1: sf1=1.08637 sf2=1.00852  R2: sf1=1.17292 sf2=1.01765  loss=0.020095  |grad|=0.009280  cycle=0.1s  (solves:168)
+   2    2.009e-02    1.000e+00    9.280e-03
+Line search failed
+[iter 14]  R0=R1: sf1=1.08574 sf2=1.00842  R2: sf1=1.17301 sf2=1.01723  loss=0.020090  |grad|=0.005620  cycle=0.4s  (solves:174)
+   3    2.009e-02    1.000e+00    5.620e-03
+[iter 15]  R0=R1: sf1=1.08425 sf2=1.00808  R2: sf1=1.17351 sf2=1.01666  loss=0.020085  |grad|=0.006708  cycle=0.1s  (solves:180)
+   4    2.008e-02    1.000e+00    6.708e-03
+[iter 16]  R0=R1: sf1=1.08276 sf2=1.00717  R2: sf1=1.17375 sf2=1.01661  loss=0.020080  |grad|=0.005879  cycle=0.0s  (solves:186)
+   5    2.008e-02    1.000e+00    5.879e-03
+Line search failed
+Line search failed
+[iter 17]  R0=R1: sf1=1.08150 sf2=1.00483  R2: sf1=1.17425 sf2=1.01663  loss=0.020075  |grad|=0.002868  cycle=0.4s  (solves:192)
+   6    2.008e-02    1.000e+00    2.868e-03
+Line search failed
+Line search failed
+[iter 18]  R0=R1: sf1=1.08130 sf2=1.00377  R2: sf1=1.17503 sf2=1.01635  loss=0.020074  |grad|=0.002539  cycle=0.5s  (solves:198)
+   7    2.007e-02    1.000e+00    2.539e-03
+Line search failed
+[iter 19]  R0=R1: sf1=1.08149 sf2=1.00295  R2: sf1=1.17555 sf2=1.01607  loss=0.020073  |grad|=0.003544  cycle=0.3s  (solves:204)
+   8    2.007e-02    1.000e+00    3.544e-03
+Line search failed
+Line search failed
+[iter 20]  R0=R1: sf1=1.08208 sf2=1.00108  R2: sf1=1.17664 sf2=1.01529  loss=0.020072  |grad|=0.001830  cycle=7.1s  (solves:210)
+   9    2.007e-02    1.000e+00    1.830e-03
+Line search failed
+Line search failed
+[iter 21]  R0=R1: sf1=1.08264 sf2=1.00096  R2: sf1=1.17696 sf2=1.01504  loss=0.020072  |grad|=0.001858  cycle=0.2s  (solves:216)
+  10    2.007e-02    1.000e+00    1.858e-03
+Iteration limit reached
+  After inner opt: mean=0.02 m
+--- (B) Boundary face reassignment ---
+  [reassign] base loss = 0.02 m
+  [reassign] 8 face(s) swapped  → R0=164 R1=103 R2=367 faces
+  saved: FDM/optimisation/2part_span/E_4p2_faces.txt  (R0=164, R1=103, R2=367 faces)
+  After reassign: mean=0.02 m  max=0.07 m
+
+══════ Outer iteration 2 ══════  (regions: R0=164 R1=103 R2=367)
+--- (A) L-BFGS inner optimisation ---
+Line search failed
+Line search failed
+[iter 22]  R0=R1: sf1=1.08264 sf2=1.00096  R2: sf1=1.17696 sf2=1.01504  loss=0.020022  |grad|=0.009634  cycle=0.4s  (solves:255)
+LIMITED-MEMORY BFGS (LBFGS)
+Iter         Fval    Step size   Optimality
+[iter 23]  R0=R1: sf1=1.08257 sf2=1.00095  R2: sf1=1.17653 sf2=1.01456  loss=0.020021  |grad|=0.006738  cycle=0.0s  (solves:266)
+   1    2.002e-02    6.250e-02    6.738e-03
+Line search failed
+[iter 24]  R0=R1: sf1=1.08256 sf2=1.00098  R2: sf1=1.17673 sf2=1.01473  loss=0.020020  |grad|=0.001068  cycle=1.3s  (solves:272)
+   2    2.002e-02    1.000e+00    1.068e-03
+[iter 25]  R0=R1: sf1=1.08253 sf2=1.00100  R2: sf1=1.17675 sf2=1.01472  loss=0.020020  |grad|=0.000884  cycle=0.0s  (solves:278)
+   3    2.002e-02    1.000e+00    8.842e-04
+  After inner opt: mean=0.02 m
+--- (B) Boundary face reassignment ---
+  [reassign] base loss = 0.02 m
+  [reassign] 8 face(s) swapped  → R0=164 R1=95 R2=375 faces
+  saved: FDM/optimisation/2part_span/E_4p2_faces.txt  (R0=164, R1=95, R2=375 faces)
+  After reassign: mean=0.02 m  max=0.07 m
+
+══════ Outer iteration 3 ══════  (regions: R0=164 R1=95 R2=375)
+--- (A) L-BFGS inner optimisation ---
+[iter 26]  R0=R1: sf1=1.08253 sf2=1.00100  R2: sf1=1.17675 sf2=1.01472  loss=0.020000  |grad|=0.006406  cycle=0.0s  (solves:318)
+LIMITED-MEMORY BFGS (LBFGS)
+Iter         Fval    Step size   Optimality
+Line search failed
+Line search failed
+[iter 27]  R0=R1: sf1=1.08240 sf2=1.00108  R2: sf1=1.17656 sf2=1.01438  loss=0.020000  |grad|=0.004545  cycle=0.6s  (solves:329)
+   1    2.000e-02    6.250e-02    4.545e-03
+[iter 28]  R0=R1: sf1=1.08236 sf2=1.00112  R2: sf1=1.17666 sf2=1.01443  loss=0.019999  |grad|=0.002312  cycle=0.0s  (solves:335)
+   2    2.000e-02    1.000e+00    2.312e-03
+Line search failed
+[iter 29]  R0=R1: sf1=1.08220 sf2=1.00124  R2: sf1=1.17680 sf2=1.01441  loss=0.019999  |grad|=0.001577  cycle=0.3s  (solves:341)
+   3    2.000e-02    1.000e+00    1.577e-03
+Line search failed
+[iter 30]  R0=R1: sf1=1.08197 sf2=1.00141  R2: sf1=1.17687 sf2=1.01435  loss=0.019998  |grad|=0.001366  cycle=0.2s  (solves:347)
+   4    2.000e-02    1.000e+00    1.366e-03
+Line search failed
+[iter 31]  R0=R1: sf1=1.08166 sf2=1.00158  R2: sf1=1.17676 sf2=1.01441  loss=0.019998  |grad|=0.001112  cycle=0.3s  (solves:353)
+   5    2.000e-02    1.000e+00    1.112e-03
+[iter 32]  R0=R1: sf1=1.08111 sf2=1.00200  R2: sf1=1.17636 sf2=1.01469  loss=0.019998  |grad|=0.000729  cycle=0.0s  (solves:359)
+   6    2.000e-02    1.000e+00    7.293e-04
+  After inner opt: mean=0.02 m
+--- (B) Boundary face reassignment ---
+  [reassign] base loss = 0.02 m
+  [reassign] 4 face(s) swapped  → R0=164 R1=91 R2=379 faces
+  saved: FDM/optimisation/2part_span/E_4p2_faces.txt  (R0=164, R1=91, R2=379 faces)
+  After reassign: mean=0.02 m  max=0.07 m
+
+══════ Outer iteration 4 ══════  (regions: R0=164 R1=91 R2=379)
+--- (A) L-BFGS inner optimisation ---
+Line search failed
+[iter 33]  R0=R1: sf1=1.08111 sf2=1.00200  R2: sf1=1.17636 sf2=1.01469  loss=0.019979  |grad|=0.002826  cycle=0.2s  (solves:395)
+LIMITED-MEMORY BFGS (LBFGS)
+Iter         Fval    Step size   Optimality
+Line search failed
+[iter 34]  R0=R1: sf1=1.08109 sf2=1.00201  R2: sf1=1.17629 sf2=1.01463  loss=0.019979  |grad|=0.000826  cycle=0.0s  (solves:407)
+   1    1.998e-02    3.125e-02    8.264e-04
+  After inner opt: mean=0.02 m
+--- (B) Boundary face reassignment ---
+  [reassign] base loss = 0.02 m
+  [reassign] 4 face(s) swapped  → R0=164 R1=87 R2=383 faces
+  saved: FDM/optimisation/2part_span/E_4p2_faces.txt  (R0=164, R1=87, R2=383 faces)
+  After reassign: mean=0.02 m  max=0.07 m
+
+══════ Outer iteration 5 ══════  (regions: R0=164 R1=87 R2=383)
+--- (A) L-BFGS inner optimisation ---
+Line search failed
+[iter 35]  R0=R1: sf1=1.08109 sf2=1.00201  R2: sf1=1.17629 sf2=1.01463  loss=0.019969  |grad|=0.002512  cycle=0.2s  (solves:444)
+LIMITED-MEMORY BFGS (LBFGS)
+Iter         Fval    Step size   Optimality
+[iter 36]  R0=R1: sf1=1.08102 sf2=1.00206  R2: sf1=1.17619 sf2=1.01453  loss=0.019969  |grad|=0.001915  cycle=0.0s  (solves:455)
+   1    1.997e-02    6.250e-02    1.915e-03
+[iter 37]  R0=R1: sf1=1.08098 sf2=1.00210  R2: sf1=1.17621 sf2=1.01455  loss=0.019969  |grad|=0.001382  cycle=0.0s  (solves:461)
+   2    1.997e-02    1.000e+00    1.382e-03
+Line search failed
+[iter 38]  R0=R1: sf1=1.08068 sf2=1.00237  R2: sf1=1.17622 sf2=1.01461  loss=0.019968  |grad|=0.001423  cycle=0.1s  (solves:467)
+   3    1.997e-02    1.000e+00    1.423e-03
+Line search failed
+[iter 39]  R0=R1: sf1=1.08042 sf2=1.00259  R2: sf1=1.17613 sf2=1.01468  loss=0.019968  |grad|=0.001591  cycle=0.1s  (solves:473)
+   4    1.997e-02    1.000e+00    1.591e-03
+Line search failed
+Line search failed
+[iter 40]  R0=R1: sf1=1.07984 sf2=1.00324  R2: sf1=1.17555 sf2=1.01514  loss=0.019968  |grad|=0.002159  cycle=1.6s  (solves:479)
+   5    1.997e-02    1.000e+00    2.159e-03
+[iter 41]  R0=R1: sf1=1.07967 sf2=1.00386  R2: sf1=1.17513 sf2=1.01533  loss=0.019967  |grad|=0.000708  cycle=0.0s  (solves:485)
+   6    1.997e-02    1.000e+00    7.075e-04
+  After inner opt: mean=0.02 m
+--- (B) Boundary face reassignment ---
+  [reassign] base loss = 0.02 m
+  [reassign] 4 face(s) swapped  → R0=164 R1=83 R2=387 faces
+  saved: FDM/optimisation/2part_span/E_4p2_faces.txt  (R0=164, R1=83, R2=387 faces)
+  After reassign: mean=0.02 m  max=0.07 m
+
+══════ Outer iteration 6 ══════  (regions: R0=164 R1=83 R2=387)
+--- (A) L-BFGS inner optimisation ---
+[iter 42]  R0=R1: sf1=1.07967 sf2=1.00386  R2: sf1=1.17513 sf2=1.01533  loss=0.019957  |grad|=0.002215  cycle=0.0s  (solves:520)
+LIMITED-MEMORY BFGS (LBFGS)
+Iter         Fval    Step size   Optimality
+Line search failed
+Line search failed
+[iter 43]  R0=R1: sf1=1.07960 sf2=1.00392  R2: sf1=1.17508 sf2=1.01523  loss=0.019957  |grad|=0.001650  cycle=2.1s  (solves:531)
+   1    1.996e-02    6.250e-02    1.650e-03
+Line search failed
+Line search failed
+[iter 44]  R0=R1: sf1=1.07953 sf2=1.00397  R2: sf1=1.17510 sf2=1.01522  loss=0.019957  |grad|=0.001343  cycle=0.1s  (solves:537)
+   2    1.996e-02    1.000e+00    1.343e-03
+Line search failed
+Line search failed
+[iter 45]  R0=R1: sf1=1.07915 sf2=1.00426  R2: sf1=1.17511 sf2=1.01524  loss=0.019957  |grad|=0.000749  cycle=0.4s  (solves:543)
+   3    1.996e-02    1.000e+00    7.488e-04
+  After inner opt: mean=0.02 m
+--- (B) Boundary face reassignment ---
+  [reassign] base loss = 0.02 m
+  [reassign] 2 face(s) swapped  → R0=164 R1=81 R2=389 faces
+  saved: FDM/optimisation/2part_span/E_4p2_faces.txt  (R0=164, R1=81, R2=389 faces)
+  After reassign: mean=0.02 m  max=0.07 m
+
+══════ Outer iteration 7 ══════  (regions: R0=164 R1=81 R2=389)
+--- (A) L-BFGS inner optimisation ---
+[iter 46]  R0=R1: sf1=1.07915 sf2=1.00426  R2: sf1=1.17511 sf2=1.01524  loss=0.019955  |grad|=0.001118  cycle=0.0s  (solves:577)
+LIMITED-MEMORY BFGS (LBFGS)
+Iter         Fval    Step size   Optimality
+Line search failed
+[iter 47]  R0=R1: sf1=1.07868 sf2=1.00442  R2: sf1=1.17477 sf2=1.01537  loss=0.019955  |grad|=0.002629  cycle=0.1s  (solves:585)
+   1    1.996e-02    5.000e-01    2.629e-03
+Line search failed
+Line search failed
+[iter 48]  R0=R1: sf1=1.07813 sf2=1.00464  R2: sf1=1.17454 sf2=1.01567  loss=0.019955  |grad|=0.000699  cycle=0.7s  (solves:591)
+   2    1.995e-02    1.000e+00    6.995e-04
+  After inner opt: mean=0.02 m
+--- (B) Boundary face reassignment ---
+  [reassign] base loss = 0.02 m
+  [reassign] 2 face(s) swapped  → R0=164 R1=79 R2=391 faces
+  saved: FDM/optimisation/2part_span/E_4p2_faces.txt  (R0=164, R1=79, R2=391 faces)
+  After reassign: mean=0.02 m  max=0.07 m
+
+══════ Outer iteration 8 ══════  (regions: R0=164 R1=79 R2=391)
+--- (A) L-BFGS inner optimisation ---
+Line search failed
+Line search failed
+[iter 49]  R0=R1: sf1=1.07813 sf2=1.00464  R2: sf1=1.17454 sf2=1.01567  loss=0.019944  |grad|=0.001163  cycle=0.6s  (solves:626)
+LIMITED-MEMORY BFGS (LBFGS)
+Iter         Fval    Step size   Optimality
+Line search failed
+[iter 50]  R0=R1: sf1=1.07770 sf2=1.00504  R2: sf1=1.17464 sf2=1.01556  loss=0.019943  |grad|=0.001266  cycle=0.3s  (solves:634)
+   1    1.994e-02    5.000e-01    1.266e-03
+Line search failed
+[iter 51]  R0=R1: sf1=1.07764 sf2=1.00508  R2: sf1=1.17449 sf2=1.01572  loss=0.019943  |grad|=0.000884  cycle=0.1s  (solves:640)
+   2    1.994e-02    1.000e+00    8.836e-04
+  After inner opt: mean=0.02 m
+--- (B) Boundary face reassignment ---
+  [reassign] base loss = 0.02 m
+  [reassign] 1 face(s) swapped  → R0=164 R1=78 R2=392 faces
+  saved: FDM/optimisation/2part_span/E_4p2_faces.txt  (R0=164, R1=78, R2=392 faces)
+  After reassign: mean=0.02 m  max=0.07 m
+
+══════ Outer iteration 9 ══════  (regions: R0=164 R1=78 R2=392)
+--- (A) L-BFGS inner optimisation ---
+[iter 52]  R0=R1: sf1=1.07764 sf2=1.00508  R2: sf1=1.17449 sf2=1.01572  loss=0.019942  |grad|=0.000910  cycle=0.0s  (solves:674)
+LIMITED-MEMORY BFGS (LBFGS)
+Iter         Fval    Step size   Optimality
+  After inner opt: mean=0.02 m
+--- (B) Boundary face reassignment ---
+  [reassign] base loss = 0.02 m
+  [reassign] 2 face(s) swapped  → R0=164 R1=76 R2=394 faces
+  saved: FDM/optimisation/2part_span/E_4p2_faces.txt  (R0=164, R1=76, R2=394 faces)
+  After reassign: mean=0.02 m  max=0.07 m
+
+══════ Outer iteration 10 ══════  (regions: R0=164 R1=76 R2=394)
+--- (A) L-BFGS inner optimisation ---
+Line search failed
+[iter 53]  R0=R1: sf1=1.07764 sf2=1.00508  R2: sf1=1.17449 sf2=1.01572  loss=0.019938  |grad|=0.001482  cycle=1.7s  (solves:710)
+LIMITED-MEMORY BFGS (LBFGS)
+Iter         Fval    Step size   Optimality
+[iter 54]  R0=R1: sf1=1.07619 sf2=1.00543  R2: sf1=1.17397 sf2=1.01600  loss=0.019937  |grad|=0.002658  cycle=0.0s  (solves:717)
+   1    1.994e-02    1.000e+00    2.658e-03
+Line search failed
+[iter 55]  R0=R1: sf1=1.07582 sf2=1.00559  R2: sf1=1.17400 sf2=1.01634  loss=0.019937  |grad|=0.004508  cycle=0.1s  (solves:724)
+   2    1.994e-02    5.000e-01    4.508e-03
+Line search failed
+Line search failed
+[iter 56]  R0=R1: sf1=1.07618 sf2=1.00548  R2: sf1=1.17400 sf2=1.01612  loss=0.019937  |grad|=0.000640  cycle=0.2s  (solves:730)
+   3    1.994e-02    1.000e+00    6.404e-04
+  After inner opt: mean=0.02 m
+--- (B) Boundary face reassignment ---
+  [reassign] base loss = 0.02 m
+  [reassign] 1 face(s) swapped  → R0=164 R1=75 R2=395 faces
+  saved: FDM/optimisation/2part_span/E_4p2_faces.txt  (R0=164, R1=75, R2=395 faces)
+  After reassign: mean=0.02 m  max=0.07 m
+
+══════ Outer iteration 11 ══════  (regions: R0=164 R1=75 R2=395)
+--- (A) L-BFGS inner optimisation ---
+Line search failed
+Line search failed
+[iter 57]  R0=R1: sf1=1.07618 sf2=1.00548  R2: sf1=1.17400 sf2=1.01612  loss=0.019935  |grad|=0.000622  cycle=0.3s  (solves:766)
+LIMITED-MEMORY BFGS (LBFGS)
+Iter         Fval    Step size   Optimality
+  After inner opt: mean=0.02 m
+--- (B) Boundary face reassignment ---
+  [reassign] base loss = 0.02 m
+  [reassign] 0 face(s) swapped  → R0=164 R1=75 R2=395 faces
+  saved: FDM/optimisation/2part_span/E_4p2_faces.txt  (R0=164, R1=75, R2=395 faces)
+  After reassign: mean=0.02 m  max=0.07 m
+  → No faces swapped. Converged.
+
+═══ Optimal parameters (R0=R1 constrained) ═══
+  Region 0=1:  sf1=1.07618  sf2=1.00548
+  Region 2:    sf1=1.174  sf2=1.01612
+  mean distance: 0.0199354 m  (was 0.0697345 m, 71.41% improvement)
+  max  distance: 0.073 m  (was 0.13 m)
+
+Total time: 199.2 s
+Total Newton solves: 798
+  wrote FDM/optimisation/2part_span/E_4p2_result.off
+  screenshots saved to: FDM/optimisation/2part_span/E_4p2_screenshots/

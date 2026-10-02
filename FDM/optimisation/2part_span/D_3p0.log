@@ -1,0 +1,50 @@
+Mesh: 341 vertices, 634 faces
+Cable: 19 vertices, 18 segments, EA=392500 N
+Boundary vertices: 46
+
+--- Initial simulation (sf1=1.043, sf2=1.043) ---
+  [cold start] ramping pressure to 1000 Pa...
+Line search failed
+  [cold start] done.
+Initial mean vertex distance: 0.0211148 m
+Initial max  vertex distance: 0.0432854 m
+
+  wrote FDM/optimisation/2part_span/D_3p0_initial.off
+--- L-BFGS optimisation ---
+[iter 0]  sf1=1.04300  sf2=1.04300  loss=0.021115  |grad|=0.376268  (total Newton solves: 4)
+LIMITED-MEMORY BFGS (LBFGS)
+Iter         Fval    Step size   Optimality
+[iter 1]  sf1=1.07907  sf2=1.07746  loss=0.019974  |grad|=0.448037  (total Newton solves: 12)
+   1    1.997e-02    1.250e-01    4.480e-01
+[iter 2]  sf1=1.06041  sf2=1.05769  loss=0.015780  |grad|=0.099573  (total Newton solves: 16)
+   2    1.578e-02    1.000e+00    9.957e-02
+[iter 3]  sf1=1.06482  sf2=1.05991  loss=0.015474  |grad|=0.040072  (total Newton solves: 20)
+   3    1.547e-02    1.000e+00    4.007e-02
+Iteration limit reached
+Iteration limit reached
+[iter 4]  sf1=1.06851  sf2=1.05913  loss=0.015365  |grad|=0.038090  (total Newton solves: 24)
+   4    1.536e-02    1.000e+00    3.809e-02
+Line search failed
+Line search failed
+[iter 5]  sf1=1.07635  sf2=1.05458  loss=0.015163  |grad|=0.059599  (total Newton solves: 28)
+   5    1.516e-02    1.000e+00    5.960e-02
+[iter 6]  sf1=1.09235  sf2=1.04178  loss=0.014814  |grad|=0.077965  (total Newton solves: 32)
+   6    1.481e-02    1.000e+00    7.797e-02
+[iter 7]  sf1=1.10455  sf2=1.02830  loss=0.014567  |grad|=0.035819  (total Newton solves: 36)
+   7    1.457e-02    1.000e+00    3.582e-02
+[iter 8]  sf1=1.10576  sf2=1.02516  loss=0.014537  |grad|=0.003808  (total Newton solves: 40)
+   8    1.454e-02    1.000e+00    3.808e-03
+[iter 9]  sf1=1.10539  sf2=1.02525  loss=0.014537  |grad|=0.000148  (total Newton solves: 44)
+   9    1.454e-02    1.000e+00    1.478e-04
+Line search failed
+Iteration limit reached
+  -> stalled at the optimum, stopping.
+
+--- Optimal parameters ---
+  sf1 (wale)   = 1.105389
+  sf2 (course) = 1.025250
+  mean vertex distance: 0.014537 m  (was 0.021115 m, 31.15% improvement)
+  max  vertex distance: 0.042 m  (was 0.043 m)
+  wrote FDM/optimisation/2part_span/D_3p0_result.off
+
+Total Newton solves: 64
