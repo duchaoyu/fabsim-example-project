@@ -1,0 +1,32 @@
+Mesh: 341 vertices, 634 faces
+Boundary vertices: 46
+
+--- Initial simulation (sf=1.043) ---
+  [cold start] ramping pressure to 1000 Pa...
+Line search failed
+  [cold start] done.
+Initial mean vertex distance: 0.00792035 m
+
+  wrote out/sf_iso_opt_initial.off
+--- L-BFGS optimisation ---
+[iter 0]  sf=1.04300  loss=0.007920  |grad|=0.213962  (total Newton solves: 3)
+LIMITED-MEMORY BFGS (LBFGS)
+Iter         Fval    Step size   Optimality
+Regularization failed
+Regularization failed
+[iter 1]  sf=1.03605  loss=0.007312  |grad|=0.054600  (total Newton solves: 12)
+   1    7.312e-03    3.125e-02    5.460e-02
+[iter 2]  sf=1.03746  loss=0.007279  |grad|=0.011104  (total Newton solves: 15)
+   2    7.279e-03    1.000e+00    1.110e-02
+[iter 3]  sf=1.03722  loss=0.007278  |grad|=0.000055  (total Newton solves: 18)
+   3    7.278e-03    1.000e+00    5.476e-05
+[iter 4]  sf=1.03722  loss=0.007278  |grad|=0.000055  (total Newton solves: 33)
+   4    7.278e-03    2.441e-04    5.476e-05
+Line search failed
+
+--- Optimal parameters ---
+  sf (isotropic) = 1.037220
+  mean vertex distance: 0.007278 m  (was 0.007920 m, 8.11% improvement)
+  wrote out/sf_iso_opt_result.off
+
+Total Newton solves: 61

@@ -1,0 +1,33 @@
+Mesh: 341 vertices, 634 faces
+Cable: 19 vertices, 18 segments, EA=157000 N
+Boundary vertices: 46
+
+--- Initial simulation (sf=1.1054) ---
+  [cold start] ramping pressure to 1000 Pa...
+  [cold start] done.
+Initial mean vertex distance: 0.0365478 m
+Initial max  vertex distance: 0.0636223 m
+
+  wrote out/sf_iso_cable_opt_initial.off
+--- L-BFGS optimisation ---
+[iter 0]  sf=1.10540  loss=0.036548  |grad|=0.588243  (total Newton solves: 3)
+LIMITED-MEMORY BFGS (LBFGS)
+Iter         Fval    Step size   Optimality
+Regularization failed
+Regularization failed
+Regularization failed
+[iter 1]  sf=1.02704  loss=0.003914  |grad|=0.014073  (total Newton solves: 10)
+   1    3.914e-03    1.250e-01    1.407e-02
+[iter 2]  sf=1.02657  loss=0.003911  |grad|=0.001010  (total Newton solves: 15)
+   2    3.911e-03    2.500e-01    1.010e-03
+[iter 3]  sf=1.02657  loss=0.003911  |grad|=0.001010  (total Newton solves: 29)
+   3    3.911e-03    4.883e-04    1.010e-03
+Line search failed
+
+--- Optimal parameters ---
+  sf (isotropic) = 1.026573
+  mean vertex distance: 0.003911 m  (was 0.036548 m, 89.30% improvement)
+  max  vertex distance: 0.01 m  (was 0.06 m)
+  wrote out/sf_iso_cable_opt_result.off
+
+Total Newton solves: 57
