@@ -1,0 +1,42 @@
+\begin{landscape}
+\begin{table}
+\centering
+\caption[Computational cost of the case studies]{Computational cost of the case studies.}\label{tab:computational-cost}
+\footnotesize
+\setlength{\tabcolsep}{8pt}
+\begin{tabular}{@{}llrlrrrrrr@{}}
+\toprule
+ & & & & \multicolumn{4}{c}{FEM optimisation} & & \\
+\cmidrule(lr){5-8}
+Section & Mesh & FDM & Case study & Design & Solves & Median & Total & Fabrication & Knitting pattern \\
+ & Vertices / faces & time & & variables & & solve time & time & time & time \\
+\midrule
+
+\multirow{5}{*}{7.4.1} & \multirow{5}{*}{341 / 634} & \multirow{5}{*}{9.4\,s}
+ & Middle crease, Isotropic, no cable (A)     & 1     & 47   & 0.009\,s & 51.5\,s & 1h5m  & 3m33s \\
+ & & & Middle crease, Isotropic, cable (B)      & 1+1   & 67   & 0.014\,s & 0.93\,s & 1h9m  & 3m38s \\
+ & & & Middle crease, Anisotropic, no cable (C) & 2     & 93   & 0.024\,s & 53.4\,s & 1h14m & 3m29s \\
+ & & & Middle crease, Anisotropic, cable (D)    & 2+1   & 39   & 0.029\,s & 1.12\,s & 1h11m & 3m32s \\
+ & & & Middle crease, 4 adaptive regions (E)    & 6     & 554  & 0.021\,s & 11.4\,s & 1h10m & 3m32s \\
+\addlinespace
+7.4.2 & 537 / 1000 & 6.9\,s  & Crossing creases        & 2+2   & 1050 & 0.72\,s & 12.8\,min & 2h8m  & 5m50s$^{a}$ \\
+\addlinespace
+7.4.3 & 497 / 929  & 1.54\,s & Free-form, 9 regions    & 18+12 & 622  & 0.13\,s & 78\,s     & 3h47m & 3m48s \\
+\addlinespace
+7.4.4 & 1309 / 2137 & 12.0\,s & Fluted dome, D8-reduced & 4+3  & 412  & 0.12\,s & 49\,s     & 3h23m & 2m40s \\
+\addlinespace
+\multirow{4}{*}{7.4.5} & \multirow{4}{*}{847 / 1563} & \multirow{4}{*}{9.3\,s}
+ & opening, 1 region                   & 2+1  & 162  & 0.66\,s & 14.9\,min & 52m  & 1m36s \\
+ & & & opening, 4 adaptive regions      & 8+1  & 2959 & 0.34\,s & 184\,min  & 1h1m & 1m37s \\
+ & & & opening, 9 field-aligned regions & 18+1 & 1241 & 0.39\,s & 68\,min   & 58m  & 1m37s \\
+ & & & opening, 9 symmetric, warm-started & 10+1 & 90 & 0.46\,s & 4.8\,min  & 1h2m & 1m37s \\
+\bottomrule
+\end{tabular}
+\par\smallskip
+\parbox{\linewidth}{\footnotesize Knitting pattern time: wall-clock time of compas\_knit's three steps (trajectories from
+the stripe pattern, knitting pattern, knittable pattern) on the target surface with the optimised pre-strain per region;
+stitch height 2.297\,mm, stitch width 3.54\,mm. The trajectory step takes 98--99\,\% of it.
+$^{a}$~Trajectories only: 24 courses close into rings around the crown, so the pattern needs a seam before it can be
+knitted flat.}
+\end{table}
+\end{landscape}
