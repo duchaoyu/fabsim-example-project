@@ -1,0 +1,46 @@
+Mesh: 341 vertices, 634 faces
+Boundary vertices: 46
+
+--- Initial simulation (sf1=1.043, sf2=1.043) ---
+  [cold start] ramping pressure to 1000 Pa...
+Line search failed
+  [cold start] done.
+Initial mean vertex distance: 0.00792035 m
+
+  wrote out/sf_opt_initial.off
+--- L-BFGS optimisation ---
+[iter 0]  sf1=1.04300  sf2=1.04300  loss=0.007920  |grad|=0.154736  (total Newton solves: 4)
+LIMITED-MEMORY BFGS (LBFGS)
+Iter         Fval    Step size   Optimality
+Line search failed
+[iter 1]  sf1=1.03765  sf2=1.03449  loss=0.007173  |grad|=0.071132  (total Newton solves: 13)
+   1    7.173e-03    6.250e-02    7.113e-02
+[iter 2]  sf1=1.04018  sf2=1.03269  loss=0.006979  |grad|=0.061904  (total Newton solves: 17)
+   2    6.979e-03    1.000e+00    6.190e-02
+[iter 3]  sf1=1.07033  sf2=1.00352  loss=0.005558  |grad|=0.180159  (total Newton solves: 22)
+   3    5.558e-03    5.000e-01    1.802e-01
+[iter 4]  sf1=1.06686  sf2=1.00211  loss=0.005094  |grad|=0.097837  (total Newton solves: 26)
+   4    5.094e-03    1.000e+00    9.784e-02
+[iter 5]  sf1=1.07458  sf2=0.98019  loss=0.004914  |grad|=0.060389  (total Newton solves: 30)
+   5    4.914e-03    1.000e+00    6.039e-02
+[iter 6]  sf1=1.07022  sf2=0.99042  loss=0.004727  |grad|=0.016789  (total Newton solves: 34)
+   6    4.727e-03    1.000e+00    1.679e-02
+[iter 7]  sf1=1.07178  sf2=0.98922  loss=0.004718  |grad|=0.011806  (total Newton solves: 38)
+   7    4.718e-03    1.000e+00    1.181e-02
+[iter 8]  sf1=1.07148  sf2=0.98907  loss=0.004717  |grad|=0.001878  (total Newton solves: 42)
+   8    4.717e-03    1.000e+00    1.878e-03
+[iter 9]  sf1=1.07157  sf2=0.98899  loss=0.004717  |grad|=0.000187  (total Newton solves: 46)
+   9    4.717e-03    1.000e+00    1.868e-04
+[iter 10]  sf1=1.07157  sf2=0.98901  loss=0.004717  |grad|=0.000064  (total Newton solves: 51)
+  10    4.717e-03    5.000e-01    6.355e-05
+[iter 11]  sf1=1.07157  sf2=0.98901  loss=0.004717  |grad|=0.000064  (total Newton solves: 73)
+  11    4.717e-03    3.815e-06    6.355e-05
+Line search failed
+
+--- Optimal parameters ---
+  sf1 (wale)   = 1.071567
+  sf2 (course) = 0.989013
+  mean vertex distance: 0.004717 m  (was 0.007920 m, 40.45% improvement)
+  wrote out/sf_opt_result.off
+
+Total Newton solves: 101

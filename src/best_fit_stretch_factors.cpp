@@ -166,13 +166,13 @@ VectorXd gradient(const VectorXd& phi)
 int main()
 {
   // ── Configuration ──────────────────────────────────────────────────────────
-  const std::string folder      = "/Users/duch/Documents/PhD/knit/2024_prototypes/2part/";
+  const std::string folder      = "data/2part/";
   const std::string mesh_ref    = folder + "2part_opt_simu_m.off";   // V0: reference/flat
   const std::string mesh_target = folder + "2part_opt_simu_m.off";   // V_target: change this!
-  const std::string out_dir     = "/Users/duch/Downloads/";
+  const std::string out_dir     = "out/";
 
-  E1        = 5000.0;   // N/m, wale
-  E2        = 12507.0;  // N/m, course
+  E1        = 12500.0;   // N/m, wale  (stitch structure I, as Section 7.2)
+  E2        = 5000.0;  // N/m, course
   nu        = 0.198;
   thickness = 1.0;
   mass      = 0.001;    // kg/m²

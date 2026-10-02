@@ -420,7 +420,7 @@ int main()
   const std::string mesh_target = folder + "2part_opt_simu_m.off";
   const std::string out_dir     = "out/";
 
-  E1 = 5000.0; E2 = 12507.0; nu = 0.198; thickness = 1.0; mass = 0.001; pressure = 1000.0;
+  E1 = 12500.0; E2 = 5000.0; nu = 0.198; thickness = 1.0; mass = 0.001; pressure = 1000.0;  // E1 wale, E2 course: stitch structure I (Section 7.2)
 
   // Crease cable — identical to best_fit_stretch_factors_cable.cpp (strategy D)
   cable_EA = 157000.0;   // N  (1mm diameter steel cable, EA = E*A)
@@ -432,7 +432,7 @@ int main()
   const int bfs_radius   = 10;
   const int max_outer    = 6;       // max alternating iterations
 
-  const double sf1_init = 1.29916, sf2_init = 0.96030;
+  const double sf1_init = 1.04192, sf2_init = 1.01207;   // strategy D optimum (2026-10-01 rerun: pressure fix, structure I)
   // ───────────────────────────────────────────────────────────────────────────
 
   fsim::readOFF(mesh_ref,    V0,      F);
