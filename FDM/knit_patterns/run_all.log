@@ -1,0 +1,156 @@
+
+== 2part_A (7.4.1) Middle crease, isotropic, no cable (A): 341 vertices, stretch wale 1.0372-1.0372, course 1.0372-1.0372
+The coefficiency is: 1.14137
+Refined the mesh to edges of at most 0.00354: 634 -> 644096 triangles, 5 passes
+Pre-strain per vertex: wale 0.964116-0.964116, course 0.964116-0.964116
+110 stripe singularities, 110 trajectories end at one
+Reversed 181 trajectories to run the same way across the field
+0 trajectories shorter than a stitch left out
+Wrote 355 trajectories to /home/chaoyu/phd_simulation/FDM/knit_patterns/2part_A/2part_A_tri_path.txt
+Wrote 89722 stitches to /home/chaoyu/phd_simulation/FDM/knit_patterns/2part_A/2part_A_tri_path_recons.txt
+Wrote 455 links between neighbouring trajectories to /home/chaoyu/phd_simulation/FDM/knit_patterns/2part_A/2part_A_neighbours.txt
+Wrote 110 stripe and 0 field singularities to /home/chaoyu/phd_simulation/FDM/knit_patterns/2part_A/2part_A_singularities.txt
+   355 trajectories, 89722 stitches, pattern 440x710, knittable 440x710  (WIDER THAN THE 365-NEEDLE BED);  time: trajectories 209.6s, pattern 3.0s, knittable 0.2s, total 212.8s
+
+== 2part_B (7.4.1) Middle crease, isotropic, cable (B): 341 vertices, stretch wale 1.0266-1.0266, course 1.0266-1.0266
+The coefficiency is: 1.14137
+Refined the mesh to edges of at most 0.00354: 634 -> 644096 triangles, 5 passes
+Pre-strain per vertex: wale 0.974115-0.974115, course 0.974115-0.974115
+120 stripe singularities, 120 trajectories end at one
+Reversed 181 trajectories to run the same way across the field
+0 trajectories shorter than a stitch left out
+Wrote 364 trajectories to /home/chaoyu/phd_simulation/FDM/knit_patterns/2part_B/2part_B_tri_path.txt
+Wrote 91569 stitches to /home/chaoyu/phd_simulation/FDM/knit_patterns/2part_B/2part_B_tri_path_recons.txt
+Wrote 471 links between neighbouring trajectories to /home/chaoyu/phd_simulation/FDM/knit_patterns/2part_B/2part_B_neighbours.txt
+Wrote 120 stripe and 0 field singularities to /home/chaoyu/phd_simulation/FDM/knit_patterns/2part_B/2part_B_singularities.txt
+   364 trajectories, 91569 stitches, pattern 445x728, knittable 445x728  (WIDER THAN THE 365-NEEDLE BED);  time: trajectories 215.3s, pattern 2.9s, knittable 0.2s, total 218.4s
+
+== 2part_C (7.4.1) Middle crease, anisotropic, no cable (C): 341 vertices, stretch wale 1.0716-1.0716, course 0.9890-0.9890
+The coefficiency is: 1.14137
+Refined the mesh to edges of at most 0.00354: 634 -> 644096 triangles, 5 passes
+Pre-strain per vertex: wale 0.933213-0.933213, course 1.01111-1.01111
+106 stripe singularities, 106 trajectories end at one
+Reversed 175 trajectories to run the same way across the field
+0 trajectories shorter than a stitch left out
+Wrote 344 trajectories to /home/chaoyu/phd_simulation/FDM/knit_patterns/2part_C/2part_C_tri_path.txt
+Wrote 91056 stitches to /home/chaoyu/phd_simulation/FDM/knit_patterns/2part_C/2part_C_tri_path_recons.txt
+Wrote 441 links between neighbouring trajectories to /home/chaoyu/phd_simulation/FDM/knit_patterns/2part_C/2part_C_neighbours.txt
+Wrote 106 stripe and 0 field singularities to /home/chaoyu/phd_simulation/FDM/knit_patterns/2part_C/2part_C_singularities.txt
+   344 trajectories, 91056 stitches, pattern 462x688, knittable 462x688  (WIDER THAN THE 365-NEEDLE BED);  time: trajectories 205.8s, pattern 2.8s, knittable 0.2s, total 208.9s
+
+== 2part_D (7.4.1) Middle crease, anisotropic, cable (D): 341 vertices, stretch wale 1.0419-1.0419, course 1.0121-1.0121
+The coefficiency is: 1.14137
+Refined the mesh to edges of at most 0.00354: 634 -> 644096 triangles, 5 passes
+Pre-strain per vertex: wale 0.959763-0.959763, course 0.988078-0.988078
+110 stripe singularities, 110 trajectories end at one
+Reversed 180 trajectories to run the same way across the field
+0 trajectories shorter than a stitch left out
+Wrote 353 trajectories to /home/chaoyu/phd_simulation/FDM/knit_patterns/2part_D/2part_D_tri_path.txt
+Wrote 91515 stitches to /home/chaoyu/phd_simulation/FDM/knit_patterns/2part_D/2part_D_tri_path_recons.txt
+Wrote 449 links between neighbouring trajectories to /home/chaoyu/phd_simulation/FDM/knit_patterns/2part_D/2part_D_neighbours.txt
+Wrote 110 stripe and 0 field singularities to /home/chaoyu/phd_simulation/FDM/knit_patterns/2part_D/2part_D_singularities.txt
+   353 trajectories, 91515 stitches, pattern 452x706, knittable 452x706  (WIDER THAN THE 365-NEEDLE BED);  time: trajectories 208.5s, pattern 2.8s, knittable 0.2s, total 211.5s
+
+== 2part_E (7.4.1) Middle crease, three regions, cable (E): 341 vertices, stretch wale 1.0160-1.0513, course 1.0016-1.0053
+The coefficiency is: 1.14137
+Refined the mesh to edges of at most 0.00354: 634 -> 644096 triangles, 5 passes
+Pre-strain per vertex: wale 0.951212-0.984233, course 0.994748-0.998432
+122 stripe singularities, 122 trajectories end at one
+Reversed 179 trajectories to run the same way across the field
+0 trajectories shorter than a stitch left out
+Wrote 357 trajectories to /home/chaoyu/phd_simulation/FDM/knit_patterns/2part_E/2part_E_tri_path.txt
+Wrote 92411 stitches to /home/chaoyu/phd_simulation/FDM/knit_patterns/2part_E/2part_E_tri_path_recons.txt
+Wrote 470 links between neighbouring trajectories to /home/chaoyu/phd_simulation/FDM/knit_patterns/2part_E/2part_E_neighbours.txt
+Wrote 122 stripe and 0 field singularities to /home/chaoyu/phd_simulation/FDM/knit_patterns/2part_E/2part_E_singularities.txt
+   357 trajectories, 92411 stitches, pattern 456x714, knittable 456x714  (WIDER THAN THE 365-NEEDLE BED);  time: trajectories 209.3s, pattern 2.9s, knittable 0.2s, total 212.4s
+
+== 4part_G (7.4.2) Crossing creases, global: 8145 vertices, stretch wale 1.0010-1.0010, course 1.0440-1.0440
+The coefficiency is: 1.2
+Refined the mesh to edges of at most 0.00354: 16000 -> 842752 triangles, 4 passes
+Pre-strain per vertex: wale 0.999001-0.999001, course 0.957896-0.957896
+223 stripe singularities, 223 trajectories end at one
+Reversed 116 trajectories to run the same way across the field
+6 trajectories shorter than a stitch left out
+Wrote 179 trajectories to /home/chaoyu/phd_simulation/FDM/knit_patterns/4part_G/4part_tri_path.txt
+Wrote 102368 stitches to /home/chaoyu/phd_simulation/FDM/knit_patterns/4part_G/4part_tri_path_recons.txt
+Wrote 324 links between neighbouring trajectories to /home/chaoyu/phd_simulation/FDM/knit_patterns/4part_G/4part_neighbours.txt
+Wrote 223 stripe and 18 field singularities to /home/chaoyu/phd_simulation/FDM/knit_patterns/4part_G/4part_singularities.txt
+   4part_G FAILED: ValueError('24 trajectories are closed rings, courses knitted in the round, e.g. around a pole: [15, 33, 34, 37, 56, 64, 81, 85, 86, 87]. They need a seam to be knitted flat.')
+
+== B5 (7.4.3) Free-form, 9 regions: 497 vertices, stretch wale 1.0010-1.0320, course 1.0232-1.0848
+The coefficiency is: 1.2
+Refined the mesh to edges of at most 0.00354: 929 -> 699136 triangles, 5 passes
+Pre-strain per vertex: wale 0.969023-0.999036, course 0.921861-0.977327
+106 stripe singularities, 106 trajectories end at one
+Reversed 182 trajectories to run the same way across the field
+0 trajectories shorter than a stitch left out
+Wrote 334 trajectories to /home/chaoyu/phd_simulation/FDM/knit_patterns/B5/B5_tri_path.txt
+Wrote 78797 stitches to /home/chaoyu/phd_simulation/FDM/knit_patterns/B5/B5_tri_path_recons.txt
+Wrote 431 links between neighbouring trajectories to /home/chaoyu/phd_simulation/FDM/knit_patterns/B5/B5_neighbours.txt
+Wrote 106 stripe and 0 field singularities to /home/chaoyu/phd_simulation/FDM/knit_patterns/B5/B5_singularities.txt
+   334 trajectories, 78797 stitches, pattern 384x668, knittable 384x668  (WIDER THAN THE 365-NEEDLE BED);  time: trajectories 225.0s, pattern 3.0s, knittable 0.2s, total 228.1s
+
+== C5 (7.4.4) Fluted dome: 18010 vertices, stretch wale 1.0070-1.0161, course 1.0096-1.0167
+The coefficiency is: 1.19911
+Refined the mesh to edges of at most 0.00354: 34192 -> 548608 triangles, 3 passes
+Pre-strain per vertex: wale 0.984156-0.993017, course 0.983578-0.990454
+133 stripe singularities, 133 trajectories end at one
+Reversed 695 trajectories to run the same way across the field
+7 trajectories shorter than a stitch left out
+Wrote 1305 trajectories to /home/chaoyu/phd_simulation/FDM/knit_patterns/C5/C5_tri_path.txt
+Wrote 91110 stitches to /home/chaoyu/phd_simulation/FDM/knit_patterns/C5/C5_tri_path_recons.txt
+Wrote 2643 links between neighbouring trajectories to /home/chaoyu/phd_simulation/FDM/knit_patterns/C5/C5_neighbours.txt
+Wrote 133 stripe and 20 field singularities to /home/chaoyu/phd_simulation/FDM/knit_patterns/C5/C5_singularities.txt
+   1305 trajectories, 91110 stitches, pattern 474x2610, knittable 474x2610  (WIDER THAN THE 365-NEEDLE BED);  time: trajectories 156.1s, pattern 3.3s, knittable 0.3s, total 159.6s
+
+== D5_1r (7.4.5) Opening, 1 region: 12766 vertices, stretch wale 1.0079-1.0079, course 1.0519-1.0519
+The coefficiency is: 1.22625
+Refined the mesh to edges of at most 0.00354: 25008 -> 400224 triangles, 3 passes
+Pre-strain per vertex: wale 0.992175-0.992175, course 0.950657-0.950657
+503 stripe singularities, 503 trajectories end at one
+Reversed 396 trajectories to run the same way across the field
+2 trajectories shorter than a stitch left out
+Wrote 790 trajectories to /home/chaoyu/phd_simulation/FDM/knit_patterns/D5_1r/D5_tri_path.txt
+Wrote 67008 stitches to /home/chaoyu/phd_simulation/FDM/knit_patterns/D5_1r/D5_tri_path_recons.txt
+Wrote 1272 links between neighbouring trajectories to /home/chaoyu/phd_simulation/FDM/knit_patterns/D5_1r/D5_neighbours.txt
+Wrote 503 stripe and 0 field singularities to /home/chaoyu/phd_simulation/FDM/knit_patterns/D5_1r/D5_singularities.txt
+   790 trajectories, 67008 stitches, pattern 239x1580, knittable 239x1580;  time: trajectories 94.0s, pattern 2.2s, knittable 0.1s, total 96.4s
+
+== D5_4ra (7.4.5) Opening, 4 adaptive regions: 12766 vertices, stretch wale 1.0076-1.0079, course 1.0510-1.0519
+The coefficiency is: 1.22625
+Refined the mesh to edges of at most 0.00354: 25008 -> 400224 triangles, 3 passes
+Pre-strain per vertex: wale 0.992164-0.992468, course 0.950653-0.951442
+502 stripe singularities, 502 trajectories end at one
+Reversed 394 trajectories to run the same way across the field
+3 trajectories shorter than a stitch left out
+Wrote 791 trajectories to /home/chaoyu/phd_simulation/FDM/knit_patterns/D5_4ra/D5_tri_path.txt
+Wrote 67069 stitches to /home/chaoyu/phd_simulation/FDM/knit_patterns/D5_4ra/D5_tri_path_recons.txt
+Wrote 1276 links between neighbouring trajectories to /home/chaoyu/phd_simulation/FDM/knit_patterns/D5_4ra/D5_neighbours.txt
+Wrote 502 stripe and 0 field singularities to /home/chaoyu/phd_simulation/FDM/knit_patterns/D5_4ra/D5_singularities.txt
+   791 trajectories, 67069 stitches, pattern 239x1582, knittable 239x1582;  time: trajectories 94.9s, pattern 2.2s, knittable 0.1s, total 97.3s
+
+== D5_lap10 (7.4.5) Opening, 10 field-aligned regions: 12766 vertices, stretch wale 1.0024-1.0253, course 1.0316-1.0692
+The coefficiency is: 1.22625
+Refined the mesh to edges of at most 0.00354: 25008 -> 400224 triangles, 3 passes
+Pre-strain per vertex: wale 0.975301-0.997654, course 0.935259-0.96933
+500 stripe singularities, 500 trajectories end at one
+Reversed 387 trajectories to run the same way across the field
+0 trajectories shorter than a stitch left out
+Wrote 787 trajectories to /home/chaoyu/phd_simulation/FDM/knit_patterns/D5_lap10/D5_tri_path.txt
+Wrote 67158 stitches to /home/chaoyu/phd_simulation/FDM/knit_patterns/D5_lap10/D5_tri_path_recons.txt
+Wrote 1265 links between neighbouring trajectories to /home/chaoyu/phd_simulation/FDM/knit_patterns/D5_lap10/D5_neighbours.txt
+Wrote 500 stripe and 0 field singularities to /home/chaoyu/phd_simulation/FDM/knit_patterns/D5_lap10/D5_singularities.txt
+   787 trajectories, 67158 stitches, pattern 243x1574, knittable 243x1574;  time: trajectories 94.2s, pattern 2.2s, knittable 0.2s, total 96.5s
+
+== D5_sym (7.4.5) Opening, 10 symmetric, warm-started: 12766 vertices, stretch wale 1.0003-1.0197, course 1.0383-1.0697
+The coefficiency is: 1.22625
+Refined the mesh to edges of at most 0.00354: 25008 -> 400224 triangles, 3 passes
+Pre-strain per vertex: wale 0.980683-0.999673, course 0.934861-0.963138
+500 stripe singularities, 500 trajectories end at one
+Reversed 383 trajectories to run the same way across the field
+0 trajectories shorter than a stitch left out
+Wrote 787 trajectories to /home/chaoyu/phd_simulation/FDM/knit_patterns/D5_sym/D5_tri_path.txt
+Wrote 67089 stitches to /home/chaoyu/phd_simulation/FDM/knit_patterns/D5_sym/D5_tri_path_recons.txt
+Wrote 1272 links between neighbouring trajectories to /home/chaoyu/phd_simulation/FDM/knit_patterns/D5_sym/D5_neighbours.txt
+Wrote 500 stripe and 0 field singularities to /home/chaoyu/phd_simulation/FDM/knit_patterns/D5_sym/D5_singularities.txt
+   787 trajectories, 67089 stitches, pattern 242x1574, knittable 242x1574;  time: trajectories 94.2s, pattern 2.2s, knittable 0.1s, total 96.6s

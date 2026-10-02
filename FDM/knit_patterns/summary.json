@@ -1,0 +1,360 @@
+[
+ {
+  "case": "2part_A",
+  "section": "7.4.1",
+  "title": "Middle crease, isotropic, no cable (A)",
+  "convention": "fem",
+  "trajectories": 355,
+  "stitches": 89722,
+  "pattern_w": 440,
+  "pattern_h": 710,
+  "knittable_w": 440,
+  "knittable_h": 710,
+  "fits_bed": false,
+  "t_trajectories_s": 209.64390571974218,
+  "t_pattern_s": 2.9614958013407886,
+  "t_knittable_s": 0.20951408194378018,
+  "t_total_s": 212.81491560302675,
+  "knittable_report": {
+   "moved": 865,
+   "added": 55,
+   "red_open": 39,
+   "black_open": 40,
+   "turn_open": 0
+  },
+  "stretch_wale": [
+   1.03722,
+   1.03722
+  ],
+  "stretch_course": [
+   1.03722,
+   1.03722
+  ]
+ },
+ {
+  "case": "2part_B",
+  "section": "7.4.1",
+  "title": "Middle crease, isotropic, cable (B)",
+  "convention": "fem",
+  "trajectories": 364,
+  "stitches": 91569,
+  "pattern_w": 445,
+  "pattern_h": 728,
+  "knittable_w": 445,
+  "knittable_h": 728,
+  "fits_bed": false,
+  "t_trajectories_s": 215.27251463523135,
+  "t_pattern_s": 2.8925680350512266,
+  "t_knittable_s": 0.20207584090530872,
+  "t_total_s": 218.36715851118788,
+  "knittable_report": {
+   "moved": 1569,
+   "added": 65,
+   "red_open": 39,
+   "black_open": 43,
+   "turn_open": 0
+  },
+  "stretch_wale": [
+   1.026573,
+   1.026573
+  ],
+  "stretch_course": [
+   1.026573,
+   1.026573
+  ]
+ },
+ {
+  "case": "2part_C",
+  "section": "7.4.1",
+  "title": "Middle crease, anisotropic, no cable (C)",
+  "convention": "fem",
+  "trajectories": 344,
+  "stitches": 91056,
+  "pattern_w": 462,
+  "pattern_h": 688,
+  "knittable_w": 462,
+  "knittable_h": 688,
+  "fits_bed": false,
+  "t_trajectories_s": 205.82479977002367,
+  "t_pattern_s": 2.835554116871208,
+  "t_knittable_s": 0.19762374507263303,
+  "t_total_s": 208.85797763196751,
+  "knittable_report": {
+   "moved": 2626,
+   "added": 84,
+   "red_open": 24,
+   "black_open": 27,
+   "turn_open": 0
+  },
+  "stretch_wale": [
+   1.071567,
+   1.071567
+  ],
+  "stretch_course": [
+   0.989013,
+   0.989013
+  ]
+ },
+ {
+  "case": "2part_D",
+  "section": "7.4.1",
+  "title": "Middle crease, anisotropic, cable (D)",
+  "convention": "fem",
+  "trajectories": 353,
+  "stitches": 91515,
+  "pattern_w": 452,
+  "pattern_h": 706,
+  "knittable_w": 452,
+  "knittable_h": 706,
+  "fits_bed": false,
+  "t_trajectories_s": 208.47302924189717,
+  "t_pattern_s": 2.816031501162797,
+  "t_knittable_s": 0.19654801487922668,
+  "t_total_s": 211.4856087579392,
+  "knittable_report": {
+   "moved": 2339,
+   "added": 71,
+   "red_open": 29,
+   "black_open": 30,
+   "turn_open": 0
+  },
+  "stretch_wale": [
+   1.041924,
+   1.041924
+  ],
+  "stretch_course": [
+   1.012066,
+   1.012066
+  ]
+ },
+ {
+  "case": "2part_E",
+  "section": "7.4.1",
+  "title": "Middle crease, three regions, cable (E)",
+  "convention": "fem",
+  "trajectories": 357,
+  "stitches": 92411,
+  "pattern_w": 456,
+  "pattern_h": 714,
+  "knittable_w": 456,
+  "knittable_h": 714,
+  "fits_bed": false,
+  "t_trajectories_s": 209.3173010488972,
+  "t_pattern_s": 2.8509187530726194,
+  "t_knittable_s": 0.2015879056416452,
+  "t_total_s": 212.36980770761147,
+  "knittable_report": {
+   "moved": 2958,
+   "added": 85,
+   "red_open": 28,
+   "black_open": 32,
+   "turn_open": 0
+  },
+  "stretch_wale": [
+   1.01602,
+   1.05129
+  ],
+  "stretch_course": [
+   1.00157,
+   1.00528
+  ]
+ },
+ {
+  "case": "4part_G",
+  "section": "7.4.2",
+  "title": "Crossing creases, global",
+  "error": "ValueError('24 trajectories are closed rings, courses knitted in the round, e.g. around a pole: [15, 33, 34, 37, 56, 64, 81, 85, 86, 87]. They need a seam to be knitted flat.')"
+ },
+ {
+  "case": "B5",
+  "section": "7.4.3",
+  "title": "Free-form, 9 regions",
+  "convention": "fem",
+  "trajectories": 334,
+  "stitches": 78797,
+  "pattern_w": 384,
+  "pattern_h": 668,
+  "knittable_w": 384,
+  "knittable_h": 668,
+  "fits_bed": false,
+  "t_trajectories_s": 225.01955685811117,
+  "t_pattern_s": 2.9561723908409476,
+  "t_knittable_s": 0.16001046728342772,
+  "t_total_s": 228.13573971623555,
+  "knittable_report": {
+   "moved": 5819,
+   "added": 130,
+   "red_open": 9,
+   "black_open": 9,
+   "turn_open": 0
+  },
+  "stretch_wale": [
+   1.0009645406635086,
+   1.031967602556507
+  ],
+  "stretch_course": [
+   1.0231994034778609,
+   1.084762705878107
+  ]
+ },
+ {
+  "case": "C5",
+  "section": "7.4.4",
+  "title": "Fluted dome",
+  "convention": "fem",
+  "trajectories": 1305,
+  "stitches": 91110,
+  "pattern_w": 474,
+  "pattern_h": 2610,
+  "knittable_w": 474,
+  "knittable_h": 2610,
+  "fits_bed": false,
+  "t_trajectories_s": 156.06339051388204,
+  "t_pattern_s": 3.292505365796387,
+  "t_knittable_s": 0.2709157280623913,
+  "t_total_s": 159.62681160774082,
+  "knittable_report": {
+   "moved": 2182,
+   "added": 285,
+   "red_open": 84,
+   "black_open": 134,
+   "turn_open": 0
+  },
+  "stretch_wale": [
+   1.007032301675382,
+   1.016099168286769
+  ],
+  "stretch_course": [
+   1.009637713319244,
+   1.0166958913908772
+  ]
+ },
+ {
+  "case": "D5_1r",
+  "section": "7.4.5",
+  "title": "Opening, 1 region",
+  "convention": "fem",
+  "trajectories": 790,
+  "stitches": 67008,
+  "pattern_w": 239,
+  "pattern_h": 1580,
+  "knittable_w": 239,
+  "knittable_h": 1580,
+  "fits_bed": true,
+  "t_trajectories_s": 94.03531443001702,
+  "t_pattern_s": 2.244416870176792,
+  "t_knittable_s": 0.14915216714143753,
+  "t_total_s": 96.42888346733525,
+  "knittable_report": {
+   "moved": 7521,
+   "added": 51,
+   "red_open": 36,
+   "black_open": 51,
+   "turn_open": 0
+  },
+  "stretch_wale": [
+   1.0078865506545698,
+   1.0078865506545698
+  ],
+  "stretch_course": [
+   1.0519041350360716,
+   1.0519041350360716
+  ]
+ },
+ {
+  "case": "D5_4ra",
+  "section": "7.4.5",
+  "title": "Opening, 4 adaptive regions",
+  "convention": "fem",
+  "trajectories": 791,
+  "stitches": 67069,
+  "pattern_w": 239,
+  "pattern_h": 1582,
+  "knittable_w": 239,
+  "knittable_h": 1582,
+  "fits_bed": true,
+  "t_trajectories_s": 94.91667490685359,
+  "t_pattern_s": 2.2395969200879335,
+  "t_knittable_s": 0.14566432405263186,
+  "t_total_s": 97.30193615099415,
+  "knittable_report": {
+   "moved": 7205,
+   "added": 54,
+   "red_open": 37,
+   "black_open": 45,
+   "turn_open": 0
+  },
+  "stretch_wale": [
+   1.0075887991269303,
+   1.0078978028075423
+  ],
+  "stretch_course": [
+   1.0510359714696031,
+   1.051908180722109
+  ]
+ },
+ {
+  "case": "D5_lap10",
+  "section": "7.4.5",
+  "title": "Opening, 10 field-aligned regions",
+  "convention": "fem",
+  "trajectories": 787,
+  "stitches": 67158,
+  "pattern_w": 243,
+  "pattern_h": 1574,
+  "knittable_w": 243,
+  "knittable_h": 1574,
+  "fits_bed": true,
+  "t_trajectories_s": 94.18154961429536,
+  "t_pattern_s": 2.197921020910144,
+  "t_knittable_s": 0.15719142882153392,
+  "t_total_s": 96.53666206402704,
+  "knittable_report": {
+   "moved": 7274,
+   "added": 61,
+   "red_open": 39,
+   "black_open": 47,
+   "turn_open": 0
+  },
+  "stretch_wale": [
+   1.0023511164916998,
+   1.025324770053767
+  ],
+  "stretch_course": [
+   1.031640407076188,
+   1.0692230202143318
+  ]
+ },
+ {
+  "case": "D5_sym",
+  "section": "7.4.5",
+  "title": "Opening, 10 symmetric, warm-started",
+  "convention": "fem",
+  "trajectories": 787,
+  "stitches": 67089,
+  "pattern_w": 242,
+  "pattern_h": 1574,
+  "knittable_w": 242,
+  "knittable_h": 1574,
+  "fits_bed": true,
+  "t_trajectories_s": 94.19945868104696,
+  "t_pattern_s": 2.206460037268698,
+  "t_knittable_s": 0.14467011578381062,
+  "t_total_s": 96.55058883409947,
+  "knittable_report": {
+   "moved": 7433,
+   "added": 74,
+   "red_open": 36,
+   "black_open": 43,
+   "turn_open": 0
+  },
+  "stretch_wale": [
+   1.0003273700757627,
+   1.0196972252796839
+  ],
+  "stretch_course": [
+   1.0382725192381608,
+   1.0696775719526124
+  ]
+ }
+]
