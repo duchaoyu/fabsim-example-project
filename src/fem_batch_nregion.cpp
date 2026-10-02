@@ -27,6 +27,7 @@
 
 #include <fsim/OrthotropicStVKMembrane.h>
 #include <fsim/CompositeModel.h>
+#include <fsim/ElasticShell.h>
 #include <fsim/util/io.h>
 #include <optim/NewtonSolver.h>
 #include "anisotropic_rest_shape.h"
@@ -308,6 +309,10 @@ static std::vector<std::vector<int>> parseCablePaths(const std::string& s)
 std::string g_solver_status = "unrun";
 int g_load_steps = 0;   // 0 = the original 1 / 10 / 50 / 100 % sequence
 double g_reg_max = 0.0; // 0 = optim's default cap on the Newton regularisation (1e4)
+// Optional discrete-shell bending (Grinspun et al.), off unless "bending_E" > 0
+// in the params.  A membrane with a free edge has no stiffness against
+// wrinkling; a small bending stiffness gives the compressed faces a stable state.
+double g_bend_E = 0.0, g_bend_t = 0.0;
 
 // ── Newton solve ──────────────────────────────────────────────────────────────
 template <class Model>
@@ -435,6 +440,16 @@ static VectorXd simulate(const std::vector<RegionParams>& regions,
     auto conservative = [&](double p, const VectorXd& x_in) {
         fsim::OrthotropicStVKMembrane membrane(
             V0_mod, F, ths, E1s, E2s, nus, face_dirs, mp.mass, p);
+        if (g_bend_E > 0.0) {
+            fsim::DiscreteShell<> shell(V0_mod, F, g_bend_t, g_bend_E, nus[0]);
+            if (cable_template.empty()) {
+                fsim::CompositeModel composite(std::move(membrane), std::move(shell));
+                return newtonSolve(composite, x_in);
+            }
+            fsim::CompositeModel composite(std::move(membrane),
+                                           MultiCableModel(cable_template), std::move(shell));
+            return newtonSolve(composite, x_in);
+        }
         if (cable_template.empty()) return newtonSolve(membrane, x_in);
         fsim::CompositeModel composite(std::move(membrane),
                                        MultiCableModel(cable_template));
@@ -443,6 +458,16 @@ static VectorXd simulate(const std::vector<RegionParams>& regions,
     auto followerStep = [&](double p, const VectorXd& x_in) {
         fsim::OrthotropicStVKMembrane membrane(
             V0_mod, F, ths, E1s, E2s, nus, face_dirs, mp.mass, 0.0);
+        if (g_bend_E > 0.0) {
+            fsim::DiscreteShell<> shell(V0_mod, F, g_bend_t, g_bend_E, nus[0]);
+            if (cable_template.empty()) {
+                fsim::CompositeModel composite(std::move(membrane), std::move(shell));
+                return follower::solve(composite, F, p, x_in, fixed_vs);
+            }
+            fsim::CompositeModel composite(std::move(membrane),
+                                           MultiCableModel(cable_template), std::move(shell));
+            return follower::solve(composite, F, p, x_in, fixed_vs);
+        }
         if (cable_template.empty())
             return follower::solve(membrane, F, p, x_in, fixed_vs);
         fsim::CompositeModel composite(std::move(membrane),
@@ -572,6 +597,11 @@ int main(int argc, char* argv[])
     // edge (the rest-shape construction still uses the topological boundary).
     g_load_steps = jsonInt(ps, "load_steps", 0);
     g_reg_max = jsonDouble(ps, "newton_reg_max", 0.0);
+    g_bend_E = jsonDouble(ps, "bending_E", 0.0);
+    g_bend_t = jsonDouble(ps, "bending_thickness", 0.0);
+    if (g_bend_E > 0.0)
+        std::cerr << "Bending: discrete shell, E " << g_bend_E << " Pa, thickness "
+                  << g_bend_t << " m\n";
     fixed_vs = jsonIntArray(ps, "fixed_vertices");
     if (fixed_vs.empty()) fixed_vs = bdrs;
     for (int v : fixed_vs)
