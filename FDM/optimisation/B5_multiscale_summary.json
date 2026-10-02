@@ -1,0 +1,1454 @@
+[
+  {
+    "diameter_m": 1.2,
+    "tag": "1p2m",
+    "motif": 5,
+    "pressure_pa": 1000.0,
+    "fem_mesh": "/home/chaoyu/phd_simulation/FDM/../data/B5_remeshed_shared.off",
+    "target_crown_m": 0.23167445,
+    "final_crown_m": 0.22038588,
+    "converged": false,
+    "loss_rmse_m": 0.004608835253648805,
+    "rmse_normalised": 0.0038406960447073374,
+    "n_calls": 1822,
+    "tension_global": {
+      "T_wale_mean_Npm": 256.81042486544675,
+      "T_course_mean_Npm": 158.19354865446718,
+      "T_wale_max_Npm": 630.2683,
+      "T_course_max_Npm": 590.1359,
+      "T_wale_norm": 0.2140086873878723,
+      "T_course_norm": 0.13182795721205598
+    },
+    "tension_regions": [
+      {
+        "region_id": 0,
+        "T_wale_mean": 271.1897333333333,
+        "T_course_mean": 146.66890579710144,
+        "T_wale_max": 526.0882,
+        "T_course_max": 189.3918
+      },
+      {
+        "region_id": 1,
+        "T_wale_mean": 240.44327210884353,
+        "T_course_mean": 84.65745102040816,
+        "T_wale_max": 461.6238,
+        "T_course_max": 175.0008
+      },
+      {
+        "region_id": 2,
+        "T_wale_mean": 202.93954657534243,
+        "T_course_mean": 88.22823150684931,
+        "T_wale_max": 470.2102,
+        "T_course_max": 177.261
+      },
+      {
+        "region_id": 3,
+        "T_wale_mean": 240.29282166666664,
+        "T_course_mean": 281.07634249999995,
+        "T_wale_max": 472.0241,
+        "T_course_max": 590.1359
+      },
+      {
+        "region_id": 4,
+        "T_wale_mean": 290.57328547008547,
+        "T_course_mean": 159.10095384615383,
+        "T_wale_max": 533.77,
+        "T_course_max": 271.0877
+      },
+      {
+        "region_id": 5,
+        "T_wale_mean": 147.32570945945946,
+        "T_course_mean": 144.19076554054055,
+        "T_wale_max": 269.972,
+        "T_course_max": 251.6762
+      },
+      {
+        "region_id": 6,
+        "T_wale_mean": 354.7223390625,
+        "T_course_mean": 180.681671875,
+        "T_wale_max": 630.2683,
+        "T_course_max": 245.7001
+      },
+      {
+        "region_id": 7,
+        "T_wale_mean": 358.5211531746032,
+        "T_course_mean": 165.3179166666667,
+        "T_wale_max": 590.8903,
+        "T_course_max": 431.5697
+      },
+      {
+        "region_id": 8,
+        "T_wale_mean": 264.50357230769237,
+        "T_course_mean": 182.74546923076923,
+        "T_wale_max": 435.1966,
+        "T_course_max": 393.4969
+      }
+    ],
+    "regions": [
+      {
+        "region_id": 0,
+        "row": 0,
+        "col": 0,
+        "knit_dir_deg": 0,
+        "sf_wale": 1.016572463338419,
+        "sf_course": 1.029975058660131
+      },
+      {
+        "region_id": 1,
+        "row": 0,
+        "col": 1,
+        "knit_dir_deg": 0,
+        "sf_wale": 1.0243881058911488,
+        "sf_course": 1.0231994034778609
+      },
+      {
+        "region_id": 2,
+        "row": 0,
+        "col": 2,
+        "knit_dir_deg": 0,
+        "sf_wale": 1.023009783879913,
+        "sf_course": 1.028869775620742
+      },
+      {
+        "region_id": 3,
+        "row": 1,
+        "col": 0,
+        "knit_dir_deg": 0,
+        "sf_wale": 1.0009645406635086,
+        "sf_course": 1.084762705878107
+      },
+      {
+        "region_id": 4,
+        "row": 1,
+        "col": 1,
+        "knit_dir_deg": 0,
+        "sf_wale": 1.0318749834027228,
+        "sf_course": 1.0366167512050855
+      },
+      {
+        "region_id": 5,
+        "row": 1,
+        "col": 2,
+        "knit_dir_deg": 0,
+        "sf_wale": 1.0054217428505834,
+        "sf_course": 1.027555556466708
+      },
+      {
+        "region_id": 6,
+        "row": 2,
+        "col": 0,
+        "knit_dir_deg": 0,
+        "sf_wale": 1.0186870291504808,
+        "sf_course": 1.0315337375550009
+      },
+      {
+        "region_id": 7,
+        "row": 2,
+        "col": 1,
+        "knit_dir_deg": 0,
+        "sf_wale": 1.031967602556507,
+        "sf_course": 1.024845437911566
+      },
+      {
+        "region_id": 8,
+        "row": 2,
+        "col": 2,
+        "knit_dir_deg": 0,
+        "sf_wale": 1.0213669926214486,
+        "sf_course": 1.0295863746853942
+      }
+    ],
+    "cable_ea": 157000.0,
+    "cables": [
+      {
+        "name": "A1",
+        "rest_scale": 0.9906456590989485
+      },
+      {
+        "name": "A2",
+        "rest_scale": 0.9911933114741167
+      },
+      {
+        "name": "A3",
+        "rest_scale": 1.0148458063223587
+      },
+      {
+        "name": "B1",
+        "rest_scale": 0.9950667039857285
+      },
+      {
+        "name": "B2",
+        "rest_scale": 0.9940060880901096
+      },
+      {
+        "name": "B3",
+        "rest_scale": 1.0004398157511576
+      },
+      {
+        "name": "C1",
+        "rest_scale": 1.0123537035507042
+      },
+      {
+        "name": "C2",
+        "rest_scale": 0.9972748798348428
+      },
+      {
+        "name": "C3",
+        "rest_scale": 0.9954181302661622
+      },
+      {
+        "name": "D1",
+        "rest_scale": 1.0128489794285642
+      },
+      {
+        "name": "D2",
+        "rest_scale": 0.9969208477082315
+      },
+      {
+        "name": "D3",
+        "rest_scale": 0.9964207510906562
+      }
+    ],
+    "history": [
+      {
+        "call": 1792,
+        "loss": 0.008968998268518177,
+        "crown_height": 0.22856382
+      },
+      {
+        "call": 1793,
+        "loss": 0.00964217487626303,
+        "crown_height": 0.2208999
+      },
+      {
+        "call": 1794,
+        "loss": 0.00872745364856975,
+        "crown_height": 0.21809778
+      },
+      {
+        "call": 1795,
+        "loss": 0.006675912169035535,
+        "crown_height": 0.2240119
+      },
+      {
+        "call": 1796,
+        "loss": 0.0071182596377730775,
+        "crown_height": 0.22618602
+      },
+      {
+        "call": 1797,
+        "loss": 0.008466187151876262,
+        "crown_height": 0.21903133
+      },
+      {
+        "call": 1798,
+        "loss": 0.006839952677138306,
+        "crown_height": 0.22348118
+      },
+      {
+        "call": 1799,
+        "loss": 0.00675786264785607,
+        "crown_height": 0.22599769
+      },
+      {
+        "call": 1800,
+        "loss": 0.00538548078435243,
+        "crown_height": 0.22429636
+      },
+      {
+        "call": 1801,
+        "loss": 0.0060850391587753,
+        "crown_height": 0.22212833
+      },
+      {
+        "call": 1802,
+        "loss": 0.006000892937688888,
+        "crown_height": 0.22238814
+      },
+      {
+        "call": 1803,
+        "loss": 0.006087972404500262,
+        "crown_height": 0.22324637
+      },
+      {
+        "call": 1804,
+        "loss": 0.005194962920799025,
+        "crown_height": 0.22161915
+      },
+      {
+        "call": 1805,
+        "loss": 0.006099956708992245,
+        "crown_height": 0.22106905
+      },
+      {
+        "call": 1806,
+        "loss": 0.006521163097725379,
+        "crown_height": 0.22449739
+      },
+      {
+        "call": 1807,
+        "loss": 0.0060696330882247206,
+        "crown_height": 0.22219406
+      },
+      {
+        "call": 1808,
+        "loss": 0.005738709904627705,
+        "crown_height": 0.22294219
+      },
+      {
+        "call": 1809,
+        "loss": 0.006176219126434325,
+        "crown_height": 0.22290723
+      },
+      {
+        "call": 1810,
+        "loss": 0.0054480180659855415,
+        "crown_height": 0.22301215
+      },
+      {
+        "call": 1811,
+        "loss": 0.0060326672592068455,
+        "crown_height": 0.22513172
+      },
+      {
+        "call": 1812,
+        "loss": 0.005789053591831802,
+        "crown_height": 0.22315248
+      },
+      {
+        "call": 1813,
+        "loss": 0.005106974700646356,
+        "crown_height": 0.22325966
+      },
+      {
+        "call": 1814,
+        "loss": 0.0054986195343579266,
+        "crown_height": 0.221303
+      },
+      {
+        "call": 1815,
+        "loss": 0.005512947677300524,
+        "crown_height": 0.22286167
+      },
+      {
+        "call": 1816,
+        "loss": 0.005164806636598762,
+        "crown_height": 0.22299869
+      },
+      {
+        "call": 1817,
+        "loss": 0.00557969181407318,
+        "crown_height": 0.22395036
+      },
+      {
+        "call": 1818,
+        "loss": 0.005526182389320242,
+        "crown_height": 0.22281174
+      },
+      {
+        "call": 1819,
+        "loss": 0.00759073335238182,
+        "crown_height": 0.23094707
+      },
+      {
+        "call": 1820,
+        "loss": 0.007831519112851452,
+        "crown_height": 0.22835242
+      },
+      {
+        "call": 1821,
+        "loss": 0.011724590724321584,
+        "crown_height": 0.21351575
+      }
+    ]
+  },
+  {
+    "diameter_m": 1.5,
+    "tag": "1p5m",
+    "motif": 5,
+    "pressure_pa": 1000.0,
+    "fem_mesh": "/home/chaoyu/phd_simulation/FDM/../data/B5_remeshed_shared_1p5m.off",
+    "target_crown_m": 0.2896955,
+    "final_crown_m": 0.27111004,
+    "converged": true,
+    "loss_rmse_m": 0.0074859620629491,
+    "rmse_normalised": 0.0049906413752994,
+    "n_calls": 870,
+    "tension_global": {
+      "T_wale_mean_Npm": 415.94801496232503,
+      "T_course_mean_Npm": 198.37726856835306,
+      "T_wale_max_Npm": 753.0846,
+      "T_course_max_Npm": 328.9325,
+      "T_wale_norm": 0.27729867664155,
+      "T_course_norm": 0.13225151237890204
+    },
+    "tension_regions": [
+      {
+        "region_id": 0,
+        "T_wale_mean": 422.39243188405806,
+        "T_course_mean": 241.03121739130438,
+        "T_wale_max": 717.1991,
+        "T_course_max": 277.9581
+      },
+      {
+        "region_id": 1,
+        "T_wale_mean": 324.30277414965985,
+        "T_course_mean": 152.52000408163266,
+        "T_wale_max": 628.0698,
+        "T_course_max": 284.9596
+      },
+      {
+        "region_id": 2,
+        "T_wale_mean": 323.5900780821918,
+        "T_course_mean": 147.9162123287671,
+        "T_wale_max": 568.0454,
+        "T_course_max": 274.3896
+      },
+      {
+        "region_id": 3,
+        "T_wale_mean": 470.0777741666667,
+        "T_course_mean": 246.15153833333332,
+        "T_wale_max": 753.0846,
+        "T_course_max": 297.8715
+      },
+      {
+        "region_id": 4,
+        "T_wale_mean": 419.21040170940176,
+        "T_course_mean": 201.43805042735042,
+        "T_wale_max": 640.4758,
+        "T_course_max": 297.0532
+      },
+      {
+        "region_id": 5,
+        "T_wale_mean": 314.99606554054054,
+        "T_course_mean": 158.74456824324324,
+        "T_wale_max": 542.5379,
+        "T_course_max": 281.421
+      },
+      {
+        "region_id": 6,
+        "T_wale_mean": 560.8718578125,
+        "T_course_mean": 265.95564687499996,
+        "T_wale_max": 640.5843,
+        "T_course_max": 295.3775
+      },
+      {
+        "region_id": 7,
+        "T_wale_mean": 515.1697095238096,
+        "T_course_mean": 217.9997880952381,
+        "T_wale_max": 644.8988,
+        "T_course_max": 328.9325
+      },
+      {
+        "region_id": 8,
+        "T_wale_mean": 509.115303076923,
+        "T_course_mean": 205.43441692307692,
+        "T_wale_max": 604.9631,
+        "T_course_max": 321.3672
+      }
+    ],
+    "regions": [
+      {
+        "region_id": 0,
+        "row": 0,
+        "col": 0,
+        "knit_dir_deg": 0,
+        "sf_wale": 1.0395042518290702,
+        "sf_course": 1.0403551408415324
+      },
+      {
+        "region_id": 1,
+        "row": 0,
+        "col": 1,
+        "knit_dir_deg": 0,
+        "sf_wale": 1.0398277191444523,
+        "sf_course": 1.0396559939338907
+      },
+      {
+        "region_id": 2,
+        "row": 0,
+        "col": 2,
+        "knit_dir_deg": 0,
+        "sf_wale": 1.0397354382041082,
+        "sf_course": 1.0401435647042026
+      },
+      {
+        "region_id": 3,
+        "row": 1,
+        "col": 0,
+        "knit_dir_deg": 0,
+        "sf_wale": 1.0384268492287096,
+        "sf_course": 1.0405619984954684
+      },
+      {
+        "region_id": 4,
+        "row": 1,
+        "col": 1,
+        "knit_dir_deg": 0,
+        "sf_wale": 1.0405069659723258,
+        "sf_course": 1.0407129998721654
+      },
+      {
+        "region_id": 5,
+        "row": 1,
+        "col": 2,
+        "knit_dir_deg": 0,
+        "sf_wale": 1.0378894386168933,
+        "sf_course": 1.0398016654113142
+      },
+      {
+        "region_id": 6,
+        "row": 2,
+        "col": 0,
+        "knit_dir_deg": 0,
+        "sf_wale": 1.0396955339616603,
+        "sf_course": 1.0403679865119662
+      },
+      {
+        "region_id": 7,
+        "row": 2,
+        "col": 1,
+        "knit_dir_deg": 0,
+        "sf_wale": 1.0404734029434908,
+        "sf_course": 1.0399026391881458
+      },
+      {
+        "region_id": 8,
+        "row": 2,
+        "col": 2,
+        "knit_dir_deg": 0,
+        "sf_wale": 1.0399389567173334,
+        "sf_course": 1.0402861614642098
+      }
+    ],
+    "cable_ea": 196250.0,
+    "cables": [
+      {
+        "name": "A1",
+        "rest_scale": 0.9991370218463491
+      },
+      {
+        "name": "A2",
+        "rest_scale": 0.9993532426315224
+      },
+      {
+        "name": "A3",
+        "rest_scale": 0.9997437359904195
+      },
+      {
+        "name": "B1",
+        "rest_scale": 0.9978412627801213
+      },
+      {
+        "name": "B2",
+        "rest_scale": 0.9976762493728697
+      },
+      {
+        "name": "B3",
+        "rest_scale": 0.9983340915672863
+      },
+      {
+        "name": "C1",
+        "rest_scale": 0.9999210991831947
+      },
+      {
+        "name": "C2",
+        "rest_scale": 0.9993853599219795
+      },
+      {
+        "name": "C3",
+        "rest_scale": 0.999223555919715
+      },
+      {
+        "name": "D1",
+        "rest_scale": 1.0001376060097793
+      },
+      {
+        "name": "D2",
+        "rest_scale": 0.9994182717124567
+      },
+      {
+        "name": "D3",
+        "rest_scale": 0.9993075927783834
+      }
+    ],
+    "history": [
+      {
+        "call": 840,
+        "loss": 0.009353503504111483,
+        "crown_height": 0.26885119
+      },
+      {
+        "call": 841,
+        "loss": 0.00894020788753419,
+        "crown_height": 0.26892999
+      },
+      {
+        "call": 842,
+        "loss": 0.008984475038381255,
+        "crown_height": 0.26966925
+      },
+      {
+        "call": 843,
+        "loss": 0.01059220357302421,
+        "crown_height": 0.26688265
+      },
+      {
+        "call": 844,
+        "loss": 0.008180358765698743,
+        "crown_height": 0.26572258
+      },
+      {
+        "call": 845,
+        "loss": 0.010957585528298628,
+        "crown_height": 0.27059818
+      },
+      {
+        "call": 846,
+        "loss": 0.009085348963393445,
+        "crown_height": 0.26921273
+      },
+      {
+        "call": 847,
+        "loss": 0.008164727829361082,
+        "crown_height": 0.26948423
+      },
+      {
+        "call": 848,
+        "loss": 0.008848152845227648,
+        "crown_height": 0.26924528
+      },
+      {
+        "call": 849,
+        "loss": 0.008317757583608877,
+        "crown_height": 0.26932975
+      },
+      {
+        "call": 850,
+        "loss": 0.009073723352118618,
+        "crown_height": 0.27170376
+      },
+      {
+        "call": 851,
+        "loss": 0.008513944165117129,
+        "crown_height": 0.26960039
+      },
+      {
+        "call": 852,
+        "loss": 0.00801180074327584,
+        "crown_height": 0.26955541
+      },
+      {
+        "call": 853,
+        "loss": 0.00785520158960449,
+        "crown_height": 0.26737107
+      },
+      {
+        "call": 854,
+        "loss": 0.00883486602408138,
+        "crown_height": 0.26921712
+      },
+      {
+        "call": 855,
+        "loss": 0.008268616940200042,
+        "crown_height": 0.26954527
+      },
+      {
+        "call": 856,
+        "loss": 0.008803441640329342,
+        "crown_height": 0.27045246
+      },
+      {
+        "call": 857,
+        "loss": 0.00838632599084008,
+        "crown_height": 0.26917669
+      },
+      {
+        "call": 858,
+        "loss": 0.008551943160387357,
+        "crown_height": 0.27714572
+      },
+      {
+        "call": 859,
+        "loss": 0.008299245644460261,
+        "crown_height": 0.27547079
+      },
+      {
+        "call": 860,
+        "loss": 0.007895416034458614,
+        "crown_height": 0.27618676
+      },
+      {
+        "call": 861,
+        "loss": 0.009594279989290098,
+        "crown_height": 0.27673142
+      },
+      {
+        "call": 862,
+        "loss": 0.009709602387041069,
+        "crown_height": 0.27529658
+      },
+      {
+        "call": 863,
+        "loss": 0.009256733049580534,
+        "crown_height": 0.2763147
+      },
+      {
+        "call": 864,
+        "loss": 0.007559149514672636,
+        "crown_height": 0.27211757
+      },
+      {
+        "call": 865,
+        "loss": 0.00811413101309362,
+        "crown_height": 0.27100084
+      },
+      {
+        "call": 866,
+        "loss": 0.008301982202554424,
+        "crown_height": 0.27297502
+      },
+      {
+        "call": 867,
+        "loss": 0.015092944397049585,
+        "crown_height": 0.26333552
+      },
+      {
+        "call": 868,
+        "loss": 0.008048248312786927,
+        "crown_height": 0.27056645
+      },
+      {
+        "call": 869,
+        "loss": 0.0081342767167758,
+        "crown_height": 0.27323463
+      }
+    ]
+  },
+  {
+    "diameter_m": 2.0,
+    "tag": "2p0m",
+    "motif": 5,
+    "pressure_pa": 1000.0,
+    "fem_mesh": "/home/chaoyu/phd_simulation/FDM/../data/B5_remeshed_shared_2p0m.off",
+    "target_crown_m": 0.38626067,
+    "final_crown_m": 0.36872937,
+    "converged": false,
+    "loss_rmse_m": 0.008345419817391973,
+    "rmse_normalised": 0.004172709908695987,
+    "n_calls": 653,
+    "tension_global": {
+      "T_wale_mean_Npm": 498.3821049515608,
+      "T_course_mean_Npm": 237.61052260495157,
+      "T_wale_max_Npm": 812.0444,
+      "T_course_max_Npm": 348.5779,
+      "T_wale_norm": 0.24919105247578038,
+      "T_course_norm": 0.11880526130247579
+    },
+    "tension_regions": [
+      {
+        "region_id": 0,
+        "T_wale_mean": 495.61429565217395,
+        "T_course_mean": 280.140031884058,
+        "T_wale_max": 778.9191,
+        "T_course_max": 308.9519
+      },
+      {
+        "region_id": 1,
+        "T_wale_mean": 396.4632027210884,
+        "T_course_mean": 192.24245986394558,
+        "T_wale_max": 675.3011,
+        "T_course_max": 325.9809
+      },
+      {
+        "region_id": 2,
+        "T_wale_mean": 385.35686712328766,
+        "T_course_mean": 179.04626849315068,
+        "T_wale_max": 636.711,
+        "T_course_max": 302.4243
+      },
+      {
+        "region_id": 3,
+        "T_wale_mean": 571.5208291666667,
+        "T_course_mean": 289.0198333333334,
+        "T_wale_max": 812.0444,
+        "T_course_max": 328.8651
+      },
+      {
+        "region_id": 4,
+        "T_wale_mean": 507.3358914529914,
+        "T_course_mean": 247.68894444444442,
+        "T_wale_max": 691.3177,
+        "T_course_max": 329.5256
+      },
+      {
+        "region_id": 5,
+        "T_wale_mean": 400.6542439189189,
+        "T_course_mean": 191.06029932432432,
+        "T_wale_max": 612.7152,
+        "T_course_max": 318.8717
+      },
+      {
+        "region_id": 6,
+        "T_wale_mean": 637.7129453124999,
+        "T_course_mean": 301.3006515625,
+        "T_wale_max": 697.2115,
+        "T_course_max": 326.8031
+      },
+      {
+        "region_id": 7,
+        "T_wale_mean": 603.5434682539684,
+        "T_course_mean": 264.9073960317461,
+        "T_wale_max": 688.0743,
+        "T_course_max": 348.5779
+      },
+      {
+        "region_id": 8,
+        "T_wale_mean": 589.0879169230769,
+        "T_course_mean": 238.1539953846154,
+        "T_wale_max": 663.9409,
+        "T_course_max": 341.122
+      }
+    ],
+    "regions": [
+      {
+        "region_id": 0,
+        "row": 0,
+        "col": 0,
+        "knit_dir_deg": 0,
+        "sf_wale": 1.041,
+        "sf_course": 1.041
+      },
+      {
+        "region_id": 1,
+        "row": 0,
+        "col": 1,
+        "knit_dir_deg": 0,
+        "sf_wale": 1.041,
+        "sf_course": 1.041
+      },
+      {
+        "region_id": 2,
+        "row": 0,
+        "col": 2,
+        "knit_dir_deg": 0,
+        "sf_wale": 1.041,
+        "sf_course": 1.041
+      },
+      {
+        "region_id": 3,
+        "row": 1,
+        "col": 0,
+        "knit_dir_deg": 0,
+        "sf_wale": 1.041,
+        "sf_course": 1.041
+      },
+      {
+        "region_id": 4,
+        "row": 1,
+        "col": 1,
+        "knit_dir_deg": 0,
+        "sf_wale": 1.041,
+        "sf_course": 1.041
+      },
+      {
+        "region_id": 5,
+        "row": 1,
+        "col": 2,
+        "knit_dir_deg": 0,
+        "sf_wale": 1.041,
+        "sf_course": 1.041
+      },
+      {
+        "region_id": 6,
+        "row": 2,
+        "col": 0,
+        "knit_dir_deg": 0,
+        "sf_wale": 1.041,
+        "sf_course": 1.041
+      },
+      {
+        "region_id": 7,
+        "row": 2,
+        "col": 1,
+        "knit_dir_deg": 0,
+        "sf_wale": 1.041,
+        "sf_course": 1.041
+      },
+      {
+        "region_id": 8,
+        "row": 2,
+        "col": 2,
+        "knit_dir_deg": 0,
+        "sf_wale": 1.041,
+        "sf_course": 1.041
+      }
+    ],
+    "cable_ea": 261666.6666666667,
+    "cables": [
+      {
+        "name": "A1",
+        "rest_scale": 1.0
+      },
+      {
+        "name": "A2",
+        "rest_scale": 1.0
+      },
+      {
+        "name": "A3",
+        "rest_scale": 1.0
+      },
+      {
+        "name": "B1",
+        "rest_scale": 1.0
+      },
+      {
+        "name": "B2",
+        "rest_scale": 1.0
+      },
+      {
+        "name": "B3",
+        "rest_scale": 1.0
+      },
+      {
+        "name": "C1",
+        "rest_scale": 1.0
+      },
+      {
+        "name": "C2",
+        "rest_scale": 1.0
+      },
+      {
+        "name": "C3",
+        "rest_scale": 1.0
+      },
+      {
+        "name": "D1",
+        "rest_scale": 1.0
+      },
+      {
+        "name": "D2",
+        "rest_scale": 1.0
+      },
+      {
+        "name": "D3",
+        "rest_scale": 1.0
+      }
+    ],
+    "history": [
+      {
+        "call": 623,
+        "loss": 0.010012387817991441,
+        "crown_height": 0.36615937
+      },
+      {
+        "call": 624,
+        "loss": 0.009928644496005863,
+        "crown_height": 0.36598324
+      },
+      {
+        "call": 625,
+        "loss": 0.009849212234058373,
+        "crown_height": 0.36698651
+      },
+      {
+        "call": 626,
+        "loss": 0.011033395292612066,
+        "crown_height": 0.36380388
+      },
+      {
+        "call": 627,
+        "loss": 0.008968281566662802,
+        "crown_height": 0.36165137
+      },
+      {
+        "call": 628,
+        "loss": 0.012533436600714697,
+        "crown_height": 0.36800292
+      },
+      {
+        "call": 629,
+        "loss": 0.009389640107434516,
+        "crown_height": 0.36654651
+      },
+      {
+        "call": 630,
+        "loss": 0.0087584083079086,
+        "crown_height": 0.36662375
+      },
+      {
+        "call": 631,
+        "loss": 0.00906134415370076,
+        "crown_height": 0.36651633
+      },
+      {
+        "call": 632,
+        "loss": 0.00888031614009674,
+        "crown_height": 0.36660022
+      },
+      {
+        "call": 633,
+        "loss": 0.010197547974805158,
+        "crown_height": 0.369366
+      },
+      {
+        "call": 634,
+        "loss": 0.009359995441542803,
+        "crown_height": 0.36690123
+      },
+      {
+        "call": 635,
+        "loss": 0.008656098831662733,
+        "crown_height": 0.36675105
+      },
+      {
+        "call": 636,
+        "loss": 0.008662671170654054,
+        "crown_height": 0.36391653
+      },
+      {
+        "call": 637,
+        "loss": 0.009907642116351189,
+        "crown_height": 0.36635115
+      },
+      {
+        "call": 638,
+        "loss": 0.00884429629331358,
+        "crown_height": 0.36682096
+      },
+      {
+        "call": 639,
+        "loss": 0.009341704565683466,
+        "crown_height": 0.36800929
+      },
+      {
+        "call": 640,
+        "loss": 0.008973860658597949,
+        "crown_height": 0.36644261
+      },
+      {
+        "call": 641,
+        "loss": 0.011461832029959852,
+        "crown_height": 0.37688314
+      },
+      {
+        "call": 642,
+        "loss": 0.011140453345167767,
+        "crown_height": 0.37476749
+      },
+      {
+        "call": 643,
+        "loss": 0.010815851830863638,
+        "crown_height": 0.3761112
+      },
+      {
+        "call": 644,
+        "loss": 0.013819021289238918,
+        "crown_height": 0.37592786
+      },
+      {
+        "call": 645,
+        "loss": 0.0139958377162778,
+        "crown_height": 0.37410729
+      },
+      {
+        "call": 646,
+        "loss": 0.013638666465320234,
+        "crown_height": 0.37568983
+      },
+      {
+        "call": 647,
+        "loss": 0.009633364794257752,
+        "crown_height": 0.37081559
+      },
+      {
+        "call": 648,
+        "loss": 0.011159585710944993,
+        "crown_height": 0.3686842
+      },
+      {
+        "call": 649,
+        "loss": 0.011406403459860437,
+        "crown_height": 0.3719326
+      },
+      {
+        "call": 650,
+        "loss": 0.00876887533336833,
+        "crown_height": 0.37060332
+      },
+      {
+        "call": 651,
+        "loss": 0.010823608827934353,
+        "crown_height": 0.36813173
+      },
+      {
+        "call": 652,
+        "loss": 0.010873570594307318,
+        "crown_height": 0.37226803
+      }
+    ]
+  },
+  {
+    "diameter_m": 3.0,
+    "tag": "3p0m",
+    "motif": 5,
+    "pressure_pa": 1000.0,
+    "fem_mesh": "/home/chaoyu/phd_simulation/FDM/../data/B5_remeshed_shared_3p0m.off",
+    "target_crown_m": 0.579391,
+    "final_crown_m": 0.55404654,
+    "converged": false,
+    "loss_rmse_m": 0.013761751892021185,
+    "rmse_normalised": 0.004587250630673729,
+    "n_calls": 396,
+    "tension_global": {
+      "T_wale_mean_Npm": 605.5174342303552,
+      "T_course_mean_Npm": 287.45928977395056,
+      "T_wale_max_Npm": 825.5302,
+      "T_course_max_Npm": 396.4476,
+      "T_wale_norm": 0.20183914474345174,
+      "T_course_norm": 0.09581976325798353
+    },
+    "tension_regions": [
+      {
+        "region_id": 0,
+        "T_wale_mean": 596.9421260869564,
+        "T_course_mean": 318.73191594202893,
+        "T_wale_max": 775.759,
+        "T_course_max": 368.0438
+      },
+      {
+        "region_id": 1,
+        "T_wale_mean": 518.5332482993196,
+        "T_course_mean": 235.3290789115646,
+        "T_wale_max": 741.4781,
+        "T_course_max": 369.4365
+      },
+      {
+        "region_id": 2,
+        "T_wale_mean": 462.7762287671233,
+        "T_course_mean": 219.61271095890407,
+        "T_wale_max": 643.8167,
+        "T_course_max": 330.0881
+      },
+      {
+        "region_id": 3,
+        "T_wale_mean": 697.7064825,
+        "T_course_mean": 348.27267500000005,
+        "T_wale_max": 825.5302,
+        "T_course_max": 396.4476
+      },
+      {
+        "region_id": 4,
+        "T_wale_mean": 620.511506837607,
+        "T_course_mean": 300.2494128205129,
+        "T_wale_max": 755.4902,
+        "T_course_max": 373.707
+      },
+      {
+        "region_id": 5,
+        "T_wale_mean": 498.77916351351354,
+        "T_course_mean": 253.0227351351351,
+        "T_wale_max": 663.3646,
+        "T_course_max": 390.2935
+      },
+      {
+        "region_id": 6,
+        "T_wale_mean": 723.8366296875,
+        "T_course_mean": 336.0304453125,
+        "T_wale_max": 803.84,
+        "T_course_max": 376.2787
+      },
+      {
+        "region_id": 7,
+        "T_wale_mean": 726.6469452380953,
+        "T_course_mean": 320.4569746031746,
+        "T_wale_max": 808.8101,
+        "T_course_max": 357.3428
+      },
+      {
+        "region_id": 8,
+        "T_wale_mean": 666.1944261538463,
+        "T_course_mean": 279.6812476923077,
+        "T_wale_max": 759.7556,
+        "T_course_max": 319.4347
+      }
+    ],
+    "regions": [
+      {
+        "region_id": 0,
+        "row": 0,
+        "col": 0,
+        "knit_dir_deg": 0,
+        "sf_wale": 1.0408147021474818,
+        "sf_course": 1.0414064787615804
+      },
+      {
+        "region_id": 1,
+        "row": 0,
+        "col": 1,
+        "knit_dir_deg": 0,
+        "sf_wale": 1.0404244824467324,
+        "sf_course": 1.0401658345003049
+      },
+      {
+        "region_id": 2,
+        "row": 0,
+        "col": 2,
+        "knit_dir_deg": 0,
+        "sf_wale": 1.040591187518093,
+        "sf_course": 1.040830914441901
+      },
+      {
+        "region_id": 3,
+        "row": 1,
+        "col": 0,
+        "knit_dir_deg": 0,
+        "sf_wale": 1.0414125967537669,
+        "sf_course": 1.0414074824219512
+      },
+      {
+        "region_id": 4,
+        "row": 1,
+        "col": 1,
+        "knit_dir_deg": 0,
+        "sf_wale": 1.040860957338164,
+        "sf_course": 1.0410310262271665
+      },
+      {
+        "region_id": 5,
+        "row": 1,
+        "col": 2,
+        "knit_dir_deg": 0,
+        "sf_wale": 1.0387528498500458,
+        "sf_course": 1.040515573053662
+      },
+      {
+        "region_id": 6,
+        "row": 2,
+        "col": 0,
+        "knit_dir_deg": 0,
+        "sf_wale": 1.0417531455517637,
+        "sf_course": 1.0415037100507
+      },
+      {
+        "region_id": 7,
+        "row": 2,
+        "col": 1,
+        "knit_dir_deg": 0,
+        "sf_wale": 1.0414388275862236,
+        "sf_course": 1.0415934519346397
+      },
+      {
+        "region_id": 8,
+        "row": 2,
+        "col": 2,
+        "knit_dir_deg": 0,
+        "sf_wale": 1.0419029912014286,
+        "sf_course": 1.0413837458081494
+      }
+    ],
+    "cable_ea": 392500.0,
+    "cables": [
+      {
+        "name": "A1",
+        "rest_scale": 0.9945930442923655
+      },
+      {
+        "name": "A2",
+        "rest_scale": 0.9947713817219662
+      },
+      {
+        "name": "A3",
+        "rest_scale": 0.9953628703898837
+      },
+      {
+        "name": "B1",
+        "rest_scale": 0.9942307031274734
+      },
+      {
+        "name": "B2",
+        "rest_scale": 0.9942307031274734
+      },
+      {
+        "name": "B3",
+        "rest_scale": 0.9942307031274734
+      },
+      {
+        "name": "C1",
+        "rest_scale": 0.9960571681136977
+      },
+      {
+        "name": "C2",
+        "rest_scale": 0.9945165613440231
+      },
+      {
+        "name": "C3",
+        "rest_scale": 0.9942307031274734
+      },
+      {
+        "name": "D1",
+        "rest_scale": 0.997587367091892
+      },
+      {
+        "name": "D2",
+        "rest_scale": 0.9955201459758573
+      },
+      {
+        "name": "D3",
+        "rest_scale": 0.9949838746215547
+      }
+    ],
+    "history": [
+      {
+        "call": 365,
+        "loss": 0.02149549575317295,
+        "crown_height": 0.56743215
+      },
+      {
+        "call": 366,
+        "loss": 0.021195337496665106,
+        "crown_height": 0.56464049
+      },
+      {
+        "call": 367,
+        "loss": 0.020746632202349267,
+        "crown_height": 0.56688017
+      },
+      {
+        "call": 368,
+        "loss": 0.017018036201967866,
+        "crown_height": 0.55915736
+      },
+      {
+        "call": 370,
+        "loss": 0.01937999148284473,
+        "crown_height": 0.5607128
+      },
+      {
+        "call": 371,
+        "loss": 0.014903168989486742,
+        "crown_height": 0.55817832
+      },
+      {
+        "call": 372,
+        "loss": 0.01737615368953623,
+        "crown_height": 0.55339165
+      },
+      {
+        "call": 373,
+        "loss": 0.018080688800460865,
+        "crown_height": 0.56064511
+      },
+      {
+        "call": 374,
+        "loss": 0.013761751892021185,
+        "crown_height": 0.55404654
+      },
+      {
+        "call": 375,
+        "loss": 0.01518313585371599,
+        "crown_height": 0.55087001
+      },
+      {
+        "call": 376,
+        "loss": 0.015726062160338353,
+        "crown_height": 0.55020597
+      },
+      {
+        "call": 377,
+        "loss": 0.015203520100866865,
+        "crown_height": 0.55182899
+      },
+      {
+        "call": 378,
+        "loss": 0.015510735325107348,
+        "crown_height": 0.54887199
+      },
+      {
+        "call": 379,
+        "loss": 0.014992532758572255,
+        "crown_height": 0.54294933
+      },
+      {
+        "call": 380,
+        "loss": 0.01794246503589986,
+        "crown_height": 0.55344203
+      },
+      {
+        "call": 381,
+        "loss": 0.014008761138141791,
+        "crown_height": 0.55125869
+      },
+      {
+        "call": 382,
+        "loss": 0.013970865731148866,
+        "crown_height": 0.5509942
+      },
+      {
+        "call": 383,
+        "loss": 0.013932884270685855,
+        "crown_height": 0.5511746
+      },
+      {
+        "call": 384,
+        "loss": 0.014153604010849695,
+        "crown_height": 0.55145552
+      },
+      {
+        "call": 385,
+        "loss": 0.015567387343721423,
+        "crown_height": 0.55488652
+      },
+      {
+        "call": 386,
+        "loss": 0.01479878897905139,
+        "crown_height": 0.55175284
+      },
+      {
+        "call": 387,
+        "loss": 0.013834800941912204,
+        "crown_height": 0.55144569
+      },
+      {
+        "call": 388,
+        "loss": 0.014312947095595153,
+        "crown_height": 0.54721351
+      },
+      {
+        "call": 389,
+        "loss": 0.015281049395587994,
+        "crown_height": 0.55089663
+      },
+      {
+        "call": 390,
+        "loss": 0.013989495325913624,
+        "crown_height": 0.55169799
+      },
+      {
+        "call": 391,
+        "loss": 0.013991944825842914,
+        "crown_height": 0.55346975
+      },
+      {
+        "call": 392,
+        "loss": 0.014275636090386404,
+        "crown_height": 0.55128723
+      },
+      {
+        "call": 393,
+        "loss": 0.017792884623892474,
+        "crown_height": 0.56795488
+      },
+      {
+        "call": 394,
+        "loss": 0.01708818913637191,
+        "crown_height": 0.56505229
+      },
+      {
+        "call": 395,
+        "loss": 0.01654094099208406,
+        "crown_height": 0.56674073
+      }
+    ]
+  }
+]

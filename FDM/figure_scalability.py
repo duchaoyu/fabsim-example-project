@@ -118,7 +118,7 @@ def main():
     fig = plt.figure(figsize=(13.2, 7.4))
     # Three panels above, four maps below: 12 columns divide evenly into both.
     gs = fig.add_gridspec(2, 12, height_ratios=[1.0, 0.95], hspace=0.42,
-                          wspace=1.05)
+                          wspace=1.6)
 
     # (a) absolute deviation, log in y only, with the fitted power law
     ax = fig.add_subplot(gs[0, 0:4])
@@ -170,7 +170,7 @@ def main():
     span_axis(ax)
     ax.set_ylabel("FEM solves to optimise")
     ax.set_title("(c) cost of optimising", loc="left")
-    ax.legend(frameon=False, loc="upper left")
+    ax.legend(frameon=False, loc="upper right")
     ax.grid(which="both", color="#EEEEEE", lw=0.6)
     ax.set_axisbelow(True)
     ax.annotate(f"$\\propto D^{{{k_cost:.2f}}}$", xy=(0.97, 0.06),
@@ -197,7 +197,7 @@ def main():
             cb.set_label("deviation, % of span", fontsize=8)
             cb.ax.tick_params(labelsize=7)
     fig.text(0.5, 0.455, "(d) where the deviation is, each normalised by its "
-             "own span: the same pattern throughout, growing",
+             "own span: the same pattern throughout",
              fontsize=10, ha="center")
 
     os.makedirs(os.path.join(HERE, "figures"), exist_ok=True)

@@ -1,0 +1,363 @@
+{
+  "diameter_m": 3.0,
+  "tag": "3p0m",
+  "motif": 5,
+  "pressure_pa": 1000.0,
+  "fem_mesh": "/home/chaoyu/phd_simulation/FDM/../data/B5_remeshed_shared_3p0m.off",
+  "target_crown_m": 0.579391,
+  "final_crown_m": 0.55404654,
+  "converged": false,
+  "loss_rmse_m": 0.013761751892021185,
+  "rmse_normalised": 0.004587250630673729,
+  "n_calls": 396,
+  "tension_global": {
+    "T_wale_mean_Npm": 605.5174342303552,
+    "T_course_mean_Npm": 287.45928977395056,
+    "T_wale_max_Npm": 825.5302,
+    "T_course_max_Npm": 396.4476,
+    "T_wale_norm": 0.20183914474345174,
+    "T_course_norm": 0.09581976325798353
+  },
+  "tension_regions": [
+    {
+      "region_id": 0,
+      "T_wale_mean": 596.9421260869564,
+      "T_course_mean": 318.73191594202893,
+      "T_wale_max": 775.759,
+      "T_course_max": 368.0438
+    },
+    {
+      "region_id": 1,
+      "T_wale_mean": 518.5332482993196,
+      "T_course_mean": 235.3290789115646,
+      "T_wale_max": 741.4781,
+      "T_course_max": 369.4365
+    },
+    {
+      "region_id": 2,
+      "T_wale_mean": 462.7762287671233,
+      "T_course_mean": 219.61271095890407,
+      "T_wale_max": 643.8167,
+      "T_course_max": 330.0881
+    },
+    {
+      "region_id": 3,
+      "T_wale_mean": 697.7064825,
+      "T_course_mean": 348.27267500000005,
+      "T_wale_max": 825.5302,
+      "T_course_max": 396.4476
+    },
+    {
+      "region_id": 4,
+      "T_wale_mean": 620.511506837607,
+      "T_course_mean": 300.2494128205129,
+      "T_wale_max": 755.4902,
+      "T_course_max": 373.707
+    },
+    {
+      "region_id": 5,
+      "T_wale_mean": 498.77916351351354,
+      "T_course_mean": 253.0227351351351,
+      "T_wale_max": 663.3646,
+      "T_course_max": 390.2935
+    },
+    {
+      "region_id": 6,
+      "T_wale_mean": 723.8366296875,
+      "T_course_mean": 336.0304453125,
+      "T_wale_max": 803.84,
+      "T_course_max": 376.2787
+    },
+    {
+      "region_id": 7,
+      "T_wale_mean": 726.6469452380953,
+      "T_course_mean": 320.4569746031746,
+      "T_wale_max": 808.8101,
+      "T_course_max": 357.3428
+    },
+    {
+      "region_id": 8,
+      "T_wale_mean": 666.1944261538463,
+      "T_course_mean": 279.6812476923077,
+      "T_wale_max": 759.7556,
+      "T_course_max": 319.4347
+    }
+  ],
+  "regions": [
+    {
+      "region_id": 0,
+      "row": 0,
+      "col": 0,
+      "knit_dir_deg": 0,
+      "sf_wale": 1.0408147021474818,
+      "sf_course": 1.0414064787615804
+    },
+    {
+      "region_id": 1,
+      "row": 0,
+      "col": 1,
+      "knit_dir_deg": 0,
+      "sf_wale": 1.0404244824467324,
+      "sf_course": 1.0401658345003049
+    },
+    {
+      "region_id": 2,
+      "row": 0,
+      "col": 2,
+      "knit_dir_deg": 0,
+      "sf_wale": 1.040591187518093,
+      "sf_course": 1.040830914441901
+    },
+    {
+      "region_id": 3,
+      "row": 1,
+      "col": 0,
+      "knit_dir_deg": 0,
+      "sf_wale": 1.0414125967537669,
+      "sf_course": 1.0414074824219512
+    },
+    {
+      "region_id": 4,
+      "row": 1,
+      "col": 1,
+      "knit_dir_deg": 0,
+      "sf_wale": 1.040860957338164,
+      "sf_course": 1.0410310262271665
+    },
+    {
+      "region_id": 5,
+      "row": 1,
+      "col": 2,
+      "knit_dir_deg": 0,
+      "sf_wale": 1.0387528498500458,
+      "sf_course": 1.040515573053662
+    },
+    {
+      "region_id": 6,
+      "row": 2,
+      "col": 0,
+      "knit_dir_deg": 0,
+      "sf_wale": 1.0417531455517637,
+      "sf_course": 1.0415037100507
+    },
+    {
+      "region_id": 7,
+      "row": 2,
+      "col": 1,
+      "knit_dir_deg": 0,
+      "sf_wale": 1.0414388275862236,
+      "sf_course": 1.0415934519346397
+    },
+    {
+      "region_id": 8,
+      "row": 2,
+      "col": 2,
+      "knit_dir_deg": 0,
+      "sf_wale": 1.0419029912014286,
+      "sf_course": 1.0413837458081494
+    }
+  ],
+  "cable_ea": 392500.0,
+  "cables": [
+    {
+      "name": "A1",
+      "rest_scale": 0.9945930442923655
+    },
+    {
+      "name": "A2",
+      "rest_scale": 0.9947713817219662
+    },
+    {
+      "name": "A3",
+      "rest_scale": 0.9953628703898837
+    },
+    {
+      "name": "B1",
+      "rest_scale": 0.9942307031274734
+    },
+    {
+      "name": "B2",
+      "rest_scale": 0.9942307031274734
+    },
+    {
+      "name": "B3",
+      "rest_scale": 0.9942307031274734
+    },
+    {
+      "name": "C1",
+      "rest_scale": 0.9960571681136977
+    },
+    {
+      "name": "C2",
+      "rest_scale": 0.9945165613440231
+    },
+    {
+      "name": "C3",
+      "rest_scale": 0.9942307031274734
+    },
+    {
+      "name": "D1",
+      "rest_scale": 0.997587367091892
+    },
+    {
+      "name": "D2",
+      "rest_scale": 0.9955201459758573
+    },
+    {
+      "name": "D3",
+      "rest_scale": 0.9949838746215547
+    }
+  ],
+  "history": [
+    {
+      "call": 365,
+      "loss": 0.02149549575317295,
+      "crown_height": 0.56743215
+    },
+    {
+      "call": 366,
+      "loss": 0.021195337496665106,
+      "crown_height": 0.56464049
+    },
+    {
+      "call": 367,
+      "loss": 0.020746632202349267,
+      "crown_height": 0.56688017
+    },
+    {
+      "call": 368,
+      "loss": 0.017018036201967866,
+      "crown_height": 0.55915736
+    },
+    {
+      "call": 370,
+      "loss": 0.01937999148284473,
+      "crown_height": 0.5607128
+    },
+    {
+      "call": 371,
+      "loss": 0.014903168989486742,
+      "crown_height": 0.55817832
+    },
+    {
+      "call": 372,
+      "loss": 0.01737615368953623,
+      "crown_height": 0.55339165
+    },
+    {
+      "call": 373,
+      "loss": 0.018080688800460865,
+      "crown_height": 0.56064511
+    },
+    {
+      "call": 374,
+      "loss": 0.013761751892021185,
+      "crown_height": 0.55404654
+    },
+    {
+      "call": 375,
+      "loss": 0.01518313585371599,
+      "crown_height": 0.55087001
+    },
+    {
+      "call": 376,
+      "loss": 0.015726062160338353,
+      "crown_height": 0.55020597
+    },
+    {
+      "call": 377,
+      "loss": 0.015203520100866865,
+      "crown_height": 0.55182899
+    },
+    {
+      "call": 378,
+      "loss": 0.015510735325107348,
+      "crown_height": 0.54887199
+    },
+    {
+      "call": 379,
+      "loss": 0.014992532758572255,
+      "crown_height": 0.54294933
+    },
+    {
+      "call": 380,
+      "loss": 0.01794246503589986,
+      "crown_height": 0.55344203
+    },
+    {
+      "call": 381,
+      "loss": 0.014008761138141791,
+      "crown_height": 0.55125869
+    },
+    {
+      "call": 382,
+      "loss": 0.013970865731148866,
+      "crown_height": 0.5509942
+    },
+    {
+      "call": 383,
+      "loss": 0.013932884270685855,
+      "crown_height": 0.5511746
+    },
+    {
+      "call": 384,
+      "loss": 0.014153604010849695,
+      "crown_height": 0.55145552
+    },
+    {
+      "call": 385,
+      "loss": 0.015567387343721423,
+      "crown_height": 0.55488652
+    },
+    {
+      "call": 386,
+      "loss": 0.01479878897905139,
+      "crown_height": 0.55175284
+    },
+    {
+      "call": 387,
+      "loss": 0.013834800941912204,
+      "crown_height": 0.55144569
+    },
+    {
+      "call": 388,
+      "loss": 0.014312947095595153,
+      "crown_height": 0.54721351
+    },
+    {
+      "call": 389,
+      "loss": 0.015281049395587994,
+      "crown_height": 0.55089663
+    },
+    {
+      "call": 390,
+      "loss": 0.013989495325913624,
+      "crown_height": 0.55169799
+    },
+    {
+      "call": 391,
+      "loss": 0.013991944825842914,
+      "crown_height": 0.55346975
+    },
+    {
+      "call": 392,
+      "loss": 0.014275636090386404,
+      "crown_height": 0.55128723
+    },
+    {
+      "call": 393,
+      "loss": 0.017792884623892474,
+      "crown_height": 0.56795488
+    },
+    {
+      "call": 394,
+      "loss": 0.01708818913637191,
+      "crown_height": 0.56505229
+    },
+    {
+      "call": 395,
+      "loss": 0.01654094099208406,
+      "crown_height": 0.56674073
+    }
+  ]
+}
