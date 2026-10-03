@@ -33,6 +33,7 @@
 #include "anisotropic_rest_shape.h"
 #include "follower_pressure.h"
 #include "sliding_cable.h"
+#include "edge_spline.h"
 #include "stress_analysis.h"
 
 #include <Eigen/Dense>
@@ -80,16 +81,19 @@ struct RegionParams {
 // that satisfies the CompositeModel interface.
 struct MultiCableModel {
     std::vector<SlidingCable> cables;
+    std::vector<EdgeSpline>   splines;   // bending-stiff edge rods (edge_spline.h)
 
     double energy(const Eigen::Ref<const Eigen::VectorXd>& X) const {
         double e = 0.0;
         for (auto& c : cables) e += c.energy(X);
+        for (auto& r : splines) e += r.energy(X);
         return e;
     }
 
     void gradient(const Eigen::Ref<const Eigen::VectorXd>& X,
                   Eigen::Ref<Eigen::VectorXd> Y) const {
         for (auto& c : cables) c.gradient(X, Y);
+        for (auto& r : splines) r.gradient(X, Y);
     }
 
     Eigen::VectorXd gradient(const Eigen::Ref<const Eigen::VectorXd>& X) const {
@@ -105,6 +109,10 @@ struct MultiCableModel {
             auto t = c.hessianTriplets(X);
             trips.insert(trips.end(), t.begin(), t.end());
         }
+        for (auto& r : splines) {
+            auto t = r.hessianTriplets(X);
+            trips.insert(trips.end(), t.begin(), t.end());
+        }
         return trips;
     }
 
@@ -116,7 +124,7 @@ struct MultiCableModel {
         return H;
     }
 
-    bool empty() const { return cables.empty(); }
+    bool empty() const { return cables.empty() && splines.empty(); }
 };
 
 // ── Globals ───────────────────────────────────────────────────────────────────
@@ -269,10 +277,11 @@ static std::vector<RegionParams> parseRegions(const std::string& s)
 }
 
 // Parse "cable_paths": [[v0,v1,...], [v0,v1,...], ...]
-static std::vector<std::vector<int>> parseCablePaths(const std::string& s)
+static std::vector<std::vector<int>> parseCablePaths(const std::string& s,
+                                                     const std::string& key = "cable_paths")
 {
     std::vector<std::vector<int>> result;
-    auto key_pos = s.find("\"cable_paths\"");
+    auto key_pos = s.find("\"" + key + "\"");
     if (key_pos == std::string::npos) return result;
     auto open_outer = s.find('[', key_pos);
     if (open_outer == std::string::npos) return result;
@@ -593,6 +602,14 @@ int main(int argc, char* argv[])
     std::vector<double> cable_rest_scales = jsonDoubleArray(ps, "cable_rest_scales");
     // Optional per-cable axial stiffness; cables beyond its length use cable_ea.
     std::vector<double> cable_eas = jsonDoubleArray(ps, "cable_eas");
+    // Optional bending-stiff edge rods: "spline_paths" [[v...],...], "spline_EA" (N),
+    // "spline_EI" (N m^2), "spline_rest" 0 = straight (bending-active) / 1 = formed
+    // to the reference edge, "spline_length_scales" per spline (rest length factor).
+    std::vector<std::vector<int>> spline_paths = parseCablePaths(ps, "spline_paths");
+    const double spline_EA = jsonDouble(ps, "spline_EA", 0.0);
+    const double spline_EI = jsonDouble(ps, "spline_EI", 0.0);
+    const bool   spline_formed = jsonInt(ps, "spline_rest", 1) != 0;
+    std::vector<double> spline_ls = jsonDoubleArray(ps, "spline_length_scales");
 
     // Optional explicit supports.  Without it every topological boundary vertex
     // is fixed; with it only these are, so the rest of the boundary is a free
@@ -676,6 +693,17 @@ int main(int argc, char* argv[])
         }
         cable_idx++;
     }
+
+    for (size_t k = 0; k < spline_paths.size(); ++k) {
+        if (spline_paths[k].size() < 2) continue;
+        for (int v : spline_paths[k])
+            if (v < 0 || v >= V0.rows()) { std::cerr << "Spline path out of range\n"; return 1; }
+        const double ls = k < spline_ls.size() ? spline_ls[k] : 1.0;
+        cables.splines.emplace_back(spline_paths[k], spline_EA, spline_EI, V0, spline_formed, ls);
+    }
+    if (!spline_paths.empty())
+        std::cerr << "Splines: " << cables.splines.size() << "  EA " << spline_EA
+                  << "  EI " << spline_EI << (spline_formed ? "  formed" : "  straight") << "\n";
 
     std::cerr << "Mesh: " << V0.rows() << "v  " << F.rows() << "f  "
               << bdrs.size() << " boundary  " << fixed_vs.size() << " fixed  "
