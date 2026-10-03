@@ -58,3 +58,21 @@ PY
 run pw_crestd2_r90w --method Powell --n-az 2 --n-rad 2 --band-edges 0.75 --crest-hw 22.5 --sym d2 --ring 0.90 \
     --p0-json optimisation/4part_s_pw_crestd2_r90_warm_p0.json
 wait
+
+# sixth: main cables split at the ring (inner part + outer ties, separate rest scales)
+python3 -c "
+import json;p=json.load(open('optimisation/4part_s_pw_ring90_result.json'))['p']
+json.dump({'p':[p[0],p[1],p[2],p[2],p[3]]},open('optimisation/4part_s_pw_split90_p0.json','w'))"
+run pw_split90 --method Powell --n-az 1 --n-rad 1 --ring 0.90 --split-at-ring --p0-json optimisation/4part_s_pw_split90_p0.json
+wait
+
+# seventh: one extra knit region where the ring result deviates most (lobe crests
+# near the base; faces from optimisation/4part_extra_region_*.json)
+python3 -c "
+import json;p=json.load(open('optimisation/4part_s_pw_ring90_result.json'))['p']
+json.dump({'p':[p[0],p[0],p[1],p[1],p[2],p[3]]},open('optimisation/4part_s_pw_ring90_x_p0.json','w'))
+json.dump({'p':[p[0],p[0],p[1],p[1],p[2],p[2],p[3]]},open('optimisation/4part_s_pw_split90_x_p0.json','w'))"
+run pw_ring90_x15  --method Powell --n-az 1 --n-rad 1 --ring 0.90 --extra-region optimisation/4part_extra_region_crest15.json --p0-json optimisation/4part_s_pw_ring90_x_p0.json
+run pw_ring90_x09  --method Powell --n-az 1 --n-rad 1 --ring 0.90 --extra-region optimisation/4part_extra_region_crest09.json --p0-json optimisation/4part_s_pw_ring90_x_p0.json
+run pw_split90_x15 --method Powell --n-az 1 --n-rad 1 --ring 0.90 --split-at-ring --extra-region optimisation/4part_extra_region_crest15.json --p0-json optimisation/4part_s_pw_split90_x_p0.json
+wait

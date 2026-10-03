@@ -407,6 +407,13 @@ def main():
     ap.add_argument("--method", choices=["L-BFGS-B", "Powell"], default="L-BFGS-B",
                     help="Powell is derivative-free and copes with the solver noise "
                          "that stalls the finite-difference line search")
+    ap.add_argument("--split-at-ring", action="store_true",
+                    help="cut the main cables where they cross the (first) ring into an "
+                         "inner part and outer ties, each anchored at the crossing; the "
+                         "inner parts share one rest scale and the outer ties another")
+    ap.add_argument("--extra-region", type=str, default=None,
+                    help="JSON {'faces': [...]} of faces that form one extra knit slot "
+                         "(already D4/D2-symmetric) on top of --n-az 1 --n-rad 1")
     ap.add_argument("--update-data", action="store_true",
                     help="also overwrite data/4part/4part_fem_best.{obj,npy}")
     args = ap.parse_args()
@@ -440,6 +447,14 @@ def main():
     face_region, slot, quad, r_edges = build_region_map(V, F, args.n_az, args.n_rad, off,
                                                         args.band_edges, args.crest_hw)
     n_wedge   = args.n_az * args.n_rad
+    if args.extra_region:
+        assert n_wedge == 1, "--extra-region goes on top of a single slot"
+        extra = set(json.load(open(args.extra_region))["faces"])
+        slot = [1 if f in extra else 0 for f in range(len(F))]
+        face_region = [slot[f] * 4 + quad[f] for f in range(len(F))]
+        n_wedge = 2
+        print(f"Extra region: {len(extra)} faces ({100*len(extra)/len(F):.1f}%) from "
+              f"{args.extra_region}")
     n_regions = 4 * n_wedge
     n_group   = 2 if args.sym == "d2" else 1     # parameter copies per slot
     n_par_kn  = n_wedge * n_group
@@ -470,8 +485,24 @@ def main():
         if (os.path.exists(CABLE_PATHS_FILE) and not args.no_cables) else []
     assigned, orbits = cable_orbits(V, cable_paths) if cable_paths else ([], [])
     cable_eas = [args.cable_ea] * len(cable_paths)
-    for rf in args.ring:
-        loop = ring_path(V, F, rf)
+    rings = [ring_path(V, F, rf) for rf in args.ring]
+    if args.split_at_ring:
+        assert rings, "--split-at-ring needs --ring"
+        on_ring = set(rings[0])
+        inner, outer = [], []
+        for c in cable_paths:
+            cut = [k for k, v in enumerate(c) if v in on_ring and 0 < k < len(c) - 1]
+            assert len(cut) >= 2, "cable does not cross the ring twice at shared vertices"
+            a, b = cut[0], cut[-1]
+            outer += [c[:a + 1], c[b:]]
+            inner.append(c[a:b + 1])
+        cable_paths = inner + outer
+        assigned = [0] * len(inner) + [1] * len(outer)
+        orbits = [list(range(len(inner))), list(range(len(inner), len(cable_paths)))]
+        cable_eas = [args.cable_ea] * len(cable_paths)
+        print(f"Split at ring: {len(inner)} inner parts {[len(c) for c in inner]} + "
+              f"{len(outer)} outer ties {[len(c) for c in outer]} verts")
+    for rf, loop in zip(args.ring, rings):
         rr = np.hypot(V[loop, 0], V[loop, 1]) / np.hypot(V[:, 0], V[:, 1]).max()
         print(f"Ring     : r/r_max {rf:.3f} -> {len(loop)-1} vertices, r/r_max "
               f"{rr.min():.3f}-{rr.max():.3f}, z {V[loop,2].min():.3f}-{V[loop,2].max():.3f} m, "
