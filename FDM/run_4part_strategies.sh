@@ -47,3 +47,14 @@ run pw_crestd2     --method Powell --n-az 2 --n-rad 2 --band-edges 0.75 --crest-
 run pw_crestd2_r90 --method Powell --n-az 2 --n-rad 2 --band-edges 0.75 --crest-hw 22.5 --sym d2 --ring 0.90
 wait
 echo done4
+
+# fifth: d2 crest + ring warm-started at the d4 crest + ring optimum (a special case of it)
+python3 - <<'PY'
+import json
+d = json.load(open('optimisation/4part_s_pw_crest_r90_result.json'))['p']
+p = [d[s] for s in range(4) for g in range(2)] + [d[4+s] for s in range(4) for g in range(2)] + d[8:]
+json.dump({"p": p}, open('optimisation/4part_s_pw_crestd2_r90_warm_p0.json', 'w'))
+PY
+run pw_crestd2_r90w --method Powell --n-az 2 --n-rad 2 --band-edges 0.75 --crest-hw 22.5 --sym d2 --ring 0.90 \
+    --p0-json optimisation/4part_s_pw_crestd2_r90_warm_p0.json
+wait
