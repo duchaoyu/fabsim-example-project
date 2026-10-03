@@ -22,6 +22,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.lines
 from matplotlib.tri import Triangulation
+from matplotlib.colors import LinearSegmentedColormap
 
 from deviation_tools import read_off, closest_dist
 
@@ -32,14 +33,23 @@ TARGET = os.path.join(ROOT, "data", "2part", "2part_opt_simu_m.off")
 BASE_SPAN = 1.2
 MM = 1e3
 
+# Type and colours as the sensitivity figures (plot_sobol_regime_bars.py:
+# blue C_S1 / orange C_INT_HATCH, #333333 ink, #DDDDDD grid); the deviation map
+# uses the case-study ramp of figure_case_results.py (SEQ).
 plt.rcParams.update({
-    "font.size": 9, "axes.titlesize": 10, "axes.labelsize": 9,
-    "xtick.labelsize": 8, "ytick.labelsize": 8, "legend.fontsize": 8,
+    "font.family": "sans-serif", "font.size": 9, "axes.titlesize": 9,
+    "axes.labelsize": 9, "xtick.labelsize": 8, "ytick.labelsize": 8,
+    "legend.fontsize": 8, "axes.linewidth": 0.8, "text.color": "#333333",
+    "axes.labelcolor": "#333333", "xtick.color": "#333333", "ytick.color": "#333333",
+    "axes.edgecolor": "#333333",
     "axes.spines.top": False, "axes.spines.right": False, "figure.dpi": 110,
 })
+INK, GRID = "#333333", "#DDDDDD"
+SEQ = LinearSegmentedColormap.from_list("seq_blue", [
+    "#cde2fb", "#9ec5f4", "#6da7ec", "#3987e5", "#256abf", "#184f95", "#0d366b"])
 
-STRATEGIES = [("D", "D  one region + cable", "#0077BB"),
-              ("E", "E  three adaptive regions + cable", "#EE7733")]
+STRATEGIES = [("D", "D  one region + cable", "#2E73BA"),
+              ("E", "E  three adaptive regions + cable", "#E07B0A")]
 MAP_SPANS = [0.6, 1.2, 3.0, 6.0]
 
 
@@ -79,6 +89,34 @@ def collect():
             rows.append(r)
         runs[key] = sorted(rows, key=lambda r: r["D"])
     return runs
+
+
+def symmetric_regions(reg, T, F):
+    """Region map made mirror-symmetric about the crease (x = 0), for display.
+
+    The E runs share one pre-strain between the two domes (regions 0 and 1) and
+    give the rest (2) its own; nothing in the alternating scheme forces the two
+    domes to be mirror images, and at most spans they are not.  A face is drawn
+    as dome when it or its mirror image is dome in the run, then one ring of
+    erosion and dilation removes single-face spurs; the left dome is labelled 0,
+    the right 1."""
+    from scipy.spatial import cKDTree
+    c = T[F].mean(axis=1)[:, :2]
+    mirror = cKDTree(c).query(c * [-1.0, 1.0])[1]
+    dome = np.isin(reg, (0, 1))
+    dome = dome | dome[mirror]
+    nb = [[] for _ in range(len(F))]
+    e2f = {}
+    for f, t in enumerate(F):
+        for a, b in ((0, 1), (1, 2), (2, 0)):
+            e2f.setdefault(tuple(sorted((t[a], t[b]))), []).append(f)
+    for fl in e2f.values():
+        if len(fl) == 2:
+            nb[fl[0]].append(fl[1]); nb[fl[1]].append(fl[0])
+    ero = np.array([dome[f] and all(dome[g] for g in nb[f]) for f in range(len(F))])
+    dome = np.array([ero[f] or any(ero[g] for g in nb[f]) for f in range(len(F))])
+    dome = dome & dome[mirror]
+    return np.where(dome, np.where(c[:, 0] < 0, 0, 1), 2)
 
 
 def exponent(x, y):
@@ -127,7 +165,7 @@ def main():
     if allD:
         d0 = np.array([allD[0], allD[-1]])
         ref = runs["D"][0]["mean_mm"] if runs["D"] else 1.0
-        axA.plot(d0, ref * d0 / d0[0], color="#888888", lw=1.0, ls=(0, (4, 3)),
+        axA.plot(d0, ref * d0 / d0[0], color="#999999", lw=1.0, ls=(0, (4, 3)),
                  label="proportional, $D^1$", zorder=0)
     axA.set_xscale("log"); axA.set_yscale("log")
     axA.set_ylabel("deviation from target (mm)")
@@ -140,21 +178,21 @@ def main():
     axB.set_ylim(bottom=0)
     axB.set_ylabel("deviation as % of span")
     axB.set_title("(b) relative to the span", loc="left")
-    axB.plot([], [], "-", color="#444444", label="mean / D")
-    axB.plot([], [], "--", color="#444444", label="max / D")
+    axB.plot([], [], "-", color=INK, label="mean / D")
+    axB.plot([], [], "--", color=INK, label="max / D")
     axB.legend(frameon=False, loc="upper left")
 
     axC.set_ylabel("stretch factor (max over regions)")
     axC.set_title("(c) pre-strain needed", loc="left")
-    axC.legend(handles=[matplotlib.lines.Line2D([], [], color="#444444", ls="-", label="wale"),
-                        matplotlib.lines.Line2D([], [], color="#444444", ls=":", label="course")],
+    axC.legend(handles=[matplotlib.lines.Line2D([], [], color=INK, ls="-", label="wale"),
+                        matplotlib.lines.Line2D([], [], color=INK, ls=":", label="course")],
                frameon=False, loc="upper left")
 
     axD.set_yscale("log")
     axD.set_ylabel("FEM solves to optimise")
     axD.set_title("(d) cost of optimising", loc="left")
-    axD.plot([], [], "o", color="#444444", label="converged")
-    axD.plot([], [], "o", color="#444444", mfc="white", label="stopped at the cap")
+    axD.plot([], [], "o", color=INK, label="converged")
+    axD.plot([], [], "o", color=INK, mfc="white", label="stopped at the cap")
     axD.legend(frameon=False, loc="lower right", bbox_to_anchor=(1.0, 0.2))
 
     for ax in (axA, axB, axC, axD):
@@ -163,7 +201,7 @@ def main():
         # 1.5 and 1.8 sit too close on a log axis to label both
         ax.set_xticklabels(["" if d == 1.5 else f"{d:g}" for d in allD])
         ax.set_xlabel("span $D$ (m)")
-        ax.grid(color="#E6E6E6", lw=0.5); ax.set_axisbelow(True)
+        ax.grid(color=GRID, lw=0.6); ax.set_axisbelow(True)
         ax.xaxis.set_minor_locator(matplotlib.ticker.NullLocator())
     # proxy legend entries for the strategy colours
     # strategy colours, keyed once for the whole top row
@@ -179,10 +217,10 @@ def main():
     for i, r in enumerate(maps):
         ax = fig.add_subplot(gs[1, 4 * i:4 * i + 4])
         tri = Triangulation(r["T"][:, 0] / r["D"], r["T"][:, 1] / r["D"], r["F"])
-        tp = ax.tripcolor(tri, 100 * r["dev"] / r["D"], cmap="magma_r", vmin=0,
+        tp = ax.tripcolor(tri, 100 * r["dev"] / r["D"], cmap=SEQ, vmin=0,
                           vmax=vmax, shading="gouraud")
         if r["regions"] is not None:
-            reg = r["regions"]
+            reg = symmetric_regions(r["regions"], r["T"], r["F"])
             Fm = r["F"]
             edges = {}
             for f, tri_f in enumerate(Fm):
@@ -192,7 +230,7 @@ def main():
             P = r["T"][:, :2] / r["D"]
             for (a, b), rr in edges.items():
                 if len(rr) == 2 and rr[0] != rr[1]:
-                    ax.plot(P[[a, b], 0], P[[a, b], 1], color="#1A1A1A", lw=0.9)
+                    ax.plot(P[[a, b], 0], P[[a, b], 1], color=INK, lw=0.9)
         ax.set_aspect("equal")
         tag = "" if r["converged"] else "  (cap)"
         ax.set_title(f"D = {r['D']:.1f} m{tag}", loc="left", fontsize=9)
@@ -204,8 +242,8 @@ def main():
             cb.set_label("deviation, % of span", fontsize=8)
             cb.ax.tick_params(labelsize=7)
     fig.text(0.5, 0.455, "(e) strategy E: where the deviation is, each normalised "
-             "by its own span; black lines are the region boundaries",
-             fontsize=10, ha="center")
+             "by its own span; lines are the region boundaries, mirrored about the crease",
+             fontsize=9, ha="center")
 
     out = os.path.join(HERE, "figures", "2part_span.pdf")
     fig.savefig(out, bbox_inches="tight")
