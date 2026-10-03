@@ -1,0 +1,394 @@
+Splines : ['E00', 'E02', 'E03a', 'E03b', 'E03c'] -> 3 rods [30, 34, 37] verts, GFRP d 10 mm, EA 3.14e+06 N, EI 19.6 N m^2
+Fixed edges: ['E01'] -> 47 fixed vertices
+Mesh    : 1232 verts, 2320 faces, 47 supports, 1185 free (fitted)
+Target  : crown 0.2697 m, span 1.2000 m  (rest == target)
+Regions : 10, faces [232, 232, 232, 232, 232, 232, 232, 232, 232, 232]; knit per face, region means [92.0, 91.6, 91.7, 93.2, 93.4, 81.6, 66.9, 58.0, 52.1, 59.5] deg — FIXED
+Adjacent: [(0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (5, 6), (6, 7), (7, 8), (8, 9)]   lambda_smooth 0.01
+Cables  : ['C00', 'C01a', 'C01b', 'C02']  EA 157000
+Material: E1 12500  E2 5000  nu 0.198   pressure 1000 Pa
+Log     : optimisation/pattern_smooth_rm2_10strip_spline10_sI_fol_calls.jsonl
+  [   13] FEM INVALID: solver follower_failed
+  gen   1  calls    16  best    4.675 mm  gen best    4.675  invalid 1/16  sigma 0.930
+  [   29] FEM INVALID: solver follower_failed
+  [   27] FEM INVALID: solver follower_failed
+  gen   2  calls    32  best    4.675 mm  gen best    5.040  invalid 2/16  sigma 0.887
+  [   44] FEM INVALID: solver follower_failed
+  [   34] FEM INVALID: solver follower_failed
+  gen   3  calls    48  best    4.340 mm  gen best    4.340  invalid 2/16  sigma 0.850
+  [   51] FEM INVALID: solver follower_failed
+  [   52] FEM INVALID: solver follower_failed
+  gen   4  calls    64  best    4.340 mm  gen best    4.519  invalid 2/16  sigma 0.849
+  [   70] FEM INVALID: solver follower_failed
+  [   74] FEM INVALID: solver follower_failed
+  gen   5  calls    80  best    4.340 mm  gen best    4.492  invalid 2/16  sigma 0.824
+  [   92] FEM INVALID: solver follower_failed
+  [   81] FEM INVALID: solver follower_failed
+  [   95] FEM INVALID: solver follower_failed
+  gen   6  calls    96  best    4.340 mm  gen best    4.451  invalid 3/16  sigma 0.820
+  [  100] FEM INVALID: solver follower_failed
+  [  102] FEM INVALID: solver follower_failed
+  [  103] FEM INVALID: solver follower_failed
+  gen   7  calls   112  best    4.340 mm  gen best    4.560  invalid 3/16  sigma 0.812
+  [  127] FEM INVALID: solver follower_failed
+  [  115] FEM INVALID: solver follower_failed
+  gen   8  calls   128  best    4.340 mm  gen best    4.490  invalid 2/16  sigma 0.804
+  [  137] FEM INVALID: solver follower_failed
+  gen   9  calls   144  best    4.340 mm  gen best    4.510  invalid 1/16  sigma 0.787
+  [  158] FEM INVALID: solver follower_failed
+  gen  10  calls   160  best    4.340 mm  gen best    4.578  invalid 1/16  sigma 0.760
+  [  167] FEM INVALID: solver follower_failed
+  [  161] FEM INVALID: solver follower_failed
+  gen  11  calls   176  best    4.340 mm  gen best    4.506  invalid 2/16  sigma 0.737
+  [  183] FEM INVALID: solver follower_failed
+  [  186] FEM INVALID: solver follower_failed
+  gen  12  calls   192  best    4.314 mm  gen best    4.314  invalid 2/16  sigma 0.726
+  [  194] FEM INVALID: solver follower_failed
+  [  202] FEM INVALID: solver follower_failed
+  [  200] FEM INVALID: solver follower_failed
+  gen  13  calls   208  best    4.314 mm  gen best    4.503  invalid 3/16  sigma 0.718
+  [  219] FEM INVALID: solver follower_failed
+  [  223] FEM INVALID: solver follower_failed
+  gen  14  calls   224  best    4.290 mm  gen best    4.290  invalid 2/16  sigma 0.695
+  [  238] FEM INVALID: solver follower_failed
+  gen  15  calls   240  best    4.237 mm  gen best    4.237  invalid 1/16  sigma 0.647
+  [  249] FEM INVALID: solver follower_failed
+  [  244] FEM INVALID: solver follower_failed
+  [  243] FEM INVALID: solver follower_failed
+  [  252] FEM INVALID: solver follower_failed
+  gen  16  calls   256  best    4.103 mm  gen best    4.103  invalid 4/16  sigma 0.607
+  gen  17  calls   272  best    4.103 mm  gen best    4.146  invalid 0/16  sigma 0.570
+  [  285] FEM INVALID: solver follower_failed
+  [  277] FEM INVALID: solver follower_failed
+  [  276] FEM INVALID: solver follower_failed
+  gen  18  calls   288  best    4.103 mm  gen best    4.180  invalid 3/16  sigma 0.531
+  [  297] FEM INVALID: solver follower_failed
+  [  300] FEM INVALID: solver follower_failed
+  [  301] FEM INVALID: solver follower_failed
+  [  292] FEM INVALID: solver follower_failed
+  gen  19  calls   304  best    4.103 mm  gen best    4.198  invalid 4/16  sigma 0.518
+  [  314] FEM INVALID: solver follower_failed
+  [  305] FEM INVALID: solver follower_failed
+  gen  20  calls   320  best    4.103 mm  gen best    4.185  invalid 2/16  sigma 0.499
+  [  324] FEM INVALID: solver follower_failed
+  [  336] FEM INVALID: solver follower_failed
+  gen  21  calls   336  best    3.885 mm  gen best    3.885  invalid 2/16  sigma 0.487
+  [  346] FEM INVALID: solver follower_failed
+  gen  22  calls   352  best    3.885 mm  gen best    3.904  invalid 1/16  sigma 0.476
+  [  366] FEM INVALID: solver follower_failed
+  gen  23  calls   368  best    3.885 mm  gen best    3.918  invalid 1/16  sigma 0.465
+  [  371] FEM INVALID: solver follower_failed
+  [  369] FEM INVALID: solver follower_failed
+  gen  24  calls   384  best    3.719 mm  gen best    3.719  invalid 2/16  sigma 0.462
+  gen  25  calls   400  best    3.690 mm  gen best    3.690  invalid 0/16  sigma 0.474
+  gen  26  calls   416  best    3.674 mm  gen best    3.674  invalid 0/16  sigma 0.475
+  [  425] FEM INVALID: solver follower_failed
+  [  429] FEM INVALID: solver follower_failed
+  [  422] FEM INVALID: solver follower_failed
+  gen  27  calls   432  best    3.674 mm  gen best    3.758  invalid 3/16  sigma 0.475
+  [  443] FEM INVALID: solver follower_failed
+  gen  28  calls   448  best    3.674 mm  gen best    3.739  invalid 1/16  sigma 0.470
+  [  459] FEM INVALID: solver follower_failed
+  gen  29  calls   464  best    3.674 mm  gen best    3.720  invalid 1/16  sigma 0.458
+  gen  30  calls   480  best    3.674 mm  gen best    3.675  invalid 0/16  sigma 0.452
+  [  491] FEM INVALID: solver follower_failed
+  gen  31  calls   496  best    3.669 mm  gen best    3.669  invalid 1/16  sigma 0.450
+  [  505] FEM INVALID: solver follower_failed
+  gen  32  calls   512  best    3.669 mm  gen best    3.754  invalid 1/16  sigma 0.450
+  gen  33  calls   528  best    3.642 mm  gen best    3.642  invalid 0/16  sigma 0.433
+  [  543] FEM INVALID: solver follower_failed
+  gen  34  calls   544  best    3.589 mm  gen best    3.589  invalid 1/16  sigma 0.408
+  [  557] FEM INVALID: solver follower_failed
+  gen  35  calls   560  best    3.589 mm  gen best    3.728  invalid 1/16  sigma 0.389
+  [  572] FEM INVALID: solver follower_failed
+  gen  36  calls   576  best    3.589 mm  gen best    3.596  invalid 1/16  sigma 0.366
+  [  592] FEM INVALID: solver follower_failed
+  [  578] FEM INVALID: solver follower_failed
+  [  580] FEM INVALID: solver follower_failed
+  [  589] FEM INVALID: solver follower_failed
+  gen  37  calls   592  best    3.589 mm  gen best    3.657  invalid 4/16  sigma 0.344
+  [  601] FEM INVALID: solver follower_failed
+  gen  38  calls   608  best    3.589 mm  gen best    3.601  invalid 1/16  sigma 0.318
+  [  623] FEM INVALID: solver follower_failed
+  [  619] FEM INVALID: solver follower_failed
+  gen  39  calls   624  best    3.585 mm  gen best    3.585  invalid 2/16  sigma 0.299
+  [  626] FEM INVALID: solver follower_failed
+  gen  40  calls   640  best    3.585 mm  gen best    3.595  invalid 1/16  sigma 0.287
+  [  647] FEM INVALID: solver follower_failed
+  gen  41  calls   656  best    3.558 mm  gen best    3.558  invalid 1/16  sigma 0.278
+  [  664] FEM INVALID: solver follower_failed
+  gen  42  calls   672  best    3.522 mm  gen best    3.522  invalid 1/16  sigma 0.275
+  gen  43  calls   688  best    3.522 mm  gen best    3.523  invalid 0/16  sigma 0.271
+  gen  44  calls   704  best    3.522 mm  gen best    3.539  invalid 0/16  sigma 0.264
+  [  711] FEM INVALID: solver follower_failed
+  gen  45  calls   720  best    3.504 mm  gen best    3.504  invalid 1/16  sigma 0.256
+  [  730] FEM INVALID: solver follower_failed
+  [  724] FEM INVALID: solver follower_failed
+  [  734] FEM INVALID: solver follower_failed
+  gen  46  calls   736  best    3.504 mm  gen best    3.516  invalid 3/16  sigma 0.242
+  [  737] FEM INVALID: solver follower_failed
+  [  752] FEM INVALID: solver follower_failed
+  [  749] FEM INVALID: solver follower_failed
+  gen  47  calls   752  best    3.502 mm  gen best    3.502  invalid 3/16  sigma 0.234
+  [  763] FEM INVALID: solver follower_failed
+  [  762] FEM INVALID: solver follower_failed
+  [  764] FEM INVALID: solver follower_failed
+  [  753] FEM INVALID: solver follower_failed
+  [  767] FEM INVALID: solver follower_failed
+  [  761] FEM INVALID: solver follower_failed
+  gen  48  calls   768  best    3.502 mm  gen best    3.513  invalid 6/16  sigma 0.217
+  [  779] FEM INVALID: solver follower_failed
+  [  769] FEM INVALID: solver follower_failed
+  gen  49  calls   784  best    3.487 mm  gen best    3.487  invalid 2/16  sigma 0.208
+  [  787] FEM INVALID: solver follower_failed
+  [  796] FEM INVALID: solver follower_failed
+  gen  50  calls   800  best    3.484 mm  gen best    3.484  invalid 2/16  sigma 0.202
+  [  807] FEM INVALID: solver follower_failed
+  gen  51  calls   816  best    3.467 mm  gen best    3.467  invalid 1/16  sigma 0.191
+  [  818] FEM INVALID: solver follower_failed
+  [  826] FEM INVALID: solver follower_failed
+  [  817] FEM INVALID: solver follower_failed
+  [  832] FEM INVALID: solver follower_failed
+  gen  52  calls   832  best    3.467 mm  gen best    3.468  invalid 4/16  sigma 0.183
+  [  842] FEM INVALID: solver follower_failed
+  [  846] FEM INVALID: solver follower_failed
+  [  841] FEM INVALID: solver follower_failed
+  gen  53  calls   848  best    3.467 mm  gen best    3.475  invalid 3/16  sigma 0.181
+  [  863] FEM INVALID: solver follower_failed
+  [  862] FEM INVALID: solver follower_failed
+  [  856] FEM INVALID: solver follower_failed
+  gen  54  calls   864  best    3.467 mm  gen best    3.467  invalid 3/16  sigma 0.183
+  [  872] FEM INVALID: solver follower_failed
+  gen  55  calls   880  best    3.456 mm  gen best    3.456  invalid 1/16  sigma 0.187
+  gen  56  calls   896  best    3.456 mm  gen best    3.456  invalid 0/16  sigma 0.189
+  [  910] FEM INVALID: solver follower_failed
+  gen  57  calls   912  best    3.434 mm  gen best    3.434  invalid 1/16  sigma 0.187
+  gen  58  calls   928  best    3.433 mm  gen best    3.433  invalid 0/16  sigma 0.185
+  [  935] FEM INVALID: solver follower_failed
+  [  941] FEM INVALID: solver follower_failed
+  gen  59  calls   944  best    3.433 mm  gen best    3.443  invalid 2/16  sigma 0.182
+  [  950] FEM INVALID: solver follower_failed
+  [  949] FEM INVALID: solver follower_failed
+  gen  60  calls   960  best    3.433 mm  gen best    3.454  invalid 2/16  sigma 0.184
+  [  965] FEM INVALID: solver follower_failed
+  gen  61  calls   976  best    3.433 mm  gen best    3.435  invalid 1/16  sigma 0.187
+  [  991] FEM INVALID: solver follower_failed
+  gen  62  calls   992  best    3.433 mm  gen best    3.446  invalid 1/16  sigma 0.191
+  gen  63  calls  1008  best    3.423 mm  gen best    3.423  invalid 0/16  sigma 0.195
+  [ 1021] FEM INVALID: solver follower_failed
+  gen  64  calls  1024  best    3.423 mm  gen best    3.447  invalid 1/16  sigma 0.195
+  [ 1036] FEM INVALID: solver follower_failed
+  [ 1026] FEM INVALID: solver follower_failed
+  [ 1038] FEM INVALID: solver follower_failed
+  [ 1027] FEM INVALID: solver follower_failed
+  gen  65  calls  1040  best    3.423 mm  gen best    3.440  invalid 4/16  sigma 0.191
+  [ 1055] FEM INVALID: solver follower_failed
+  [ 1052] FEM INVALID: solver follower_failed
+  [ 1050] FEM INVALID: solver follower_failed
+  gen  66  calls  1056  best    3.423 mm  gen best    3.435  invalid 3/16  sigma 0.180
+  gen  67  calls  1072  best    3.422 mm  gen best    3.422  invalid 0/16  sigma 0.171
+  gen  68  calls  1088  best    3.418 mm  gen best    3.418  invalid 0/16  sigma 0.161
+  gen  69  calls  1104  best    3.405 mm  gen best    3.405  invalid 0/16  sigma 0.149
+  [ 1105] FEM INVALID: solver follower_failed
+  [ 1114] FEM INVALID: solver follower_failed
+  [ 1107] FEM INVALID: solver follower_failed
+  gen  70  calls  1120  best    3.396 mm  gen best    3.396  invalid 3/16  sigma 0.150
+  [ 1133] FEM INVALID: solver follower_failed
+  [ 1126] FEM INVALID: solver follower_failed
+  [ 1124] FEM INVALID: solver follower_failed
+  [ 1136] FEM INVALID: solver follower_failed
+  [ 1130] FEM INVALID: solver follower_failed
+  [ 1131] FEM INVALID: solver follower_failed
+  gen  71  calls  1136  best    3.396 mm  gen best    3.398  invalid 6/16  sigma 0.152
+  [ 1151] FEM INVALID: solver follower_failed
+  [ 1152] FEM INVALID: solver follower_failed
+  gen  72  calls  1152  best    3.393 mm  gen best    3.393  invalid 2/16  sigma 0.148
+  [ 1164] FEM INVALID: solver follower_failed
+  [ 1160] FEM INVALID: solver follower_failed
+  [ 1159] FEM INVALID: solver follower_failed
+  [ 1156] FEM INVALID: solver follower_failed
+  [ 1155] FEM INVALID: solver follower_failed
+  gen  73  calls  1168  best    3.390 mm  gen best    3.390  invalid 5/16  sigma 0.144
+  [ 1171] FEM INVALID: solver follower_failed
+  [ 1183] FEM INVALID: solver follower_failed
+  gen  74  calls  1184  best    3.389 mm  gen best    3.389  invalid 2/16  sigma 0.136
+  [ 1199] FEM INVALID: solver follower_failed
+  [ 1185] FEM INVALID: solver follower_failed
+  gen  75  calls  1200  best    3.385 mm  gen best    3.385  invalid 2/16  sigma 0.132
+  [ 1211] FEM INVALID: solver follower_failed
+  gen  76  calls  1216  best    3.385 mm  gen best    3.390  invalid 1/16  sigma 0.127
+  [ 1220] FEM INVALID: solver follower_failed
+  [ 1224] FEM INVALID: solver follower_failed
+  [ 1228] FEM INVALID: solver follower_failed
+  gen  77  calls  1232  best    3.385 mm  gen best    3.387  invalid 3/16  sigma 0.126
+  [ 1239] FEM INVALID: solver follower_failed
+  [ 1248] FEM INVALID: solver follower_failed
+  [ 1233] FEM INVALID: solver follower_failed
+  [ 1244] FEM INVALID: solver follower_failed
+  gen  78  calls  1248  best    3.383 mm  gen best    3.383  invalid 4/16  sigma 0.121
+  [ 1263] FEM INVALID: solver follower_failed
+  [ 1264] FEM INVALID: solver follower_failed
+  gen  79  calls  1264  best    3.383 mm  gen best    3.389  invalid 2/16  sigma 0.122
+  [ 1278] FEM INVALID: solver follower_failed
+  [ 1265] FEM INVALID: solver follower_failed
+  gen  80  calls  1280  best    3.383 mm  gen best    3.393  invalid 2/16  sigma 0.117
+  gen  81  calls  1296  best    3.383 mm  gen best    3.386  invalid 0/16  sigma 0.113
+  [ 1305] FEM INVALID: solver follower_failed
+  gen  82  calls  1312  best    3.383 mm  gen best    3.387  invalid 1/16  sigma 0.111
+  gen  83  calls  1328  best    3.382 mm  gen best    3.382  invalid 0/16  sigma 0.104
+  [ 1338] FEM INVALID: solver follower_failed
+  [ 1333] FEM INVALID: solver follower_failed
+  [ 1343] FEM INVALID: solver follower_failed
+  gen  84  calls  1344  best    3.381 mm  gen best    3.381  invalid 3/16  sigma 0.097
+  [ 1354] FEM INVALID: solver follower_failed
+  gen  85  calls  1360  best    3.381 mm  gen best    3.383  invalid 1/16  sigma 0.090
+  [ 1366] FEM INVALID: solver follower_failed
+  gen  86  calls  1376  best    3.379 mm  gen best    3.379  invalid 1/16  sigma 0.085
+  [ 1388] FEM INVALID: solver follower_failed
+  gen  87  calls  1392  best    3.377 mm  gen best    3.377  invalid 1/16  sigma 0.083
+  gen  88  calls  1408  best    3.377 mm  gen best    3.377  invalid 0/16  sigma 0.081
+  [ 1421] FEM INVALID: solver follower_failed
+  gen  89  calls  1424  best    3.376 mm  gen best    3.376  invalid 1/16  sigma 0.080
+  gen  90  calls  1440  best    3.376 mm  gen best    3.377  invalid 0/16  sigma 0.079
+  gen  91  calls  1456  best    3.376 mm  gen best    3.376  invalid 0/16  sigma 0.079
+  gen  92  calls  1472  best    3.371 mm  gen best    3.371  invalid 0/16  sigma 0.078
+  [ 1482] FEM INVALID: solver follower_failed
+  gen  93  calls  1488  best    3.371 mm  gen best    3.373  invalid 1/16  sigma 0.077
+  [ 1489] FEM INVALID: solver follower_failed
+  [ 1502] FEM INVALID: solver follower_failed
+  gen  94  calls  1504  best    3.368 mm  gen best    3.368  invalid 2/16  sigma 0.078
+  [ 1513] FEM INVALID: solver follower_failed
+  gen  95  calls  1520  best    3.368 mm  gen best    3.368  invalid 1/16  sigma 0.076
+  [ 1536] FEM INVALID: solver follower_failed
+  gen  96  calls  1536  best    3.368 mm  gen best    3.370  invalid 1/16  sigma 0.072
+  [ 1548] FEM INVALID: solver follower_failed
+  [ 1539] FEM INVALID: solver follower_failed
+  gen  97  calls  1552  best    3.368 mm  gen best    3.372  invalid 2/16  sigma 0.069
+  gen  98  calls  1568  best    3.368 mm  gen best    3.370  invalid 0/16  sigma 0.068
+  gen  99  calls  1584  best    3.368 mm  gen best    3.370  invalid 0/16  sigma 0.069
+  [ 1590] FEM INVALID: solver follower_failed
+  gen 100  calls  1600  best    3.368 mm  gen best    3.368  invalid 1/16  sigma 0.071
+  gen 101  calls  1616  best    3.368 mm  gen best    3.368  invalid 0/16  sigma 0.074
+  gen 102  calls  1632  best    3.365 mm  gen best    3.365  invalid 0/16  sigma 0.076
+  [ 1644] FEM INVALID: solver follower_failed
+  gen 103  calls  1648  best    3.365 mm  gen best    3.367  invalid 1/16  sigma 0.077
+  [ 1649] FEM INVALID: solver follower_failed
+  [ 1654] FEM INVALID: solver follower_failed
+  gen 104  calls  1664  best    3.365 mm  gen best    3.368  invalid 2/16  sigma 0.079
+  [ 1674] FEM INVALID: solver follower_failed
+  gen 105  calls  1680  best    3.363 mm  gen best    3.363  invalid 1/16  sigma 0.080
+  gen 106  calls  1696  best    3.363 mm  gen best    3.363  invalid 0/16  sigma 0.080
+  gen 107  calls  1712  best    3.361 mm  gen best    3.361  invalid 0/16  sigma 0.080
+  gen 108  calls  1728  best    3.361 mm  gen best    3.363  invalid 0/16  sigma 0.080
+  [ 1740] FEM INVALID: solver follower_failed
+  gen 109  calls  1744  best    3.361 mm  gen best    3.361  invalid 1/16  sigma 0.082
+  gen 110  calls  1760  best    3.361 mm  gen best    3.362  invalid 0/16  sigma 0.084
+  gen 111  calls  1776  best    3.361 mm  gen best    3.361  invalid 0/16  sigma 0.086
+  gen 112  calls  1792  best    3.360 mm  gen best    3.360  invalid 0/16  sigma 0.086
+  gen 113  calls  1808  best    3.359 mm  gen best    3.359  invalid 0/16  sigma 0.082
+  gen 114  calls  1824  best    3.359 mm  gen best    3.361  invalid 0/16  sigma 0.080
+  [ 1827] FEM INVALID: solver follower_failed
+  gen 115  calls  1840  best    3.359 mm  gen best    3.362  invalid 1/16  sigma 0.080
+  [ 1855] FEM INVALID: solver follower_failed
+  [ 1841] FEM INVALID: solver follower_failed
+  gen 116  calls  1856  best    3.359 mm  gen best    3.362  invalid 2/16  sigma 0.080
+  [ 1866] FEM INVALID: solver follower_failed
+  [ 1869] FEM INVALID: solver follower_failed
+  gen 117  calls  1872  best    3.359 mm  gen best    3.360  invalid 2/16  sigma 0.077
+  [ 1888] FEM INVALID: solver follower_failed
+  [ 1880] FEM INVALID: solver follower_failed
+  gen 118  calls  1888  best    3.359 mm  gen best    3.360  invalid 2/16  sigma 0.074
+  [ 1901] FEM INVALID: solver follower_failed
+  gen 119  calls  1904  best    3.359 mm  gen best    3.360  invalid 1/16  sigma 0.072
+  gen 120  calls  1920  best    3.359 mm  gen best    3.359  invalid 0/16  sigma 0.069
+  gen 121  calls  1936  best    3.358 mm  gen best    3.358  invalid 0/16  sigma 0.068
+  [ 1948] FEM INVALID: solver follower_failed
+  gen 122  calls  1952  best    3.357 mm  gen best    3.357  invalid 1/16  sigma 0.068
+  [ 1965] FEM INVALID: solver follower_failed
+  gen 123  calls  1968  best    3.357 mm  gen best    3.357  invalid 1/16  sigma 0.068
+  [ 1975] FEM INVALID: solver follower_failed
+  [ 1976] FEM INVALID: solver follower_failed
+  [ 1970] FEM INVALID: solver follower_failed
+  gen 124  calls  1984  best    3.357 mm  gen best    3.357  invalid 3/16  sigma 0.070
+  gen 125  calls  2000  best    3.356 mm  gen best    3.356  invalid 0/16  sigma 0.069
+  gen 126  calls  2016  best    3.356 mm  gen best    3.356  invalid 0/16  sigma 0.067
+  gen 127  calls  2032  best    3.356 mm  gen best    3.356  invalid 0/16  sigma 0.064
+  gen 128  calls  2048  best    3.355 mm  gen best    3.355  invalid 0/16  sigma 0.060
+  gen 129  calls  2064  best    3.355 mm  gen best    3.355  invalid 0/16  sigma 0.058
+  gen 130  calls  2080  best    3.355 mm  gen best    3.356  invalid 0/16  sigma 0.056
+  gen 131  calls  2096  best    3.355 mm  gen best    3.356  invalid 0/16  sigma 0.055
+  gen 132  calls  2112  best    3.355 mm  gen best    3.355  invalid 0/16  sigma 0.055
+  gen 133  calls  2128  best    3.354 mm  gen best    3.354  invalid 0/16  sigma 0.057
+  gen 134  calls  2144  best    3.354 mm  gen best    3.354  invalid 0/16  sigma 0.057
+  gen 135  calls  2160  best    3.354 mm  gen best    3.354  invalid 0/16  sigma 0.056
+  gen 136  calls  2176  best    3.354 mm  gen best    3.354  invalid 0/16  sigma 0.054
+  gen 137  calls  2192  best    3.354 mm  gen best    3.354  invalid 0/16  sigma 0.051
+  gen 138  calls  2208  best    3.354 mm  gen best    3.354  invalid 0/16  sigma 0.049
+  gen 139  calls  2224  best    3.354 mm  gen best    3.354  invalid 0/16  sigma 0.046
+  gen 140  calls  2240  best    3.353 mm  gen best    3.353  invalid 0/16  sigma 0.045
+  gen 141  calls  2256  best    3.353 mm  gen best    3.353  invalid 0/16  sigma 0.045
+  gen 142  calls  2272  best    3.352 mm  gen best    3.352  invalid 0/16  sigma 0.045
+  [ 2285] FEM INVALID: solver follower_failed
+  gen 143  calls  2288  best    3.352 mm  gen best    3.353  invalid 1/16  sigma 0.045
+  gen 144  calls  2304  best    3.352 mm  gen best    3.353  invalid 0/16  sigma 0.044
+  gen 145  calls  2320  best    3.352 mm  gen best    3.353  invalid 0/16  sigma 0.042
+  gen 146  calls  2336  best    3.352 mm  gen best    3.353  invalid 0/16  sigma 0.041
+  gen 147  calls  2352  best    3.352 mm  gen best    3.353  invalid 0/16  sigma 0.041
+  gen 148  calls  2368  best    3.352 mm  gen best    3.353  invalid 0/16  sigma 0.040
+  gen 149  calls  2384  best    3.352 mm  gen best    3.353  invalid 0/16  sigma 0.037
+  gen 150  calls  2400  best    3.352 mm  gen best    3.352  invalid 0/16  sigma 0.035
+  gen 151  calls  2416  best    3.352 mm  gen best    3.352  invalid 0/16  sigma 0.032
+  gen 152  calls  2432  best    3.352 mm  gen best    3.352  invalid 0/16  sigma 0.031
+  gen 153  calls  2448  best    3.352 mm  gen best    3.352  invalid 0/16  sigma 0.031
+  gen 154  calls  2464  best    3.352 mm  gen best    3.352  invalid 0/16  sigma 0.030
+  [ 2480] FEM INVALID: solver follower_failed
+  gen 155  calls  2480  best    3.352 mm  gen best    3.352  invalid 1/16  sigma 0.029
+  gen 156  calls  2496  best    3.352 mm  gen best    3.352  invalid 0/16  sigma 0.028
+  gen 157  calls  2512  best    3.352 mm  gen best    3.352  invalid 0/16  sigma 0.027
+  gen 158  calls  2528  best    3.352 mm  gen best    3.352  invalid 0/16  sigma 0.028
+  gen 159  calls  2544  best    3.352 mm  gen best    3.352  invalid 0/16  sigma 0.028
+  gen 160  calls  2560  best    3.352 mm  gen best    3.352  invalid 0/16  sigma 0.027
+  gen 161  calls  2576  best    3.352 mm  gen best    3.352  invalid 0/16  sigma 0.027
+  gen 162  calls  2592  best    3.352 mm  gen best    3.352  invalid 0/16  sigma 0.027
+  gen 163  calls  2608  best    3.352 mm  gen best    3.352  invalid 0/16  sigma 0.025
+  gen 164  calls  2624  best    3.352 mm  gen best    3.352  invalid 0/16  sigma 0.024
+  gen 165  calls  2640  best    3.351 mm  gen best    3.351  invalid 0/16  sigma 0.023
+  gen 166  calls  2656  best    3.351 mm  gen best    3.351  invalid 0/16  sigma 0.022
+  gen 167  calls  2672  best    3.351 mm  gen best    3.351  invalid 0/16  sigma 0.021
+  gen 168  calls  2688  best    3.351 mm  gen best    3.351  invalid 0/16  sigma 0.020
+  gen 169  calls  2704  best    3.351 mm  gen best    3.351  invalid 0/16  sigma 0.020
+  gen 170  calls  2720  best    3.351 mm  gen best    3.351  invalid 0/16  sigma 0.020
+  gen 171  calls  2736  best    3.351 mm  gen best    3.351  invalid 0/16  sigma 0.020
+  gen 172  calls  2752  best    3.351 mm  gen best    3.351  invalid 0/16  sigma 0.020
+  gen 173  calls  2768  best    3.351 mm  gen best    3.351  invalid 0/16  sigma 0.020
+  gen 174  calls  2784  best    3.351 mm  gen best    3.351  invalid 0/16  sigma 0.019
+  gen 175  calls  2800  best    3.351 mm  gen best    3.351  invalid 0/16  sigma 0.019
+  gen 176  calls  2816  best    3.351 mm  gen best    3.351  invalid 0/16  sigma 0.019
+  gen 177  calls  2832  best    3.351 mm  gen best    3.351  invalid 0/16  sigma 0.018
+  gen 178  calls  2848  best    3.351 mm  gen best    3.351  invalid 0/16  sigma 0.018
+  gen 179  calls  2864  best    3.351 mm  gen best    3.351  invalid 0/16  sigma 0.018
+  gen 180  calls  2880  best    3.351 mm  gen best    3.351  invalid 0/16  sigma 0.017
+  gen 181  calls  2896  best    3.351 mm  gen best    3.351  invalid 0/16  sigma 0.016
+  gen 182  calls  2912  best    3.351 mm  gen best    3.351  invalid 0/16  sigma 0.015
+  gen 183  calls  2928  best    3.351 mm  gen best    3.351  invalid 0/16  sigma 0.014
+  gen 184  calls  2944  best    3.351 mm  gen best    3.351  invalid 0/16  sigma 0.014
+  gen 185  calls  2960  best    3.351 mm  gen best    3.351  invalid 0/16  sigma 0.013
+  gen 186  calls  2976  best    3.351 mm  gen best    3.351  invalid 0/16  sigma 0.014
+  gen 187  calls  2992  best    3.351 mm  gen best    3.351  invalid 0/16  sigma 0.014
+  gen 188  calls  3008  best    3.351 mm  gen best    3.351  invalid 0/16  sigma 0.014
+  gen 189  calls  3024  best    3.351 mm  gen best    3.351  invalid 0/16  sigma 0.014
+  gen 190  calls  3040  best    3.351 mm  gen best    3.351  invalid 0/16  sigma 0.014
+  gen 191  calls  3056  best    3.351 mm  gen best    3.351  invalid 0/16  sigma 0.014
+  gen 192  calls  3072  best    3.351 mm  gen best    3.351  invalid 0/16  sigma 0.014
+  gen 193  calls  3088  best    3.351 mm  gen best    3.351  invalid 0/16  sigma 0.015
+  gen 194  calls  3104  best    3.351 mm  gen best    3.351  invalid 0/16  sigma 0.016
+  gen 195  calls  3120  best    3.351 mm  gen best    3.351  invalid 0/16  sigma 0.016
+  gen 196  calls  3136  best    3.351 mm  gen best    3.351  invalid 0/16  sigma 0.016
+  gen 197  calls  3152  best    3.351 mm  gen best    3.351  invalid 0/16  sigma 0.017
+  gen 198  calls  3168  best    3.351 mm  gen best    3.351  invalid 0/16  sigma 0.017
+  gen 199  calls  3184  best    3.351 mm  gen best    3.351  invalid 0/16  sigma 0.016
+  gen 200  calls  3200  best    3.351 mm  gen best    3.351  invalid 0/16  sigma 0.016
+
+CMA-ES stop: {'maxiter': 200}
+Best score 3.3506 mm-equivalent (RMSE + penalty) after 3200 FEM calls, 172.6 min
+  re-evaluated RMSE 3.3297 mm (0.28 % of span)  max dev 10.61 mm  crown 0.2642 (target 0.2697)  max disp 10.61 mm
+Saved optimisation/pattern_smooth_rm2_10strip_spline10_sI_fol_result.json

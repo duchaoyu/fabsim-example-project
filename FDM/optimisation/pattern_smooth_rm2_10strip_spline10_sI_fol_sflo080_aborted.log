@@ -1,0 +1,93 @@
+Splines : ['E00', 'E02', 'E03a', 'E03b', 'E03c'] -> 3 rods [30, 34, 37] verts, GFRP d 10 mm, EA 3.14e+06 N, EI 19.6 N m^2
+Fixed edges: ['E01'] -> 47 fixed vertices
+Mesh    : 1232 verts, 2320 faces, 47 supports, 1185 free (fitted)
+Target  : crown 0.2697 m, span 1.2000 m  (rest == target)
+Regions : 10, faces [232, 232, 232, 232, 232, 232, 232, 232, 232, 232]; knit per face, region means [92.0, 91.6, 91.7, 93.2, 93.4, 81.6, 66.9, 58.0, 52.1, 59.5] deg — FIXED
+Adjacent: [(0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (5, 6), (6, 7), (7, 8), (8, 9)]   lambda_smooth 0.01
+Cables  : ['C00', 'C01a', 'C01b', 'C02']  EA 157000
+Material: E1 12500  E2 5000  nu 0.198   pressure 1000 Pa
+Log     : optimisation/pattern_smooth_rm2_10strip_spline10_sI_fol_calls.jsonl
+  [    8] FEM INVALID: solver follower_failed
+  [    1] FEM INVALID: solver follower_failed
+  [    3] FEM INVALID: solver follower_failed
+  [    6] FEM INVALID: solver follower_failed
+  [   13] FEM INVALID: solver follower_failed
+  [   10] FEM INVALID: solver follower_failed
+  [   14] FEM INVALID: solver follower_failed
+  [    7] FEM INVALID: solver follower_failed
+  [    2] FEM INVALID: solver follower_failed
+  [    4] FEM INVALID: solver follower_failed
+  [   16] FEM INVALID: solver follower_failed
+  [   12] FEM INVALID: solver follower_failed
+  [   15] FEM INVALID: solver follower_failed
+  [    5] FEM INVALID: timeout
+  gen   1  calls    16  best   15.617 mm  gen best   15.617  invalid 14/16  sigma 0.943
+  [   21] FEM INVALID: solver follower_failed
+  [   28] FEM INVALID: solver follower_failed
+  [   19] FEM INVALID: solver follower_failed
+  [   31] FEM INVALID: solver follower_failed
+  [   18] FEM INVALID: solver follower_failed
+  [   26] FEM INVALID: solver follower_failed
+  [   20] FEM INVALID: solver follower_failed
+  [   27] FEM INVALID: solver follower_failed
+  [   24] FEM INVALID: solver follower_failed
+  [   29] FEM INVALID: solver follower_failed
+  [   30] FEM INVALID: solver follower_failed
+  [   22] FEM INVALID: timeout
+  [   17] FEM INVALID: timeout
+  gen   2  calls    32  best   13.825 mm  gen best   13.825  invalid 13/16  sigma 0.888
+  [   33] FEM INVALID: solver follower_failed
+  [   48] FEM INVALID: solver follower_failed
+  [   41] FEM INVALID: solver follower_failed
+  [   47] FEM INVALID: solver follower_failed
+  [   46] FEM INVALID: solver follower_failed
+  [   35] FEM INVALID: solver follower_failed
+  [   37] FEM INVALID: solver follower_failed
+  [   39] FEM INVALID: solver follower_failed
+  [   38] FEM INVALID: solver follower_failed
+  [   40] FEM INVALID: solver follower_failed
+  [   43] FEM INVALID: solver follower_failed
+  [   36] FEM INVALID: solver follower_failed
+  [   44] FEM INVALID: solver follower_failed
+  gen   3  calls    48  best   13.825 mm  gen best   15.582  invalid 13/16  sigma 0.861
+  [   49] FEM INVALID: solver follower_failed
+  [   62] FEM INVALID: solver follower_failed
+  [   61] FEM INVALID: solver follower_failed
+  [   54] FEM INVALID: solver follower_failed
+  [   58] FEM INVALID: solver follower_failed
+  [   57] FEM INVALID: solver follower_failed
+  [   55] FEM INVALID: solver follower_failed
+  [   59] FEM INVALID: solver follower_failed
+  [   53] FEM INVALID: solver follower_failed
+  [   63] FEM INVALID: solver follower_failed
+  [   64] FEM INVALID: solver follower_failed
+  [   51] FEM INVALID: solver follower_failed
+  [   50] FEM INVALID: solver follower_failed
+  gen   4  calls    64  best   13.825 mm  gen best   15.115  invalid 13/16  sigma 0.878
+  [   68] FEM INVALID: solver follower_failed
+  [   73] FEM INVALID: solver follower_failed
+  [   71] FEM INVALID: solver follower_failed
+  [   66] FEM INVALID: solver follower_failed
+  [   67] FEM INVALID: solver follower_failed
+  [   79] FEM INVALID: solver follower_failed
+  [   74] FEM INVALID: solver follower_failed
+  [   77] FEM INVALID: solver follower_failed
+  [   70] FEM INVALID: solver follower_failed
+  [   78] FEM INVALID: solver follower_failed
+  [   76] FEM INVALID: solver follower_failed
+  [   75] FEM INVALID: solver follower_failed
+  gen   5  calls    80  best   13.825 mm  gen best   14.790  invalid 12/16  sigma 0.883
+  [   88] FEM INVALID: solver follower_failed
+  [   92] FEM INVALID: solver follower_failed
+  [   90] FEM INVALID: solver follower_failed
+  [   84] FEM INVALID: solver follower_failed
+  [   89] FEM INVALID: solver follower_failed
+  [   83] FEM INVALID: solver follower_failed
+  [   91] FEM INVALID: solver follower_failed
+  [   95] FEM INVALID: solver follower_failed
+  [   85] FEM INVALID: solver follower_failed
+  [   82] FEM INVALID: solver follower_failed
+  [   81] FEM INVALID: solver follower_failed
+  [   93] FEM INVALID: solver follower_failed
+  [   96] FEM INVALID: solver follower_failed
+  [   87] FEM INVALID: solver follower_failed
