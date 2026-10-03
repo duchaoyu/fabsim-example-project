@@ -16,3 +16,6 @@ FDM/data/Knitting for Shell structures.backup_*.docx
 # Fresh Linux build tree (build-linux/ carries a stale macOS cache)
 build-headless/
 out/
+
+# per-call FEM outputs of the 4-part strategy runs (hundreds of MB)
+FDM/optimisation/4part_calls/

@@ -591,6 +591,8 @@ int main(int argc, char* argv[])
     std::vector<RegionParams> regions = parseRegions(ps);
     std::vector<std::vector<int>> cable_paths = parseCablePaths(ps);
     std::vector<double> cable_rest_scales = jsonDoubleArray(ps, "cable_rest_scales");
+    // Optional per-cable axial stiffness; cables beyond its length use cable_ea.
+    std::vector<double> cable_eas = jsonDoubleArray(ps, "cable_eas");
 
     // Optional explicit supports.  Without it every topological boundary vertex
     // is fixed; with it only these are, so the rest of the boundary is a free
@@ -660,15 +662,17 @@ int main(int argc, char* argv[])
             std::cerr << "Cable path has out-of-range vertex index\n";
             return 1;
         }
+        double ea_i = (cable_idx < (int)cable_eas.size() && cable_eas[cable_idx] > 0.0)
+                          ? cable_eas[cable_idx] : cable_ea;
         // Optional per-cable rest-length scale: L_rest = scale * L_geom (scale<1 → pre-tensioned)
         if (cable_idx < (int)cable_rest_scales.size()) {
             double L_geom = 0.0;
             for (size_t k = 0; k + 1 < path.size(); ++k)
                 L_geom += (V0.row(path[k+1]) - V0.row(path[k])).norm();
             double L_rest = cable_rest_scales[cable_idx] * L_geom;
-            cables.cables.emplace_back(path, cable_ea, L_rest);
+            cables.cables.emplace_back(path, ea_i, L_rest);
         } else {
-            cables.cables.emplace_back(path, cable_ea, V0);
+            cables.cables.emplace_back(path, ea_i, V0);
         }
         cable_idx++;
     }

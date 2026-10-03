@@ -86,7 +86,7 @@ def lobe_offset(V):
 
 
 # ── D4 region map ─────────────────────────────────────────────────────────────
-def build_region_map(V, F, n_az, n_rad, off):
+def build_region_map(V, F, n_az, n_rad, off, band_edges=None, crest_hw=None):
     """region id = slot*4 + quadrant, slot = sub_az*n_rad + band."""
     cen = V[F].mean(axis=1)
     r   = np.hypot(cen[:, 0], cen[:, 1])
@@ -94,9 +94,17 @@ def build_region_map(V, F, n_az, n_rad, off):
     quad = (az // 90.0).astype(int)
     loc  = az - quad * 90.0                    # 0..90 inside the quadrant
     sub  = np.minimum((loc / (90.0 / n_az)).astype(int), n_az - 1)
+    if crest_hw is not None:
+        # two mirror-symmetric sub-wedges: 0 = lobe crest (within crest_hw deg of
+        # the crest at loc = 45), 1 = valley sectors either side of it
+        assert n_az == 2, "--crest-hw needs --n-az 2"
+        sub = (np.abs(loc - 45.0) > crest_hw).astype(int)
     # equal-area radial bands
     r_max = r.max()
     edges = r_max * np.sqrt(np.linspace(0, 1, n_rad + 1))[1:-1]
+    if band_edges:
+        assert len(band_edges) == n_rad - 1, "--band-edges needs n_rad-1 values"
+        edges = r_max * np.asarray(sorted(band_edges))
     band  = np.searchsorted(edges, r)
     slot  = sub * n_rad + band
     return (slot * 4 + quad).astype(int).tolist(), slot.astype(int).tolist(), \
@@ -142,6 +150,44 @@ def cable_orbits(V, paths, tol=22.0):
     return assigned, orb
 
 
+# ── Hoop (ring) cable near the base ──────────────────────────────────────────
+def ring_path(V, F, r_frac, n_way=16):
+    """Closed vertex loop that follows r = r_frac * r_max as closely as the mesh
+    allows: Dijkstra between n_way waypoints placed symmetrically in azimuth
+    (so the loop is as x/y-mirror symmetric as the unsymmetric mesh permits),
+    edge cost = length * (1 + 20 |r_mid - r0| / r_max).  First vertex repeated
+    at the end, so the sliding cable closes on itself."""
+    import heapq
+    r = np.hypot(V[:, 0], V[:, 1]); rmax = r.max(); r0 = r_frac * rmax
+    az = np.arctan2(V[:, 1], V[:, 0])
+    adj = [dict() for _ in range(len(V))]
+    for f in F:
+        for a, b in zip(f, np.roll(f, -1)):
+            a, b = int(a), int(b)
+            rm = 0.5 * (r[a] + r[b])
+            w = np.linalg.norm(V[a] - V[b]) * (1.0 + 20.0 * abs(rm - r0) / rmax)
+            adj[a][b] = adj[b][a] = w
+    way = []
+    for k in range(n_way):
+        t = 2 * np.pi * k / n_way
+        cost = np.hypot(r * np.cos(az) - r0 * np.cos(t), r * np.sin(az) - r0 * np.sin(t))
+        way.append(int(np.argmin(cost)))
+    loop = [way[0]]
+    for a, b in zip(way, way[1:] + way[:1]):
+        dist = {a: 0.0}; prev = {}; pq = [(0.0, a)]
+        while pq:
+            d, u = heapq.heappop(pq)
+            if u == b: break
+            if d > dist[u]: continue
+            for v, w in adj[u].items():
+                if d + w < dist.get(v, 1e18):
+                    dist[v] = d + w; prev[v] = u; heapq.heappush(pq, (d + w, v))
+        seg = [b]
+        while seg[-1] != a: seg.append(prev[seg[-1]])
+        loop += seg[::-1][1:]
+    return loop
+
+
 # ── FEM plumbing (from optimise_C5_16region.py) ───────────────────────────────
 _call_count   = [0]
 _out_prefix   = ["4part"]
@@ -151,6 +197,8 @@ _t_start      = [None]
 _time_limit   = [0.0]
 _best         = [None]
 _log_fh       = [None]
+_call_dir     = [OUT_DIR]
+_max_resid    = [1e-3]   # N, largest out-of-balance force accepted at the last stage
 
 
 class _TimeUp(Exception):
@@ -217,7 +265,7 @@ def _check_fem_valid(verts, crown, V_rest):
 
 def run_fem(sf_wale, sf_course, knit_dirs, pressure, motif, region_map_path,
             cable_paths, cable_ea, cable_rest_scales, V_rest, n_regions,
-            extra_log=None):
+            extra_log=None, cable_eas=None):
     """One FEM call.
 
     NOTE vs the C5 original: that version deleted its params temp file in a
@@ -239,13 +287,15 @@ def run_fem(sf_wale, sf_course, knit_dirs, pressure, motif, region_map_path,
                               for r in range(n_regions)],
         "cable_rest_scales": [float(s) for s in cable_rest_scales],
     }
+    if cable_eas is not None:
+        params["cable_eas"] = [float(e) for e in cable_eas]
 
     with tempfile.NamedTemporaryFile(mode="w", suffix=".json",
                                      delete=False, dir=OUT_DIR) as pf:
         json.dump(params, pf)
         params_path = pf.name
 
-    prefix = os.path.join(OUT_DIR, f"{_out_prefix[0]}_{_call_count[0]:05d}")
+    prefix = os.path.join(_call_dir[0], f"{_out_prefix[0]}_{_call_count[0]:05d}")
     cmd    = [BINARY, MESH_PATH, region_map_path, params_path, prefix]
 
     rec = {"call": _call_count[0], "prefix": os.path.basename(prefix),
@@ -262,6 +312,15 @@ def run_fem(sf_wale, sf_course, knit_dirs, pressure, motif, region_map_path,
         if res.returncode != 0:
             rec["status"] = f"rc={res.returncode}"
             print(f"  [{_call_count[0]:4d}] FEM error (rc={res.returncode}): {res.stderr[:200]}")
+            return None
+        # The binary exits 0 even when Newton fails and then writes (nearly) the
+        # start state, i.e. the target itself, which scores a near-perfect fit.
+        # Accept only a solve whose last load stage ends in equilibrium.
+        resid = [float(l.split("max=")[1].split()[0]) for l in res.stderr.splitlines()
+                 if l.startswith("SOLVER_RESIDUAL")]
+        if resid and resid[-1] > _max_resid[0]:
+            rec["status"] = f"not converged (final residual {resid[-1]:.3g})"
+            print(f"  [{_call_count[0]:4d}] FEM NOT CONVERGED: final residual {resid[-1]:.3g}")
             return None
         scalars_path, verts_path = prefix + "_scalars.csv", prefix + "_verts.csv"
         if not os.path.exists(scalars_path):
@@ -329,6 +388,27 @@ def main():
                          "as face_knit_dirs_deg (fem_batch_nregion honours it and "
                          "then ignores the region-level knit_dir_deg); off by "
                          "default so the region map keeps the C5 format.")
+    ap.add_argument("--band-edges", type=float, nargs="+", default=None,
+                    help="radial band edges as fractions of r_max (n_rad-1 values); "
+                         "default equal-area bands")
+    ap.add_argument("--sym", choices=["d4", "d2"], default="d4",
+                    help="d4: all four quadrants share a slot's parameters; d2: "
+                         "mirror symmetry in x and in y only, so the lobes on the "
+                         "x axis and those on the y axis get separate parameters")
+    ap.add_argument("--ring", type=float, nargs="*", default=[],
+                    help="add closed hoop cables at these r/r_max (each its own "
+                         "rest-scale parameter)")
+    ap.add_argument("--ring-ea", type=float, default=39250.0,
+                    help="axial stiffness of the hoop cables (N); 39250 = 1 mm steel, "
+                         "a quarter of the 2 mm main cables' 157000")
+    ap.add_argument("--crest-hw", type=float, default=None,
+                    help="with --n-az 2: split each quadrant into a lobe-crest sector "
+                         "of this half-width (deg) and the valley sectors around it")
+    ap.add_argument("--method", choices=["L-BFGS-B", "Powell"], default="L-BFGS-B",
+                    help="Powell is derivative-free and copes with the solver noise "
+                         "that stalls the finite-difference line search")
+    ap.add_argument("--update-data", action="store_true",
+                    help="also overwrite data/4part/4part_fem_best.{obj,npy}")
     args = ap.parse_args()
 
     os.makedirs(OUT_DIR, exist_ok=True)
@@ -336,6 +416,9 @@ def main():
     _time_limit[0] = args.time_limit
     _min_disp[0]   = args.min_disp_mm / 1000.0
     _log_fh[0]     = open(CALL_LOG, "a")
+    _call_dir[0]   = os.path.join(OUT_DIR, "4part_calls", args.tag)
+    os.makedirs(_call_dir[0], exist_ok=True)
+    region_map_file = os.path.join(OUT_DIR, f"{args.tag}_region_map.json")
 
     V, F = load_off(MESH_PATH)
     V_target, _ = load_off(TARGET_OFF)
@@ -354,14 +437,17 @@ def main():
           if _min_disp[0] > 0 else "  displacement floor: DISABLED")
 
     off = lobe_offset(V)
-    face_region, slot, quad, r_edges = build_region_map(V, F, args.n_az, args.n_rad, off)
+    face_region, slot, quad, r_edges = build_region_map(V, F, args.n_az, args.n_rad, off,
+                                                        args.band_edges, args.crest_hw)
     n_wedge   = args.n_az * args.n_rad
     n_regions = 4 * n_wedge
+    n_group   = 2 if args.sym == "d2" else 1     # parameter copies per slot
+    n_par_kn  = n_wedge * n_group
     field = json.load(open(FIELD_FILE))
     rmap = {"face_regions": face_region}
     if args.face_knit:
         rmap["face_knit_dirs_deg"] = field["knit_dir_deg_face"]
-    with open(REGION_MAP, "w") as f:
+    with open(region_map_file, "w") as f:
         json.dump(rmap, f)
     import collections
     cnt = collections.Counter(face_region)
@@ -370,9 +456,9 @@ def main():
     print(f"  {args.n_az} azimuthal sub-wedges x {args.n_rad} radial bands "
           f"(band edges r = {np.round(r_edges,4).tolist()} m)")
     print(f"  {n_wedge} slots in the fundamental quarter -> {n_regions} physical "
-          f"regions, {2*n_wedge} sf parameters (NOT {2*n_regions})")
+          f"regions, {2*n_par_kn} sf parameters (NOT {2*n_regions})")
     print(f"  faces per region: min {min(cnt.values())}, max {max(cnt.values())}")
-    print(f"  region map -> {REGION_MAP}")
+    print(f"  region map -> {region_map_file}")
 
     knit_dirs = region_knit_dirs(face_region, n_regions, field["knit_dir_deg_face"])
     print(f"\nknit_dir_deg per region (FIXED from {os.path.basename(FIELD_FILE)}, "
@@ -383,23 +469,36 @@ def main():
     cable_paths = list(json.load(open(CABLE_PATHS_FILE)).values()) \
         if (os.path.exists(CABLE_PATHS_FILE) and not args.no_cables) else []
     assigned, orbits = cable_orbits(V, cable_paths) if cable_paths else ([], [])
+    cable_eas = [args.cable_ea] * len(cable_paths)
+    for rf in args.ring:
+        loop = ring_path(V, F, rf)
+        rr = np.hypot(V[loop, 0], V[loop, 1]) / np.hypot(V[:, 0], V[:, 1]).max()
+        print(f"Ring     : r/r_max {rf:.3f} -> {len(loop)-1} vertices, r/r_max "
+              f"{rr.min():.3f}-{rr.max():.3f}, z {V[loop,2].min():.3f}-{V[loop,2].max():.3f} m, "
+              f"EA {args.ring_ea:.0f} N")
+        assigned.append(len(orbits)); orbits.append([len(cable_paths)])
+        cable_paths.append(loop); cable_eas.append(args.ring_ea)
     n_orb = len(orbits)
     print(f"\nCables   : {len(cable_paths)} sections, lens {[len(p) for p in cable_paths]}")
     print(f"           {n_orb} D4 orbits (shared rest-scale): "
           f"{[len(o) for o in orbits]}")
 
     # design vector: [sf_wale(n_wedge), sf_course(n_wedge), scale(n_orb)]
+    # d2: quadrants 0/2 (lobes on one axis) share, 1/3 share.  Within a quadrant
+    # the sub-wedges are only mirror images of each other for n_az = 1, which is
+    # what the d2 runs use.
     def expand(p):
         sw = np.empty(n_regions); sc = np.empty(n_regions)
         for s in range(n_wedge):
             for k in range(4):
-                sw[s*4+k] = p[s]; sc[s*4+k] = p[n_wedge + s]
+                g = s * n_group + (k % n_group)
+                sw[s*4+k] = p[g]; sc[s*4+k] = p[n_par_kn + g]
         scales = np.ones(len(cable_paths))
         for i, k in enumerate(assigned):
-            scales[i] = p[2*n_wedge + k]
+            scales[i] = p[2*n_par_kn + k]
         return sw, sc, scales
 
-    p0 = np.r_[np.full(n_wedge, args.sf0_wale), np.full(n_wedge, args.sf0_course),
+    p0 = np.r_[np.full(n_par_kn, args.sf0_wale), np.full(n_par_kn, args.sf0_course),
                np.full(n_orb, args.scale0)]
     if args.p0_json:
         prev = json.load(open(args.p0_json))["p"]
@@ -409,16 +508,17 @@ def main():
         else:
             print(f"WARNING: {args.p0_json} has {len(prev)} params, need {len(p0)} "
                   f"— ignoring the warm start")
-    bounds = [(args.sf_lo, args.sf_hi)] * (2*n_wedge) + [(0.75, 1.05)] * n_orb
+    bounds = [(args.sf_lo, args.sf_hi)] * (2*n_par_kn) + [(0.75, 1.05)] * n_orb
     p0 = np.clip(p0, [b[0] for b in bounds], [b[1] for b in bounds])
 
     history = []
 
     def objective(p):
         sw, sc, scales = expand(p)
-        out = run_fem(sw, sc, knit_dirs, args.pressure, args.motif, REGION_MAP,
+        out = run_fem(sw, sc, knit_dirs, args.pressure, args.motif, region_map_file,
                       cable_paths, args.cable_ea, scales, V_rest, n_regions,
-                      extra_log={"p": [float(x) for x in p], "tag": args.tag})
+                      extra_log={"p": [float(x) for x in p], "tag": args.tag},
+                      cable_eas=cable_eas)
         if out is None or "verts" not in out:
             loss = 1e3
         else:
@@ -434,17 +534,20 @@ def main():
     l0 = objective(p0)
     print(f"  baseline interior RMSE = {l0*1000:.3f} mm")
 
-    print(f"\nOptimising {len(p0)} parameters (L-BFGS-B, maxiter {args.maxiter}, "
+    print(f"\nOptimising {len(p0)} parameters ({args.method}, maxiter {args.maxiter}, "
           f"time limit {args.time_limit:.0f} s) ...")
-    res = _run_minimize(objective, p0, method="L-BFGS-B", bounds=bounds,
-                        options={"maxiter": args.maxiter, "eps": args.eps, "ftol": 1e-14})
+    if args.method == "Powell":
+        opts = {"maxiter": args.maxiter, "xtol": 1e-4, "ftol": 1e-6}
+    else:
+        opts = {"maxiter": args.maxiter, "eps": args.eps, "ftol": 1e-14}
+    res = _run_minimize(objective, p0, method=args.method, bounds=bounds, options=opts)
     print(f"\n{res.message}   calls={_call_count[0]}")
 
     p_best = np.asarray(res.x)
     sw, sc, scales = expand(p_best)
-    out = run_fem(sw, sc, knit_dirs, args.pressure, args.motif, REGION_MAP,
+    out = run_fem(sw, sc, knit_dirs, args.pressure, args.motif, region_map_file,
                   cable_paths, args.cable_ea, scales, V_rest, n_regions,
-                  extra_log={"final": True, "tag": args.tag})
+                  extra_log={"final": True, "tag": args.tag}, cable_eas=cable_eas)
     if out is None:
         print("FINAL RE-RUN INVALID — reporting the tracked best loss only.")
         rmse, maxdev, crown, maxdisp, verts = float(res.fun), None, None, None, None
@@ -480,8 +583,13 @@ def main():
         "max_disp_mm": None if maxdisp is None else maxdisp * 1000.0,
         "floor_limited": bool(maxdisp is not None and maxdisp < 1.25 * _min_disp[0]),
         "p": [float(x) for x in p_best],
-        "slots": [{"slot": s, "sf_wale": float(p_best[s]),
-                   "sf_course": float(p_best[n_wedge + s])} for s in range(n_wedge)],
+        "sym": args.sym, "crest_hw": args.crest_hw, "method": args.method, "band_edges_frac": args.band_edges, "face_knit": args.face_knit,
+        "rings_r_frac": args.ring, "ring_ea": args.ring_ea if args.ring else None,
+        "cable_eas": [float(e) for e in cable_eas],
+        "cable_paths": [[int(v) for v in c] for c in cable_paths],
+        "slots": [{"slot": s, "group": g, "sf_wale": float(p_best[s*n_group + g]),
+                   "sf_course": float(p_best[n_par_kn + s*n_group + g])}
+                  for s in range(n_wedge) for g in range(n_group)],
         "regions": [{"region_id": r, "slot": r // 4, "quadrant": r % 4,
                      "sf_wale": float(sw[r]), "sf_course": float(sc[r]),
                      "knit_dir_deg": float(knit_dirs[r])} for r in range(n_regions)],
@@ -496,7 +604,7 @@ def main():
     print(f"Saved: {CALL_LOG}  (per-call parameters — the C5 script lost these)")
 
     if verts is not None:
-        obj = os.path.join(DATA, "4part_fem_best.obj")
+        obj = os.path.join(OUT_DIR, f"{args.tag}_fem_best.obj")
         with open(obj, "w") as f:
             f.write(f"# 4part FEM knit+cable best fit ({args.tag})\n")
             f.write(f"# interior RMSE  : {rmse*1000:.3f} mm\n")
@@ -510,7 +618,10 @@ def main():
             for fc in F:
                 f.write(f"f {fc[0]+1} {fc[1]+1} {fc[2]+1}\n")
         print(f"Saved: {obj}")
-        np.save(os.path.join(DATA, "4part_fem_best_verts.npy"), verts)
+        if args.update_data:
+            import shutil
+            shutil.copy(obj, os.path.join(DATA, "4part_fem_best.obj"))
+            np.save(os.path.join(DATA, "4part_fem_best_verts.npy"), verts)
 
     _log_fh[0].close()
 
