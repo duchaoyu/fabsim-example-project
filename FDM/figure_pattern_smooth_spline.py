@@ -44,13 +44,14 @@ S = json.load(open(SEED))
 mesh = os.path.join(HERE, S["mesh"]); rmap = os.path.join(HERE, best.get("region_map", S["region_map"]))
 V, F = load_off(mesh)
 C = json.load(open(os.path.join(HERE, S["cable_file"])))
-fixed = S["fixed_vertices"]
+fixed = best.get("fixed_vertices", S["fixed_vertices"])
 free = np.array(sorted(set(range(len(V))) - set(fixed)))
 face_region = np.array(json.load(open(rmap))["face_regions"])
 knit = best.get("knit_dir_deg_region_means", S["knit_dir_deg_region_means"])
 d = 0.010
 E03 = C["E03a"] + C["E03b"][1:] + C["E03c"][1:]
-splines = [C["E00"], C["E02"], E03]
+splines = (best["splines"]["spline_paths"] if best.get("splines")
+           else [C["E00"], C["E02"], E03])
 cables = [k for k in best.get("cable_names", ["C00", "C01a", "C01b", "C02"])
           if not k.startswith("E")]          # [] for the splines-only runs
 p = dict(pressure=1000.0, motif=1, cable_ea=157000.0, E1=12500.0, E2=5000.0, nu=0.198,
