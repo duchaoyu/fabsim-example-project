@@ -486,6 +486,27 @@ static VectorXd simulate(const std::vector<RegionParams>& regions,
 
     for (double p : steps) {
         if (!follower_mode) { x = conservative(p, x); continue; }
+        // FEM_FOLLOWER_START=volume: start each stage from the volume-work solve
+        // at the same pressure and keep the previous state as the fallback.  On
+        // pattern_smooth with edge splines the previous-state start stalls for
+        // the full 199 iterations at every stage and the volume start converges
+        // in 10-35, so this order is several times faster.
+        const char* fs = std::getenv("FEM_FOLLOWER_START");
+        if (fs && std::string(fs) == "volume") {
+            auto r = followerStep(p, conservative(p, x));
+            if (!r.converged) {
+                std::cerr << "FOLLOWER p=" << p << " stalled from volume-work start at max|r|="
+                          << r.residual << "; retrying from previous state\n";
+                auto r2 = followerStep(p, x);
+                if (r2.converged || r2.residual < r.residual) r = r2;
+            }
+            std::cerr << "FOLLOWER p=" << p << (r.converged ? " converged" : " FAILED")
+                      << " it=" << r.iterations << " max|r|=" << r.residual << "\n";
+            g_solver_status = r.converged ? "follower_converged" : "follower_failed";
+            std::cerr << "SOLVER_STATUS " << g_solver_status << "\n";
+            x = r.x;
+            continue;
+        }
         auto r = followerStep(p, x);
         if (!r.converged) {
             // Newton on the follower balance can stall from a poor start (the

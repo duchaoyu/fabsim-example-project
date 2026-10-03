@@ -92,6 +92,11 @@ CABLE_EA = 157000.0
 # motif 1 as the binary's table has it (the pre-2026-09-19 estimates), at the
 # user's request; the measured stitch structure 1 is E1 10300, E2 13400, nu 0.58
 MATERIAL = {"E1": 5000.0, "E2": 12507.0, "nu": 0.198}
+# --material sI: the measured stitch structure I, E1 = wale (along the knit field)
+MATERIALS = {"motif1": dict(MATERIAL),
+             "sI": {"E1": 12500.0, "E2": 5000.0, "nu": 0.198}}
+_splines = [None]      # --spline-edges: {"spline_paths", "spline_EA", "spline_EI", "spline_rest"}
+_follower = [False]    # --follower: follower pressure (p n dA on the current surface)
 
 _call = [0]
 _prefix = ["pattern_smooth"]
@@ -123,6 +128,8 @@ def run_fem(sw, sc, knit, pressure, cable_paths, cscales, fixed, V_rest, t_crown
               "cable_rest_scales": [float(s) for s in cscales]}
     if _reg_max[0] > 0:
         params["newton_reg_max"] = _reg_max[0]
+    if _splines[0]:
+        params.update(_splines[0])
     with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False,
                                      dir=OUT_DIR) as pf:
         json.dump(params, pf)
@@ -130,14 +137,17 @@ def run_fem(sw, sc, knit, pressure, cable_paths, cscales, fixed, V_rest, t_crown
     prefix = os.path.join(OUT_DIR, f"{_prefix[0]}_{n:05d}")
     out, reason = None, "ok"
     try:
+        env = dict(os.environ)
+        if _follower[0]:
+            env.update(FEM_PRESSURE="follower", FEM_FOLLOWER_START="volume")
         r = subprocess.run([BINARY, MESH_PATH, REGION_MAP, ppath, prefix],
-                           capture_output=True, text=True,
+                           capture_output=True, text=True, env=env,
                            timeout=float(os.environ.get("FEM_TIMEOUT", "300")))
         status = next((l.split()[1] for l in r.stderr.splitlines()[::-1]
                        if l.startswith("SOLVER_STATUS")), "?")
         if r.returncode != 0:
             reason = f"rc={r.returncode}: {r.stderr[-160:]}"
-        elif status != "success":
+        elif status not in ("success", "follower_converged"):
             reason = f"solver {status}"
         else:
             with open(prefix + "_scalars.csv") as f:
@@ -263,8 +273,25 @@ def main():
                     help="phase 3: initial step on the cable rest scales")
     ap.add_argument("--cable0-edge", type=float, default=None,
                     help="phase 2/3 start: rest scale of the edge cables E*")
+    ap.add_argument("--material", choices=sorted(MATERIALS), default="motif1",
+                    help="motif1: the pre-2026-09-19 estimates (E1 5000, E2 12507); "
+                         "sI: measured stitch structure I (E_wale 12500, E_course 5000)")
+    ap.add_argument("--spline-edges", type=float, default=0.0,
+                    help="replace the free-edge cables by bending-stiff GFRP rods of "
+                         "this diameter (mm, E 40 GPa), formed to the target edge; "
+                         "chains of edge cables that share end vertices become one rod")
+    ap.add_argument("--sf-lo", type=float, default=0.80,
+                    help="lower bound on the stretch factors.  Below 1 the fabric is "
+                         "knitted larger than the surface and goes into compression; "
+                         "with the follower load that leaves no stable state (1.001 "
+                         "made 10/10 random designs converge, 0.80 about 1 in 8)")
+    ap.add_argument("--follower", action="store_true",
+                    help="follower pressure (correct at free edges) instead of the "
+                         "volume-work load")
     args = ap.parse_args()
     set_variant(args.variant)
+    MATERIAL.clear(); MATERIAL.update(MATERIALS[args.material])
+    _follower[0] = args.follower
     global REGION_MAP, N_REGIONS
     if args.region_map:
         REGION_MAP = args.region_map if os.path.isabs(args.region_map) else \
@@ -319,6 +346,29 @@ def main():
         fixed = sorted(set(fixed) | set(cab[e]))
     free_idx = np.array(sorted(set(range(len(V))) - set(fixed)))
     cable_names = [k for k in sorted(cab) if k not in fix_edges]
+    spline_names = []
+    if args.spline_edges > 0:
+        # join edge cables end to end (E03a-E03b-E03c) into continuous rods; at a
+        # support each edge keeps its own rod
+        fixed_set = set(fixed)
+        chains = [list(cab[k]) for k in cable_names if k.startswith("E")]
+        spline_names = [k for k in cable_names if k.startswith("E")]
+        merged = True
+        while merged:
+            merged = False
+            for i in range(len(chains)):
+                for j in range(len(chains)):
+                    if i != j and chains[i][-1] == chains[j][0] and \
+                            chains[j][0] not in fixed_set:   # never through a support
+                        chains[i] += chains[j][1:]; del chains[j]; merged = True; break
+                if merged: break
+        d = args.spline_edges / 1000.0
+        _splines[0] = {"spline_paths": chains, "spline_EA": 40e9 * np.pi * d**2 / 4,
+                       "spline_EI": 40e9 * np.pi * d**4 / 64, "spline_rest": 1}
+        cable_names = [k for k in cable_names if not k.startswith("E")]
+        print(f"Splines : {spline_names} -> {len(chains)} rods "
+              f"{[len(c) for c in chains]} verts, GFRP d {args.spline_edges:g} mm, "
+              f"EA {_splines[0]['spline_EA']:.3g} N, EI {_splines[0]['spline_EI']:.3g} N m^2")
     cable_paths = [cab[k] for k in cable_names]
     n_c = len(cable_names)
     if fix_edges:
@@ -390,7 +440,8 @@ def main():
             ce = args.cable0 if args.cable0_edge is None else args.cable0_edge
             p0 = np.array([args.sf0] * (2 * N_REGIONS) +
                           [ce if k.startswith("E") else args.cable0 for k in cable_names])
-        bnds = [(0.80, 1.50)] * (2 * N_REGIONS) + [(0.80, 1.05)] * n_c
+        bnds = [(args.sf_lo, 1.50)] * (2 * N_REGIONS) + [(0.80, 1.05)] * n_c
+        p0 = np.clip(p0, [b[0] for b in bnds], [b[1] for b in bnds])
 
         def expand(p):
             N = N_REGIONS
@@ -443,6 +494,8 @@ def main():
          "fixed_edges": fix_edges,
          "pressure": args.pressure, "material": MATERIAL, "cable_ea": CABLE_EA,
          "newton_reg_max": args.newton_reg_max,
+         "follower": args.follower, "sf_lo": args.sf_lo, "spline_edges_mm": args.spline_edges,
+         "spline_names": spline_names, "splines": _splines[0],
          "n_regions": N_REGIONS, "lambda_smooth": lam,
          "laplacian": lap(sw, sc), "adjacent_regions": adj_pairs,
          "rmse_mm": l * 1e3, "max_dev_mm": float(dev[free_idx].max()) * 1e3,
