@@ -41,17 +41,18 @@ else:
     label = f"in progress, best of {len(recs)} calls (call {best['call']})"
 
 S = json.load(open(SEED))
-mesh = os.path.join(HERE, S["mesh"]); rmap = os.path.join(OPT, f"../{S['region_map']}")
+mesh = os.path.join(HERE, S["mesh"]); rmap = os.path.join(HERE, best.get("region_map", S["region_map"]))
 V, F = load_off(mesh)
 C = json.load(open(os.path.join(HERE, S["cable_file"])))
 fixed = S["fixed_vertices"]
 free = np.array(sorted(set(range(len(V))) - set(fixed)))
 face_region = np.array(json.load(open(rmap))["face_regions"])
-knit = S["knit_dir_deg_region_means"]
+knit = best.get("knit_dir_deg_region_means", S["knit_dir_deg_region_means"])
 d = 0.010
 E03 = C["E03a"] + C["E03b"][1:] + C["E03c"][1:]
 splines = [C["E00"], C["E02"], E03]
-cables = ["C00", "C01a", "C01b", "C02"]
+cables = [k for k in best.get("cable_names", ["C00", "C01a", "C01b", "C02"])
+          if not k.startswith("E")]          # [] for the splines-only runs
 p = dict(pressure=1000.0, motif=1, cable_ea=157000.0, E1=12500.0, E2=5000.0, nu=0.198,
          cable_paths=[C[k] for k in cables], fixed_vertices=fixed, newton_reg_max=1e6,
          regions=[dict(sf_wale=best["sf_wale"][r], sf_course=best["sf_course"][r],
@@ -71,7 +72,8 @@ span = np.ptp(V[:, 0]) * 1e3
 print(f"{status}: RMSE {rmse:.2f} mm, mean {dv[free].mean():.2f}, max {mx:.2f} mm")
 
 fig = plt.figure(figsize=(17, 10))
-fig.suptitle(f"Free-form shell, 10 mm GFRP edge splines, follower load 1000 Pa, structure I "
+fig.suptitle(f"Free-form shell, 10 mm GFRP edge splines{'' if cables else ' only (no interior cables)'}, "
+             f"{len(knit) if len(set(face_region)) > 1 else 1} knit region(s), follower load 1000 Pa, structure I "
              f"({label}; solve {status})", fontsize=12)
 
 # (a) 3D result surface coloured by deviation
