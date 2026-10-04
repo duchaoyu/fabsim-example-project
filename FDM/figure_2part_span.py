@@ -48,6 +48,13 @@ INK, GRID = "#333333", "#DDDDDD"
 SEQ = LinearSegmentedColormap.from_list("seq_blue", [
     "#cde2fb", "#9ec5f4", "#6da7ec", "#3987e5", "#256abf", "#184f95", "#0d366b"])
 
+# Deviation ramp of the original crease figure (thesis Figure 7.28 in its first
+# version, legend "0 / 18 mm / 60 mm"): green -> yellow at 30 % of the scale ->
+# orange -> red, sampled from its colour bar.
+DEV = LinearSegmentedColormap.from_list("crease_dev", [
+    (0.00, "#4f9a2f"), (0.12, "#75b435"), (0.30, "#f4f150"), (0.49, "#f2c142"),
+    (0.62, "#e8782f"), (0.75, "#e44a26"), (1.00, "#d8441f")])
+
 STRATEGIES = [("D", "D  one region + cable", "#2E73BA"),
               ("E", "E  three adaptive regions + cable", "#E07B0A")]
 MAP_SPANS = [0.6, 1.2, 3.0, 6.0]
@@ -217,7 +224,7 @@ def main():
     for i, r in enumerate(maps):
         ax = fig.add_subplot(gs[1, 4 * i:4 * i + 4])
         tri = Triangulation(r["T"][:, 0] / r["D"], r["T"][:, 1] / r["D"], r["F"])
-        tp = ax.tripcolor(tri, 100 * r["dev"] / r["D"], cmap=SEQ, vmin=0,
+        tp = ax.tripcolor(tri, 100 * r["dev"] / r["D"], cmap=DEV, vmin=0,
                           vmax=vmax, shading="gouraud")
         if r["regions"] is not None:
             reg = symmetric_regions(r["regions"], r["T"], r["F"])
