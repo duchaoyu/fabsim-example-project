@@ -1,0 +1,56 @@
+Splines : ['E00', 'E01', 'E02', 'E03a', 'E03b', 'E03c'] -> 4 rods [30, 26, 34, 37] verts, GFRP d 10 mm, EA 3.14e+06 N, EI 19.6 N m^2
+Mesh    : 1232 verts, 2320 faces, 23 supports, 1209 free (fitted)
+Target  : crown 0.2697 m, span 1.2000 m  (rest == target)
+Regions : 1, faces [2320]; knit per face, region means [78.6] deg — FIXED
+Adjacent: []   lambda_smooth 0
+Cables  : []  EA 157000
+Material: E1 12500  E2 5000  nu 0.198   pressure 1000 Pa
+Log     : optimisation/pattern_smooth_rm2_uniform_splineonly_e01_sI_fol_calls.jsonl
+  gen   1  calls     8  best    7.083 mm  gen best    7.083  invalid 0/8  sigma 0.875
+  gen   2  calls    16  best    6.918 mm  gen best    6.918  invalid 0/8  sigma 0.689
+  gen   3  calls    24  best    6.918 mm  gen best    7.049  invalid 0/8  sigma 0.604
+  gen   4  calls    32  best    6.893 mm  gen best    6.893  invalid 0/8  sigma 0.557
+  gen   5  calls    40  best    6.893 mm  gen best    6.896  invalid 0/8  sigma 0.555
+  gen   6  calls    48  best    6.861 mm  gen best    6.861  invalid 0/8  sigma 0.450
+  gen   7  calls    56  best    6.857 mm  gen best    6.857  invalid 0/8  sigma 0.400
+  gen   8  calls    64  best    6.857 mm  gen best    6.891  invalid 0/8  sigma 0.361
+  gen   9  calls    72  best    6.857 mm  gen best    6.857  invalid 0/8  sigma 0.292
+  gen  10  calls    80  best    6.857 mm  gen best    6.857  invalid 0/8  sigma 0.214
+  gen  11  calls    88  best    6.856 mm  gen best    6.856  invalid 0/8  sigma 0.193
+  gen  12  calls    96  best    6.855 mm  gen best    6.855  invalid 0/8  sigma 0.183
+  gen  13  calls   104  best    6.855 mm  gen best    6.857  invalid 0/8  sigma 0.149
+  gen  14  calls   112  best    6.854 mm  gen best    6.854  invalid 0/8  sigma 0.136
+  gen  15  calls   120  best    6.853 mm  gen best    6.853  invalid 0/8  sigma 0.157
+  gen  16  calls   128  best    6.852 mm  gen best    6.852  invalid 0/8  sigma 0.162
+  gen  17  calls   136  best    6.852 mm  gen best    6.853  invalid 0/8  sigma 0.144
+  gen  18  calls   144  best    6.852 mm  gen best    6.853  invalid 0/8  sigma 0.142
+  gen  19  calls   152  best    6.852 mm  gen best    6.852  invalid 0/8  sigma 0.113
+  gen  20  calls   160  best    6.852 mm  gen best    6.853  invalid 0/8  sigma 0.096
+  gen  21  calls   168  best    6.852 mm  gen best    6.852  invalid 0/8  sigma 0.090
+  gen  22  calls   176  best    6.852 mm  gen best    6.852  invalid 0/8  sigma 0.084
+  gen  23  calls   184  best    6.852 mm  gen best    6.852  invalid 0/8  sigma 0.070
+  gen  24  calls   192  best    6.852 mm  gen best    6.852  invalid 0/8  sigma 0.065
+  gen  25  calls   200  best    6.852 mm  gen best    6.852  invalid 0/8  sigma 0.053
+  gen  26  calls   208  best    6.852 mm  gen best    6.852  invalid 0/8  sigma 0.060
+  gen  27  calls   216  best    6.852 mm  gen best    6.852  invalid 0/8  sigma 0.055
+  gen  28  calls   224  best    6.852 mm  gen best    6.852  invalid 0/8  sigma 0.057
+  gen  29  calls   232  best    6.852 mm  gen best    6.852  invalid 0/8  sigma 0.053
+  gen  30  calls   240  best    6.852 mm  gen best    6.852  invalid 0/8  sigma 0.046
+  gen  31  calls   248  best    6.852 mm  gen best    6.852  invalid 0/8  sigma 0.039
+  gen  32  calls   256  best    6.852 mm  gen best    6.852  invalid 0/8  sigma 0.037
+  gen  33  calls   264  best    6.852 mm  gen best    6.852  invalid 0/8  sigma 0.031
+  gen  34  calls   272  best    6.852 mm  gen best    6.852  invalid 0/8  sigma 0.026
+  gen  35  calls   280  best    6.852 mm  gen best    6.852  invalid 0/8  sigma 0.026
+  gen  36  calls   288  best    6.852 mm  gen best    6.852  invalid 0/8  sigma 0.026
+  gen  37  calls   296  best    6.852 mm  gen best    6.852  invalid 0/8  sigma 0.024
+  gen  38  calls   304  best    6.852 mm  gen best    6.852  invalid 0/8  sigma 0.021
+  gen  39  calls   312  best    6.852 mm  gen best    6.852  invalid 0/8  sigma 0.024
+  gen  40  calls   320  best    6.852 mm  gen best    6.852  invalid 0/8  sigma 0.024
+  gen  41  calls   328  best    6.852 mm  gen best    6.852  invalid 0/8  sigma 0.019
+  gen  42  calls   336  best    6.852 mm  gen best    6.852  invalid 0/8  sigma 0.018
+  gen  43  calls   344  best    6.852 mm  gen best    6.852  invalid 0/8  sigma 0.016
+
+CMA-ES stop: {'tolfun': 1e-07}
+Best score 6.8520 mm-equivalent (RMSE + penalty) after 344 FEM calls, 19.9 min
+  re-evaluated RMSE 6.8520 mm (0.57 % of span)  max dev 25.98 mm  crown 0.2567 (target 0.2697)  max disp 25.98 mm
+Saved optimisation/pattern_smooth_rm2_uniform_splineonly_e01_sI_fol_result.json
